@@ -1,0 +1,16 @@
+{
+  "name": "gobstones-interpreter",
+  "description": "Gobstones Web Interpreter",
+  "main": "lib/library.js",
+  "license": "MIT",
+  "keywords": [
+    "gobstones",
+    "interpreter"
+  ],
+  "homepage": "https://github.com/gobstones/gobstones-interpreter",
+  "moduleType": [],
+  "ignore": [
+    "**/*",
+    "!lib/*"
+  ]
+}
