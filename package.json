@@ -2,7 +2,7 @@
   "name": "gobstones-interpreter",
   "version": "0.0.1",
   "description": "Gobstones Web interpreter",
-  "main": "lib/library.js",
+  "main": "lib/gobstones-interpreter.js",
   "scripts": {
     "build": "webpack --env build",
     "dev": "webpack --progress --colors --watch --env dev",
