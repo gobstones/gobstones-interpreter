@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/gobstones/gobstones-interpreter.svg?branch=master)](https://travis-ci.org/gobstones/gobstones-interpreter)
+
 # gobstones-interpreter
 
 ## important scripts
