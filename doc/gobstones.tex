@@ -33,7 +33,29 @@ Todos los s\'imbolos terminales se acompa\~nan de su nombre \tok{EN\_MAYUSCULAS}
 \symbolentry{\texttt{[0-9]+}}{\tok{NUM}}{\nb{Constante num\'erica.}}
 \symbolentry{\texttt{[a-z][\_a-zA-Z0-9]*}}{\tok{LOWERID}}{\nb{Identificador en min\'uscula: \'indices, par\'ametros, funciones, variables, campos.}}
 \symbolentry{\texttt{[A-Z][\_a-zA-Z0-9]*}}{\tok{UPPERID}}{\nb{Identificador en may\'uscula: constructores, procedimientos, tipos.}}
+\symbolentry{\texttt{"(\textbackslash{t}|\textbackslash{n}|\textbackslash{r}|\textbackslash\textbackslash|\textbackslash"|[\^{}\textbackslash"])*"}}{\tok{STRING}}{\nb{Constante {\em string}.}}
 \end{tabularx}
+\medskip
+
+Clarificaci\'on sobre las constantes de {\em string}:
+las cadenas est\'an delimitadas por comillas dobles (\chr{"}).
+Todos los caracteres desde la comilla que abre hasta la que cierra se
+toman literalmente salvo la contrabarra (\chr{\textbackslash}) que se
+interpreta como un caracter de escape.
+Los escapes admitidos son:
+\begin{center}
+\texttt{\textbackslash{t}}
+\hspace{1cm}
+\texttt{\textbackslash{n}}
+\hspace{1cm}
+\texttt{\textbackslash{r}}
+\hspace{1cm}
+\texttt{\textbackslash\textbackslash}
+\hspace{1cm}
+\texttt{\textbackslash"}
+\end{center}
+con su significado usual.
+\bigskip
 
 \noindent{\bf Palabras clave}\medskip\\
 \begin{tabularx}{\textwidth}{llXp{10cm}}

@@ -1,7 +1,7 @@
 import chai from 'chai';
 
 import {
-  T_EOF, T_NUM, T_LOWERID, T_UPPERID,
+  T_EOF, T_NUM, T_STRING, T_LOWERID, T_UPPERID,
   /* Keywords */
   T_PROGRAM, T_INTERACTIVE, T_PROCEDURE, T_FUNCTION, T_RETURN,
   T_IF, T_THEN, T_ELSE, T_REPEAT, T_FOREACH, T_IN, T_WHILE,
@@ -427,3 +427,47 @@ it('Lexer - Unknown token', () => {
   var lexer = new Lexer('%');
   expect(() => lexer.nextToken()).throws(i18n('errmsg:unknown-token'));
 });
+
+it('Lexer - Basic string constants', () => {
+  var lexer = new Lexer('"" "a" "hola""chau"');
+  expectTokens(lexer, [
+      [T_STRING, ''],
+      [T_STRING, 'a'],
+      [T_STRING, 'hola'],
+      [T_STRING, 'chau'],
+      [T_EOF, null]
+  ]);
+});
+
+it('Lexer - String constants with escapes', () => {
+  var lexer = new Lexer('"","\\"","\\\\","\\t","\\n","\\r"');
+  expectTokens(lexer, [
+      [T_STRING, ''],
+      [T_COMMA, ','],
+      [T_STRING, '"'],
+      [T_COMMA, ','],
+      [T_STRING, '\\'],
+      [T_COMMA, ','],
+      [T_STRING, '\t'],
+      [T_COMMA, ','],
+      [T_STRING, '\n'],
+      [T_COMMA, ','],
+      [T_STRING, '\r'],
+      [T_EOF, null]
+  ]);
+});
+
+it('Lexer - Unclosed string constant', () => {
+  var lexer = new Lexer(' "hola \n ');
+  expect(() => lexer.nextToken()).throws(
+    i18n('errmsg:unclosed-string-constant')
+  );
+});
+
+it('Lexer - Unclosed string constant after escape', () => {
+  var lexer = new Lexer(' "hola \\');
+  expect(() => lexer.nextToken()).throws(
+    i18n('errmsg:unclosed-string-constant')
+  );
+});
+

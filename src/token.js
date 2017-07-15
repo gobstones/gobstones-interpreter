@@ -2,6 +2,7 @@
 /* Token types are constant symbols */
 export const T_EOF = Symbol.for('T_EOF');         // End of file
 export const T_NUM = Symbol.for('T_NUM');         // Number
+export const T_STRING = Symbol.for('T_STRING');   // String constant
 export const T_UPPERID = Symbol.for('T_UPPERID'); // Uppercase identifier
 export const T_LOWERID = Symbol.for('T_LOWERID'); // Lowercase identifier
 

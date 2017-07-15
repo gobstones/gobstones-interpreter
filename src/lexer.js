@@ -2,7 +2,7 @@ import { i18n } from './i18n';
 import { Warning, SyntaxError } from './exceptions';
 import { MultifileReader } from './reader';
 import {
-  Token, T_EOF, T_NUM, T_LOWERID, T_UPPERID,
+  Token, T_EOF, T_NUM, T_STRING, T_LOWERID, T_UPPERID,
   /* Keywords */
   T_PROGRAM, T_INTERACTIVE, T_PROCEDURE, T_FUNCTION, T_RETURN,
   T_IF, T_THEN, T_ELSE, T_REPEAT, T_FOREACH, T_IN, T_WHILE,
@@ -153,6 +153,8 @@ export class Lexer {
       } else {
         return new Token(T_LOWERID, value, startPos, endPos);
       }
+    } else if (this._reader.peek() === '"') {
+      return this._readStringConstant();
     } else {
       for (var [symbol, type] of SYMBOLS) {
         if (this._reader.startsWith(symbol)) {
@@ -200,6 +202,49 @@ export class Lexer {
       this._reader = this._reader.consumeCharacter();
     }
     return result.join('');
+  }
+
+  /* Reads a quote-delimited string constant.
+   * Escapes are recognized. */
+  _readStringConstant() {
+    var startPos = this._reader;
+    var result = [];
+    this._reader = this._reader.consumeCharacter();
+    while (!this._reader.eof()) {
+      let c = this._reader.peek();
+      if (c === '"') {
+        this._reader = this._reader.consumeCharacter();
+        return new Token(T_STRING, result.join('', startPos, this._reader));
+      } else if (c === '\\') {
+        this._reader = this._reader.consumeCharacter();
+        if (this._reader.eof()) {
+          break;
+        }
+        let c2 = this._reader.peek();
+        this._reader = this._reader.consumeCharacter();
+        switch (c2) {
+          case 't':
+            result.push('\t');
+            break;
+          case 'n':
+            result.push('\n');
+            break;
+          case 'r':
+            result.push('\r');
+            break;
+          default:
+            result.push(c2);
+            break;
+        }
+      } else {
+        result.push(c);
+        this._reader = this._reader.consumeCharacter();
+      }
+    }
+    throw new SyntaxError(
+                startPos,
+                i18n('errmsg:unclosed-string-constant')
+              );
   }
 
   _ignoreWhitespaceAndComments() {
