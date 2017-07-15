@@ -1,0 +1,124 @@
+\documentclass{article}
+\usepackage{xcolor}
+\usepackage{tabularx}
+\begin{document}
+\newcommand{\chr}[1]{\texttt{'}\textcolor{blue}{\texttt{#1}}\texttt{'}}
+\newcommand{\str}[1]{\texttt{"}\textcolor{blue}{\texttt{#1}}\texttt{"}}
+\newcommand{\tok}[1]{\textcolor{red}{\texttt{#1}}}
+\newcommand{\symbolentry}[3]{#1 & #2 && #3 \\}
+\newcommand{\nb}[1]{\footnotesize{#1}}
+\newcommand{\TODO}[1]{\textcolor{red}{#1}}
+\section{Gram\'atica de XGobstones}
+
+\subsection{Sintaxis l\'exica}
+
+\begin{itemize}
+\item Se ignoran:
+\chr{\textbackslash t} (\texttt{TAB}, chr 8),
+\chr{\textbackslash n} (\texttt{LF}, chr 10),
+\chr{\textbackslash r} (\texttt{CR}, chr 13),
+\chr{\,} (\texttt{SPACE}, chr 32).
+\item Se admiten comentarios comenzados por \str{//} y por \str{--} que se extienden hasta el fin de l\'inea (\texttt{LF}).
+\item Se admiten comentarios delimitados por \str{/*} \str{*/} y por \str{\{-} \str{-\}} que pueden anidarse.
+\item El tokenizador reconoce directivas {\em pragma} de la forma \str{/*@parte$_1$@parte$_2$@...@parte$_n$@*/}. La idea es que esto pueda ser un mecanismo extensible de directivas. Ver m\'as abajo las directivas soportadas.
+\end{itemize}
+
+
+\subsection{Lista de s\'imbolos terminales}
+
+Todos los s\'imbolos terminales se acompa\~nan de su nombre \tok{EN\_MAYUSCULAS}.\bigskip
+
+\noindent{\bf Identificadores y constantes}\medskip\\
+\begin{tabularx}{\textwidth}{llXp{8cm}}
+\symbolentry{\texttt{[0-9]+}}{\tok{NUM}}{\nb{Constante num\'erica.}}
+\symbolentry{\texttt{[a-z][\_a-zA-Z0-9]*}}{\tok{LOWERID}}{\nb{Identificador en min\'uscula: \'indices, par\'ametros, funciones, variables, campos.}}
+\symbolentry{\texttt{[A-Z][\_a-zA-Z0-9]*}}{\tok{UPPERID}}{\nb{Identificador en may\'uscula: constructores, procedimientos, tipos.}}
+\end{tabularx}
+
+\noindent{\bf Palabras clave}\medskip\\
+\begin{tabularx}{\textwidth}{llXp{10cm}}
+\symbolentry{\texttt{program}}{\tok{PROGRAM}}{\nb{Para declarar la rutina principal.}}
+\symbolentry{\texttt{interactive}}{\tok{INTERACTIVE}}{\nb{Para declarar una rutina principal interactiva con \texttt{interactive program}.}}
+\symbolentry{\texttt{procedure}}{\tok{PROCEDURE}}{\nb{Para declarar procedimientos.}}
+\symbolentry{\texttt{function}}{\tok{FUNCTION}}{\nb{Para declarar funciones.}}
+\symbolentry{\texttt{return}}{\tok{RETURN}}{\nb{Para devolver valores de funciones y de la rutina principal.}}
+\symbolentry{\texttt{if}}{\tok{IF}}{\nb{Para la alternativa condicional.}}
+\symbolentry{\texttt{then}}{\tok{THEN}}{\nb{Palabra clave opcional para la rama ``then''.}}
+\symbolentry{\texttt{else}}{\tok{ELSE}}{\nb{Para la rama ``else''.}}
+\symbolentry{\texttt{repeat}}{\tok{REPEAT}}{\nb{Repetici\'on simple.}}
+\symbolentry{\texttt{foreach}}{\tok{FOREACH}}{\nb{Repetici\'on indexada.}}
+\symbolentry{\texttt{in}}{\tok{IN}}{\nb{Para declarar el rango de la repetici\'on indexada.}}
+\symbolentry{\texttt{while}}{\tok{WHILE}}{\nb{Repetici\'on condicional.}}
+\symbolentry{\texttt{switch}}{\tok{SWITCH}}{\nb{Para hacer {\em pattern matching}.}}
+\symbolentry{\texttt{to}}{\tok{TO}}{\nb{Palabra clave opcional despu\'es del sujeto sobre el que se hace {\em pattern matching}.}}
+\symbolentry{\texttt{match}}{\tok{MATCH}}{\nb{Alternativa para hacer {\em pattern matching}. \TODO{XXX: ?`deber\'ia ser el mismo token que SWITCH, verdad?}}}
+\symbolentry{\texttt{let}}{\tok{LET}}{\nb{Palabra clave opcional para la asignaci\'on. Es obligatoria en el caso de las asignaciones que hacen {\em destructuring} de tuplas.}}
+\symbolentry{\texttt{not}}{\tok{NOT}}{\nb{Negaci\'on l\'ogica.}}
+\symbolentry{\texttt{mod}}{\tok{MOD}}{\nb{Resto de la divisi\'on entera.}}
+\symbolentry{\texttt{div}}{\tok{DIV}}{\nb{Cociente de la divisi\'on entera.}}
+\symbolentry{\texttt{type}}{\tok{TYPE}}{\nb{Para la declaraci\'on de nuevos tipos.}}
+\symbolentry{\texttt{is}}{\tok{IS}}{\nb{Palabra clave para acompa\~nar la declaraci\'on de un nuevo tipo.}}
+\symbolentry{\texttt{record}}{\tok{RECORD}}{\nb{Para tipos registro.}}
+\symbolentry{\texttt{variant}}{\tok{VARIANT}}{\nb{Para tipos variantes.}}
+\symbolentry{\texttt{case}}{\tok{CASE}}{\nb{Para las alternativas de tipos variantes.}}
+\symbolentry{\texttt{field}}{\tok{FIELD}}{\nb{Para los campos de tipos registro.}}
+\symbolentry{\texttt{\_}}{\tok{UNDERSCORE}}{\nb{Para marcar el caso ``default'' en un switch/match.}}
+\end{tabularx}\bigskip
+
+\noindent{\bf S\'imbolos}\medskip\\
+\begin{tabularx}{\textwidth}{llXp{10cm}}
+\symbolentry{\texttt{(}}{\tok{LPAREN}}{\nb{Par\'entesis izquierdo.}}
+\symbolentry{\texttt{)}}{\tok{RPAREN}}{\nb{Par\'entesis derecho.}}
+\symbolentry{\texttt{\{}}{\tok{LBRACE}}{\nb{Llave izquierda.}}
+\symbolentry{\texttt{\}}}{\tok{RBRACE}}{\nb{Llave derecha.}}
+\symbolentry{\texttt{[}}{\tok{LBRACK}}{\nb{Corchete izquierdo (para listas y rangos).}}
+\symbolentry{\texttt{]}}{\tok{RBRACK}}{\nb{Corchete derecho.}}
+\symbolentry{\texttt{,}}{\tok{COMMA}}{\nb{Coma.}}
+\symbolentry{\texttt{;}}{\tok{SEMICOLON}}{\nb{Punto y coma (separador de instrucciones opcional).}}
+\symbolentry{\texttt{..}}{\tok{RANGE}}{\nb{Para rangos, p.ej. \texttt{[1..10]}.}}
+\symbolentry{\texttt{:=}}{\tok{ASSIGN}}{\nb{Operador de asignaci\'on.}}
+\symbolentry{\texttt{\&\&}}{\tok{AND}}{\nb{Conjunci\'on.}}
+\symbolentry{\texttt{||}}{\tok{OR}}{\nb{Disyunci\'on.}}
+\symbolentry{\texttt{<-}}{\tok{GETS}}{\nb{Para inicializar campos, p.ej. \texttt{Coord(x <- 1, y <- 2)}.}}
+\symbolentry{\texttt{|}}{\tok{PIPE}}{\nb{Para actualizar campos, p.ej. \texttt{Coord(c | x <- 2)}.}}
+\symbolentry{\texttt{==}}{\tok{EQ}}{\nb{Comparaci\'on por igualdad.}}
+\symbolentry{\texttt{/=}}{\tok{NE}}{\nb{Comparaci\'on por desigualdad.}}
+\symbolentry{\texttt{<=}}{\tok{LE}}{\nb{Comparaci\'on por menor o igual.}}
+\symbolentry{\texttt{>=}}{\tok{GE}}{\nb{Comparaci\'on por mayor o igual.}}
+\symbolentry{\texttt{<}}{\tok{LT}}{\nb{Comparaci\'on por menor estricto.}}
+\symbolentry{\texttt{>}}{\tok{LT}}{\nb{Comparaci\'on por mayor estricto.}}
+\symbolentry{\texttt{++}}{\tok{CONCAT}}{\nb{Operador de concatenaci\'on de listas.}}
+\symbolentry{\texttt{+}}{\tok{PLUS}}{\nb{Suma de n\'umeros.}}
+\symbolentry{\texttt{-}}{\tok{MINUS}}{\nb{Resta de n\'umeros y menos unario.}}
+\symbolentry{\texttt{*}}{\tok{TIMES}}{\nb{Producto de n\'umeros.}}
+\symbolentry{\texttt{\^}}{\tok{POW}}{\nb{Potencia.}}
+\end{tabularx}\bigskip
+
+\subsection{Pragmas}
+
+El tokenizador implementa directivas pragma para
+mantener registro de ``regiones''. Una regi\'on es una cadena de texto que
+sirve para identificar o {\em taggear} un fragmento del programa.
+Las regiones no tienen ning\'un significado
+especial para el int\'erprete de Gobstones, pero todas las excepciones que
+eleva el int\'erprete vienen acompa\~nadas de una posici\'on que incluye
+el nombre de la regi\'on actual. Las regiones pueden anidarse.
+Este comportamiento se implementa por medio de dos directivas.
+\begin{itemize}
+\item \str{/*@BEGIN\_REGION@\textit{nombre\_de\_la\_regi\'on}@*/}:
+       mete el nombre de una regi\'on en la pila de regiones.
+\item \str{/*@END\_REGION@*/}: saca la regi\'on del tope de la pila de regiones.
+\end{itemize}
+Por ejemplo ante el siguiente programa:
+\begin{verbatim}
+/*@BEGIN_REGION@A@*/
+procedure P() {
+  /*@BEGIN_REGION@B@*/
+  x := f(
+  /*@END_REGION@*/
+}
+/*@END_REGION@*/
+\end{verbatim}
+El parser idealmente deber\'ia reportar que hay un error de sintaxis en la regi\'on \texttt{B}.
+
+\end{document}
