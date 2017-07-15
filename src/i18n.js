@@ -9,6 +9,9 @@ const ES = {
   'errmsg:unknown-token':
     'Símbolo desconocido en la entrada.',
 
+  'errmsg:obsolete-tuple-assignment':
+    'La sintaxis de asignación de tuplas "(x1, ..., xN) := y" está obsoleta. Usar "let (x1, ..., xN) := y".',
+
   'warning:empty-pragma':
     'Directiva pragma vacía.',
 

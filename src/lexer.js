@@ -131,9 +131,25 @@ export class Lexer {
     this._multifileReader = new MultifileReader(input);
     this._reader = this._multifileReader.readCurrentFile();
     this._warnings = [];
+    this._obsoleteTupleAssignmentRecognizer = new ObsoleteTupleAssignmentRecognizer();
   }
 
+  /* Return the next token from the input, checking for warnings */
   nextToken() {
+    var startPos = this._reader;
+    var tok = this._nextToken();
+    this._obsoleteTupleAssignmentRecognizer.feed(startPos, tok.type);
+    return tok;
+  }
+
+  /* When tokenization is done, this function returns the list of all
+   * the warnings collected during tokenization */
+  warnings() {
+    return this._warnings;
+  }
+
+  /* Actually read and return the next token from the input */
+  _nextToken() {
     if (!this._findNextToken()) {
       return new Token(T_EOF, null, this._reader, this._reader);
     }
@@ -156,20 +172,8 @@ export class Lexer {
     } else if (this._reader.peek() === '"') {
       return this._readStringConstant();
     } else {
-      for (var [symbol, type] of SYMBOLS) {
-        if (this._reader.startsWith(symbol)) {
-          let startPos = this._reader;
-          this._reader = this._reader.consumeString(symbol);
-          let endPos = this._reader;
-          return new Token(type, symbol, startPos, endPos);
-        }
-      }
-      throw new SyntaxError(this._reader, i18n('errmsg:unknown-token'));
+      return this._readSymbol();
     }
-  }
-
-  warnings() {
-    return this._warnings;
   }
 
   /* Skip whitespace and advance through files until the start of the next
@@ -245,6 +249,19 @@ export class Lexer {
                 startPos,
                 i18n('errmsg:unclosed-string-constant')
               );
+  }
+
+  /* Read a symbol */
+  _readSymbol() {
+    for (var [symbol, type] of SYMBOLS) {
+      if (this._reader.startsWith(symbol)) {
+        let startPos = this._reader;
+        this._reader = this._reader.consumeString(symbol);
+        let endPos = this._reader;
+        return new Token(type, symbol, startPos, endPos);
+      }
+    }
+    throw new SyntaxError(this._reader, i18n('errmsg:unknown-token'));
   }
 
   _ignoreWhitespaceAndComments() {
@@ -384,5 +401,56 @@ export class Lexer {
     this._warnings.push(new Warning(position, message));
   }
 
+}
+
+/* Class that recognizes the presence of the obsolete tuple assignment syntax
+ *
+ *   (x1, ..., xN) := ...
+ *
+ * in favour of
+ *
+ *   let (x1, ..., xN) := ...
+ *
+ * This is done using a simple finite automaton with five states:
+ *
+ *   1: no information
+ *   2: we have read "(x1,...,xN," with N >= 1 or just "(", without "let"
+ *   3: we have read "(x1,...,xN"  with N >= 1, without "let"
+ *   4: we have read "(x1,...,xN)", without "let"
+ *   5: we have read "let
+ *
+ * If it finds a tuple assignment without let, it throws a SyntaxError.
+ */
+class ObsoleteTupleAssignmentRecognizer {
+  constructor() {
+    this._state = 1;
+    this._table = {1: {}, 2: {}, 3: {}, 4: {}, 5: {}};
+    this._table[1][T_LPAREN] = 2;
+    this._table[1][T_LET] = 5;
+    this._table[2][T_LPAREN] = 2;
+    this._table[2][T_RPAREN] = 4;
+    this._table[2][T_LOWERID] = 3;
+    this._table[2][T_LET] = 5;
+    this._table[3][T_LPAREN] = 2;
+    this._table[3][T_RPAREN] = 4;
+    this._table[3][T_COMMA] = 2;
+    this._table[3][T_LET] = 5;
+    this._table[4][T_LPAREN] = 2;
+    this._table[4][T_ASSIGN] = 1; /* throws warning */
+    this._table[4][T_LET] = 5;
+    this._table[5][T_LPAREN] = 1;
+    this._table[5][T_LET] = 5;
+  }
+
+  feed(pos, tokenType) {
+    if (this._state == 4 && tokenType == T_ASSIGN) {
+      throw new SyntaxError(pos, i18n('errmsg:obsolete-tuple-assignment'));
+    }
+    if (tokenType in this._table[this._state]) {
+      this._state = this._table[this._state][tokenType];
+    } else {
+      this._state = 1;
+    }
+  }
 }
 

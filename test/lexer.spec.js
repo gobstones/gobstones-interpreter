@@ -471,3 +471,50 @@ it('Lexer - Unclosed string constant after escape', () => {
   );
 });
 
+it('Lexer - Reject obsolete tuple assignment: empty tuple', () => {
+  var lexer = new Lexer('() :=');
+  lexer.nextToken();
+  lexer.nextToken();
+  expect(() => lexer.nextToken()).throws(
+    i18n('errmsg:obsolete-tuple-assignment')
+  );
+});
+
+it('Lexer - Reject obsolete tuple assignment: singleton', () => {
+  var lexer = new Lexer('(x) :=');
+  for (var i = 0; i < 3; i++) {
+    lexer.nextToken();
+  }
+  expect(() => lexer.nextToken()).throws(
+    i18n('errmsg:obsolete-tuple-assignment')
+  );
+});
+
+it('Lexer - Reject obsolete tuple assignment: proper tuple', () => {
+  var lexer = new Lexer('(x,y,z) :=');
+  for (var i = 0; i < 7; i++) {
+    lexer.nextToken();
+  }
+  expect(() => lexer.nextToken()).throws(
+    i18n('errmsg:obsolete-tuple-assignment')
+  );
+});
+
+it('Lexer - Accept tuple assignment with let: empty tuple', () => {
+  var lexer = new Lexer('let () :=');
+  expectTokenTypes(lexer, [T_LET, T_LPAREN, T_RPAREN, T_ASSIGN, T_EOF]);
+});
+
+it('Lexer - Accept tuple assignment with let: singleton', () => {
+  var lexer = new Lexer('let (x) :=');
+  expectTokenTypes(lexer, [T_LET, T_LPAREN, T_LOWERID, T_RPAREN, T_ASSIGN, T_EOF]);
+});
+
+it('Lexer - Accept tuple assignment with let: proper tuple', () => {
+  var lexer = new Lexer('let (x,y,z) :=');
+  expectTokenTypes(lexer, [
+      T_LET, T_LPAREN, T_LOWERID, T_COMMA, T_LOWERID, T_COMMA, T_LOWERID,
+      T_RPAREN, T_ASSIGN, T_EOF
+  ]);
+});
+
