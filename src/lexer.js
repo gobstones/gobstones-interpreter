@@ -112,6 +112,57 @@ const SYMBOLS = [
   ['^', T_POW]
 ];
 
+/* Class that recognizes the presence of the obsolete tuple assignment syntax
+ *
+ *   (x1, ..., xN) := ...
+ *
+ * in favour of
+ *
+ *   let (x1, ..., xN) := ...
+ *
+ * This is done using a simple finite automaton with five states:
+ *
+ *   1: no information
+ *   2: we have read "(x1,...,xN," with N >= 1 or just "(", without "let"
+ *   3: we have read "(x1,...,xN"  with N >= 1, without "let"
+ *   4: we have read "(x1,...,xN)", without "let"
+ *   5: we have read "let
+ *
+ * If it finds a tuple assignment without let, it throws a SyntaxError.
+ */
+class ObsoleteTupleAssignmentRecognizer {
+  constructor() {
+    this._state = 1;
+    this._table = {1: {}, 2: {}, 3: {}, 4: {}, 5: {}};
+    this._table[1][T_LPAREN] = 2;
+    this._table[1][T_LET] = 5;
+    this._table[2][T_LPAREN] = 2;
+    this._table[2][T_RPAREN] = 4;
+    this._table[2][T_LOWERID] = 3;
+    this._table[2][T_LET] = 5;
+    this._table[3][T_LPAREN] = 2;
+    this._table[3][T_RPAREN] = 4;
+    this._table[3][T_COMMA] = 2;
+    this._table[3][T_LET] = 5;
+    this._table[4][T_LPAREN] = 2;
+    this._table[4][T_ASSIGN] = 1; /* throws warning */
+    this._table[4][T_LET] = 5;
+    this._table[5][T_LPAREN] = 1;
+    this._table[5][T_LET] = 5;
+  }
+
+  feed(pos, tokenType) {
+    if (this._state === 4 && tokenType === T_ASSIGN) {
+      throw new SyntaxError(pos, i18n('errmsg:obsolete-tuple-assignment'));
+    }
+    if (tokenType in this._table[this._state]) {
+      this._state = this._table[this._state][tokenType];
+    } else {
+      this._state = 1;
+    }
+  }
+}
+
 /* An instance of Lexer scans source code for tokens.
  * Example:
  *
@@ -401,56 +452,5 @@ export class Lexer {
     this._warnings.push(new Warning(position, message));
   }
 
-}
-
-/* Class that recognizes the presence of the obsolete tuple assignment syntax
- *
- *   (x1, ..., xN) := ...
- *
- * in favour of
- *
- *   let (x1, ..., xN) := ...
- *
- * This is done using a simple finite automaton with five states:
- *
- *   1: no information
- *   2: we have read "(x1,...,xN," with N >= 1 or just "(", without "let"
- *   3: we have read "(x1,...,xN"  with N >= 1, without "let"
- *   4: we have read "(x1,...,xN)", without "let"
- *   5: we have read "let
- *
- * If it finds a tuple assignment without let, it throws a SyntaxError.
- */
-class ObsoleteTupleAssignmentRecognizer {
-  constructor() {
-    this._state = 1;
-    this._table = {1: {}, 2: {}, 3: {}, 4: {}, 5: {}};
-    this._table[1][T_LPAREN] = 2;
-    this._table[1][T_LET] = 5;
-    this._table[2][T_LPAREN] = 2;
-    this._table[2][T_RPAREN] = 4;
-    this._table[2][T_LOWERID] = 3;
-    this._table[2][T_LET] = 5;
-    this._table[3][T_LPAREN] = 2;
-    this._table[3][T_RPAREN] = 4;
-    this._table[3][T_COMMA] = 2;
-    this._table[3][T_LET] = 5;
-    this._table[4][T_LPAREN] = 2;
-    this._table[4][T_ASSIGN] = 1; /* throws warning */
-    this._table[4][T_LET] = 5;
-    this._table[5][T_LPAREN] = 1;
-    this._table[5][T_LET] = 5;
-  }
-
-  feed(pos, tokenType) {
-    if (this._state == 4 && tokenType == T_ASSIGN) {
-      throw new SyntaxError(pos, i18n('errmsg:obsolete-tuple-assignment'));
-    }
-    if (tokenType in this._table[this._state]) {
-      this._state = this._table[this._state][tokenType];
-    } else {
-      this._state = 1;
-    }
-  }
 }
 
