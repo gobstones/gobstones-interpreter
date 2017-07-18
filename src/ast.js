@@ -3,7 +3,21 @@ import { UnknownPosition } from './reader';
 /* AST node tags are constant symbols */
 export const N_ProgramDeclaration = Symbol.for('N_ProgramDeclaration');
 export const N_ProcedureDeclaration = Symbol.for('N_ProcedureDeclaration');
-export const N_Block = Symbol.for('N_Block');
+export const N_FunctionDeclaration = Symbol.for('N_FunctionDeclaration');
+/* Statements */
+export const N_StmtBlock = Symbol.for('N_StmtBlock');
+export const N_StmtReturn = Symbol.for('N_StmtReturn');
+export const N_StmtIf = Symbol.for('N_StmtIf');
+export const N_StmtRepeat = Symbol.for('N_StmtRepeat');
+export const N_StmtForeach = Symbol.for('N_StmtForeach');
+export const N_StmtWhile = Symbol.for('N_StmtWhile');
+export const N_StmtSwitch = Symbol.for('N_StmtSwitch');
+export const N_StmtSwitchBranch = Symbol.for('N_StmtSwitchBranch');
+export const N_StmtLet = Symbol.for('N_StmtLet');
+export const N_StmtProcedureCall = Symbol.for('N_StmtProcedureCall');
+/* Expressions */
+export const N_ExprVariable = Symbol.for('N_ExprVariable');
+export const N_ExprTuple = Symbol.for('N_ExprTuple');
 
 /* An instance of ASTNode represents a node of the abstract syntax tree.
  * - tag should be a node tag symbol.
@@ -52,26 +66,121 @@ export class ASTNode {
 }
 
 export class ASTProgramDeclaration extends ASTNode {
-  constructor(block) {
-    super(N_ProgramDeclaration, [block]);
+  constructor(body) {
+    super(N_ProgramDeclaration, [body]);
+  }
+
+  get body() {
+    return this.children[0];
   }
 }
 
 export class ASTProcedureDeclaration extends ASTNode {
-  constructor(name, parameterList, block) {
-    super(N_ProcedureDeclaration, [name, parameterList, block]);
+  constructor(name, parameterList, body) {
+    super(N_ProcedureDeclaration, [name, parameterList, body]);
+  }
+
+  get body() {
+    return this.children[2];
   }
 }
 
 export class ASTFunctionDeclaration extends ASTNode {
-  constructor(name, parameterList, block) {
-    super(N_ProcedureDeclaration, [name, parameterList, block]);
+  constructor(name, parameterList, body) {
+    super(N_FunctionDeclaration, [name, parameterList, body]);
+  }
+
+  get body() {
+    return this.children[2];
   }
 }
 
-export class ASTBlock extends ASTNode {
+/* Statements */
+
+export class ASTStmtBlock extends ASTNode {
   constructor(statements) {
-    super(N_Block, statements);
+    super(N_StmtBlock, statements);
+  }
+
+  get statements() {
+    return this.children;
+  }
+}
+
+export class ASTStmtReturn extends ASTNode {
+  constructor(result) {
+    super(N_StmtReturn, [result]);
+  }
+
+  get result() {
+    return this.children[0];
+  }
+}
+
+export class ASTStmtIf extends ASTNode {
+  // Note: elseBlock may be null
+  constructor(condition, thenBlock, elseBlock) {
+    super(N_StmtIf, [condition, thenBlock, elseBlock]);
+  }
+}
+
+export class ASTStmtRepeat extends ASTNode {
+  constructor(times, body) {
+    super(N_StmtRepeat, [times, body]);
+  }
+}
+
+export class ASTStmtForeach extends ASTNode {
+  constructor(index, range, body) {
+    super(N_StmtForeach, [index, range, body]);
+  }
+}
+
+export class ASTStmtWhile extends ASTNode {
+  constructor(condition, body) {
+    super(N_StmtWhile, [condition, body]);
+  }
+}
+
+export class ASTStmtSwitch extends ASTNode {
+  constructor(subject, branches) {
+    super(N_StmtSwitch, [subject, branches]);
+  }
+}
+
+export class ASTStmtSwitchBranch extends ASTNode {
+  constructor(pattern, body) {
+    super(N_StmtSwitchBranch, [pattern, body]);
+  }
+}
+
+export class ASTStmtLet extends ASTNode {
+  constructor(lhs, condition) {
+    super(N_StmtLet, [lhs, expression]);
+  }
+}
+
+export class ASTStmtProcedureCall extends ASTNode {
+  constructor(procedureName, args) {
+    super(N_StmtProcedureCall, [procedureName, args]);
+  }
+}
+
+/* Expressions */
+
+export class ASTExprVariable extends ASTNode {
+  constructor(variableName) {
+    super(N_ExprVariable, [variableName]);
+  }
+}
+
+export class ASTExprTuple extends ASTNode {
+  constructor(expressions) {
+    super(N_ExprTuple, expressions);
+  }
+
+  get expressions() {
+    return this.children;
   }
 }
 

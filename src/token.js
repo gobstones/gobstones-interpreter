@@ -20,7 +20,6 @@ export const T_FOREACH = Symbol.for('T_FOREACH');
 export const T_IN = Symbol.for('T_IN');
 export const T_WHILE = Symbol.for('T_WHILE');
 export const T_SWITCH = Symbol.for('T_SWITCH');
-export const T_MATCH = Symbol.for('T_MATCH');
 export const T_TO = Symbol.for('T_TO');
 export const T_LET = Symbol.for('T_LET');
 export const T_NOT = Symbol.for('T_NOT');

@@ -5,7 +5,7 @@ import {
   /* Keywords */
   T_PROGRAM, T_INTERACTIVE, T_PROCEDURE, T_FUNCTION, T_RETURN,
   T_IF, T_THEN, T_ELSE, T_REPEAT, T_FOREACH, T_IN, T_WHILE,
-  T_SWITCH, T_MATCH, T_TO, T_LET, T_NOT, T_DIV, T_MOD, T_TYPE,
+  T_SWITCH, T_TO, T_LET, T_NOT, T_DIV, T_MOD, T_TYPE,
   T_IS, T_RECORD, T_VARIANT, T_CASE, T_FIELD, T_UNDERSCORE,
   /* Symbols */
   T_LPAREN, T_RPAREN, T_LBRACE, T_RBRACE, T_LBRACK, T_RBRACK, T_COMMA,
@@ -347,7 +347,7 @@ it('Lexer - Keywords', () => {
     T_IN,
     T_WHILE,
     T_SWITCH,
-    T_MATCH,
+    T_SWITCH,
     T_TO,
     T_LET,
     T_NOT,

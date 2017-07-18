@@ -64,7 +64,6 @@ const ES = {
   'T_IN': laPalabraClave('in'),
   'T_WHILE': laPalabraClave('while'),
   'T_SWITCH': laPalabraClave('switch'),
-  'T_MATCH': laPalabraClave('match'),
   'T_TO': laPalabraClave('to'),
   'T_LET': laPalabraClave('let'),
   'T_NOT': laPalabraClave('not'),

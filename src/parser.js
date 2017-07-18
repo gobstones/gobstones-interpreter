@@ -6,7 +6,7 @@ import {
   /* Keywords */
   T_PROGRAM, T_INTERACTIVE, T_PROCEDURE, T_FUNCTION, T_RETURN,
   T_IF, T_THEN, T_ELSE, T_REPEAT, T_FOREACH, T_IN, T_WHILE,
-  T_SWITCH, T_MATCH, T_TO, T_LET, T_NOT, T_DIV, T_MOD, T_TYPE,
+  T_SWITCH, T_TO, T_LET, T_NOT, T_DIV, T_MOD, T_TYPE,
   T_IS, T_RECORD, T_VARIANT, T_CASE, T_FIELD, T_UNDERSCORE,
   /* Symbols */
   T_LPAREN, T_RPAREN, T_LBRACE, T_RBRACE, T_LBRACK, T_RBRACK, T_COMMA,
@@ -19,7 +19,20 @@ import {
   ASTProgramDeclaration,
   ASTProcedureDeclaration,
   ASTFunctionDeclaration,
-  ASTBlock,
+  /* Statements */
+  ASTStmtBlock,
+  ASTStmtReturn,
+  ASTStmtIf,
+  ASTStmtRepeat,
+  ASTStmtForeach,
+  ASTStmtWhile,
+  ASTStmtSwitch,
+  ASTStmtSwitchBranch,
+  ASTStmtLet,
+  ASTStmtProcedureCall,
+  /* Expressions */
+  ASTExprVariable,
+  ASTExprTuple,
 } from './ast';
 
 /* Represents a parser for a Gobstones/XGobstones program.
@@ -88,7 +101,7 @@ export class Parser {
   _parseProgramDeclaration() {
     var startPos = this._currentToken.startPos;
     this._match(T_PROGRAM);
-    var block = this._parseBlock();
+    var block = this._parseStmtBlock();
     var result = new ASTProgramDeclaration(block);
     result.startPos = startPos;
     result.endPos = block.endPos;
@@ -101,7 +114,7 @@ export class Parser {
     var name = this._currentToken;
     this._match(T_UPPERID);
     var parameterList = this._parseParameterList();
-    var block = this._parseBlock();
+    var block = this._parseStmtBlock();
     var result = new ASTProcedureDeclaration(name, parameterList, block);
     result.startPos = startPos;
     result.endPos = block.endPos;
@@ -114,47 +127,47 @@ export class Parser {
     var name = this._currentToken;
     this._match(T_LOWERID);
     var parameterList = this._parseParameterList();
-    var block = this._parseBlock();
+    var block = this._parseStmtBlock();
     var result = new ASTFunctionDeclaration(name, parameterList, block);
     result.startPos = startPos;
     result.endPos = block.endPos;
     return result;
   }
 
-  _parseBlock() {
-    var startPos = this._currentToken.startPos;
-    var statements = [];
-    this._match(T_LBRACE);
-    while (this._currentToken.tag !== T_RBRACE) {
-      statements.push(this._parseStatement());
-      if (this._currentToken === T_SEMICOLON) {
-        this._nextToken();
-      }
+  /* Generic method to parse a delimited list:
+   *   left: token tag for the left delimiter
+   *   right: token tag for the right delimiter
+   *   separator: token tag for the separator
+   *   parseElement: function that parses one element */
+  _parseDelimitedList(left, right, separator, parseElement) {
+    this._match(left);
+    if (this._currentToken.tag === right) {
+      this._match(right);
+      return []; /* Empty case */
     }
-    var endPos = this._currentToken.startPos; 
-    this._match(T_RBRACE);
-    var result = new ASTBlock(statements);
-    result.startPos = startPos;
-    result.endPos = endPos;
-    return result;
+    var list = [parseElement()];
+    while (this._currentToken.tag === separator) {
+      this._match(separator);
+      list.push(parseElement());
+    }
+    this._matchExpected(right, [separator, right]);
+    return list;
+  }
+
+  _parseParameter() {
+    var parameter = this._currentToken;
+    this._match(T_LOWERID);
+    return parameter;
   }
 
   _parseParameterList() {
-    this._match(T_LPAREN);
-    if (this._currentToken.tag === T_RPAREN) {
-      this._match(T_RPAREN);
-      return []; /* Empty case */
-    }
-    var parameterList = [this._currentToken];
-    this._match(T_LOWERID);
-    while (this._currentToken.tag === T_COMMA) {
-      this._match(T_COMMA);
-      parameterList.push(this._currentToken);
-      this._match(T_LOWERID);
-    }
-    this._matchExpected(T_RPAREN, [T_COMMA, T_RPAREN]);
-    return parameterList;
+    let self = this;
+    return this._parseDelimitedList(
+             T_LPAREN, T_RPAREN, T_COMMA, () => self._parseParameter()
+           );
   }
+
+  /** Statements **/
 
   /* Statement, optionally followed by semicolon */
   _parseStatement() {
@@ -166,12 +179,12 @@ export class Parser {
   }
 
   /* Statement (not followed by semicolon) */
-  _parseStatement() {
-    switch (this._currentToken) {
+  _parsePureStatement() {
+    switch (this._currentToken.tag) {
       case T_RETURN:
-        throw Error('TODO');
+        return this._parseStmtReturn();
       case T_IF:
-        throw Error('TODO');
+        return this._parseStmtIf();
       case T_REPEAT:
         throw Error('TODO');
       case T_FOREACH:
@@ -180,13 +193,10 @@ export class Parser {
         throw Error('TODO');
       case T_SWITCH:
         throw Error('TODO');
-      case T_MATCH:
-        throw Error('TODO');
       case T_LET:
         throw Error('TODO');
       case T_LBRACE:
-        // nested block
-        throw Error('TODO');
+        return this._parseStmtBlock();
       case T_LOWERID:
         // variable assignment
         throw Error('TODO');
@@ -204,12 +214,106 @@ export class Parser {
     }
   }
 
+  _parseStmtBlock() {
+    var startPos = this._currentToken.startPos;
+    var statements = [];
+    this._match(T_LBRACE);
+    while (this._currentToken.tag !== T_RBRACE) {
+      statements.push(this._parseStatement());
+      if (this._currentToken === T_SEMICOLON) {
+        this._match(T_SEMICOLON);
+      }
+    }
+    var endPos = this._currentToken.startPos; 
+    this._match(T_RBRACE);
+    var result = new ASTStmtBlock(statements);
+    result.startPos = startPos;
+    result.endPos = endPos;
+    return result;
+  }
+
+  _parseStmtReturn() {
+    var startPos = this._currentToken.startPos;
+    this._match(T_RETURN);
+    var tuple = this._parseExprTuple();
+    var result = new ASTStmtReturn(tuple);
+    result.startPos = startPos;
+    result.endPos = tuple.endPos;
+    return result;
+  }
+
+  _parseStmtIf() {
+    var startPos = this._currentToken.startPos;
+    this._match(T_IF);
+    this._match(T_LPAREN);
+    var condition = this._parseExpression();
+    this._match(T_RPAREN);
+    /* Optional 'then' */
+    if (this._currentToken.tag === T_THEN) {
+      this._match(T_THEN);
+    }
+    var thenBlock = this._parseStmtBlock();
+    var endPos;
+    var elseBlock;
+    if (this._currentToken.tag === T_ELSE) {
+      this._match(T_ELSE);
+      elseBlock = this._parseStmtBlock();
+      endPos = elseBlock.endPos
+    } else {
+      elseBlock = null;
+      endPos = thenBlock.endPos;
+    }
+    var result = new ASTStmtIf(condition, thenBlock, elseBlock);
+    result.startPos = startPos;
+    result.endPos = endPos;
+    return result;
+  }
+
+  /** Expressions **/
+
+  _parseExpression() {
+    // TODO: extend to other expressions
+    var expression = this._currentToken;
+    this._match(T_LOWERID);
+    var result = new ASTExprVariable(expression);
+    result.startPos = expression.startPos;
+    result.endPos = expression.endPos;
+    return result;
+  }
+
+  /* Read a list of expressions separated by commas and delimited
+   * by parentheses. If there is a single expression, return the
+   * expression itself. If there are 0 or >=2 expressions, return
+   * a tuple.
+   */
+  _parseExprTuple() {
+    var startPos = this._currentToken.startPos;
+    let self = this;
+    var expressionList = this._parseDelimitedList(
+                           T_LPAREN, T_RPAREN, T_COMMA,
+                           () => self._parseExpression()
+                         );
+    if (expressionList.length == 1) {
+      return expressionList[0];
+    }
+    var result = new ASTExprTuple(expressionList);
+    result.startPos = startPos;
+    if (expressionList.length === 0) {
+      result.endPos = startPos;
+    } else {
+      result.endPos = expressionList.slice(-1)[0].endPos;
+    }
+    return result;
+  }
+
+  /** Helpers **/
+
   /* Advance to the next token */
   _nextToken() {
     this._currentToken = this._lexer.nextToken();
   }
 
-  /* Check that the current token has the right tag.
+  /* Check that the current token has the expected tag.
    * Then advance to the next token. */
   _match(tokenTag) {
     if (this._currentToken.tag !== tokenTag) {
@@ -224,9 +328,10 @@ export class Parser {
     this._nextToken();
   }
 
-  /* Check that the current token has the right tag.
+  /* Check that the current token has the expected tag.
    * Then advance to the next token.
-   * Otherwise report that any of the alternatives in the tagList was expected.
+   * Otherwise report that any of the alternatives in the tagList
+   * was expected.
    */
   _matchExpected(tokenTag, tagList) {
     if (this._currentToken.tag !== tokenTag) {
@@ -244,3 +349,4 @@ export class Parser {
   }
 
 }
+

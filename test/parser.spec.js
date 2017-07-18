@@ -6,7 +6,20 @@ import {
   ASTProgramDeclaration,
   ASTProcedureDeclaration,
   ASTFunctionDeclaration,
-  ASTBlock,
+  /* Statements */
+  ASTStmtBlock,
+  ASTStmtReturn,
+  ASTStmtIf,
+  ASTStmtRepeat,
+  ASTStmtForeach,
+  ASTStmtWhile,
+  ASTStmtSwitch,
+  ASTStmtSwitchBranch,
+  ASTStmtLet,
+  ASTStmtProcedureCall,
+  /* Expressions */
+  ASTExprVariable,
+  ASTExprTuple,
 } from '../src/ast';
 import { UnknownPosition } from '../src/reader';
 import {
@@ -15,7 +28,7 @@ import {
   /* Keywords */
   T_PROGRAM, T_INTERACTIVE, T_PROCEDURE, T_FUNCTION, T_RETURN,
   T_IF, T_THEN, T_ELSE, T_REPEAT, T_FOREACH, T_IN, T_WHILE,
-  T_SWITCH, T_MATCH, T_TO, T_LET, T_NOT, T_DIV, T_MOD, T_TYPE,
+  T_SWITCH, T_TO, T_LET, T_NOT, T_DIV, T_MOD, T_TYPE,
   T_IS, T_RECORD, T_VARIANT, T_CASE, T_FIELD, T_UNDERSCORE,
   /* Symbols */
   T_LPAREN, T_RPAREN, T_LBRACE, T_RBRACE, T_LBRACK, T_RBRACK, T_COMMA,
@@ -30,11 +43,14 @@ const expect = chai.expect;
 
 /* Return true iff the expressions are syntactically equal.
  * An expression might be:
+ * - null,
  * - a token (instance of Token),
  * - a node (instance of ASTNode) whose children are expressions,
  * - a list of expressions. */
 function syntacticallyEqual(e1, e2) {
-  if (e1 instanceof Token && e2 instanceof Token) {
+  if (e1 === null && e2 === null) {
+    return true;
+  } else if (e1 instanceof Token && e2 instanceof Token) {
     return e1.tag === e2.tag
         && e1.value === e2.value;
   } else if (e1 instanceof ASTNode && e2 instanceof ASTNode) {
@@ -67,7 +83,7 @@ it('Parser - Accept empty program declaration', () => {
   var parser = new Parser('program {}');
   expectAST(parser.parse(), [
     new ASTProgramDeclaration(
-      new ASTBlock([])
+      new ASTStmtBlock([])
     )
   ]);
 });
@@ -120,44 +136,44 @@ it('Parser - Program declaration: keep track of positions', () => {
 it('Parser - Procedure declaration with no parameters', () => {
   var parser = new Parser('procedure P() {}');
   expectAST(parser.parse(), [
-      new ASTProcedureDeclaration(
-        tok(T_UPPERID, 'P'),
-        [],
-        new ASTBlock([])
-      )
+    new ASTProcedureDeclaration(
+      tok(T_UPPERID, 'P'),
+      [],
+      new ASTStmtBlock([])
+    )
   ]);
 });
 
 it('Parser - Procedure declaration with one parameters', () => {
   var parser = new Parser('procedure Poner(color) {}');
   expectAST(parser.parse(), [
-      new ASTProcedureDeclaration(
-        tok(T_UPPERID, 'Poner'),
-        [tok(T_LOWERID, 'color')],
-        new ASTBlock([])
-      )
+    new ASTProcedureDeclaration(
+      tok(T_UPPERID, 'Poner'),
+      [tok(T_LOWERID, 'color')],
+      new ASTStmtBlock([])
+    )
   ]);
 });
 
 it('Parser - Procedure declaration with two parameters', () => {
   var parser = new Parser('procedure PonerN(n,col) {}');
   expectAST(parser.parse(), [
-      new ASTProcedureDeclaration(
-        tok(T_UPPERID, 'PonerN'),
-        [tok(T_LOWERID, 'n'), tok(T_LOWERID, 'col')],
-        new ASTBlock([])
-      )
+    new ASTProcedureDeclaration(
+      tok(T_UPPERID, 'PonerN'),
+      [tok(T_LOWERID, 'n'), tok(T_LOWERID, 'col')],
+      new ASTStmtBlock([])
+    )
   ]);
 });
 
 it('Parser - Procedure declaration with three parameters', () => {
   var parser = new Parser('procedure Q(x ,y, z) {}');
   expectAST(parser.parse(), [
-      new ASTProcedureDeclaration(
-        tok(T_UPPERID, 'Q'),
-        [tok(T_LOWERID, 'x'), tok(T_LOWERID, 'y'), tok(T_LOWERID, 'z')],
-        new ASTBlock([])
-      )
+    new ASTProcedureDeclaration(
+      tok(T_UPPERID, 'Q'),
+      [tok(T_LOWERID, 'x'), tok(T_LOWERID, 'y'), tok(T_LOWERID, 'z')],
+      new ASTStmtBlock([])
+    )
   ]);
 });
 
@@ -204,7 +220,7 @@ it('Parser - Procedure declaration: reject trailing comma', () => {
   );
 });
 
-it('Parser - Procedure declaration: fail on invalid procedure name', () => {
+it('Parser - Procedure declaration: fail on invalid name', () => {
   var parser = new Parser('procedure p(x, y) {}');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
@@ -214,7 +230,7 @@ it('Parser - Procedure declaration: fail on invalid procedure name', () => {
   );
 });
 
-it('Parser - Procedure declaration: fail on invalid parameter name', () => {
+it('Parser - Procedure declaration: fail on invalid parameter', () => {
   var parser = new Parser('procedure P(x, Y) {}');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
@@ -259,44 +275,44 @@ it('Parser - Procedure declarations: keep track of positions', () => {
 it('Parser - Function declaration with no parameters', () => {
   var parser = new Parser('function f() {}');
   expectAST(parser.parse(), [
-      new ASTProcedureDeclaration(
-        tok(T_LOWERID, 'f'),
-        [],
-        new ASTBlock([])
-      )
+    new ASTFunctionDeclaration(
+      tok(T_LOWERID, 'f'),
+      [],
+      new ASTStmtBlock([])
+    )
   ]);
 });
 
 it('Parser - Function declaration with one parameter', () => {
   var parser = new Parser('function nroBolitas(color) {}');
   expectAST(parser.parse(), [
-      new ASTProcedureDeclaration(
-        tok(T_LOWERID, 'nroBolitas'),
-        [tok(T_LOWERID, 'color')],
-        new ASTBlock([])
-      )
+    new ASTFunctionDeclaration(
+      tok(T_LOWERID, 'nroBolitas'),
+      [tok(T_LOWERID, 'color')],
+      new ASTStmtBlock([])
+    )
   ]);
 });
 
 it('Parser - Function declaration with two parameters', () => {
   var parser = new Parser('function nroBolitasAl(c, d) {}');
   expectAST(parser.parse(), [
-      new ASTProcedureDeclaration(
-        tok(T_LOWERID, 'nroBolitasAl'),
-        [tok(T_LOWERID, 'c'), tok(T_LOWERID, 'd')],
-        new ASTBlock([])
-      )
+    new ASTFunctionDeclaration(
+      tok(T_LOWERID, 'nroBolitasAl'),
+      [tok(T_LOWERID, 'c'), tok(T_LOWERID, 'd')],
+      new ASTStmtBlock([])
+    )
   ]);
 });
 
 it('Parser - Function declaration with three parameters', () => {
   var parser = new Parser('function gg(x,yy,zzz) {}');
   expectAST(parser.parse(), [
-      new ASTProcedureDeclaration(
-        tok(T_LOWERID, 'gg'),
-        [tok(T_LOWERID, 'x'), tok(T_LOWERID, 'yy'), tok(T_LOWERID, 'zzz')],
-        new ASTBlock([])
-      )
+    new ASTFunctionDeclaration(
+      tok(T_LOWERID, 'gg'),
+      [tok(T_LOWERID, 'x'), tok(T_LOWERID, 'yy'), tok(T_LOWERID, 'zzz')],
+      new ASTStmtBlock([])
+    )
   ]);
 });
 
@@ -308,28 +324,28 @@ it('Parser - Mixed function and procedure declarations', () => {
                  'program{}'
                );
   expectAST(parser.parse(), [
-      new ASTFunctionDeclaration(
-        tok(T_LOWERID, 'f'),
-        [tok(T_LOWERID, 'x')],
-        new ASTBlock([])
-      ),
-      new ASTProcedureDeclaration(
-        tok(T_UPPERID, 'P'),
-        [],
-        new ASTBlock([])
-      ),
-      new ASTProcedureDeclaration(
-        tok(T_UPPERID, 'Q'),
-        [tok(T_LOWERID, 'x'), tok(T_LOWERID, 'y')],
-        new ASTBlock([])
-      ),
-      new ASTProgramDeclaration(
-        new ASTBlock([])
-      )
+    new ASTFunctionDeclaration(
+      tok(T_LOWERID, 'f'),
+      [tok(T_LOWERID, 'x')],
+      new ASTStmtBlock([])
+    ),
+    new ASTProcedureDeclaration(
+      tok(T_UPPERID, 'P'),
+      [],
+      new ASTStmtBlock([])
+    ),
+    new ASTProcedureDeclaration(
+      tok(T_UPPERID, 'Q'),
+      [tok(T_LOWERID, 'x'), tok(T_LOWERID, 'y')],
+      new ASTStmtBlock([])
+    ),
+    new ASTProgramDeclaration(
+      new ASTStmtBlock([])
+    )
   ]);
 });
 
-it('Parser - Reject non-statement', () => {
+it('Parser - Reject non-statement when expecting statement', () => {
   var parser = new Parser('program { + }');
   expect(() => parser.parse()).throws(
       i18n('errmsg:expected-but-found')(
@@ -339,3 +355,216 @@ it('Parser - Reject non-statement', () => {
   );
 });
 
+it('Parser - Return: no results', () => {
+  var parser = new Parser('program { return () }');
+  expectAST(parser.parse(), [
+    new ASTProgramDeclaration(
+      new ASTStmtBlock([
+        new ASTStmtReturn(
+          new ASTExprTuple([])
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - Return: one result', () => {
+  var parser = new Parser('function f() { return (x) }');
+  expectAST(parser.parse(), [
+    new ASTFunctionDeclaration(tok(T_LOWERID, 'f'), [],
+          new ASTStmtBlock([
+            new ASTStmtReturn(
+              new ASTExprVariable(tok(T_LOWERID, 'x'))
+            )
+          ])
+        )
+  ]);
+});
+
+it('Parser - Return: two results', () => {
+  var parser = new Parser('program { return (z1,z2) }');
+  expectAST(parser.parse(), [
+    new ASTProgramDeclaration(
+          new ASTStmtBlock([
+            new ASTStmtReturn(
+              new ASTExprTuple([
+                new ASTExprVariable(tok(T_LOWERID, 'z1')),
+                new ASTExprVariable(tok(T_LOWERID, 'z2')),
+              ])
+            )
+          ])
+        )
+  ]);
+});
+
+it('Parser - Return: keep track of positions (no results)', () => {
+  var parser = new Parser('program {\n\n\n return\n() }');
+  var tree = parser.parse();
+  expect(tree[0].body.statements[0].result.expressions.length).equals(0);
+  expect(tree[0].body.statements[0].startPos.line).equals(4);
+  expect(tree[0].body.statements[0].startPos.column).equals(2);
+  expect(tree[0].body.statements[0].endPos.line).equals(5);
+  expect(tree[0].body.statements[0].endPos.column).equals(1);
+});
+
+it('Parser - Return: keep track of positions (one result)', () => {
+  var parser = new Parser('program {\n\n\n return\n(col) }');
+  var tree = parser.parse();
+  expect(tree[0].body.statements[0].startPos.line).equals(4);
+  expect(tree[0].body.statements[0].startPos.column).equals(2);
+  expect(tree[0].body.statements[0].endPos.line).equals(5);
+  expect(tree[0].body.statements[0].endPos.column).equals(5);
+});
+
+it('Parser - Return: keep track of positions (two results)', () => {
+  var parser = new Parser('program {\n\n\n return\n(col,dir) }');
+  var tree = parser.parse();
+  expect(tree[0].body.statements[0].result.expressions.length).equals(2);
+  expect(tree[0].body.statements[0].startPos.line).equals(4);
+  expect(tree[0].body.statements[0].startPos.column).equals(2);
+  expect(tree[0].body.statements[0].endPos.line).equals(5);
+  expect(tree[0].body.statements[0].endPos.column).equals(9);
+});
+
+it('Parser - Nested block statements', () => {
+  var parser = new Parser('program { { { {} } {} } { {} } {} }');
+  expectAST(parser.parse(), [
+    new ASTProgramDeclaration(
+      new ASTStmtBlock([
+        new ASTStmtBlock([
+          new ASTStmtBlock([
+            new ASTStmtBlock([
+            ])
+          ]),
+          new ASTStmtBlock([
+          ])
+        ]),
+        new ASTStmtBlock([
+          new ASTStmtBlock([
+          ])
+        ]),
+        new ASTStmtBlock([
+        ])
+      ])
+    )
+  ]);
+});
+
+it('Parser - If without "else"', () => {
+  var parser = new Parser('program { if (a) {} }');
+  expectAST(parser.parse(), [
+    new ASTProgramDeclaration(
+      new ASTStmtBlock([
+        new ASTStmtIf(
+          new ASTExprVariable(tok(T_LOWERID, 'a')),
+          new ASTStmtBlock([]),
+          null
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - If using the optional "then" keyword', () => {
+  var parser = new Parser('program { if (cond) then {} }');
+  expectAST(parser.parse(), [
+    new ASTProgramDeclaration(
+      new ASTStmtBlock([
+        new ASTStmtIf(
+          new ASTExprVariable(tok(T_LOWERID, 'cond')),
+          new ASTStmtBlock([]),
+          null
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - If with "else"', () => {
+  var parser = new Parser('program { if (xxx) {} else {} }');
+  expectAST(parser.parse(), [
+    new ASTProgramDeclaration(
+      new ASTStmtBlock([
+        new ASTStmtIf(
+          new ASTExprVariable(tok(T_LOWERID, 'xxx')),
+          new ASTStmtBlock([]),
+          new ASTStmtBlock([])
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - Nested ifs', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  if (a) {\n' +
+                 '    if (b) then {\n' +
+                 '      if (c) {\n' +
+                 '      }\n' +
+                 '      if (d) {\n' +
+                 '      }\n' +
+                 '    } else {\n' +
+                 '      if (e) then {\n' +
+                 '      }\n' +
+                 '    }\n' +
+                 '    if (f) then {\n' +
+                 '    }\n' +
+                 '  } else {\n' +
+                 '    if (e) {\n' +
+                 '    }\n' +
+                 '    if (f) then {\n' +
+                 '      if (g) then {\n' +
+                 '      }\n' +
+                 '    } else {\n' +
+                 '      if (h) then {\n' +
+                 '      }\n' +
+                 '      if (i) then {\n' +
+                 '      }\n' +
+                 '    }\n' +
+                 '  }\n' +
+                 '}'
+               );
+
+  function ifthen(c, t) {
+    return new ASTStmtIf(
+             new ASTExprVariable(tok(T_LOWERID, c)),
+             new ASTStmtBlock(t),
+             null);
+  }
+
+  function ifthenelse(c, t, e) {
+    return new ASTStmtIf(
+             new ASTExprVariable(tok(T_LOWERID, c)),
+             new ASTStmtBlock(t),
+             new ASTStmtBlock(e));
+  }
+
+  expectAST(parser.parse(), [
+    new ASTProgramDeclaration(
+      new ASTStmtBlock([
+        ifthenelse('a', [
+          ifthenelse('b', [
+            ifthen('c', []),
+            ifthen('d', [])
+          ], [
+            ifthen('e', [])
+          ]),
+          ifthen('f', [
+          ]),
+        ], [
+          ifthen('e', [
+          ]),
+          ifthenelse('f', [
+            ifthen('g', [])
+          ], [
+            ifthen('h', []),
+            ifthen('i', [])
+          ]),
+        ])
+      ])
+    )
+  ]);
+});
+
+// TODO: if: keep track of positions
