@@ -13,7 +13,6 @@ import {
   T_EQ, T_NE, T_LE, T_GE, T_LT, T_GT, T_AND, T_OR, T_CONCAT, T_PLUS,
   T_MINUS, T_TIMES, T_POW
 } from '../src/token';
-import {SyntaxError} from '../src/exceptions';
 import {Lexer} from '../src/lexer';
 import {i18n} from '../src/i18n';
 
@@ -23,13 +22,13 @@ const expect = chai.expect;
 it('Lexer - Empty source', () => {
   var lexer = new Lexer('');
   var tok = lexer.nextToken();
-  expect(tok.type).equals(T_EOF);
+  expect(tok.tag).equals(T_EOF);
 });
 
 it('Lexer - Ignore whitespace', () => {
   var lexer = new Lexer('   \n\t   \r\n  \n\n ');
   var tok = lexer.nextToken();
-  expect(tok.type).equals(T_EOF);
+  expect(tok.tag).equals(T_EOF);
   expect(tok.startPos.line).equals(5);
   expect(tok.startPos.column).equals(2);
 });
@@ -41,32 +40,32 @@ it('Lexer - Numbers', () => {
   var t3 = lexer.nextToken();
   var t4 = lexer.nextToken();
 
-  expect(t1.type).equals(T_NUM);
+  expect(t1.tag).equals(T_NUM);
   expect(t1.value).equals('1');
   expect(t1.startPos.line).equals(1);
   expect(t1.startPos.column).equals(1);
   expect(t1.endPos.line).equals(1);
   expect(t1.endPos.column).equals(2);
 
-  expect(t2.type).equals(T_NUM);
+  expect(t2.tag).equals(T_NUM);
   expect(t2.value).equals('222');
   expect(t2.startPos.line).equals(1);
   expect(t2.startPos.column).equals(4);
   expect(t2.endPos.line).equals(1);
   expect(t2.endPos.column).equals(7);
 
-  expect(t3.type).equals(T_NUM);
+  expect(t3.tag).equals(T_NUM);
   expect(t3.value).equals('34567890123');
   expect(t3.startPos.line).equals(2);
   expect(t3.startPos.column).equals(1);
   expect(t3.endPos.line).equals(2);
   expect(t3.endPos.column).equals(12);
 
-  expect(t4.type).equals(T_EOF);
+  expect(t4.tag).equals(T_EOF);
 });
 
 function expectToken(actualToken, expectedType, expectedValue) {
-  expect(actualToken.type).equals(expectedType);
+  expect(actualToken.tag).equals(expectedType);
   expect(actualToken.value).equals(expectedValue);
 }
 
@@ -80,7 +79,7 @@ function expectTokens(lexer, expected) {
 function expectTokenTypes(lexer, expected) {
   for (var expectedType of expected) {
     var actualToken = lexer.nextToken();
-    expect(actualToken.type).equals(expectedType);
+    expect(actualToken.tag).equals(expectedType);
   }
 }
 
@@ -132,7 +131,7 @@ it('Lexer - Nested Haskell-style multiline comments', () => {
 
 it('Lexer - Unclosed C-style multiline comment', () => {
   var lexer = new Lexer('1 /* /**/');
-  expect(lexer.nextToken().type).equals(T_NUM);
+  expect(lexer.nextToken().tag).equals(T_NUM);
   expect(() => lexer.nextToken()).throws(
                  i18n('errmsg:unclosed-multiline-comment')
                );
@@ -251,7 +250,7 @@ it('Lexer - Empty pragma', () => {
   var w = lexer.warnings();
   expect(w.length).equals(1);
   expect(w[0].message).equals(
-    i18n('warning:unknown-pragma')
+    i18n('warning:unknown-pragma')('FOO')
   );
 });
 
@@ -425,7 +424,7 @@ it('Lexer - Symbols', () => {
 
 it('Lexer - Unknown token', () => {
   var lexer = new Lexer('%');
-  expect(() => lexer.nextToken()).throws(i18n('errmsg:unknown-token'));
+  expect(() => lexer.nextToken()).throws(i18n('errmsg:unknown-token')('%'));
 });
 
 it('Lexer - Basic string constants', () => {

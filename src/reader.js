@@ -133,12 +133,15 @@ export class SourceReader {
 
 }
 
+/* Return a source reader that represents an unknown position */
+export const UnknownPosition = new SourceReader('(?)', '');
+
 /* An instance of MultifileReader represents a scanner for reading
  * source code from a list of files.
  */
 export class MultifileReader {
 
-  /* Sources is either:
+  /* The 'input' parameter should be either:
    * (1) a string. e.g.  'program {}', or
    * (2) a map from filenames to strings, e.g.
    *     {
@@ -152,7 +155,7 @@ export class MultifileReader {
     }
     this._filenames = Object.keys(input);
     this._filenames.sort();
-    this._sources = input;
+    this._input = input;
     this._index = 0;
   }
 
@@ -170,7 +173,7 @@ export class MultifileReader {
   readCurrentFile() {
     if (this._index < this._filenames.length) {
       var filename = this._filenames[this._index];
-      return new SourceReader(filename, this._sources[filename]);
+      return new SourceReader(filename, this._input[filename]);
     } else {
       return new SourceReader('(?)', '');
     }

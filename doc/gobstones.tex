@@ -1,13 +1,26 @@
 \documentclass{article}
 \usepackage{xcolor}
+\usepackage{amsmath}
 \usepackage{tabularx}
+\usepackage[spanish]{babel}
 \begin{document}
 \newcommand{\chr}[1]{\texttt{'}\textcolor{blue}{\texttt{#1}}\texttt{'}}
 \newcommand{\str}[1]{\texttt{"}\textcolor{blue}{\texttt{#1}}\texttt{"}}
 \newcommand{\tok}[1]{\textcolor{red}{\texttt{#1}}}
 \newcommand{\symbolentry}[3]{#1 & #2 && #3 \\}
 \newcommand{\nb}[1]{\footnotesize{#1}}
-\newcommand{\TODO}[1]{\textcolor{red}{#1}}
+\newcommand{\s}[1]{\textcolor{blue}{{\it$\langle$#1$\rangle$}}}
+\newcommand{\produccion}[2]{
+  \noindent
+  \begin{tabularx}{\textwidth}{lrlr}
+  #1 & $\xrightarrow{\hspace{.5cm}}$ & #2
+  \end{tabularx}\\
+}
+\newcommand{\EMPTY}{$\epsilon$}
+\newcommand{\ALT}{
+  \\ & $\mid$ &
+}
+\newcommand{\TODO}[1]{\textcolor{red}{****#1****}}
 \section{Gram\'atica de XGobstones}
 
 \subsection{Sintaxis l\'exica}
@@ -98,7 +111,7 @@ con su significado usual.
 \symbolentry{\texttt{,}}{\tok{COMMA}}{\nb{Coma.}}
 \symbolentry{\texttt{;}}{\tok{SEMICOLON}}{\nb{Punto y coma (separador de instrucciones opcional).}}
 \symbolentry{\texttt{..}}{\tok{RANGE}}{\nb{Para rangos, p.ej. \texttt{[1..10]}.}}
-\symbolentry{\texttt{:=}}{\tok{ASSIGN}}{\nb{Operador de asignaci\'on.}}
+\symbolentry{\texttt{:=}}{\tok{ASSIGN}}{\nb{Asignaci\'on.}}
 \symbolentry{\texttt{\&\&}}{\tok{AND}}{\nb{Conjunci\'on.}}
 \symbolentry{\texttt{||}}{\tok{OR}}{\nb{Disyunci\'on.}}
 \symbolentry{\texttt{<-}}{\tok{GETS}}{\nb{Para inicializar campos, p.ej. \texttt{Coord(x <- 1, y <- 2)}.}}
@@ -142,5 +155,73 @@ procedure P() {
 /*@END_REGION@*/
 \end{verbatim}
 El parser idealmente deber\'ia reportar que hay un error de sintaxis en la regi\'on \texttt{B}.
+
+\subsection{Gram\'atica}
+Los s\'imbolos no terminales se describen con su nombre \s{en\_cursiva}.
+Esta gram\'atica es liberal en algunos sentidos. En particular, el \texttt{return}
+se considera un {\em statement} que puede aparecer en la posici\'on en la que
+podr\'ia aparecer cualquier otra instrucci\'on. La restricci\'on de que
+el \texttt{return} \'unicamente aparezca como \'ultima instrucci\'on del bloque, y
+\'unicamente al final de las declaraciones de funciones y del programa principal,
+es una restricci\'on que se posterga para la etapa de chequeo sem\'antico
+({\em lint}).
+
+Esta gram\'atica se puede expresar como LL(1) usando las t\'ecnicas
+usuales (factorizando las producciones a izquierda y estratificando las expresiones en t\'erminos, factores, \'atomos, etc.),
+pero las convenciones de asociatividad y precedencia de operadores no
+se reflejan en las producciones, sino por fuera.
+\bigskip
+
+\produccion{\s{program}}{\s{declaration}*}
+
+\produccion{\s{declaration}}{
+\s{programDeclaration}
+\ALT
+\s{interactiveProgramDeclaration}
+\ALT
+\s{procedureDeclaration}
+\ALT
+\s{functionDeclaration}
+\ALT
+\s{typeDeclaration}
+}
+
+\produccion{\s{programDeclaration}}{
+  \tok{PROGRAM} \s{block}
+}
+
+\produccion{\s{interactiveProgramDeclaration}}{
+  \TODO{TODO}
+}
+
+\produccion{\s{procedureDeclaration}}{
+  \tok{PROCEDURE} \tok{LPAREN} \s{parameterList} \tok{RPAREN} \s{block}
+}
+
+\produccion{\s{functionDeclaration}}{
+  \tok{FUNCTION} \tok{LPAREN} \s{parameterList} \tok{RPAREN} \s{block}
+}
+
+\produccion{\s{typeDeclaration}}{
+  \TODO{TODO}
+}
+
+\produccion{\s{parameterList}}{
+  \EMPTY
+\ALT
+  \s{nonEmptyParameterList}
+}
+
+\produccion{\s{nonEmptyParameterList}}{
+  \tok{LOWERID} (\tok{COMMA} \s{nonEmptyParameterList})?
+}
+
+\produccion{\s{block}}{
+  \tok{LBRACE} (\s{statement} \tok{SEMICOLON}?)* \tok{RBRACE}
+}
+
+\produccion{\s{statement}}{
+  \TODO{TODO}
+}
 
 \end{document}

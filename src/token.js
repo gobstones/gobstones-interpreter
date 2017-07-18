@@ -1,5 +1,5 @@
 
-/* Token types are constant symbols */
+/* Token tags are constant symbols */
 export const T_EOF = Symbol.for('T_EOF');         // End of file
 export const T_NUM = Symbol.for('T_NUM');         // Number
 export const T_STRING = Symbol.for('T_STRING');   // String constant
@@ -62,20 +62,20 @@ export const T_TIMES = Symbol.for('T_TIMES');
 export const T_POW = Symbol.for('T_POW');
 
 /* A token is given by:
- * - A token type      (e.g. T_LOWERID, T_NUM).
+ * - A token tag (e.g. T_LOWERID, T_NUM).
  * - Possibly, a value (e.g. 'nroBolitas', 8).
  *   When the value is irrelevant, we provide null by convention.
  * - Two positions, representing its location in the source. */
 export class Token {
-  constructor(type, value, startPos, endPos) {
-    this._type = type;
+  constructor(tag, value, startPos, endPos) {
+    this._tag = tag;
     this._value = value;
     this._startPos = startPos;
     this._endPos = endPos;
   }
 
-  get type() {
-    return this._type;
+  get tag() {
+    return this._tag;
   }
 
   get value() {

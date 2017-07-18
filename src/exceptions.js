@@ -1,6 +1,6 @@
 
 /* Base class for signalling conditions */
-export class GobstonesInterpreterException extends Error {
+export class GbsInterpreterException extends Error {
   /* Note: position should typically be an instance of SourceReader */
   constructor(position, message) {
     super(message, position.filename, position.row);
@@ -13,13 +13,13 @@ export class GobstonesInterpreterException extends Error {
   }
 }
 
-export class Warning extends GobstonesInterpreterException {
+export class GbsWarning extends GbsInterpreterException {
   constructor(position, message) {
     super(position, message);
   }
 }
 
-export class SyntaxError extends GobstonesInterpreterException {
+export class GbsSyntaxError extends GbsInterpreterException {
   constructor(position, message) {
     super(position, message);
   }

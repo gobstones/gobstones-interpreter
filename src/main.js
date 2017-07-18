@@ -1,14 +1,8 @@
 
 import { T_EOF, T_NUM } from './token.js';
-import { Lexer } from './lexer.js';
+//import { Lexer } from './lexer.js';
+import { Parser } from './parser.js';
 
-var lexer = new Lexer('/*');
+var parser = new Parser(' program { } ');
 
-for (;;) {
-  var tok = lexer.nextToken();
-  if (tok.type === T_EOF) {
-    break;
-  }
-  console.log(tok.type);
-  console.log(tok.value);
-}
+console.log(parser.parse());

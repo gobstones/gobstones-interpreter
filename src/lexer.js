@@ -1,5 +1,5 @@
 import { i18n } from './i18n';
-import { Warning, SyntaxError } from './exceptions';
+import { GbsWarning, GbsSyntaxError } from './exceptions';
 import { MultifileReader } from './reader';
 import {
   Token, T_EOF, T_NUM, T_STRING, T_LOWERID, T_UPPERID,
@@ -112,6 +112,57 @@ const SYMBOLS = [
   ['^', T_POW]
 ];
 
+/* Class that recognizes the presence of the obsolete tuple assignment syntax
+ *
+ *   (x1, ..., xN) := ...
+ *
+ * in favour of
+ *
+ *   let (x1, ..., xN) := ...
+ *
+ * This is done using a simple finite automaton with five states:
+ *
+ *   1: no information
+ *   2: we have read "(x1,...,xN," with N >= 1 or just "(", without "let"
+ *   3: we have read "(x1,...,xN"  with N >= 1, without "let"
+ *   4: we have read "(x1,...,xN)", without "let"
+ *   5: we have read "let
+ *
+ * If it finds a tuple assignment without let, it throws a GbsSyntaxError.
+ */
+class ObsoleteTupleAssignmentRecognizer {
+  constructor() {
+    this._state = 1;
+    this._table = {1: {}, 2: {}, 3: {}, 4: {}, 5: {}};
+    this._table[1][T_LPAREN] = 2;
+    this._table[1][T_LET] = 5;
+    this._table[2][T_LPAREN] = 2;
+    this._table[2][T_RPAREN] = 4;
+    this._table[2][T_LOWERID] = 3;
+    this._table[2][T_LET] = 5;
+    this._table[3][T_LPAREN] = 2;
+    this._table[3][T_RPAREN] = 4;
+    this._table[3][T_COMMA] = 2;
+    this._table[3][T_LET] = 5;
+    this._table[4][T_LPAREN] = 2;
+    this._table[4][T_ASSIGN] = 1; /* throws warning */
+    this._table[4][T_LET] = 5;
+    this._table[5][T_LPAREN] = 1;
+    this._table[5][T_LET] = 5;
+  }
+
+  feed(pos, tokenTag) {
+    if (this._state === 4 && tokenTag === T_ASSIGN) {
+      throw new GbsSyntaxError(pos, i18n('errmsg:obsolete-tuple-assignment'));
+    }
+    if (tokenTag in this._table[this._state]) {
+      this._state = this._table[this._state][tokenTag];
+    } else {
+      this._state = 1;
+    }
+  }
+}
+
 /* An instance of Lexer scans source code for tokens.
  * Example:
  *
@@ -138,7 +189,7 @@ export class Lexer {
   nextToken() {
     var startPos = this._reader;
     var tok = this._nextToken();
-    this._obsoleteTupleAssignmentRecognizer.feed(startPos, tok.type);
+    this._obsoleteTupleAssignmentRecognizer.feed(startPos, tok.tag);
     return tok;
   }
 
@@ -245,7 +296,7 @@ export class Lexer {
         this._reader = this._reader.consumeCharacter();
       }
     }
-    throw new SyntaxError(
+    throw new GbsSyntaxError(
                 startPos,
                 i18n('errmsg:unclosed-string-constant')
               );
@@ -253,15 +304,18 @@ export class Lexer {
 
   /* Read a symbol */
   _readSymbol() {
-    for (var [symbol, type] of SYMBOLS) {
+    for (var [symbol, tag] of SYMBOLS) {
       if (this._reader.startsWith(symbol)) {
         let startPos = this._reader;
         this._reader = this._reader.consumeString(symbol);
         let endPos = this._reader;
-        return new Token(type, symbol, startPos, endPos);
+        return new Token(tag, symbol, startPos, endPos);
       }
     }
-    throw new SyntaxError(this._reader, i18n('errmsg:unknown-token'));
+    throw new GbsSyntaxError(
+                this._reader,
+                i18n('errmsg:unknown-token')(this._reader.peek())
+              );
   }
 
   _ignoreWhitespaceAndComments() {
@@ -335,7 +389,7 @@ export class Lexer {
         this._reader = this._reader.consumeCharacter();
       }
     }
-    throw new SyntaxError(
+    throw new GbsSyntaxError(
                 startPos,
                 i18n('errmsg:unclosed-multiline-comment')
               );
@@ -361,7 +415,7 @@ export class Lexer {
         return pragma;
       }
     }
-    throw new SyntaxError(
+    throw new GbsSyntaxError(
                 startPos,
                 i18n('errmsg:unclosed-multiline-comment')
               );
@@ -378,7 +432,7 @@ export class Lexer {
       result.push(this._reader.peek());
       this._reader = this._reader.consumeInvisibleCharacter();
     }
-    throw new SyntaxError(
+    throw new GbsSyntaxError(
                 startPos,
                 i18n('errmsg:unclosed-multiline-comment')
               );
@@ -393,64 +447,13 @@ export class Lexer {
     } else if (pragma[0] === 'END_REGION') {
       this._reader = this._reader.endRegion();
     } else {
-      this._emitWarning(startPos, i18n('warning:unknown-pragma'));
+      this._emitWarning(startPos, i18n('warning:unknown-pragma')(pragma[0]));
     }
   }
 
   _emitWarning(position, message) {
-    this._warnings.push(new Warning(position, message));
+    this._warnings.push(new GbsWarning(position, message));
   }
 
-}
-
-/* Class that recognizes the presence of the obsolete tuple assignment syntax
- *
- *   (x1, ..., xN) := ...
- *
- * in favour of
- *
- *   let (x1, ..., xN) := ...
- *
- * This is done using a simple finite automaton with five states:
- *
- *   1: no information
- *   2: we have read "(x1,...,xN," with N >= 1 or just "(", without "let"
- *   3: we have read "(x1,...,xN"  with N >= 1, without "let"
- *   4: we have read "(x1,...,xN)", without "let"
- *   5: we have read "let
- *
- * If it finds a tuple assignment without let, it throws a SyntaxError.
- */
-class ObsoleteTupleAssignmentRecognizer {
-  constructor() {
-    this._state = 1;
-    this._table = {1: {}, 2: {}, 3: {}, 4: {}, 5: {}};
-    this._table[1][T_LPAREN] = 2;
-    this._table[1][T_LET] = 5;
-    this._table[2][T_LPAREN] = 2;
-    this._table[2][T_RPAREN] = 4;
-    this._table[2][T_LOWERID] = 3;
-    this._table[2][T_LET] = 5;
-    this._table[3][T_LPAREN] = 2;
-    this._table[3][T_RPAREN] = 4;
-    this._table[3][T_COMMA] = 2;
-    this._table[3][T_LET] = 5;
-    this._table[4][T_LPAREN] = 2;
-    this._table[4][T_ASSIGN] = 1; /* throws warning */
-    this._table[4][T_LET] = 5;
-    this._table[5][T_LPAREN] = 1;
-    this._table[5][T_LET] = 5;
-  }
-
-  feed(pos, tokenType) {
-    if (this._state == 4 && tokenType == T_ASSIGN) {
-      throw new SyntaxError(pos, i18n('errmsg:obsolete-tuple-assignment'));
-    }
-    if (tokenType in this._table[this._state]) {
-      this._state = this._table[this._state][tokenType];
-    } else {
-      this._state = 1;
-    }
-  }
 }
 
