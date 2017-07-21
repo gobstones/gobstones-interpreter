@@ -167,7 +167,11 @@ el \texttt{return} \'unicamente aparezca como \'ultima instrucci\'on del bloque,
 \'unicamente al final de las declaraciones de funciones y del programa principal,
 es una restricci\'on que se posterga para la etapa de chequeo sem\'antico
 ({\em lint}).
-\item El \texttt{return} recibe una lista de valores a devolver.
+\item Se admite el gui\'on bajo (\chr{\_}) como un posible patr\'on en el lado
+izquierdo de las ramas de un \texttt{switch} y en el lado izquierdo de las ramas de un.
+\texttt{interactive program}.
+En una lista de ramas deber\'ia haber un \'unico gui\'on bajo, y deber\'ia ser el \'ultimo
+patr\'on de la lista pero esto, de nuevo, se relega a la etapa de lint.
 \end{itemize}
 
 Esta gram\'atica se puede expresar como LL(1) usando las t\'ecnicas
@@ -259,15 +263,15 @@ en las producciones, sino por fuera.
 }
 
 \produccion{\s{stmtRepeat}}{
-  \TODO{TODO}
+  \tok{REPEAT} \tok{LPAREN} \s{expression} \tok{RPAREN} \s{stmtBlock}
 }
 
 \produccion{\s{stmtForeach}}{
-  \TODO{TODO}
+  \tok{FOREACH} \tok{LOWERID} \tok{IN} \s{expression} \s{stmtBlock}
 }
 
 \produccion{\s{stmtWhile}}{
-  \TODO{TODO}
+  \tok{WHILE} \tok{LPAREN} \s{expression} \tok{RPAREN} \s{stmtBlock}
 }
 
 \produccion{\s{stmtSwitch}}{

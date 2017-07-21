@@ -186,13 +186,13 @@ export class Parser {
       case T_IF:
         return this._parseStmtIf();
       case T_REPEAT:
-        throw Error('TODO');
+        return this._parseStmtRepeat();
       case T_FOREACH:
-        throw Error('TODO');
+        return this._parseStmtForeach();
       case T_WHILE:
-        throw Error('TODO');
+        return this._parseStmtWhile();
       case T_SWITCH:
-        throw Error('TODO');
+        return this._parseStmtSwitch();
       case T_LET:
         throw Error('TODO');
       case T_LBRACE:
@@ -267,6 +267,65 @@ export class Parser {
     result.startPos = startPos;
     result.endPos = endPos;
     return result;
+  }
+
+  _parseStmtRepeat() {
+    var startPos = this._currentToken.startPos;
+    this._match(T_REPEAT);
+    this._match(T_LPAREN);
+    var times = this._parseExpression();
+    this._match(T_RPAREN);
+    var body = this._parseStmtBlock();
+    var result = new ASTStmtRepeat(times, body);
+    result.startPos = startPos;
+    result.endPos = body.endPos
+    return result;
+  }
+
+  _parseStmtForeach() {
+    var startPos = this._currentToken.startPos;
+    this._match(T_FOREACH);
+    var index = this._currentToken;
+    this._match(T_LOWERID);
+    this._match(T_IN);
+    var range = this._parseExpression();
+    var body = this._parseStmtBlock();
+    var result = new ASTStmtForeach(index, range, body);
+    result.startPos = startPos;
+    result.endPos = body.endPos
+    return result;
+  }
+
+  _parseStmtWhile() {
+    var startPos = this._currentToken.startPos;
+    this._match(T_WHILE);
+    this._match(T_LPAREN);
+    var condition = this._parseExpression();
+    this._match(T_RPAREN);
+    var body = this._parseStmtBlock();
+    var result = new ASTStmtWhile(condition, body);
+    result.startPos = startPos;
+    result.endPos = body.endPos
+    return result;
+  }
+
+  _parseStmtSwitch() {
+    var startPos = this._currentToken.startPos;
+    this._match(T_SWITCH);
+    this._match(T_LPAREN);
+    var subject = this._parseExpression();
+    this._match(T_RPAREN);
+    this._match(T_LBRACE);
+    var branches = _parseStmtSwitchBranches();
+    var endPos = this._currentToken.startPos;
+    this._match(T_RBRACE);
+    var result = new ASTStmtSwitch(subject, branches);
+    /// TODO!
+  }
+
+  _parseStmtSwitchBranches() {
+    /// TODO!
+    return null;
   }
 
   /** Expressions **/

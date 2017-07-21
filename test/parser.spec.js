@@ -495,7 +495,7 @@ it('Parser - If with "else"', () => {
   ]);
 });
 
-it('Parser - Nested ifs', () => {
+it('Parser - Nested if', () => {
   var parser = new Parser(
                  'program {\n' +
                  '  if (a) {\n' +
@@ -567,4 +567,303 @@ it('Parser - Nested ifs', () => {
   ]);
 });
 
-// TODO: if: keep track of positions
+it('Parser - If: fail if missing left parenthesis', () => {
+  var parser = new Parser('program { if xxx) {} else {} }');
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:expected-but-found')(
+      i18n('T_LPAREN'),
+      i18n('T_LOWERID')
+   )
+  );
+});
+
+it('Parser - If: fail if missing right parenthesis', () => {
+  var parser = new Parser('program { if (xxx {} else {} }');
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:expected-but-found')(
+      i18n('T_RPAREN'),
+      i18n('T_LBRACE')
+   )
+  );
+});
+
+it('Parser - If: fail if missing then block', () => {
+  var parser = new Parser('program { if(xxx)');
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:expected-but-found')(
+      i18n('T_LBRACE'),
+      i18n('T_EOF')
+   )
+  );
+});
+
+it('Parser - If: fail if missing else block', () => {
+  var parser = new Parser('program { if(xxx) {} else');
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:expected-but-found')(
+      i18n('T_LBRACE'),
+      i18n('T_EOF')
+   )
+  );
+});
+
+
+it('Parser - If: keep track of positions', () => {
+  var parser = new Parser('program {\n  if (xxx) {\n  } else {\n  }\n}');
+  var tree = parser.parse();
+  expect(tree[0].body.statements.length).equals(1);
+  expect(tree[0].body.statements[0].startPos.line).equals(2);
+  expect(tree[0].body.statements[0].startPos.column).equals(3);
+  expect(tree[0].body.statements[0].endPos.line).equals(4);
+  expect(tree[0].body.statements[0].endPos.column).equals(3);
+});
+
+it('Parser - Repeat', () => {
+  var parser = new Parser('program { repeat (n) {} }');
+  expectAST(parser.parse(), [
+    new ASTProgramDeclaration(
+      new ASTStmtBlock([
+        new ASTStmtRepeat(
+          new ASTExprVariable(tok(T_LOWERID, 'n')),
+          new ASTStmtBlock([])
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - Nested repeat', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  repeat (nro1) {\n' +
+                 '    repeat (nro2) {}\n' +
+                 '  }\n' +
+                 '  repeat (nro3) {\n' +
+                 '  }\n' +
+                 '}'
+               );
+  expectAST(parser.parse(), [
+    new ASTProgramDeclaration(
+      new ASTStmtBlock([
+        new ASTStmtRepeat(
+          new ASTExprVariable(tok(T_LOWERID, 'nro1')),
+          new ASTStmtBlock([
+            new ASTStmtRepeat(
+              new ASTExprVariable(tok(T_LOWERID, 'nro2')),
+              new ASTStmtBlock([
+              ])
+            )
+          ])
+        ),
+        new ASTStmtRepeat(
+          new ASTExprVariable(tok(T_LOWERID, 'nro3')),
+          new ASTStmtBlock([
+          ])
+        )
+      ])
+    )
+  ]);
+});
+
+
+it('Parser - Repeat: fail if missing left parenthesis', () => {
+  var parser = new Parser('program { repeat n) {} }');
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:expected-but-found')(
+      i18n('T_LPAREN'),
+      i18n('T_LOWERID')
+   )
+  );
+});
+
+it('Parser - Repeat: fail if missing right parenthesis', () => {
+  var parser = new Parser('program { repeat (n');
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:expected-but-found')(
+      i18n('T_RPAREN'),
+      i18n('T_EOF')
+   )
+  );
+});
+
+it('Parser - Repeat: keep track of positions', () => {
+  var parser = new Parser('program { repeat (n) { } repeat(m) { } }');
+  var tree = parser.parse();
+  expect(tree[0].body.statements.length).equals(2);
+  expect(tree[0].body.statements[0].startPos.line).equals(1);
+  expect(tree[0].body.statements[0].startPos.column).equals(11);
+  expect(tree[0].body.statements[0].endPos.line).equals(1);
+  expect(tree[0].body.statements[0].endPos.column).equals(24);
+  expect(tree[0].body.statements[1].startPos.line).equals(1);
+  expect(tree[0].body.statements[1].startPos.column).equals(26);
+  expect(tree[0].body.statements[1].endPos.line).equals(1);
+  expect(tree[0].body.statements[1].endPos.column).equals(38);
+});
+
+it('Parser - Foreach', () => {
+  var parser = new Parser('program { foreach i in expr {} }');
+  expectAST(parser.parse(), [
+    new ASTProgramDeclaration(
+      new ASTStmtBlock([
+        new ASTStmtForeach(
+          tok(T_LOWERID, 'i'),
+          new ASTExprVariable(tok(T_LOWERID, 'expr')),
+          new ASTStmtBlock([])
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - Nested foreach', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  foreach dir in lista1 {\n' +
+                 '    foreach col in lista2 {\n' +
+                 '    }\n' +
+                 '    foreach col in lista3 {\n' +
+                 '    }\n' +
+                 '  }\n' +
+                 '}'
+               );
+  expectAST(parser.parse(), [
+    new ASTProgramDeclaration(
+      new ASTStmtBlock([
+        new ASTStmtForeach(
+          tok(T_LOWERID, 'dir'),
+          new ASTExprVariable(tok(T_LOWERID, 'lista1')),
+          new ASTStmtBlock([
+            new ASTStmtForeach(
+              tok(T_LOWERID, 'col'),
+              new ASTExprVariable(tok(T_LOWERID, 'lista2')),
+              new ASTStmtBlock([])
+            ),
+            new ASTStmtForeach(
+              tok(T_LOWERID, 'col'),
+              new ASTExprVariable(tok(T_LOWERID, 'lista3')),
+              new ASTStmtBlock([])
+            )
+          ])
+        )
+      ])
+    )
+  ]);
+});
+
+
+it('Parser - Foreach: fail if wrong index name', () => {
+  var parser = new Parser('program { foreach I in expr {} }');
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:expected-but-found')(
+      i18n('T_LOWERID'),
+      i18n('T_UPPERID')
+    )
+  );
+});
+
+it('Parser - Foreach: fail if missing "in"', () => {
+  var parser = new Parser('program { foreach i ( expr ) {} }');
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:expected-but-found')(
+      i18n('T_IN'),
+      i18n('T_LPAREN')
+    )
+  );
+});
+
+it('Parser - Foreach: fail if missing block', () => {
+  var parser = new Parser('program { foreach i in expr }');
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:expected-but-found')(
+      i18n('T_LBRACE'),
+      i18n('T_RBRACE')
+    )
+  );
+});
+
+it('Parser - Foreach: keep track of positions', () => {
+  var parser = new Parser('program {\nforeach\ni\nin\nexpr\n{\n}\n}');
+  var tree = parser.parse();
+  expect(tree[0].body.statements.length).equals(1);
+  expect(tree[0].body.statements[0].startPos.line).equals(2);
+  expect(tree[0].body.statements[0].startPos.column).equals(1);
+  expect(tree[0].body.statements[0].endPos.line).equals(7);
+  expect(tree[0].body.statements[0].endPos.column).equals(1);
+});
+
+it('Parser - While', () => {
+  var parser = new Parser('program { while (cond) {} }');
+  expectAST(parser.parse(), [
+    new ASTProgramDeclaration(
+      new ASTStmtBlock([
+        new ASTStmtWhile(
+          new ASTExprVariable(tok(T_LOWERID, 'cond')),
+          new ASTStmtBlock([])
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - Nested while', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  while (cond1) {\n' +
+                 '    while (cond2) {\n' +
+                 '    }\n' +
+                 '  }\n' +
+                 '  while (cond3) {\n' +
+                 '  }\n' +
+                 '}'
+               );
+  expectAST(parser.parse(), [
+    new ASTProgramDeclaration(
+      new ASTStmtBlock([
+        new ASTStmtWhile(
+          new ASTExprVariable(tok(T_LOWERID, 'cond1')),
+          new ASTStmtBlock([
+            new ASTStmtWhile(
+              new ASTExprVariable(tok(T_LOWERID, 'cond2')),
+              new ASTStmtBlock([])
+            )
+          ])
+        ),
+        new ASTStmtWhile(
+          new ASTExprVariable(tok(T_LOWERID, 'cond3')),
+          new ASTStmtBlock([])
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - While: fail if missing left parenthesis', () => {
+  var parser = new Parser('program { while cond {} }');
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:expected-but-found')(
+      i18n('T_LPAREN'),
+      i18n('T_LOWERID')
+    )
+  );
+});
+
+it('Parser - While: fail if missing right parenthesis', () => {
+  var parser = new Parser('program { while (cond while {} }');
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:expected-but-found')(
+      i18n('T_RPAREN'),
+      i18n('T_WHILE')
+    )
+  );
+});
+
+it('Parser - While: fail if missing block', () => {
+  var parser = new Parser('program { while (cond) /*{}*/ }');
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:expected-but-found')(
+      i18n('T_LBRACE'),
+      i18n('T_RBRACE')
+    )
+  );
+});
+
