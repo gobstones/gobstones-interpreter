@@ -17,6 +17,10 @@ import {
   ASTStmtSwitch, ASTStmtSwitchBranch,
   ASTStmtLet,
   ASTStmtProcedureCall,
+  /* Patterns */
+  ASTPatternWildcard,
+  ASTPatternConstructor,
+  ASTPatternTuple,
   /* Expressions */
   ASTExprVariable,
   ASTExprTuple,
@@ -48,6 +52,9 @@ const expect = chai.expect;
  * - a node (instance of ASTNode) whose children are expressions,
  * - a list of expressions. */
 function syntacticallyEqual(e1, e2) {
+  if (e1 === '?' || e2 === '?') {
+    return true;
+  }
   if (e1 === null && e2 === null) {
     return true;
   } else if (e1 instanceof Token && e2 instanceof Token) {
@@ -404,7 +411,7 @@ it('Parser - Return: keep track of positions (no results)', () => {
   expect(tree[0].body.statements[0].startPos.line).equals(4);
   expect(tree[0].body.statements[0].startPos.column).equals(2);
   expect(tree[0].body.statements[0].endPos.line).equals(5);
-  expect(tree[0].body.statements[0].endPos.column).equals(1);
+  expect(tree[0].body.statements[0].endPos.column).equals(2);
 });
 
 it('Parser - Return: keep track of positions (one result)', () => {
@@ -865,5 +872,330 @@ it('Parser - While: fail if missing block', () => {
       i18n('T_RBRACE')
     )
   );
+});
+
+it('Parser - Switch: empty (no branches)', () => {
+  var parser = new Parser(
+                 'program {' +
+                 '  switch (a) {' +
+                 '  }' +
+                 '}'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefProgram(
+      new ASTStmtBlock([
+        new ASTStmtSwitch(
+          new ASTExprVariable(tok(T_LOWERID, 'a')),
+          []
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - Switch: empty with optional keyword "to"', () => {
+  var parser = new Parser(
+                 'program {' +
+                 '  switch (foo) to {' +
+                 '  }' +
+                 '}'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefProgram(
+      new ASTStmtBlock([
+        new ASTStmtSwitch(
+          new ASTExprVariable(tok(T_LOWERID, 'foo')),
+          []
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - Switch: empty with keyword "match"', () => {
+  var parser = new Parser(
+                 'program {' +
+                 '  match (bar) to {' +
+                 '  }' +
+                 '}'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefProgram(
+      new ASTStmtBlock([
+        new ASTStmtSwitch(
+          new ASTExprVariable(tok(T_LOWERID, 'bar')),
+          []
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - Switch: wildcard', () => {
+  var parser = new Parser(
+                 'program {' +
+                 '  switch (foo) {' +
+                 '    _ -> {' +
+                 '      if (bar) {}' +
+                 '    }' +
+                 '  }' +
+                 '}'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefProgram(
+      new ASTStmtBlock([
+        new ASTStmtSwitch(
+          new ASTExprVariable(tok(T_LOWERID, 'foo')),
+          [
+            new ASTStmtSwitchBranch(
+              new ASTPatternWildcard(),
+              new ASTStmtBlock([
+                new ASTStmtIf(
+                  new ASTExprVariable(tok(T_LOWERID, 'bar')),
+                  new ASTStmtBlock([]),
+                  null
+                )
+              ])
+            )
+          ]
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - Switch: constructors without arguments', () => {
+  var parser = new Parser(
+                 'program {' +
+                 '  switch (foo) {' +
+                 '    Norte -> {}' +
+                 '    Este -> {}' +
+                 '    Sur -> {}' +
+                 '    _ -> {}' +
+                 '  }' +
+                 '}'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefProgram(
+      new ASTStmtBlock([
+        new ASTStmtSwitch(
+          new ASTExprVariable(tok(T_LOWERID, 'foo')),
+          [
+            new ASTStmtSwitchBranch(
+              new ASTPatternConstructor(
+                tok(T_UPPERID, 'Norte'),
+                []
+              ),
+              new ASTStmtBlock([])
+            ),
+            new ASTStmtSwitchBranch(
+              new ASTPatternConstructor(
+                tok(T_UPPERID, 'Este'),
+                []
+              ),
+              new ASTStmtBlock([])
+            ),
+            new ASTStmtSwitchBranch(
+              new ASTPatternConstructor(
+                tok(T_UPPERID, 'Sur'),
+                []
+              ),
+              new ASTStmtBlock([])
+            ),
+            new ASTStmtSwitchBranch(
+              new ASTPatternWildcard(),
+              new ASTStmtBlock([])
+            )
+          ]
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - Switch: constructors with arguments', () => {
+  var parser = new Parser(
+                 'program {' +
+                 '  switch (foo) {' +
+                 '    INIT()           -> {}' +
+                 '    Leaf(x)          -> {}' +
+                 '    Norte            -> {}' +
+                 '    Cons(x, xs)      -> {}' +
+                 '    A(foo, bar, baz) -> {}' +
+                 '  }' +
+                 '}'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefProgram(
+      new ASTStmtBlock([
+        new ASTStmtSwitch(
+          new ASTExprVariable(tok(T_LOWERID, 'foo')),
+          [
+            new ASTStmtSwitchBranch(
+              new ASTPatternConstructor(
+                tok(T_UPPERID, 'INIT'),
+                []
+              ),
+              new ASTStmtBlock([])
+            ),
+            new ASTStmtSwitchBranch(
+              new ASTPatternConstructor(
+                tok(T_UPPERID, 'Leaf'),
+                [tok(T_LOWERID, 'x')]
+              ),
+              new ASTStmtBlock([])
+            ),
+            new ASTStmtSwitchBranch(
+              new ASTPatternConstructor(
+                tok(T_UPPERID, 'Norte'),
+                []
+              ),
+              new ASTStmtBlock([])
+            ),
+            new ASTStmtSwitchBranch(
+              new ASTPatternConstructor(
+                tok(T_UPPERID, 'Cons'),
+                [tok(T_LOWERID, 'x'), tok(T_LOWERID, 'xs')]
+              ),
+              new ASTStmtBlock([])
+            ),
+            new ASTStmtSwitchBranch(
+              new ASTPatternConstructor(
+                tok(T_UPPERID, 'A'),
+                [
+                  tok(T_LOWERID, 'foo'),
+                  tok(T_LOWERID, 'bar'),
+                  tok(T_LOWERID, 'baz')
+                ]
+              ),
+              new ASTStmtBlock([])
+            ),
+          ]
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - Switch: tuples', () => {
+  var parser = new Parser(
+                 'program {' +
+                 '  switch (foo) {' +
+                 '    ()    -> {}' +
+                 '    (x,y) -> {}' +
+                 '    (foo, bar, baz) -> {}' +
+                 '    _ -> {}' +
+                 '  }' +
+                 '}'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefProgram(
+      new ASTStmtBlock([
+        new ASTStmtSwitch(
+          new ASTExprVariable(tok(T_LOWERID, 'foo')),
+          [
+            new ASTStmtSwitchBranch(
+              new ASTPatternTuple([]),
+              new ASTStmtBlock([])
+            ),
+            new ASTStmtSwitchBranch(
+              new ASTPatternTuple([
+                tok(T_LOWERID, 'x'),
+                tok(T_LOWERID, 'y'),
+              ]),
+              new ASTStmtBlock([])
+            ),
+            new ASTStmtSwitchBranch(
+              new ASTPatternTuple([
+                tok(T_LOWERID, 'foo'),
+                tok(T_LOWERID, 'bar'),
+                tok(T_LOWERID, 'baz'),
+              ]),
+              new ASTStmtBlock([])
+            ),
+            new ASTStmtSwitchBranch(
+              new ASTPatternWildcard(),
+              new ASTStmtBlock([])
+            )
+          ]
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - Switch: reject singleton tuple', () => {
+  var parser = new Parser(
+                 'program {' +
+                 '  switch (foo) {' +
+                 '    (x)    -> {}' +
+                 '  }' +
+                 '}'
+               );
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:pattern-tuple-cannot-be-singleton')
+  );
+});
+
+it('Parser - Switch: reject if missing braces', () => {
+  var parser = new Parser(
+                 'program {' +
+                 '  switch (foo)' +
+                 '    _ -> {}' +
+                 '}'
+               );
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:expected-but-found')(
+      i18n('T_LBRACE'),
+      i18n('T_UNDERSCORE')
+    )
+  );
+});
+
+it('Parser - Switch: reject malformed pattern (single variable)', () => {
+  var parser = new Parser(
+                 'program {' +
+                 '  switch (foo) {' +
+                 '    x -> {}' +
+                 '  }' +
+                 '}'
+               );
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:expected-but-found')(
+      i18n('pattern'),
+      i18n('T_LOWERID')
+    )
+  );
+});
+
+it('Parser - Switch: reject malformed pattern (nested tuples)', () => {
+  var parser = new Parser(
+                 'program {' +
+                 '  switch (foo) {' +
+                 '    ((x,y),z) -> {}' +
+                 '  }' +
+                 '}'
+               );
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:expected-but-found')(
+      i18n('T_LOWERID'),
+      i18n('T_LPAREN')
+    )
+  );
+});
+
+it('Parser - Switch: keep track of positions', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  switch (foo) {\n' +
+                 '    A(b) -> {}\n' +
+                 '  }\n' +
+                 '}\n'
+               );
+  var tree = parser.parse();
+  expect(tree[0].body.statements[0].startPos.line).equals(2);
+  expect(tree[0].body.statements[0].startPos.column).equals(3);
+  expect(tree[0].body.statements[0].endPos.line).equals(4);
+  expect(tree[0].body.statements[0].endPos.column).equals(3);
 });
 

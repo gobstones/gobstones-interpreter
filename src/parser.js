@@ -10,7 +10,7 @@ import {
   T_IS, T_RECORD, T_VARIANT, T_CASE, T_FIELD, T_UNDERSCORE,
   /* Symbols */
   T_LPAREN, T_RPAREN, T_LBRACE, T_RBRACE, T_LBRACK, T_RBRACK, T_COMMA,
-  T_SEMICOLON, T_RANGE, T_GETS, T_PIPE, T_ASSIGN,
+  T_SEMICOLON, T_RANGE, T_GETS, T_PIPE, T_ARROW, T_ASSIGN,
   T_EQ, T_NE, T_LE, T_GE, T_LT, T_GT, T_AND, T_OR, T_CONCAT, T_PLUS,
   T_MINUS, T_TIMES, T_POW
 } from './token';
@@ -30,6 +30,10 @@ import {
   ASTStmtSwitch, ASTStmtSwitchBranch,
   ASTStmtLet,
   ASTStmtProcedureCall,
+  /* Patterns */
+  ASTPatternWildcard,
+  ASTPatternConstructor,
+  ASTPatternTuple,
   /* Expressions */
   ASTExprVariable,
   ASTExprTuple,
@@ -113,7 +117,9 @@ export class Parser {
     this._match(T_PROCEDURE);
     var name = this._currentToken;
     this._match(T_UPPERID);
+    this._match(T_LPAREN);
     var parameterList = this._parseParameterList();
+    this._match(T_RPAREN);
     var block = this._parseStmtBlock();
     var result = new ASTDefProcedure(name, parameterList, block);
     result.startPos = startPos;
@@ -126,7 +132,9 @@ export class Parser {
     this._match(T_FUNCTION);
     var name = this._currentToken;
     this._match(T_LOWERID);
+    this._match(T_LPAREN);
     var parameterList = this._parseParameterList();
+    this._match(T_RPAREN);
     var block = this._parseStmtBlock();
     var result = new ASTDefFunction(name, parameterList, block);
     result.startPos = startPos;
@@ -135,14 +143,11 @@ export class Parser {
   }
 
   /* Generic method to parse a delimited list:
-   *   left: token tag for the left delimiter
-   *   right: token tag for the right delimiter
+   *   rightDelimiter: token tag for the right delimiter
    *   separator: token tag for the separator
    *   parseElement: function that parses one element */
-  _parseDelimitedList(left, right, separator, parseElement) {
-    this._match(left);
-    if (this._currentToken.tag === right) {
-      this._match(right);
+  _parseDelimitedList(rightDelimiter, separator, parseElement) {
+    if (this._currentToken.tag === rightDelimiter) {
       return []; /* Empty case */
     }
     var list = [parseElement()];
@@ -150,7 +155,18 @@ export class Parser {
       this._match(separator);
       list.push(parseElement());
     }
-    this._matchExpected(right, [separator, right]);
+    if (this._currentToken.tag !== rightDelimiter) {
+      throw new GbsSyntaxError(
+                  this._currentToken.startPos,
+                  i18n('errmsg:expected-but-found')(
+                    i18n('<alternative>')([
+                      i18n(Symbol.keyFor(separator)),
+                      i18n(Symbol.keyFor(rightDelimiter))
+                    ]),
+                    i18n(Symbol.keyFor(this._currentToken.tag))
+                  )
+                );
+    }
     return list;
   }
 
@@ -163,7 +179,7 @@ export class Parser {
   _parseParameterList() {
     let self = this;
     return this._parseDelimitedList(
-             T_LPAREN, T_RPAREN, T_COMMA, () => self._parseParameter()
+             T_RPAREN, T_COMMA, () => self._parseParameter()
            );
   }
 
@@ -315,8 +331,11 @@ export class Parser {
     this._match(T_LPAREN);
     var subject = this._parseExpression();
     this._match(T_RPAREN);
+    if (this._currentToken.tag === T_TO) {
+      this._match(T_TO);
+    }
     this._match(T_LBRACE);
-    var branches = _parseStmtSwitchBranches();
+    var branches = this._parseStmtSwitchBranches();
     var endPos = this._currentToken.startPos;
     this._match(T_RBRACE);
     var result = new ASTStmtSwitch(subject, branches);
@@ -334,13 +353,79 @@ export class Parser {
   }
 
   _parseStmtSwitchBranch() {
-      var pattern = this._parsePattern();
-      this._match(T_ARROW);
-      var body = this._parseStmtBlock();
-      var result = new ASTStmtSwitchBranch(pattern, body);
-      result.startPos = pattern.startPos;
-      result.endPos = body.endPos;
-      return result;
+    var pattern = this._parsePattern();
+    this._match(T_ARROW);
+    var body = this._parseStmtBlock();
+    var result = new ASTStmtSwitchBranch(pattern, body);
+    result.startPos = pattern.startPos;
+    result.endPos = body.endPos;
+    return result;
+  }
+
+  _parsePattern() {
+    if (this._currentToken.tag === T_UNDERSCORE) {
+      return this._parsePatternWildcard();
+    } else if (this._currentToken.tag === T_UPPERID) {
+      return this._parsePatternConstructor();
+    } else if (this._currentToken.tag === T_LPAREN) {
+      return this._parsePatternTuple();
+    } else {
+      throw new GbsSyntaxError(
+        this._currentToken.startPos,
+        i18n('errmsg:expected-but-found')(
+          i18n('pattern'),
+          i18n(Symbol.keyFor(this._currentToken.tag))
+        )
+      );
+    }
+  }
+
+  _parsePatternWildcard() {
+    var startPos = this._currentToken.startPos;
+    this._match(T_UNDERSCORE);
+    var result = new ASTPatternWildcard();
+    var endPos = startPos;
+    result.startPos = startPos;
+    result.endPos = endPos;
+    return result;
+  }
+
+  _parsePatternConstructor() {
+    var startPos = this._currentToken.startPos;
+    var endPos = this._currentToken.startPos;
+    var constructor = this._currentToken;
+    this._match(T_UPPERID);
+    var parameters;
+    if (this._currentToken.tag === T_LPAREN) {
+      this._match(T_LPAREN);
+      parameters = this._parseParameterList();
+      endPos = this._currentToken.startPos;
+      this._match(T_RPAREN);
+    } else {
+      parameters = [];
+    }
+    var result = new ASTPatternConstructor(constructor, parameters);
+    result.startPos = startPos;
+    result.endPos = endPos;
+    return result;
+  }
+
+  _parsePatternTuple() {
+    var startPos = this._currentToken.startPos;
+    this._match(T_LPAREN);
+    var parameters = this._parseParameterList();
+    if (parameters.length === 1) {
+      throw new GbsSyntaxError(
+        this._currentToken.startPos,
+        i18n('errmsg:pattern-tuple-cannot-be-singleton')
+      );
+    }
+    var endPos = this._currentToken.startPos;
+    this._match(T_RPAREN);
+    var result = new ASTPatternTuple(parameters);
+    result.startPos = startPos;
+    result.endPos = endPos;
+    return result;
   }
 
   /** Expressions **/
@@ -363,20 +448,22 @@ export class Parser {
   _parseExprTuple() {
     var startPos = this._currentToken.startPos;
     let self = this;
+    this._match(T_LPAREN);
     var expressionList = this._parseDelimitedList(
-                           T_LPAREN, T_RPAREN, T_COMMA,
+                           T_RPAREN, T_COMMA,
                            () => self._parseExpression()
                          );
+    var endPos = this._currentToken.startPos;
+    this._match(T_RPAREN);
+
+    var result;
     if (expressionList.length == 1) {
-      return expressionList[0];
-    }
-    var result = new ASTExprTuple(expressionList);
-    result.startPos = startPos;
-    if (expressionList.length === 0) {
-      result.endPos = startPos;
+      result = expressionList[0];
     } else {
-      result.endPos = expressionList.slice(-1)[0].endPos;
+      result = new ASTExprTuple(expressionList);
     }
+    result.startPos = startPos;
+    result.endPos = endPos;
     return result;
   }
 

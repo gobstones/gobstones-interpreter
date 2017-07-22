@@ -287,8 +287,35 @@ en las producciones, sino por fuera.
 }
 
 \produccion{\s{stmtSwitch}}{
-  \TODO{TODO}
+  \tok{SWITCH} \tok{LPAREN} \s{expression} \tok{RPAREN} \tok{TO}? \tok{LBRACE} \s{stmtSwitchBranch}* \tok{RBRACE}
 }
+
+\produccion{\s{stmtSwitchBranch}}{
+  \s{pattern} \tok{ARROW} \s{stmtBlock}
+}
+
+\produccion{\s{pattern}}{
+  \s{patternWildcard}
+\ALT
+  \s{patternConstructor}
+\ALT
+  \s{patternTuple}
+}
+
+\produccion{\s{patternWildcard}}{
+  \tok{UNDERSCORE}
+}
+
+\produccion{\s{patternConstructor}}{
+  \tok{UPPERID} (\tok{LPAREN} \s{parameterList} \tok{RPAREN})?
+}
+
+\produccion{\s{patternTuple}}{
+  \tok{LPAREN} \tok{RPAREN}
+\ALT
+  \tok{LPAREN} \tok{LOWERID} \tok{COMMA} \s{nonEmptyParameterList} \tok{RPAREN}
+}
+
 
 \produccion{\s{stmtLet}}{
   \TODO{TODO}

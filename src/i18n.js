@@ -37,8 +37,13 @@ const ES = {
 
   'errmsg:expected-but-found':
     function (expected, found) {
-      return 'Se esperaba ' + expected + '.\n' + 'Se encontró: ' + found + '.';
+      return 'Se esperaba ' + expected + '.\n' +
+             'Se encontró: ' + found + '.';
     },
+
+  'errmsg:pattern-tuple-cannot-be-singleton':
+    'El patrón para una tupla no puede tener una sola componente.\n' +
+    'Las tuplas tienen 0, 2, 3, o más componentes, pero no 1.',
 
   '<alternative>':
     function (strings) {
@@ -49,6 +54,8 @@ const ES = {
   /* Descriptions of syntactic constructions and tokens */
   'definition':
     'una definición (de programa, función, procedimiento, o tipo)',
+  'pattern':
+    'un patrón (comodín "_", constructor aplicado a variables, o tupla)',
   'statement': 'un comando',
   'T_EOF': 'el final del archivo',
   'T_NUM': 'un número',
@@ -91,6 +98,7 @@ const ES = {
   'T_RANGE': 'un separador de rango ("..")',
   'T_GETS': 'una flecha hacia la izquierda ("<-")',
   'T_PIPE': 'una barra vertical ("|")',
+  'T_ARROW': 'una flecha ("->")',
   'T_ASSIGN': 'un operador de asignación (":=")',
   'T_EQ': 'una comparación por igualdad ("==")',
   'T_NE': 'una comparación por desigualdad ("/=")',

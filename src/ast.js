@@ -15,6 +15,10 @@ export const N_StmtSwitch = Symbol.for('N_StmtSwitch');
 export const N_StmtSwitchBranch = Symbol.for('N_StmtSwitchBranch');
 export const N_StmtLet = Symbol.for('N_StmtLet');
 export const N_StmtProcedureCall = Symbol.for('N_StmtProcedureCall');
+/* Patterns */
+export const N_PatternWildcard = Symbol.for('N_PatternWildcard');
+export const N_PatternConstructor = Symbol.for('N_PatternConstructor');
+export const N_PatternTuple = Symbol.for('N_PatternTuple');
 /* Expressions */
 export const N_ExprVariable = Symbol.for('N_ExprVariable');
 export const N_ExprTuple = Symbol.for('N_ExprTuple');
@@ -163,6 +167,26 @@ export class ASTStmtLet extends ASTNode {
 export class ASTStmtProcedureCall extends ASTNode {
   constructor(procedureName, args) {
     super(N_StmtProcedureCall, [procedureName, args]);
+  }
+}
+
+/* Patterns */
+
+export class ASTPatternWildcard extends ASTNode {
+  constructor() {
+    super(N_PatternWildcard, []);
+  }
+}
+
+export class ASTPatternConstructor extends ASTNode {
+  constructor(constructor, parameters) {
+    super(N_PatternConstructor, [constructor, parameters]);
+  }
+}
+
+export class ASTPatternTuple extends ASTNode {
+  constructor(parameters) {
+    super(N_PatternTuple, parameters);
   }
 }
 

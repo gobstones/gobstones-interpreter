@@ -98,7 +98,7 @@ const SYMBOLS = [
   ['<-', T_GETS],     // Field initializer, e.g. Coord(x <- 1, y <- 2)
   ['|', T_PIPE],      // Field update, e.g. Coord(c | x <- 2)
   /* Pattern matching */
-  ['->', T_ARROW],    // Branches of a switch
+  ['->', T_ARROW],    // For the branches of a switch
   /* Relational operators */
   ['==', T_EQ],
   ['/=', T_NE],
