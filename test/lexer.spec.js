@@ -9,7 +9,7 @@ import {
   T_IS, T_RECORD, T_VARIANT, T_CASE, T_FIELD, T_UNDERSCORE,
   /* Symbols */
   T_LPAREN, T_RPAREN, T_LBRACE, T_RBRACE, T_LBRACK, T_RBRACK, T_COMMA,
-  T_SEMICOLON, T_RANGE, T_GETS, T_PIPE, T_ASSIGN,
+  T_SEMICOLON, T_RANGE, T_GETS, T_PIPE, T_ARROW, T_ASSIGN,
   T_EQ, T_NE, T_LE, T_GE, T_LT, T_GT, T_AND, T_OR, T_CONCAT, T_PLUS,
   T_MINUS, T_TIMES, T_POW
 } from '../src/token';
@@ -82,6 +82,35 @@ function expectTokenTypes(lexer, expected) {
     expect(actualToken.tag).equals(expectedType);
   }
 }
+
+it('Lexer - Accept the number zero', () => {
+  var lexer = new Lexer('  0  0');
+  expectTokens(lexer, [
+    [T_NUM, '0'], [T_NUM, '0'], [T_EOF, null]
+  ]);
+});
+
+it('Lexer - Reject the number zero when written with two digits', () => {
+  var lexer = new Lexer('  00 ');
+  expect(() => lexer.nextToken()).throws(
+    i18n('errmsg:numeric-constant-should-not-have-leading-zeroes')
+  );
+});
+
+it('Lexer - Reject the number zero when written with three digits', () => {
+  var lexer = new Lexer('  000 ');
+  expect(() => lexer.nextToken()).throws(
+    i18n('errmsg:numeric-constant-should-not-have-leading-zeroes')
+  );
+});
+
+it('Lexer - Reject other constants with leading zeroes', () => {
+  var lexer = new Lexer('  00007 ');
+  expect(() => lexer.nextToken()).throws(
+    i18n('errmsg:numeric-constant-should-not-have-leading-zeroes')
+  );
+});
+
 
 it('Lexer - C-style single line comments', () => {
   var lexer = new Lexer('// 1 2 3 ñácate\n 4  5 // 6\n 7 // 8 9');
@@ -377,6 +406,7 @@ it('Lexer - Symbols', () => {
     '..',
     '<-',
     '|',
+    '->',
     ':=',
     '==',
     '/=',
@@ -405,6 +435,7 @@ it('Lexer - Symbols', () => {
     T_RANGE,
     T_GETS,
     T_PIPE,
+    T_ARROW,
     T_ASSIGN,
     T_EQ,
     T_NE,
@@ -439,7 +470,9 @@ it('Lexer - Basic string constants', () => {
 });
 
 it('Lexer - String constants with escapes', () => {
-  var lexer = new Lexer('"","\\"","\\\\","\\t","\\n","\\r"');
+  var lexer = new Lexer(
+                '"","\\"","\\\\","\\a","\\b","\\f","\\n","\\r","\\t","\\v"'
+              );
   expectTokens(lexer, [
       [T_STRING, ''],
       [T_COMMA, ','],
@@ -447,11 +480,19 @@ it('Lexer - String constants with escapes', () => {
       [T_COMMA, ','],
       [T_STRING, '\\'],
       [T_COMMA, ','],
-      [T_STRING, '\t'],
+      [T_STRING, '\a'],
+      [T_COMMA, ','],
+      [T_STRING, '\b'],
+      [T_COMMA, ','],
+      [T_STRING, '\f'],
       [T_COMMA, ','],
       [T_STRING, '\n'],
       [T_COMMA, ','],
       [T_STRING, '\r'],
+      [T_COMMA, ','],
+      [T_STRING, '\t'],
+      [T_COMMA, ','],
+      [T_STRING, '\v'],
       [T_EOF, null]
   ]);
 });

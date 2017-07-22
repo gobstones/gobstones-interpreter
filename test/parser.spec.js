@@ -3,9 +3,10 @@ import chai from 'chai';
 import { i18n } from '../src/i18n';
 import {
   ASTNode,
-  ASTProgramDeclaration,
-  ASTProcedureDeclaration,
-  ASTFunctionDeclaration,
+  /* Definitions */
+  ASTDefProgram,
+  ASTDefProcedure,
+  ASTDefFunction,
   /* Statements */
   ASTStmtBlock,
   ASTStmtReturn,
@@ -13,8 +14,7 @@ import {
   ASTStmtRepeat,
   ASTStmtForeach,
   ASTStmtWhile,
-  ASTStmtSwitch,
-  ASTStmtSwitchBranch,
+  ASTStmtSwitch, ASTStmtSwitchBranch,
   ASTStmtLet,
   ASTStmtProcedureCall,
   /* Expressions */
@@ -79,10 +79,10 @@ function expectAST(obtainedAst, expectedAst) {
   return expect(syntacticallyEqual(obtainedAst, expectedAst)).equals(true);
 }
 
-it('Parser - Accept empty program declaration', () => {
+it('Parser - Accept empty program definition', () => {
   var parser = new Parser('program {}');
   expectAST(parser.parse(), [
-    new ASTProgramDeclaration(
+    new ASTDefProgram(
       new ASTStmtBlock([])
     )
   ]);
@@ -93,17 +93,17 @@ it('Parser - Reject empty source', () => {
   expect(() => parser.parse()).throws(i18n('errmsg:empty-source'));
 });
 
-it('Parser - Reject non-declarations at the toplevel', () => {
+it('Parser - Reject things other than definitions at the toplevel', () => {
   var parser = new Parser('if');
   expect(() => parser.parse()).throws(
       i18n('errmsg:expected-but-found')(
-        i18n('declaration'),
+        i18n('definition'),
         i18n('T_IF')
       )
   );
 });
 
-it('Parser - Program declaration: fail on no left brace', () => {
+it('Parser - Program definition: fail on no left brace', () => {
   var parser = new Parser('program');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
@@ -113,7 +113,7 @@ it('Parser - Program declaration: fail on no left brace', () => {
   );
 });
 
-it('Parser - Program declaration: fail on no right brace', () => {
+it('Parser - Program definition: fail on no right brace', () => {
   var parser = new Parser('program {');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
@@ -123,7 +123,7 @@ it('Parser - Program declaration: fail on no right brace', () => {
   );
 });
 
-it('Parser - Program declaration: keep track of positions', () => {
+it('Parser - Program definition: keep track of positions', () => {
   var parser = new Parser('\n   program {\n\n\n}');
   var tree = parser.parse();
   expect(tree.length).equals(1);
@@ -133,10 +133,10 @@ it('Parser - Program declaration: keep track of positions', () => {
   expect(tree[0].endPos.column).equals(1);
 });
 
-it('Parser - Procedure declaration with no parameters', () => {
+it('Parser - Procedure definition with no parameters', () => {
   var parser = new Parser('procedure P() {}');
   expectAST(parser.parse(), [
-    new ASTProcedureDeclaration(
+    new ASTDefProcedure(
       tok(T_UPPERID, 'P'),
       [],
       new ASTStmtBlock([])
@@ -144,10 +144,10 @@ it('Parser - Procedure declaration with no parameters', () => {
   ]);
 });
 
-it('Parser - Procedure declaration with one parameters', () => {
+it('Parser - Procedure definition with one parameters', () => {
   var parser = new Parser('procedure Poner(color) {}');
   expectAST(parser.parse(), [
-    new ASTProcedureDeclaration(
+    new ASTDefProcedure(
       tok(T_UPPERID, 'Poner'),
       [tok(T_LOWERID, 'color')],
       new ASTStmtBlock([])
@@ -155,10 +155,10 @@ it('Parser - Procedure declaration with one parameters', () => {
   ]);
 });
 
-it('Parser - Procedure declaration with two parameters', () => {
+it('Parser - Procedure definition with two parameters', () => {
   var parser = new Parser('procedure PonerN(n,col) {}');
   expectAST(parser.parse(), [
-    new ASTProcedureDeclaration(
+    new ASTDefProcedure(
       tok(T_UPPERID, 'PonerN'),
       [tok(T_LOWERID, 'n'), tok(T_LOWERID, 'col')],
       new ASTStmtBlock([])
@@ -166,10 +166,10 @@ it('Parser - Procedure declaration with two parameters', () => {
   ]);
 });
 
-it('Parser - Procedure declaration with three parameters', () => {
+it('Parser - Procedure definition with three parameters', () => {
   var parser = new Parser('procedure Q(x ,y, z) {}');
   expectAST(parser.parse(), [
-    new ASTProcedureDeclaration(
+    new ASTDefProcedure(
       tok(T_UPPERID, 'Q'),
       [tok(T_LOWERID, 'x'), tok(T_LOWERID, 'y'), tok(T_LOWERID, 'z')],
       new ASTStmtBlock([])
@@ -177,7 +177,7 @@ it('Parser - Procedure declaration with three parameters', () => {
   ]);
 });
 
-it('Parser - Procedure declaration: fail on missing argument list', () => {
+it('Parser - Procedure definition: fail on missing argument list', () => {
   var parser = new Parser('procedure P {}');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
@@ -187,7 +187,7 @@ it('Parser - Procedure declaration: fail on missing argument list', () => {
   );
 });
 
-it('Parser - Procedure declaration: fail on missing comma', () => {
+it('Parser - Procedure definition: fail on missing comma', () => {
   var parser = new Parser('procedure P(x y) {}');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
@@ -200,7 +200,7 @@ it('Parser - Procedure declaration: fail on missing comma', () => {
   );
 });
 
-it('Parser - Procedure declaration: reject initial comma', () => {
+it('Parser - Procedure definition: reject initial comma', () => {
   var parser = new Parser('procedure P(,x) {}');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
@@ -210,7 +210,7 @@ it('Parser - Procedure declaration: reject initial comma', () => {
   );
 });
 
-it('Parser - Procedure declaration: reject trailing comma', () => {
+it('Parser - Procedure definition: reject trailing comma', () => {
   var parser = new Parser('procedure P(x,y,) {}');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
@@ -220,7 +220,7 @@ it('Parser - Procedure declaration: reject trailing comma', () => {
   );
 });
 
-it('Parser - Procedure declaration: fail on invalid name', () => {
+it('Parser - Procedure definition: fail on invalid name', () => {
   var parser = new Parser('procedure p(x, y) {}');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
@@ -230,7 +230,7 @@ it('Parser - Procedure declaration: fail on invalid name', () => {
   );
 });
 
-it('Parser - Procedure declaration: fail on invalid parameter', () => {
+it('Parser - Procedure definition: fail on invalid parameter', () => {
   var parser = new Parser('procedure P(x, Y) {}');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
@@ -240,7 +240,7 @@ it('Parser - Procedure declaration: fail on invalid parameter', () => {
   );
 });
 
-it('Parser - Procedure declaration: fail on invalid block', () => {
+it('Parser - Procedure definition: fail on invalid block', () => {
   var parser = new Parser('procedure P\n(x, y) }');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
@@ -250,7 +250,7 @@ it('Parser - Procedure declaration: fail on invalid block', () => {
   );
 });
  
-it('Parser - Procedure declarations: keep track of positions', () => {
+it('Parser - Procedure definition: keep track of positions', () => {
   var parser = new Parser(
       '/*@BEGIN_REGION@A@*//*ignore*/procedure P\n' +
       '/*@BEGIN_REGION@B@*/(x,y){} procedure Q()\n' +
@@ -272,10 +272,10 @@ it('Parser - Procedure declarations: keep track of positions', () => {
   expect(tree[1].endPos.region).equals('A');
 });
 
-it('Parser - Function declaration with no parameters', () => {
+it('Parser - Function definition with no parameters', () => {
   var parser = new Parser('function f() {}');
   expectAST(parser.parse(), [
-    new ASTFunctionDeclaration(
+    new ASTDefFunction(
       tok(T_LOWERID, 'f'),
       [],
       new ASTStmtBlock([])
@@ -283,10 +283,10 @@ it('Parser - Function declaration with no parameters', () => {
   ]);
 });
 
-it('Parser - Function declaration with one parameter', () => {
+it('Parser - Function definition with one parameter', () => {
   var parser = new Parser('function nroBolitas(color) {}');
   expectAST(parser.parse(), [
-    new ASTFunctionDeclaration(
+    new ASTDefFunction(
       tok(T_LOWERID, 'nroBolitas'),
       [tok(T_LOWERID, 'color')],
       new ASTStmtBlock([])
@@ -294,10 +294,10 @@ it('Parser - Function declaration with one parameter', () => {
   ]);
 });
 
-it('Parser - Function declaration with two parameters', () => {
+it('Parser - Function definition with two parameters', () => {
   var parser = new Parser('function nroBolitasAl(c, d) {}');
   expectAST(parser.parse(), [
-    new ASTFunctionDeclaration(
+    new ASTDefFunction(
       tok(T_LOWERID, 'nroBolitasAl'),
       [tok(T_LOWERID, 'c'), tok(T_LOWERID, 'd')],
       new ASTStmtBlock([])
@@ -305,10 +305,10 @@ it('Parser - Function declaration with two parameters', () => {
   ]);
 });
 
-it('Parser - Function declaration with three parameters', () => {
+it('Parser - Function definition with three parameters', () => {
   var parser = new Parser('function gg(x,yy,zzz) {}');
   expectAST(parser.parse(), [
-    new ASTFunctionDeclaration(
+    new ASTDefFunction(
       tok(T_LOWERID, 'gg'),
       [tok(T_LOWERID, 'x'), tok(T_LOWERID, 'yy'), tok(T_LOWERID, 'zzz')],
       new ASTStmtBlock([])
@@ -316,7 +316,7 @@ it('Parser - Function declaration with three parameters', () => {
   ]);
 });
 
-it('Parser - Mixed function and procedure declarations', () => {
+it('Parser - Mixed function and procedure definitions', () => {
   var parser = new Parser(
                  'function f(x) {}\n' +
                  'procedure P() {}\n' +
@@ -324,22 +324,22 @@ it('Parser - Mixed function and procedure declarations', () => {
                  'program{}'
                );
   expectAST(parser.parse(), [
-    new ASTFunctionDeclaration(
+    new ASTDefFunction(
       tok(T_LOWERID, 'f'),
       [tok(T_LOWERID, 'x')],
       new ASTStmtBlock([])
     ),
-    new ASTProcedureDeclaration(
+    new ASTDefProcedure(
       tok(T_UPPERID, 'P'),
       [],
       new ASTStmtBlock([])
     ),
-    new ASTProcedureDeclaration(
+    new ASTDefProcedure(
       tok(T_UPPERID, 'Q'),
       [tok(T_LOWERID, 'x'), tok(T_LOWERID, 'y')],
       new ASTStmtBlock([])
     ),
-    new ASTProgramDeclaration(
+    new ASTDefProgram(
       new ASTStmtBlock([])
     )
   ]);
@@ -358,7 +358,7 @@ it('Parser - Reject non-statement when expecting statement', () => {
 it('Parser - Return: no results', () => {
   var parser = new Parser('program { return () }');
   expectAST(parser.parse(), [
-    new ASTProgramDeclaration(
+    new ASTDefProgram(
       new ASTStmtBlock([
         new ASTStmtReturn(
           new ASTExprTuple([])
@@ -371,7 +371,7 @@ it('Parser - Return: no results', () => {
 it('Parser - Return: one result', () => {
   var parser = new Parser('function f() { return (x) }');
   expectAST(parser.parse(), [
-    new ASTFunctionDeclaration(tok(T_LOWERID, 'f'), [],
+    new ASTDefFunction(tok(T_LOWERID, 'f'), [],
           new ASTStmtBlock([
             new ASTStmtReturn(
               new ASTExprVariable(tok(T_LOWERID, 'x'))
@@ -384,7 +384,7 @@ it('Parser - Return: one result', () => {
 it('Parser - Return: two results', () => {
   var parser = new Parser('program { return (z1,z2) }');
   expectAST(parser.parse(), [
-    new ASTProgramDeclaration(
+    new ASTDefProgram(
           new ASTStmtBlock([
             new ASTStmtReturn(
               new ASTExprTuple([
@@ -429,7 +429,7 @@ it('Parser - Return: keep track of positions (two results)', () => {
 it('Parser - Nested block statements', () => {
   var parser = new Parser('program { { { {} } {} } { {} } {} }');
   expectAST(parser.parse(), [
-    new ASTProgramDeclaration(
+    new ASTDefProgram(
       new ASTStmtBlock([
         new ASTStmtBlock([
           new ASTStmtBlock([
@@ -453,7 +453,7 @@ it('Parser - Nested block statements', () => {
 it('Parser - If without "else"', () => {
   var parser = new Parser('program { if (a) {} }');
   expectAST(parser.parse(), [
-    new ASTProgramDeclaration(
+    new ASTDefProgram(
       new ASTStmtBlock([
         new ASTStmtIf(
           new ASTExprVariable(tok(T_LOWERID, 'a')),
@@ -468,7 +468,7 @@ it('Parser - If without "else"', () => {
 it('Parser - If using the optional "then" keyword', () => {
   var parser = new Parser('program { if (cond) then {} }');
   expectAST(parser.parse(), [
-    new ASTProgramDeclaration(
+    new ASTDefProgram(
       new ASTStmtBlock([
         new ASTStmtIf(
           new ASTExprVariable(tok(T_LOWERID, 'cond')),
@@ -483,7 +483,7 @@ it('Parser - If using the optional "then" keyword', () => {
 it('Parser - If with "else"', () => {
   var parser = new Parser('program { if (xxx) {} else {} }');
   expectAST(parser.parse(), [
-    new ASTProgramDeclaration(
+    new ASTDefProgram(
       new ASTStmtBlock([
         new ASTStmtIf(
           new ASTExprVariable(tok(T_LOWERID, 'xxx')),
@@ -541,7 +541,7 @@ it('Parser - Nested if', () => {
   }
 
   expectAST(parser.parse(), [
-    new ASTProgramDeclaration(
+    new ASTDefProgram(
       new ASTStmtBlock([
         ifthenelse('a', [
           ifthenelse('b', [
@@ -621,7 +621,7 @@ it('Parser - If: keep track of positions', () => {
 it('Parser - Repeat', () => {
   var parser = new Parser('program { repeat (n) {} }');
   expectAST(parser.parse(), [
-    new ASTProgramDeclaration(
+    new ASTDefProgram(
       new ASTStmtBlock([
         new ASTStmtRepeat(
           new ASTExprVariable(tok(T_LOWERID, 'n')),
@@ -643,7 +643,7 @@ it('Parser - Nested repeat', () => {
                  '}'
                );
   expectAST(parser.parse(), [
-    new ASTProgramDeclaration(
+    new ASTDefProgram(
       new ASTStmtBlock([
         new ASTStmtRepeat(
           new ASTExprVariable(tok(T_LOWERID, 'nro1')),
@@ -703,7 +703,7 @@ it('Parser - Repeat: keep track of positions', () => {
 it('Parser - Foreach', () => {
   var parser = new Parser('program { foreach i in expr {} }');
   expectAST(parser.parse(), [
-    new ASTProgramDeclaration(
+    new ASTDefProgram(
       new ASTStmtBlock([
         new ASTStmtForeach(
           tok(T_LOWERID, 'i'),
@@ -727,7 +727,7 @@ it('Parser - Nested foreach', () => {
                  '}'
                );
   expectAST(parser.parse(), [
-    new ASTProgramDeclaration(
+    new ASTDefProgram(
       new ASTStmtBlock([
         new ASTStmtForeach(
           tok(T_LOWERID, 'dir'),
@@ -794,7 +794,7 @@ it('Parser - Foreach: keep track of positions', () => {
 it('Parser - While', () => {
   var parser = new Parser('program { while (cond) {} }');
   expectAST(parser.parse(), [
-    new ASTProgramDeclaration(
+    new ASTDefProgram(
       new ASTStmtBlock([
         new ASTStmtWhile(
           new ASTExprVariable(tok(T_LOWERID, 'cond')),
@@ -817,7 +817,7 @@ it('Parser - Nested while', () => {
                  '}'
                );
   expectAST(parser.parse(), [
-    new ASTProgramDeclaration(
+    new ASTDefProgram(
       new ASTStmtBlock([
         new ASTStmtWhile(
           new ASTExprVariable(tok(T_LOWERID, 'cond1')),

@@ -10,7 +10,7 @@ import {
   T_IS, T_RECORD, T_VARIANT, T_CASE, T_FIELD, T_UNDERSCORE,
   /* Symbols */
   T_LPAREN, T_RPAREN, T_LBRACE, T_RBRACE, T_LBRACK, T_RBRACK, T_COMMA,
-  T_SEMICOLON, T_RANGE, T_GETS, T_PIPE, T_ASSIGN,
+  T_SEMICOLON, T_RANGE, T_GETS, T_PIPE, T_ARROW, T_ASSIGN,
   T_EQ, T_NE, T_LE, T_GE, T_LT, T_GT, T_AND, T_OR, T_CONCAT, T_PLUS,
   T_MINUS, T_TIMES, T_POW
 } from './token';
@@ -97,6 +97,8 @@ const SYMBOLS = [
   /* Fields */
   ['<-', T_GETS],     // Field initializer, e.g. Coord(x <- 1, y <- 2)
   ['|', T_PIPE],      // Field update, e.g. Coord(c | x <- 2)
+  /* Pattern matching */
+  ['->', T_ARROW],    // Branches of a switch
   /* Relational operators */
   ['==', T_EQ],
   ['/=', T_NE],
@@ -163,6 +165,10 @@ class ObsoleteTupleAssignmentRecognizer {
   }
 }
 
+function leadingZeroes(string) {
+  return string.length >= 0 && string[0] === '0';
+}
+
 /* An instance of Lexer scans source code for tokens.
  * Example:
  *
@@ -208,6 +214,12 @@ export class Lexer {
       let startPos = this._reader;
       let value = this._readStringWhile(isDigit);
       let endPos = this._reader;
+      if (leadingZeroes(value) && value.length > 1) {
+        throw new GbsSyntaxError(
+          startPos,
+          i18n('errmsg:numeric-constant-should-not-have-leading-zeroes')
+        );
+      }
       return new Token(T_NUM, value, startPos, endPos);
     } else if (isIdent(this._reader.peek())) {
       let startPos = this._reader;
@@ -278,14 +290,26 @@ export class Lexer {
         let c2 = this._reader.peek();
         this._reader = this._reader.consumeCharacter();
         switch (c2) {
-          case 't':
-            result.push('\t');
+          case 'a':
+            result.push('\a');
+            break;
+          case 'b':
+            result.push('\b');
+            break;
+          case 'f':
+            result.push('\f');
             break;
           case 'n':
             result.push('\n');
             break;
           case 'r':
             result.push('\r');
+            break;
+          case 't':
+            result.push('\t');
+            break;
+          case 'v':
+            result.push('\v');
             break;
           default:
             result.push(c2);

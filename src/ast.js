@@ -1,9 +1,9 @@
 import { UnknownPosition } from './reader';
 
 /* AST node tags are constant symbols */
-export const N_ProgramDeclaration = Symbol.for('N_ProgramDeclaration');
-export const N_ProcedureDeclaration = Symbol.for('N_ProcedureDeclaration');
-export const N_FunctionDeclaration = Symbol.for('N_FunctionDeclaration');
+export const N_DefProgram = Symbol.for('N_DefProgram');
+export const N_DefProcedure = Symbol.for('N_DefProcedure');
+export const N_DefFunction = Symbol.for('N_DefFunction');
 /* Statements */
 export const N_StmtBlock = Symbol.for('N_StmtBlock');
 export const N_StmtReturn = Symbol.for('N_StmtReturn');
@@ -65,9 +65,9 @@ export class ASTNode {
   }
 }
 
-export class ASTProgramDeclaration extends ASTNode {
+export class ASTDefProgram extends ASTNode {
   constructor(body) {
-    super(N_ProgramDeclaration, [body]);
+    super(N_DefProgram, [body]);
   }
 
   get body() {
@@ -75,9 +75,9 @@ export class ASTProgramDeclaration extends ASTNode {
   }
 }
 
-export class ASTProcedureDeclaration extends ASTNode {
+export class ASTDefProcedure extends ASTNode {
   constructor(name, parameterList, body) {
-    super(N_ProcedureDeclaration, [name, parameterList, body]);
+    super(N_DefProcedure, [name, parameterList, body]);
   }
 
   get body() {
@@ -85,9 +85,9 @@ export class ASTProcedureDeclaration extends ASTNode {
   }
 }
 
-export class ASTFunctionDeclaration extends ASTNode {
+export class ASTDefFunction extends ASTNode {
   constructor(name, parameterList, body) {
-    super(N_FunctionDeclaration, [name, parameterList, body]);
+    super(N_DefFunction, [name, parameterList, body]);
   }
 
   get body() {

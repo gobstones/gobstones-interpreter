@@ -11,6 +11,9 @@ const ES = {
   'errmsg:unclosed-string-constant':
     'La comilla que abre no tiene una comilla que cierra correspondiente.',
 
+  'errmsg:numeric-constant-should-not-have-leading-zeroes':
+    'Las constantes numéricas no se pueden escribir con ceros a la izquierda.',
+
   'errmsg:unknown-token':
     function (symbol) {
       return 'Símbolo desconocido en la entrada: "' + symbol + '".';
@@ -44,7 +47,8 @@ const ES = {
     },
 
   /* Descriptions of syntactic constructions and tokens */
-  'declaration': 'una declaración',
+  'definition':
+    'una definición (de programa, función, procedimiento, o tipo)',
   'statement': 'un comando',
   'T_EOF': 'el final del archivo',
   'T_NUM': 'un número',

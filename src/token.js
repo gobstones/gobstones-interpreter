@@ -45,6 +45,7 @@ export const T_SEMICOLON = Symbol.for('T_SEMICOLON');
 export const T_RANGE = Symbol.for('T_RANGE');
 export const T_GETS = Symbol.for('T_GETS');
 export const T_PIPE = Symbol.for('T_PIPE');
+export const T_ARROW = Symbol.for('T_ARROW');
 export const T_ASSIGN = Symbol.for('T_ASSIGN');
 export const T_EQ = Symbol.for('T_EQ');
 export const T_NE = Symbol.for('T_NE');

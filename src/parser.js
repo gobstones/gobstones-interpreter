@@ -16,9 +16,10 @@ import {
 } from './token';
 import {
   ASTNode,
-  ASTProgramDeclaration,
-  ASTProcedureDeclaration,
-  ASTFunctionDeclaration,
+  /* Definitions */
+  ASTDefProgram,
+  ASTDefProcedure,
+  ASTDefFunction,
   /* Statements */
   ASTStmtBlock,
   ASTStmtReturn,
@@ -26,8 +27,7 @@ import {
   ASTStmtRepeat,
   ASTStmtForeach,
   ASTStmtWhile,
-  ASTStmtSwitch,
-  ASTStmtSwitchBranch,
+  ASTStmtSwitch, ASTStmtSwitchBranch,
   ASTStmtLet,
   ASTStmtProcedureCall,
   /* Expressions */
@@ -59,31 +59,31 @@ export class Parser {
 
   /* Return the AST that results from parsing a full program */
   parse() {
-    var declarations = [];
+    var definitions = [];
     while (this._currentToken.tag !== T_EOF) {
-      declarations.push(this._parseDeclaration());
+      definitions.push(this._parseDefinition());
     }
-    if (declarations.length == 0) {
+    if (definitions.length == 0) {
       throw new GbsSyntaxError(
                   this._currentToken.startPos,
                   i18n('errmsg:empty-source')
                 );
     } else {
-      return declarations;
+      return definitions;
     }
   }
 
-  _parseDeclaration() {
+  _parseDefinition() {
     switch (this._currentToken.tag) {
       case T_PROGRAM:
-        return this._parseProgramDeclaration();
+        return this._parseDefProgram();
       case T_INTERACTIVE:
         this._nextToken();
         throw Error('TODO');
       case T_PROCEDURE:
-        return this._parseProcedureDeclaration();
+        return this._parseDefProcedure();
       case T_FUNCTION:
-        return this._parseFunctionDeclaration();
+        return this._parseDefFunction();
       case T_TYPE:
         this._nextToken();
         throw Error('TODO');
@@ -91,44 +91,44 @@ export class Parser {
         throw new GbsSyntaxError(
                     this._currentToken.startPos,
                     i18n('errmsg:expected-but-found')(
-                      i18n('declaration'),
+                      i18n('definition'),
                       i18n(Symbol.keyFor(this._currentToken.tag))
                     )
                   );
     }
   }
 
-  _parseProgramDeclaration() {
+  _parseDefProgram() {
     var startPos = this._currentToken.startPos;
     this._match(T_PROGRAM);
     var block = this._parseStmtBlock();
-    var result = new ASTProgramDeclaration(block);
+    var result = new ASTDefProgram(block);
     result.startPos = startPos;
     result.endPos = block.endPos;
     return result;
   }
 
-  _parseProcedureDeclaration() {
+  _parseDefProcedure() {
     var startPos = this._currentToken.startPos;
     this._match(T_PROCEDURE);
     var name = this._currentToken;
     this._match(T_UPPERID);
     var parameterList = this._parseParameterList();
     var block = this._parseStmtBlock();
-    var result = new ASTProcedureDeclaration(name, parameterList, block);
+    var result = new ASTDefProcedure(name, parameterList, block);
     result.startPos = startPos;
     result.endPos = block.endPos;
     return result;
   }
 
-  _parseFunctionDeclaration() {
+  _parseDefFunction() {
     var startPos = this._currentToken.startPos;
     this._match(T_FUNCTION);
     var name = this._currentToken;
     this._match(T_LOWERID);
     var parameterList = this._parseParameterList();
     var block = this._parseStmtBlock();
-    var result = new ASTFunctionDeclaration(name, parameterList, block);
+    var result = new ASTDefFunction(name, parameterList, block);
     result.startPos = startPos;
     result.endPos = block.endPos;
     return result;
@@ -320,12 +320,27 @@ export class Parser {
     var endPos = this._currentToken.startPos;
     this._match(T_RBRACE);
     var result = new ASTStmtSwitch(subject, branches);
-    /// TODO!
+    result.startPos = startPos;
+    result.endPos = endPos;
+    return result;
   }
 
   _parseStmtSwitchBranches() {
-    /// TODO!
-    return null;
+    var branches = []
+    while (this._currentToken.tag !== T_RBRACE) {
+      branches.push(this._parseStmtSwitchBranch());
+    }
+    return branches;
+  }
+
+  _parseStmtSwitchBranch() {
+      var pattern = this._parsePattern();
+      this._match(T_ARROW);
+      var body = this._parseStmtBlock();
+      var result = new ASTStmtSwitchBranch(pattern, body);
+      result.startPos = pattern.startPos;
+      result.endPos = body.endPos;
+      return result;
   }
 
   /** Expressions **/

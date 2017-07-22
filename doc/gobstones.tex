@@ -42,11 +42,11 @@
 Todos los s\'imbolos terminales se acompa\~nan de su nombre \tok{EN\_MAYUSCULAS}.\bigskip
 
 \noindent{\bf Identificadores y constantes}\medskip\\
-\begin{tabularx}{\textwidth}{llXp{8cm}}
-\symbolentry{\texttt{[0-9]+}}{\tok{NUM}}{\nb{Constante num\'erica.}}
+\begin{tabularx}{\textwidth}{llXp{4cm}}
+\symbolentry{\texttt{0|[1-9][0-9]*}}{\tok{NUM}}{\nb{Constante num\'erica (sin ceros a la izquierda).}}
 \symbolentry{\texttt{[a-z][\_a-zA-Z0-9]*}}{\tok{LOWERID}}{\nb{Identificador en min\'uscula: \'indices, par\'ametros, funciones, variables, campos.}}
 \symbolentry{\texttt{[A-Z][\_a-zA-Z0-9]*}}{\tok{UPPERID}}{\nb{Identificador en may\'uscula: constructores, procedimientos, tipos.}}
-\symbolentry{\texttt{"(\textbackslash{t}|\textbackslash{n}|\textbackslash{r}|\textbackslash\textbackslash|\textbackslash"|[\^{}\textbackslash"])*"}}{\tok{STRING}}{\nb{Constante {\em string}.}}
+\symbolentry{\texttt{"(\textbackslash{a}|\textbackslash{b}|\textbackslash{f}|\textbackslash{n}|\textbackslash{r}|\textbackslash{t}|\textbackslash{v}|\textbackslash\textbackslash|\textbackslash"|[\^{}\textbackslash"])*"}}{\tok{STRING}}{\nb{Constante de cadena.}}
 \end{tabularx}
 \medskip
 
@@ -57,17 +57,27 @@ toman literalmente salvo la contrabarra (\chr{\textbackslash}) que se
 interpreta como un caracter de escape.
 Los escapes admitidos son:
 \begin{center}
-\texttt{\textbackslash{t}}
+\texttt{\textbackslash\textbackslash}
+\hspace{1cm}
+\texttt{\textbackslash"}
+\end{center}
+\begin{center}
+\texttt{\textbackslash{a}}
+\hspace{1cm}
+\texttt{\textbackslash{b}}
+\hspace{1cm}
+\texttt{\textbackslash{f}}
 \hspace{1cm}
 \texttt{\textbackslash{n}}
 \hspace{1cm}
 \texttt{\textbackslash{r}}
 \hspace{1cm}
-\texttt{\textbackslash\textbackslash}
+\texttt{\textbackslash{t}}
 \hspace{1cm}
-\texttt{\textbackslash"}
+\texttt{\textbackslash{v}}
 \end{center}
-con su significado usual.
+con su significado acostumbrado en la tradici\'on de C
+({\em cf.} la gram\'atica oficial de Gobstones).
 \bigskip
 
 \noindent{\bf Palabras clave}\medskip\\
@@ -116,6 +126,7 @@ con su significado usual.
 \symbolentry{\texttt{||}}{\tok{OR}}{\nb{Disyunci\'on.}}
 \symbolentry{\texttt{<-}}{\tok{GETS}}{\nb{Para inicializar campos, p.ej. \texttt{Coord(x <- 1, y <- 2)}.}}
 \symbolentry{\texttt{|}}{\tok{PIPE}}{\nb{Para actualizar campos, p.ej. \texttt{Coord(c | x <- 2)}.}}
+\symbolentry{\texttt{->}}{\tok{ARROW}}{\nb{Usado en las ramas de un \texttt{switch}, p.ej. \texttt{Norte ->\ \{r := 1\}}.}}
 \symbolentry{\texttt{==}}{\tok{EQ}}{\nb{Comparaci\'on por igualdad.}}
 \symbolentry{\texttt{/=}}{\tok{NE}}{\nb{Comparaci\'on por desigualdad.}}
 \symbolentry{\texttt{<=}}{\tok{LE}}{\nb{Comparaci\'on por menor o igual.}}
@@ -158,7 +169,8 @@ El parser idealmente deber\'ia reportar que hay un error de sintaxis en la regi\
 
 \subsection{Gram\'atica}
 Los s\'imbolos no terminales se describen con su nombre \s{enCursiva}.
-Esta gram\'atica es liberal en algunos sentidos. En particular:
+Las producciones se escriben siguiendo las convenciones usuales de EBNF.
+La gram\'atica es liberal en algunos sentidos. En particular:
 \begin{itemize}
 \item El \texttt{return}
 se considera un {\em statement} que puede aparecer en la posici\'on en la que
@@ -180,37 +192,37 @@ Las convenciones de asociatividad y precedencia de operadores no se reflejan
 en las producciones, sino por fuera.
 \bigskip
 
-\produccion{\s{program}}{\s{declaration}*}
+\produccion{\s{start}}{\s{definition}*}
 
-\produccion{\s{declaration}}{
-\s{programDeclaration}
+\produccion{\s{definition}}{
+\s{defProgram}
 \ALT
-\s{interactiveProgramDeclaration}
+\s{defInteractiveProgram}
 \ALT
-\s{procedureDeclaration}
+\s{defProcedure}
 \ALT
-\s{functionDeclaration}
+\s{defFunction}
 \ALT
-\s{typeDeclaration}
+\s{defType}
 }
 
-\produccion{\s{programDeclaration}}{
+\produccion{\s{defProgram}}{
   \tok{PROGRAM} \s{stmtBlock}
 }
 
-\produccion{\s{interactiveProgramDeclaration}}{
+\produccion{\s{defInteractiveProgram}}{
   \TODO{TODO}
 }
 
-\produccion{\s{procedureDeclaration}}{
+\produccion{\s{defProcedure}}{
   \tok{PROCEDURE} \tok{LPAREN} \s{parameterList} \tok{RPAREN} \s{stmtBlock}
 }
 
-\produccion{\s{functionDeclaration}}{
+\produccion{\s{defFunction}}{
   \tok{FUNCTION} \tok{LPAREN} \s{parameterList} \tok{RPAREN} \s{stmtBlock}
 }
 
-\produccion{\s{typeDeclaration}}{
+\produccion{\s{defType}}{
   \TODO{TODO}
 }
 
