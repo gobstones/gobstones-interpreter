@@ -1,6 +1,6 @@
 import { UnknownPosition } from './reader';
 
-/* AST node tags are constant symbols */
+/* Definitions */
 export const N_DefProgram = Symbol.for('N_DefProgram');
 export const N_DefProcedure = Symbol.for('N_DefProcedure');
 export const N_DefFunction = Symbol.for('N_DefFunction');
@@ -12,7 +12,6 @@ export const N_StmtRepeat = Symbol.for('N_StmtRepeat');
 export const N_StmtForeach = Symbol.for('N_StmtForeach');
 export const N_StmtWhile = Symbol.for('N_StmtWhile');
 export const N_StmtSwitch = Symbol.for('N_StmtSwitch');
-export const N_StmtSwitchBranch = Symbol.for('N_StmtSwitchBranch');
 export const N_StmtAssignVariable = Symbol.for('N_StmtAssignVariable');
 export const N_StmtAssignTuple = Symbol.for('N_StmtAssignTuple');
 export const N_StmtProcedureCall = Symbol.for('N_StmtProcedureCall');
@@ -22,7 +21,19 @@ export const N_PatternConstructor = Symbol.for('N_PatternConstructor');
 export const N_PatternTuple = Symbol.for('N_PatternTuple');
 /* Expressions */
 export const N_ExprVariable = Symbol.for('N_ExprVariable');
+export const N_ExprConstantNumber = Symbol.for('N_ExprConstantNumber');
+export const N_ExprConstantString = Symbol.for('N_ExprConstantString');
+export const N_ExprList = Symbol.for('N_ExprList');
 export const N_ExprTuple = Symbol.for('N_ExprTuple');
+export const N_ExprConstructor = Symbol.for('N_ExprConstructor');
+export const N_ExprConstructorUpdate = Symbol.for('N_ExprConstructorUpdate');
+export const N_ExprAnd = Symbol.for('N_ExprAnd');
+export const N_ExprOr = Symbol.for('N_ExprOr');
+export const N_ExprFunctionCall = Symbol.for('N_ExprFunctionCall');
+/* SwitchBranch: pattern -> body */
+export const N_SwitchBranch = Symbol.for('N_SwitchBranch');
+/* FieldValue: field <- value */
+export const N_FieldValue = Symbol.for('N_FieldValue');
 
 /* An instance of ASTNode represents a node of the abstract syntax tree.
  * - tag should be a node tag symbol.
@@ -153,9 +164,9 @@ export class ASTStmtSwitch extends ASTNode {
   }
 }
 
-export class ASTStmtSwitchBranch extends ASTNode {
+export class ASTSwitchBranch extends ASTNode {
   constructor(pattern, body) {
-    super(N_StmtSwitchBranch, [pattern, body]);
+    super(N_SwitchBranch, [pattern, body]);
   }
 }
 
@@ -205,6 +216,24 @@ export class ASTExprVariable extends ASTNode {
   }
 }
 
+export class ASTExprConstantNumber extends ASTNode {
+  constructor(number) {
+    super(N_ExprConstantNumber, [number]);
+  }
+}
+
+export class ASTExprConstantString extends ASTNode {
+  constructor(string) {
+    super(N_ExprConstantString, [string]);
+  }
+}
+
+export class ASTExprList extends ASTNode {
+  constructor(expressions) {
+    super(N_ExprList, expressions);
+  }
+}
+
 export class ASTExprTuple extends ASTNode {
   constructor(expressions) {
     super(N_ExprTuple, expressions);
@@ -212,6 +241,42 @@ export class ASTExprTuple extends ASTNode {
 
   get expressions() {
     return this.children;
+  }
+}
+
+export class ASTExprConstructor extends ASTNode {
+  constructor(constructorName, fieldValues) {
+    super(N_ExprConstructor, [constructorName, fieldValues]);
+  }
+}
+
+export class ASTExprConstructorUpdate extends ASTNode {
+  constructor(constructorName, expr, fieldValues) {
+    super(N_ExprConstructorUpdate, [constructorName, expr, fieldValues]);
+  }
+}
+
+export class ASTFieldValue extends ASTNode {
+  constructor(fieldName, value) {
+    super(N_ExprConstructorFieldValue, [fieldName, value]);
+  }
+}
+
+export class ASTExprAnd extends ASTNode {
+  constructor(constructorName, arg1, arg2) {
+    super(N_ExprAnd, [arg1, arg2]);
+  }
+}
+
+export class ASTExprOr extends ASTNode {
+  constructor(constructorName, arg1, arg2) {
+    super(N_ExprOr, [arg1, arg2]);
+  }
+}
+
+export class ASTExprFunctionCall extends ASTNode {
+  constructor(functionName, args) {
+    super(N_ExprFunctionCall, args);
   }
 }
 

@@ -27,7 +27,7 @@ import {
   ASTStmtRepeat,
   ASTStmtForeach,
   ASTStmtWhile,
-  ASTStmtSwitch, ASTStmtSwitchBranch,
+  ASTStmtSwitch,
   ASTStmtAssignVariable,
   ASTStmtAssignTuple,
   ASTStmtProcedureCall,
@@ -37,8 +37,84 @@ import {
   ASTPatternTuple,
   /* Expressions */
   ASTExprVariable,
+  ASTExprConstantNumber,
+  ASTExprConstantString,
+  ASTExprList,
   ASTExprTuple,
+  ASTExprConstructor,
+  ASTExprConstructorUpdate,
+  ASTExprAnd,
+  ASTExprOr,
+  ASTExprFunctionCall,
+  /* SwitchBranch */
+  ASTSwitchBranch,
+  /* FieldValue */
+  ASTFieldValue,
 } from './ast';
+
+const InfixL = Symbol.for('InfixL');
+const InfixR = Symbol.for('InfixR');
+const Infix = Symbol.for('Infix');
+const Prefix = Symbol.for('Prefix');
+
+class Operator {
+  constructor(tag, functionName) {
+    this._tag = tag;
+    this._functionName = functionName;
+  }
+}
+
+class PrecedenceLevel {
+  constructor(fixity, operators) {
+    this._fixity = fixity;
+    this._operators = operators;
+  }
+}
+
+/* OPERATORS is a list of precedence levels.
+ * Precedence levels are ordered from lesser to greater precedence.
+ */
+const OPERATORS = [
+  /* Logical operators */
+  new PrecedenceLevel(InfixR, [new Operator(T_OR, '||')]),
+  new PrecedenceLevel(InfixR, [new Operator(T_AND, '&&')]),
+  new PrecedenceLevel(Prefix, [new Operator(T_NOT, 'not')]),
+  /* Relational operators */
+  new PrecedenceLevel(Infix, [
+    new Operator(T_EQ, '=='),
+    new Operator(T_NE, '/='),
+    new Operator(T_LE, '<='),
+    new Operator(T_GE, '>='),
+    new Operator(T_LT, '<'),
+    new Operator(T_GT, '>'),
+  ]),
+  /* List concatenation */
+  new PrecedenceLevel(InfixL, [
+    new Operator(T_CONCAT, '++'),
+  ]),
+  /* Additive operators */
+  new PrecedenceLevel(InfixL, [
+    new Operator(T_PLUS, '+'),
+    new Operator(T_MINUS, '-'),
+  ]),
+  /* Multiplicative operators */
+  new PrecedenceLevel(InfixL, [
+    new Operator(T_TIMES, '*'),
+  ]),
+  /* Division operators */
+  new PrecedenceLevel(InfixL, [
+    new Operator(T_DIV, 'div'),
+    new Operator(T_MOD, 'mod'),
+  ]),
+  /* Exponential operators */
+  new PrecedenceLevel(InfixR, [
+    new Operator(T_POW, '^'),
+  ]),
+  /* Unary minus */
+  new PrecedenceLevel(Prefix, [
+    new Operator(T_MINUS, '-(unary)'),
+  ])
+];
 
 /* Represents a parser for a Gobstones/XGobstones program.
  * It is structured as a straightforward recursive-descent parser.
@@ -77,6 +153,8 @@ export class Parser {
       return definitions;
     }
   }
+
+  /** Definitions **/
 
   _parseDefinition() {
     switch (this._currentToken.tag) {
@@ -141,47 +219,6 @@ export class Parser {
     result.startPos = startPos;
     result.endPos = block.endPos;
     return result;
-  }
-
-  /* Generic method to parse a delimited list:
-   *   rightDelimiter: token tag for the right delimiter
-   *   separator: token tag for the separator
-   *   parseElement: function that parses one element */
-  _parseDelimitedList(rightDelimiter, separator, parseElement) {
-    if (this._currentToken.tag === rightDelimiter) {
-      return []; /* Empty case */
-    }
-    var list = [parseElement()];
-    while (this._currentToken.tag === separator) {
-      this._match(separator);
-      list.push(parseElement());
-    }
-    if (this._currentToken.tag !== rightDelimiter) {
-      throw new GbsSyntaxError(
-                  this._currentToken.startPos,
-                  i18n('errmsg:expected-but-found')(
-                    i18n('<alternative>')([
-                      i18n(Symbol.keyFor(separator)),
-                      i18n(Symbol.keyFor(rightDelimiter))
-                    ]),
-                    i18n(Symbol.keyFor(this._currentToken.tag))
-                  )
-                );
-    }
-    return list;
-  }
-
-  _parseLowerid() {
-    var lowerid = this._currentToken;
-    this._match(T_LOWERID);
-    return lowerid;
-  }
-
-  _parseLoweridList() {
-    let self = this;
-    return this._parseDelimitedList(
-             T_RPAREN, T_COMMA, () => self._parseLowerid()
-           );
   }
 
   /** Statements **/
@@ -334,30 +371,12 @@ export class Parser {
       this._match(T_TO);
     }
     this._match(T_LBRACE);
-    var branches = this._parseStmtSwitchBranches();
+    var branches = this._parseSwitchBranches();
     var endPos = this._currentToken.startPos;
     this._match(T_RBRACE);
     var result = new ASTStmtSwitch(subject, branches);
     result.startPos = startPos;
     result.endPos = endPos;
-    return result;
-  }
-
-  _parseStmtSwitchBranches() {
-    var branches = []
-    while (this._currentToken.tag !== T_RBRACE) {
-      branches.push(this._parseStmtSwitchBranch());
-    }
-    return branches;
-  }
-
-  _parseStmtSwitchBranch() {
-    var pattern = this._parsePattern();
-    this._match(T_ARROW);
-    var body = this._parseStmtBlock();
-    var result = new ASTStmtSwitchBranch(pattern, body);
-    result.startPos = pattern.startPos;
-    result.endPos = body.endPos;
     return result;
   }
 
@@ -505,13 +524,46 @@ export class Parser {
   /** Expressions **/
 
   _parseExpression() {
-    // TODO: extend to other expressions
-    var expression = this._currentToken;
-    this._match(T_LOWERID);
-    var result = new ASTExprVariable(expression);
-    result.startPos = expression.startPos;
-    result.endPos = expression.endPos;
-    return result;
+    return this._parseExprAtom();
+  }
+
+  /* Parse an atomic expression.
+   * I.e. all the operators must be surrounded by parentheses */
+  _parseExprAtom() {
+    switch (this._currentToken.tag) {
+      case T_LOWERID:
+        // TODO: function call / field accessor ???
+        var expression = this._currentToken;
+        this._match(T_LOWERID);
+        var result = new ASTExprVariable(expression);
+        result.startPos = expression.startPos;
+        result.endPos = expression.endPos;
+        return result;
+      case T_UPPERID:
+        // constructor with params / without params / constructor update
+        throw Error('TODO');
+      case T_LPAREN:
+        // tuple / non-atomic expression with operators, following the
+        // OPERATORS table
+        throw Error('TODO');
+      case T_NUM:
+        // number constant
+        throw Error('TODO');
+      case T_STRING:
+        // string constant
+        throw Error('TODO');
+      case T_LBRACE:
+        // lists / ranges! [1..10]  [1,2..10]
+        throw Error('TODO');
+      default:
+        throw new GbsSyntaxError(
+                    this._currentToken.startPos,
+                    i18n('errmsg:expected-but-found')(
+                      i18n('expression'),
+                      i18n(Symbol.keyFor(this._currentToken.tag))
+                    )
+                  );
+    }
   }
 
   /* Read a list of expressions separated by commas and delimited
@@ -538,6 +590,26 @@ export class Parser {
     }
     result.startPos = startPos;
     result.endPos = endPos;
+    return result;
+  }
+
+  /** SwitchBranch **/
+
+  _parseSwitchBranches() {
+    var branches = []
+    while (this._currentToken.tag !== T_RBRACE) {
+      branches.push(this._parseSwitchBranch());
+    }
+    return branches;
+  }
+
+  _parseSwitchBranch() {
+    var pattern = this._parsePattern();
+    this._match(T_ARROW);
+    var body = this._parseStmtBlock();
+    var result = new ASTSwitchBranch(pattern, body);
+    result.startPos = pattern.startPos;
+    result.endPos = body.endPos;
     return result;
   }
 
@@ -581,6 +653,47 @@ export class Parser {
                 );
     }
     this._nextToken();
+  }
+
+  /* Generic method to parse a delimited list:
+   *   rightDelimiter: token tag for the right delimiter
+   *   separator: token tag for the separator
+   *   parseElement: function that parses one element */
+  _parseDelimitedList(rightDelimiter, separator, parseElement) {
+    if (this._currentToken.tag === rightDelimiter) {
+      return []; /* Empty case */
+    }
+    var list = [parseElement()];
+    while (this._currentToken.tag === separator) {
+      this._match(separator);
+      list.push(parseElement());
+    }
+    if (this._currentToken.tag !== rightDelimiter) {
+      throw new GbsSyntaxError(
+                  this._currentToken.startPos,
+                  i18n('errmsg:expected-but-found')(
+                    i18n('<alternative>')([
+                      i18n(Symbol.keyFor(separator)),
+                      i18n(Symbol.keyFor(rightDelimiter))
+                    ]),
+                    i18n(Symbol.keyFor(this._currentToken.tag))
+                  )
+                );
+    }
+    return list;
+  }
+
+  _parseLowerid() {
+    var lowerid = this._currentToken;
+    this._match(T_LOWERID);
+    return lowerid;
+  }
+
+  _parseLoweridList() {
+    let self = this;
+    return this._parseDelimitedList(
+             T_RPAREN, T_COMMA, () => self._parseLowerid()
+           );
   }
 
 }

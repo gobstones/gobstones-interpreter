@@ -14,7 +14,7 @@ import {
   ASTStmtRepeat,
   ASTStmtForeach,
   ASTStmtWhile,
-  ASTStmtSwitch, ASTStmtSwitchBranch,
+  ASTStmtSwitch,
   ASTStmtAssignVariable,
   ASTStmtAssignTuple,
   ASTStmtProcedureCall,
@@ -24,7 +24,19 @@ import {
   ASTPatternTuple,
   /* Expressions */
   ASTExprVariable,
+  ASTExprConstantNumber,
+  ASTExprConstantString,
+  ASTExprList,
   ASTExprTuple,
+  ASTExprConstructor,
+  ASTExprConstructorUpdate,
+  ASTExprAnd,
+  ASTExprOr,
+  ASTExprFunctionCall,
+  /* SwitchBranch */
+  ASTSwitchBranch,
+  /* FieldValue */
+  ASTFieldValue,
 } from '../src/ast';
 import { UnknownPosition } from '../src/reader';
 import {
@@ -948,7 +960,7 @@ it('Parser - Switch: wildcard', () => {
         new ASTStmtSwitch(
           new ASTExprVariable(tok(T_LOWERID, 'foo')),
           [
-            new ASTStmtSwitchBranch(
+            new ASTSwitchBranch(
               new ASTPatternWildcard(),
               new ASTStmtBlock([
                 new ASTStmtIf(
@@ -982,28 +994,28 @@ it('Parser - Switch: constructors without arguments', () => {
         new ASTStmtSwitch(
           new ASTExprVariable(tok(T_LOWERID, 'foo')),
           [
-            new ASTStmtSwitchBranch(
+            new ASTSwitchBranch(
               new ASTPatternConstructor(
                 tok(T_UPPERID, 'Norte'),
                 []
               ),
               new ASTStmtBlock([])
             ),
-            new ASTStmtSwitchBranch(
+            new ASTSwitchBranch(
               new ASTPatternConstructor(
                 tok(T_UPPERID, 'Este'),
                 []
               ),
               new ASTStmtBlock([])
             ),
-            new ASTStmtSwitchBranch(
+            new ASTSwitchBranch(
               new ASTPatternConstructor(
                 tok(T_UPPERID, 'Sur'),
                 []
               ),
               new ASTStmtBlock([])
             ),
-            new ASTStmtSwitchBranch(
+            new ASTSwitchBranch(
               new ASTPatternWildcard(),
               new ASTStmtBlock([])
             )
@@ -1032,35 +1044,35 @@ it('Parser - Switch: constructors with arguments', () => {
         new ASTStmtSwitch(
           new ASTExprVariable(tok(T_LOWERID, 'foo')),
           [
-            new ASTStmtSwitchBranch(
+            new ASTSwitchBranch(
               new ASTPatternConstructor(
                 tok(T_UPPERID, 'INIT'),
                 []
               ),
               new ASTStmtBlock([])
             ),
-            new ASTStmtSwitchBranch(
+            new ASTSwitchBranch(
               new ASTPatternConstructor(
                 tok(T_UPPERID, 'Leaf'),
                 [tok(T_LOWERID, 'x')]
               ),
               new ASTStmtBlock([])
             ),
-            new ASTStmtSwitchBranch(
+            new ASTSwitchBranch(
               new ASTPatternConstructor(
                 tok(T_UPPERID, 'Norte'),
                 []
               ),
               new ASTStmtBlock([])
             ),
-            new ASTStmtSwitchBranch(
+            new ASTSwitchBranch(
               new ASTPatternConstructor(
                 tok(T_UPPERID, 'Cons'),
                 [tok(T_LOWERID, 'x'), tok(T_LOWERID, 'xs')]
               ),
               new ASTStmtBlock([])
             ),
-            new ASTStmtSwitchBranch(
+            new ASTSwitchBranch(
               new ASTPatternConstructor(
                 tok(T_UPPERID, 'A'),
                 [
@@ -1095,18 +1107,18 @@ it('Parser - Switch: tuples', () => {
         new ASTStmtSwitch(
           new ASTExprVariable(tok(T_LOWERID, 'foo')),
           [
-            new ASTStmtSwitchBranch(
+            new ASTSwitchBranch(
               new ASTPatternTuple([]),
               new ASTStmtBlock([])
             ),
-            new ASTStmtSwitchBranch(
+            new ASTSwitchBranch(
               new ASTPatternTuple([
                 tok(T_LOWERID, 'x'),
                 tok(T_LOWERID, 'y'),
               ]),
               new ASTStmtBlock([])
             ),
-            new ASTStmtSwitchBranch(
+            new ASTSwitchBranch(
               new ASTPatternTuple([
                 tok(T_LOWERID, 'foo'),
                 tok(T_LOWERID, 'bar'),
@@ -1114,7 +1126,7 @@ it('Parser - Switch: tuples', () => {
               ]),
               new ASTStmtBlock([])
             ),
-            new ASTStmtSwitchBranch(
+            new ASTSwitchBranch(
               new ASTPatternWildcard(),
               new ASTStmtBlock([])
             )
@@ -1406,7 +1418,7 @@ it('Parser - Procedure call: reject if missing right parenthesis', () => {
                );
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
-      i18n('T_LOWERID'),
+      i18n('expression'),
       i18n('T_RBRACE')
     )
   );

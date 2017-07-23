@@ -66,6 +66,7 @@ const ES = {
   'pattern':
     'un patrón (comodín "_", constructor aplicado a variables, o tupla)',
   'statement': 'un comando',
+  'expression': 'una expresión',
   'T_EOF': 'el final del archivo',
   'T_NUM': 'un número',
   'T_STRING': 'una cadena (string)',
