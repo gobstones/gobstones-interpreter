@@ -10,6 +10,7 @@
 \newcommand{\symbolentry}[3]{#1 & #2 && #3 \\}
 \newcommand{\nb}[1]{\footnotesize{#1}}
 \newcommand{\s}[1]{\textcolor{blue}{{\it$\langle$#1$\rangle$}}}
+\newcommand{\nonEmpty}[1]{#1$_{1}$}
 \newcommand{\produccion}[2]{
   \noindent
   \begin{tabularx}{\textwidth}{lrlr}
@@ -215,25 +216,25 @@ en las producciones, sino por fuera.
 }
 
 \produccion{\s{defProcedure}}{
-  \tok{PROCEDURE} \tok{LPAREN} \s{parameterList} \tok{RPAREN} \s{stmtBlock}
+  \tok{PROCEDURE} \tok{LPAREN} \s{loweridList} \tok{RPAREN} \s{stmtBlock}
 }
 
 \produccion{\s{defFunction}}{
-  \tok{FUNCTION} \tok{LPAREN} \s{parameterList} \tok{RPAREN} \s{stmtBlock}
+  \tok{FUNCTION} \tok{LPAREN} \s{loweridList} \tok{RPAREN} \s{stmtBlock}
 }
 
 \produccion{\s{defType}}{
   \TODO{TODO}
 }
 
-\produccion{\s{parameterList}}{
+\produccion{\s{loweridList}}{
   \EMPTY
 \ALT
-  \s{nonEmptyParameterList}
+  \s{\nonEmpty{loweridList}}
 }
 
-\produccion{\s{nonEmptyParameterList}}{
-  \tok{LOWERID} (\tok{COMMA} \s{nonEmptyParameterList})?
+\produccion{\s{\nonEmpty{loweridList}}}{
+  \tok{LOWERID} (\tok{COMMA} \s{\nonEmpty{loweridList}})?
 }
 
 \noindent {\bf Statements.}
@@ -307,22 +308,30 @@ en las producciones, sino por fuera.
 }
 
 \produccion{\s{patternConstructor}}{
-  \tok{UPPERID} (\tok{LPAREN} \s{parameterList} \tok{RPAREN})?
+  \tok{UPPERID} (\tok{LPAREN} \s{loweridList} \tok{RPAREN})?
 }
 
 \produccion{\s{patternTuple}}{
   \tok{LPAREN} \tok{RPAREN}
 \ALT
-  \tok{LPAREN} \tok{LOWERID} \tok{COMMA} \s{nonEmptyParameterList} \tok{RPAREN}
+  \tok{LPAREN} \tok{LOWERID} \tok{COMMA} \s{\nonEmpty{loweridList}} \tok{RPAREN}
 }
 
 
 \produccion{\s{stmtLet}}{
-  \TODO{TODO}
+  \tok{LET} \s{stmtVariableAssignment}
+\ALT
+  \tok{LET} \s{stmtTupleAssignment}
 }
 
 \produccion{\s{stmtVariableAssignment}}{
-  \TODO{TODO}
+  \tok{LOWERID} \tok{ASSIGN} \s{expression}
+}
+
+\produccion{\s{stmtTupleAssignment}}{
+  \tok{LPAREN} \tok{RPAREN} \tok{ASSIGN} \s{expression}
+\ALT
+  \tok{LPAREN} \tok{LOWERID} \tok{COMMA} \s{\nonEmpty{loweridList}} \tok{RPAREN} \tok{ASSIGN} \s{expression}
 }
 
 \produccion{\s{stmtProcedureCall}}{
@@ -342,11 +351,11 @@ en las producciones, sino por fuera.
 \produccion{\s{expressionList}}{
   \EMPTY
 \ALT
-  \s{nonEmptyExpressionList}
+  \s{\nonEmpty{expressionList}}
 }
 
-\produccion{\s{nonEmptyExpressionList}}{
-  \s{expression} (\tok{COMMA} \s{nonEmptyExpressionList})?
+\produccion{\s{\nonEmpty{expressionList}}}{
+  \s{expression} (\tok{COMMA} \s{\nonEmpty{expressionList}})?
 }
 
 

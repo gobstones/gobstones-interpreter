@@ -13,7 +13,8 @@ export const N_StmtForeach = Symbol.for('N_StmtForeach');
 export const N_StmtWhile = Symbol.for('N_StmtWhile');
 export const N_StmtSwitch = Symbol.for('N_StmtSwitch');
 export const N_StmtSwitchBranch = Symbol.for('N_StmtSwitchBranch');
-export const N_StmtLet = Symbol.for('N_StmtLet');
+export const N_StmtAssignVariable = Symbol.for('N_StmtAssignVariable');
+export const N_StmtAssignTuple = Symbol.for('N_StmtAssignTuple');
 export const N_StmtProcedureCall = Symbol.for('N_StmtProcedureCall');
 /* Patterns */
 export const N_PatternWildcard = Symbol.for('N_PatternWildcard');
@@ -80,8 +81,8 @@ export class ASTDefProgram extends ASTNode {
 }
 
 export class ASTDefProcedure extends ASTNode {
-  constructor(name, parameterList, body) {
-    super(N_DefProcedure, [name, parameterList, body]);
+  constructor(name, parameters, body) {
+    super(N_DefProcedure, [name, parameters, body]);
   }
 
   get body() {
@@ -90,8 +91,8 @@ export class ASTDefProcedure extends ASTNode {
 }
 
 export class ASTDefFunction extends ASTNode {
-  constructor(name, parameterList, body) {
-    super(N_DefFunction, [name, parameterList, body]);
+  constructor(name, parameters, body) {
+    super(N_DefFunction, [name, parameters, body]);
   }
 
   get body() {
@@ -158,9 +159,15 @@ export class ASTStmtSwitchBranch extends ASTNode {
   }
 }
 
-export class ASTStmtLet extends ASTNode {
-  constructor(lhs, condition) {
-    super(N_StmtLet, [lhs, expression]);
+export class ASTStmtAssignVariable extends ASTNode {
+  constructor(variable, expression) {
+    super(N_StmtAssignVariable, [variable, expression]);
+  }
+}
+
+export class ASTStmtAssignTuple extends ASTNode {
+  constructor(variables, expression) {
+    super(N_StmtAssignTuple, [variables, expression]);
   }
 }
 

@@ -28,7 +28,8 @@ import {
   ASTStmtForeach,
   ASTStmtWhile,
   ASTStmtSwitch, ASTStmtSwitchBranch,
-  ASTStmtLet,
+  ASTStmtAssignVariable,
+  ASTStmtAssignTuple,
   ASTStmtProcedureCall,
   /* Patterns */
   ASTPatternWildcard,
@@ -118,10 +119,10 @@ export class Parser {
     var name = this._currentToken;
     this._match(T_UPPERID);
     this._match(T_LPAREN);
-    var parameterList = this._parseParameterList();
+    var parameters = this._parseLoweridList();
     this._match(T_RPAREN);
     var block = this._parseStmtBlock();
-    var result = new ASTDefProcedure(name, parameterList, block);
+    var result = new ASTDefProcedure(name, parameters, block);
     result.startPos = startPos;
     result.endPos = block.endPos;
     return result;
@@ -133,10 +134,10 @@ export class Parser {
     var name = this._currentToken;
     this._match(T_LOWERID);
     this._match(T_LPAREN);
-    var parameterList = this._parseParameterList();
+    var parameters = this._parseLoweridList();
     this._match(T_RPAREN);
     var block = this._parseStmtBlock();
-    var result = new ASTDefFunction(name, parameterList, block);
+    var result = new ASTDefFunction(name, parameters, block);
     result.startPos = startPos;
     result.endPos = block.endPos;
     return result;
@@ -170,16 +171,16 @@ export class Parser {
     return list;
   }
 
-  _parseParameter() {
-    var parameter = this._currentToken;
+  _parseLowerid() {
+    var lowerid = this._currentToken;
     this._match(T_LOWERID);
-    return parameter;
+    return lowerid;
   }
 
-  _parseParameterList() {
+  _parseLoweridList() {
     let self = this;
     return this._parseDelimitedList(
-             T_RPAREN, T_COMMA, () => self._parseParameter()
+             T_RPAREN, T_COMMA, () => self._parseLowerid()
            );
   }
 
@@ -210,12 +211,11 @@ export class Parser {
       case T_SWITCH:
         return this._parseStmtSwitch();
       case T_LET:
-        throw Error('TODO');
+        return this._parseStmtLet();
       case T_LBRACE:
         return this._parseStmtBlock();
       case T_LOWERID:
-        // variable assignment
-        throw Error('TODO');
+        return this._parseStmtAssignVariable();
       case T_UPPERID:
         // procedure call
         throw Error('TODO');
@@ -362,6 +362,63 @@ export class Parser {
     return result;
   }
 
+  _parseStmtLet() {
+    var startPos = this._currentToken.startPos;
+    this._match(T_LET);
+    var result;
+    if (this._currentToken.tag == T_LOWERID) {
+      result = this._parseStmtAssignVariable();
+    } else if (this._currentToken.tag == T_LPAREN) {
+      result = this._parseStmtAssignTuple();
+    } else {
+      throw new GbsSyntaxError(
+        this._currentToken.startPos,
+        i18n('errmsg:expected-but-found')(
+          i18n('<alternative>')(
+            i18n('T_LOWERID'),
+            i18n('T_LPAREN')
+          ),
+          i18n(Symbol.keyfor(this._currentToken.tag))
+        )
+      );
+    }
+    result.startPos = startPos;
+    return result;
+  }
+
+  _parseStmtAssignVariable() {
+    var startPos = this._currentToken.startPos;
+    var variable = this._currentToken;
+    this._match(T_LOWERID);
+    this._match(T_ASSIGN);
+    var expression = this._parseExpression();
+    let result = new ASTStmtAssignVariable(variable, expression);
+    result.startPos = startPos;
+    result.endPos = expression.endPos;
+    return result;
+  }
+
+  _parseStmtAssignTuple() {
+    var startPos = this._currentToken.startPos;
+    this._match(T_LPAREN);
+    var variables = this._parseLoweridList();
+    if (variables.length === 1) {
+      throw new GbsSyntaxError(
+        this._currentToken.startPos,
+        i18n('errmsg:assignment-tuple-cannot-be-singleton')
+      );
+    }
+    this._match(T_RPAREN);
+    this._match(T_ASSIGN);
+    var expression = this._parseExpression();
+    let result = new ASTStmtAssignTuple(variables, expression);
+    result.startPos = startPos;
+    result.endPos = expression.endPos;
+    return result;
+  }
+
+  /** Patterns **/
+
   _parsePattern() {
     if (this._currentToken.tag === T_UNDERSCORE) {
       return this._parsePatternWildcard();
@@ -398,7 +455,7 @@ export class Parser {
     var parameters;
     if (this._currentToken.tag === T_LPAREN) {
       this._match(T_LPAREN);
-      parameters = this._parseParameterList();
+      parameters = this._parseLoweridList();
       endPos = this._currentToken.startPos;
       this._match(T_RPAREN);
     } else {
@@ -413,7 +470,7 @@ export class Parser {
   _parsePatternTuple() {
     var startPos = this._currentToken.startPos;
     this._match(T_LPAREN);
-    var parameters = this._parseParameterList();
+    var parameters = this._parseLoweridList();
     if (parameters.length === 1) {
       throw new GbsSyntaxError(
         this._currentToken.startPos,

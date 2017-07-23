@@ -15,7 +15,8 @@ import {
   ASTStmtForeach,
   ASTStmtWhile,
   ASTStmtSwitch, ASTStmtSwitchBranch,
-  ASTStmtLet,
+  ASTStmtAssignVariable,
+  ASTStmtAssignTuple,
   ASTStmtProcedureCall,
   /* Patterns */
   ASTPatternWildcard,
@@ -1124,7 +1125,7 @@ it('Parser - Switch: tuples', () => {
   ]);
 });
 
-it('Parser - Switch: reject singleton tuple', () => {
+it('Parser - Switch: reject singleton tuple pattern', () => {
   var parser = new Parser(
                  'program {' +
                  '  switch (foo) {' +
@@ -1197,5 +1198,158 @@ it('Parser - Switch: keep track of positions', () => {
   expect(tree[0].body.statements[0].startPos.column).equals(3);
   expect(tree[0].body.statements[0].endPos.line).equals(4);
   expect(tree[0].body.statements[0].endPos.column).equals(3);
+});
+
+it('Parser - Let: variable assignment', () => {
+  var parser = new Parser(
+                 'program {' +
+                 '  let foo := bar' +
+                 '  let bar := baz' +
+                 '}\n'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefProgram(
+      new ASTStmtBlock([
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'foo'),
+          new ASTExprVariable(tok(T_LOWERID, 'bar')),
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'bar'),
+          new ASTExprVariable(tok(T_LOWERID, 'baz')),
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - Let: nullary tuple assignment', () => {
+  var parser = new Parser(
+                 'program {' +
+                 '  let () := bar' +
+                 '}\n'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefProgram(
+      new ASTStmtBlock([
+        new ASTStmtAssignTuple(
+          [],
+          new ASTExprVariable(tok(T_LOWERID, 'bar')),
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - Let: tuple assignment', () => {
+  var parser = new Parser(
+                 'program {' +
+                 '  let (x,y) := bar2' +
+                 '  let (x,y,z) := bar3' +
+                 '  let (x1,x2,x3,x4) := bar4' +
+                 '}\n'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefProgram(
+      new ASTStmtBlock([
+        new ASTStmtAssignTuple(
+          [
+            tok(T_LOWERID, 'x'),
+            tok(T_LOWERID, 'y'),
+          ],
+          new ASTExprVariable(tok(T_LOWERID, 'bar2')),
+        ),
+        new ASTStmtAssignTuple(
+          [
+            tok(T_LOWERID, 'x'),
+            tok(T_LOWERID, 'y'),
+            tok(T_LOWERID, 'z')
+          ],
+          new ASTExprVariable(tok(T_LOWERID, 'bar3')),
+        ),
+        new ASTStmtAssignTuple(
+          [
+            tok(T_LOWERID, 'x1'),
+            tok(T_LOWERID, 'x2'),
+            tok(T_LOWERID, 'x3'),
+            tok(T_LOWERID, 'x4')
+          ],
+          new ASTExprVariable(tok(T_LOWERID, 'bar4')),
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - Let: reject singleton tuple assignment', () => {
+  var parser = new Parser(
+                 'program {' +
+                 '  let (foo) := bar' +
+                 '}'
+               );
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:assignment-tuple-cannot-be-singleton')
+  );
+});
+
+it('Parser - Let: keep track of positions', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  let foo := bar\n' +
+                 '  let (foo, bar) := baz\n' +
+                 '}\n'
+               );
+  var tree = parser.parse();
+  expect(tree[0].body.statements.length).equals(2);
+  expect(tree[0].body.statements[0].startPos.line).equals(2);
+  expect(tree[0].body.statements[0].startPos.column).equals(3);
+  expect(tree[0].body.statements[0].endPos.line).equals(2);
+  expect(tree[0].body.statements[0].endPos.column).equals(17);
+  expect(tree[0].body.statements[1].startPos.line).equals(3);
+  expect(tree[0].body.statements[1].startPos.column).equals(3);
+  expect(tree[0].body.statements[1].endPos.line).equals(3);
+  expect(tree[0].body.statements[1].endPos.column).equals(24);
+});
+
+it('Parser - Variable assignment', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  a := b\n' +
+                 '  b := c\n' +
+                 '  c := d\n' +
+                 '}\n'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefProgram(
+      new ASTStmtBlock([
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'a'), new ASTExprVariable(tok(T_LOWERID, 'b'))
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'b'), new ASTExprVariable(tok(T_LOWERID, 'c'))
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'c'), new ASTExprVariable(tok(T_LOWERID, 'd'))
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - Variable assignment: keep track of positions', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  /**/\n' +
+                 '  /**/foo\n' +
+                 '  := bar/**/\n' +
+                 '  /**/\n' +
+                 '}\n'
+               );
+  var tree = parser.parse();
+  expect(tree[0].body.statements.length).equals(1);
+  expect(tree[0].body.statements[0].startPos.line).equals(3);
+  expect(tree[0].body.statements[0].startPos.column).equals(7);
+  expect(tree[0].body.statements[0].endPos.line).equals(4);
+  expect(tree[0].body.statements[0].endPos.column).equals(9);
 });
 

@@ -45,6 +45,10 @@ const ES = {
     'El patrón para una tupla no puede tener una sola componente.\n' +
     'Las tuplas tienen 0, 2, 3, o más componentes, pero no 1.',
 
+  'errmsg:assignment-tuple-cannot-be-singleton':
+    'La asignación a una tupla no puede constar de una sola componente.\n' +
+    'Las tuplas tienen 0, 2, 3, o más componentes, pero no 1.',
+
   '<alternative>':
     function (strings) {
       return 'alguna de las siguientes alternativas:\n'
