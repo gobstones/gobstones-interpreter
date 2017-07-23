@@ -12,7 +12,12 @@ const ES = {
     'La comilla que abre no tiene una comilla que cierra correspondiente.',
 
   'errmsg:numeric-constant-should-not-have-leading-zeroes':
-    'Las constantes numéricas no se pueden escribir con ceros a la izquierda.',
+    'Las constantes numéricas no se pueden escribir con ceros a la ' +
+    'izquierda.',
+
+  'errmsg:identifier-must-start-with-alphabetic-character':
+    'Los identificadores deben empezar con un caracter alfabético ' +
+    '(a...z,A...Z).',
 
   'errmsg:unknown-token':
     function (symbol) {

@@ -32,7 +32,7 @@
 \chr{\textbackslash n} (\texttt{LF}, chr 10),
 \chr{\textbackslash r} (\texttt{CR}, chr 13),
 \chr{\,} (\texttt{SPACE}, chr 32).
-\item Se admiten comentarios comenzados por \str{//} y por \str{--} que se extienden hasta el fin de l\'inea (\texttt{LF}).
+\item Se admiten comentarios comenzados por \str{//} (estilo C++), por \str{--} (estilo Haskell) y por \str{\#} (estilo shell) que se extienden hasta el fin de l\'inea (\texttt{LF}).
 \item Se admiten comentarios delimitados por \str{/*} \str{*/} y por \str{\{-} \str{-\}} que pueden anidarse.
 \item El tokenizador reconoce directivas {\em pragma} de la forma \str{/*@parte$_1$@parte$_2$@...@parte$_n$@*/}. La idea es que esto pueda ser un mecanismo extensible de directivas. Ver m\'as abajo las directivas soportadas.
 \end{itemize}
@@ -45,8 +45,8 @@ Todos los s\'imbolos terminales se acompa\~nan de su nombre \tok{EN\_MAYUSCULAS}
 \noindent{\bf Identificadores y constantes}\medskip\\
 \begin{tabularx}{\textwidth}{llXp{4cm}}
 \symbolentry{\texttt{0|[1-9][0-9]*}}{\tok{NUM}}{\nb{Constante num\'erica (sin ceros a la izquierda).}}
-\symbolentry{\texttt{[a-z][\_a-zA-Z0-9]*}}{\tok{LOWERID}}{\nb{Identificador en min\'uscula: \'indices, par\'ametros, funciones, variables, campos.}}
-\symbolentry{\texttt{[A-Z][\_a-zA-Z0-9]*}}{\tok{UPPERID}}{\nb{Identificador en may\'uscula: constructores, procedimientos, tipos.}}
+\symbolentry{\texttt{[a-z][\_a-zA-Z0-9']*}}{\tok{LOWERID}}{\nb{Identificador en min\'uscula: \'indices, par\'ametros, funciones, variables, campos.}}
+\symbolentry{\texttt{[A-Z][\_a-zA-Z0-9']*}}{\tok{UPPERID}}{\nb{Identificador en may\'uscula: constructores, procedimientos, tipos.}}
 \symbolentry{\texttt{"(\textbackslash{a}|\textbackslash{b}|\textbackslash{f}|\textbackslash{n}|\textbackslash{r}|\textbackslash{t}|\textbackslash{v}|\textbackslash\textbackslash|\textbackslash"|[\^{}\textbackslash"])*"}}{\tok{STRING}}{\nb{Constante de cadena.}}
 \end{tabularx}
 \medskip

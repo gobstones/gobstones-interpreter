@@ -39,7 +39,7 @@ function isAlpha(chr) {
 }
 
 function isIdent(chr) {
-  return isAlpha(chr) || isDigit(chr) || chr === '_';
+  return isAlpha(chr) || isDigit(chr) || chr === '_' || chr == "'";
 }
 
 const KEYWORDS = {
@@ -229,8 +229,13 @@ export class Lexer {
         return new Token(KEYWORDS[value], value, startPos, endPos);
       } else if (isUpper(value[0])) {
         return new Token(T_UPPERID, value, startPos, endPos);
-      } else {
+      } else if (isLower(value[0])) {
         return new Token(T_LOWERID, value, startPos, endPos);
+      } else {
+        throw new GbsSyntaxError(
+          startPos,
+          i18n('errmsg:identifier-must-start-with-alphabetic-character')
+        );
       }
     } else if (this._reader.peek() === '"') {
       return this._readStringConstant();
@@ -381,7 +386,8 @@ export class Lexer {
   /* Returns true if a single-line comment starts here */
   _startSingleLineComment() {
     return this._reader.startsWith('--')
-        || this._reader.startsWith('//');
+        || this._reader.startsWith('//')
+        || this._reader.startsWith('#');
   }
 
   /* Skips a single-line comment */

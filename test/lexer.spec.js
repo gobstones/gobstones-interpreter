@@ -111,7 +111,6 @@ it('Lexer - Reject other constants with leading zeroes', () => {
   );
 });
 
-
 it('Lexer - C-style single line comments', () => {
   var lexer = new Lexer('// 1 2 3 ñácate\n 4  5 // 6\n 7 // 8 9');
   expectTokens(lexer, [
@@ -125,6 +124,16 @@ it('Lexer - Haskell-style single line comments', () => {
     [T_NUM, '10'], [T_NUM, '30'], [T_EOF, null]
   ]);
 });
+
+it('Lexer - Shell-style single line comments', () => {
+  var lexer = new Lexer('1 2 3 # 4 5 6\n10 20 30 # 40 50 60');
+  expectTokens(lexer, [
+    [T_NUM, '1'], [T_NUM, '2'], [T_NUM, '3'],
+    [T_NUM, '10'], [T_NUM, '20'], [T_NUM, '30'],
+    [T_EOF, null]
+  ]);
+});
+
 
 it('Lexer - C-style multiline comments', () => {
   var lexer = new Lexer('1 2 /*3 4 \n\n\nññfsdalkfaf\n 5 6*/ 7 8 /*9*/ 10');
@@ -318,11 +327,15 @@ it('Lexer - Pragma BEGIN_REGION .. END_REGION', () => {
 });
 
 it('Lexer - Identifiers', () => {
-  var lexer = new Lexer('x x42 Poner PonerN Mover nroBolitas Rojo a_b_c');
+  var lexer = new Lexer(
+                "x x' x42 Poner Poner' PonerN Mover nroBolitas Rojo a_b_c"
+              );
   expectTokens(lexer, [
     [T_LOWERID, 'x'],
+    [T_LOWERID, "x'"],
     [T_LOWERID, 'x42'],
     [T_UPPERID, 'Poner'],
+    [T_UPPERID, "Poner'"],
     [T_UPPERID, 'PonerN'],
     [T_UPPERID, 'Mover'],
     [T_LOWERID, 'nroBolitas'],
@@ -330,6 +343,13 @@ it('Lexer - Identifiers', () => {
     [T_LOWERID, 'a_b_c'],
     [T_EOF, null]
   ]);
+});
+
+it('Lexer - Reject identifier started with single quote', () => {
+  var lexer = new Lexer("'hola");
+  expect(() => lexer.nextToken()).throws(
+    i18n('errmsg:identifier-must-start-with-alphabetic-character')
+  );
 });
 
 it('Lexer - Keywords', () => {
