@@ -266,7 +266,7 @@ en las producciones, sino por fuera.
 }
 
 \produccion{\s{stmtReturn}}{
-  \tok{RETURN} \s{exprTuple}
+  \tok{RETURN} \tok{LPAREN} \s{expressionList} \tok{RPAREN}
 }
 
 \produccion{\s{stmtIf}}{
@@ -295,6 +295,28 @@ en las producciones, sino por fuera.
   \s{pattern} \tok{ARROW} \s{stmtBlock}
 }
 
+\produccion{\s{stmtLet}}{
+  \tok{LET} \s{stmtVariableAssignment}
+\ALT
+  \tok{LET} \s{stmtTupleAssignment}
+}
+
+\produccion{\s{stmtVariableAssignment}}{
+  \tok{LOWERID} \tok{ASSIGN} \s{expression}
+}
+
+\produccion{\s{stmtTupleAssignment}}{
+  \tok{LPAREN} \tok{RPAREN} \tok{ASSIGN} \s{expression}
+\ALT
+  \tok{LPAREN} \tok{LOWERID} \tok{COMMA} \s{\nonEmpty{loweridList}} \tok{RPAREN} \tok{ASSIGN} \s{expression}
+}
+
+\produccion{\s{stmtProcedureCall}}{
+  \tok{UPPERID} \tok{LPAREN} \s{expressionList} \tok{RPAREN}
+}
+
+\noindent {\bf Patterns.}
+
 \produccion{\s{pattern}}{
   \s{patternWildcard}
 \ALT
@@ -315,27 +337,6 @@ en las producciones, sino por fuera.
   \tok{LPAREN} \tok{RPAREN}
 \ALT
   \tok{LPAREN} \tok{LOWERID} \tok{COMMA} \s{\nonEmpty{loweridList}} \tok{RPAREN}
-}
-
-
-\produccion{\s{stmtLet}}{
-  \tok{LET} \s{stmtVariableAssignment}
-\ALT
-  \tok{LET} \s{stmtTupleAssignment}
-}
-
-\produccion{\s{stmtVariableAssignment}}{
-  \tok{LOWERID} \tok{ASSIGN} \s{expression}
-}
-
-\produccion{\s{stmtTupleAssignment}}{
-  \tok{LPAREN} \tok{RPAREN} \tok{ASSIGN} \s{expression}
-\ALT
-  \tok{LPAREN} \tok{LOWERID} \tok{COMMA} \s{\nonEmpty{loweridList}} \tok{RPAREN} \tok{ASSIGN} \s{expression}
-}
-
-\produccion{\s{stmtProcedureCall}}{
-  \TODO{TODO}
 }
 
 \noindent {\bf Expressions.}

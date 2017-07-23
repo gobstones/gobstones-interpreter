@@ -1353,3 +1353,90 @@ it('Parser - Variable assignment: keep track of positions', () => {
   expect(tree[0].body.statements[0].endPos.column).equals(9);
 });
 
+it('Parser - Procedure call', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  VaciarTablero()\n' +
+                 '  Mover(dir)\n' +
+                 '  PonerN(n, col)\n' +
+                 '  Q (a,b,c,d)\n' +
+                 '}\n'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefProgram(
+      new ASTStmtBlock([
+        new ASTStmtProcedureCall(tok(T_UPPERID, 'VaciarTablero'), []),
+        new ASTStmtProcedureCall(tok(T_UPPERID, 'Mover'), [
+          new ASTExprVariable(tok(T_LOWERID, 'dir'))
+        ]),
+        new ASTStmtProcedureCall(tok(T_UPPERID, 'PonerN'), [
+          new ASTExprVariable(tok(T_LOWERID, 'n')),
+          new ASTExprVariable(tok(T_LOWERID, 'col'))
+        ]),
+        new ASTStmtProcedureCall(tok(T_UPPERID, 'Q'), [
+          new ASTExprVariable(tok(T_LOWERID, 'a')),
+          new ASTExprVariable(tok(T_LOWERID, 'b')),
+          new ASTExprVariable(tok(T_LOWERID, 'c')),
+          new ASTExprVariable(tok(T_LOWERID, 'd'))
+        ])
+      ])
+    )
+  ]);
+});
+
+it('Parser - Procedure call: reject if missing left parenthesis', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  P\n' +
+                 '}\n'
+               );
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:expected-but-found')(
+      i18n('T_LPAREN'),
+      i18n('T_RBRACE')
+    )
+  );
+});
+
+it('Parser - Procedure call: reject if missing right parenthesis', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  P(\n' +
+                 '}\n'
+               );
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:expected-but-found')(
+      i18n('T_LOWERID'),
+      i18n('T_RBRACE')
+    )
+  );
+});
+
+it('Parser - Procedure call: keep track of positions', () => {
+  var parser = new Parser('program{P(a,a,a)}');
+  var tree = parser.parse();
+  expect(tree[0].body.statements.length).equals(1);
+  expect(tree[0].body.statements[0].startPos.line).equals(1);
+  expect(tree[0].body.statements[0].startPos.column).equals(9);
+  expect(tree[0].body.statements[0].endPos.line).equals(1);
+  expect(tree[0].body.statements[0].endPos.column).equals(16);
+});
+
+it('Parser - Allow semicolon as statement separator', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  P();Q();R();S()\n' +
+                 '}'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefProgram(
+      new ASTStmtBlock([
+        new ASTStmtProcedureCall(tok(T_UPPERID, 'P'), []),
+        new ASTStmtProcedureCall(tok(T_UPPERID, 'Q'), []),
+        new ASTStmtProcedureCall(tok(T_UPPERID, 'R'), []),
+        new ASTStmtProcedureCall(tok(T_UPPERID, 'S'), [])
+      ])
+    )
+  ]);
+});
+

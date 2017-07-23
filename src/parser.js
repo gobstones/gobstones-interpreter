@@ -217,8 +217,7 @@ export class Parser {
       case T_LOWERID:
         return this._parseStmtAssignVariable();
       case T_UPPERID:
-        // procedure call
-        throw Error('TODO');
+        return this._parseStmtProcedureCall();
       default:
         throw new GbsSyntaxError(
                     this._currentToken.startPos,
@@ -414,6 +413,24 @@ export class Parser {
     let result = new ASTStmtAssignTuple(variables, expression);
     result.startPos = startPos;
     result.endPos = expression.endPos;
+    return result;
+  }
+
+  _parseStmtProcedureCall() {
+    var startPos = this._currentToken.startPos;
+    var procedureName = this._currentToken;
+    this._match(T_UPPERID);
+    this._match(T_LPAREN);
+    let self = this;
+    var args = this._parseDelimitedList(
+                 T_RPAREN, T_COMMA,
+                 () => self._parseExpression()
+               );
+    var endPos = this._currentToken.startPos;
+    this._match(T_RPAREN);
+    var result = new ASTStmtProcedureCall(procedureName, args);
+    result.startPos = startPos;
+    result.endPos = endPos;
     return result;
   }
 
