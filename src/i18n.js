@@ -12,12 +12,12 @@ const ES = {
     'La comilla que abre no tiene una comilla que cierra correspondiente.',
 
   'errmsg:numeric-constant-should-not-have-leading-zeroes':
-    'Las constantes numéricas no se pueden escribir con ceros a la ' +
-    'izquierda.',
+    'Las constantes numéricas no se pueden escribir con ceros a la '
+   + 'izquierda.',
 
   'errmsg:identifier-must-start-with-alphabetic-character':
-    'Los identificadores deben empezar con un caracter alfabético ' +
-    '(a...z,A...Z).',
+    'Los identificadores deben empezar con un caracter alfabético '
+   + '(a...z,A...Z).',
 
   'errmsg:unknown-token':
     function (symbol) {
@@ -42,17 +42,17 @@ const ES = {
 
   'errmsg:expected-but-found':
     function (expected, found) {
-      return 'Se esperaba ' + expected + '.\n' +
-             'Se encontró: ' + found + '.';
+      return 'Se esperaba ' + expected + '.\n'
+           + 'Se encontró: ' + found + '.';
     },
 
   'errmsg:pattern-tuple-cannot-be-singleton':
-    'El patrón para una tupla no puede tener una sola componente.\n' +
-    'Las tuplas tienen 0, 2, 3, o más componentes, pero no 1.',
+    'El patrón para una tupla no puede tener una sola componente.\n'
+  + 'Las tuplas tienen 0, 2, 3, o más componentes, pero no 1.',
 
   'errmsg:assignment-tuple-cannot-be-singleton':
-    'La asignación a una tupla no puede constar de una sola componente.\n' +
-    'Las tuplas tienen 0, 2, 3, o más componentes, pero no 1.',
+    'La asignación a una tupla no puede constar de una sola componente.\n'
+  + 'Las tuplas tienen 0, 2, 3, o más componentes, pero no 1.',
 
   '<alternative>':
     function (strings) {

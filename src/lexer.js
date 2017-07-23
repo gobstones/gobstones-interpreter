@@ -39,7 +39,7 @@ function isAlpha(chr) {
 }
 
 function isIdent(chr) {
-  return isAlpha(chr) || isDigit(chr) || chr === '_' || chr == "'";
+  return isAlpha(chr) || isDigit(chr) || chr === '_' || chr === "'";
 }
 
 const KEYWORDS = {
