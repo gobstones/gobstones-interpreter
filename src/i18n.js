@@ -54,12 +54,6 @@ const ES = {
     'La asignación a una tupla no puede constar de una sola componente.\n'
   + 'Las tuplas tienen 0, 2, 3, o más componentes, pero no 1.',
 
-  '<alternative>':
-    function (strings) {
-      return 'alguna de las siguientes alternativas:\n'
-           + strings.map(s => '  ' + s).join('\n');
-    },
-
   /* Descriptions of syntactic constructions and tokens */
   'definition':
     'una definición (de programa, función, procedimiento, o tipo)',
@@ -67,6 +61,8 @@ const ES = {
     'un patrón (comodín "_", constructor aplicado a variables, o tupla)',
   'statement': 'un comando',
   'expression': 'una expresión',
+  'procedure call': 'una invocación a un procedimiento',
+  'field name': 'el nombre de un campo',
   'T_EOF': 'el final del archivo',
   'T_NUM': 'un número',
   'T_STRING': 'una cadena (string)',
@@ -123,6 +119,13 @@ const ES = {
   'T_MINUS': 'el operador de resta ("-")',
   'T_TIMES': 'el operador de producto ("*")',
   'T_POW': 'el operador de potencia ("^")',
+
+  /* Helpers */
+  '<alternative>':
+    function (strings) {
+      return 'alguna de las siguientes alternativas:\n'
+           + strings.map(s => '  ' + s).join('\n');
+    },
 };
 
 var language = 'ES';

@@ -50,6 +50,8 @@ import {
   ASTSwitchBranch,
   /* FieldValue */
   ASTFieldValue,
+  //
+  N_ExprVariable,
 } from './ast';
 
 const InfixL = Symbol.for('InfixL');
@@ -337,8 +339,7 @@ export class Parser {
   _parseStmtForeach() {
     var startPos = this._currentToken.startPos;
     this._match(T_FOREACH);
-    var index = this._currentToken;
-    this._match(T_LOWERID);
+    var index = this._parseLowerid();
     this._match(T_IN);
     var range = this._parseExpression();
     var body = this._parseStmtBlock();
@@ -405,14 +406,12 @@ export class Parser {
   }
 
   _parseStmtAssignVariable() {
-    var startPos = this._currentToken.startPos;
-    var variable = this._currentToken;
-    this._match(T_LOWERID);
+    var variable = this._parseLowerid();
     this._match(T_ASSIGN);
-    var expression = this._parseExpression();
-    let result = new ASTStmtAssignVariable(variable, expression);
-    result.startPos = startPos;
-    result.endPos = expression.endPos;
+    var value = this._parseExpression();
+    let result = new ASTStmtAssignVariable(variable, value);
+    result.startPos = variable.startPos;
+    result.endPos = value.endPos;
     return result;
   }
 
@@ -428,17 +427,15 @@ export class Parser {
     }
     this._match(T_RPAREN);
     this._match(T_ASSIGN);
-    var expression = this._parseExpression();
-    let result = new ASTStmtAssignTuple(variables, expression);
+    var value = this._parseExpression();
+    let result = new ASTStmtAssignTuple(variables, value);
     result.startPos = startPos;
-    result.endPos = expression.endPos;
+    result.endPos = value.endPos;
     return result;
   }
 
   _parseStmtProcedureCall() {
-    var startPos = this._currentToken.startPos;
-    var procedureName = this._currentToken;
-    this._match(T_UPPERID);
+    var procedureName = this._parseUpperid();
     this._match(T_LPAREN);
     let self = this;
     var args = this._parseDelimitedList(
@@ -448,7 +445,7 @@ export class Parser {
     var endPos = this._currentToken.startPos;
     this._match(T_RPAREN);
     var result = new ASTStmtProcedureCall(procedureName, args);
-    result.startPos = startPos;
+    result.startPos = procedureName.startPos;
     result.endPos = endPos;
     return result;
   }
@@ -532,25 +529,16 @@ export class Parser {
   _parseExprAtom() {
     switch (this._currentToken.tag) {
       case T_LOWERID:
-        // TODO: function call / field accessor ???
-        var expression = this._currentToken;
-        this._match(T_LOWERID);
-        var result = new ASTExprVariable(expression);
-        result.startPos = expression.startPos;
-        result.endPos = expression.endPos;
-        return result;
+        return this._parseExprVariableOrFunctionCall();
+      case T_NUM:
+        return this._parseExprConstantNumber();
+      case T_STRING:
+        return this._parseExprConstantString();
       case T_UPPERID:
-        // constructor with params / without params / constructor update
-        throw Error('TODO');
+        return this._parseExprConstructorOrConstructorUpdate();
       case T_LPAREN:
         // tuple / non-atomic expression with operators, following the
         // OPERATORS table
-        throw Error('TODO');
-      case T_NUM:
-        // number constant
-        throw Error('TODO');
-      case T_STRING:
-        // string constant
         throw Error('TODO');
       case T_LBRACE:
         // lists / ranges! [1..10]  [1,2..10]
@@ -566,6 +554,184 @@ export class Parser {
     }
   }
 
+  _parseExprVariableOrFunctionCall() {
+    var id = this._parseLowerid();
+    var result;
+    var endPos;
+    if (this._currentToken.tag == T_LPAREN) {
+      this._match(T_LPAREN);
+      var args = this._parseExpressionList(T_RPAREN);
+      result = new ASTExprFunctionCall(id, args);
+      endPos = this._currentToken.startPos;
+      this._match(T_RPAREN);
+    } else {
+      result = new ASTExprVariable(id);
+      endPos = id.endPos;
+    }
+    result.startPos = id.startPos;
+    result.endPos = endPos;
+    return result;
+  }
+
+  _parseExprConstantNumber() {
+    var number = this._currentToken;
+    this._match(T_NUM);
+    var result = new ASTExprConstantNumber(number);
+    result.startPos = number.startPos;
+    result.endPos = number.endPos;
+    return result;
+  }
+
+  _parseExprConstantString() {
+    var string = this._currentToken;
+    this._match(T_STRING);
+    var result = new ASTExprConstantString(string);
+    result.startPos = string.startPos;
+    result.endPos = string.endPos;
+    return result;
+  }
+
+  /*
+   * Parse any of the following constructions:
+   * (1) Constructor with no arguments: "Norte"
+   * (2) Constructor with no arguments and explicit parentheses: "Nil()"
+   * (3) Constructor with arguments: "Coord(x <- 1, y <- 2)"
+   * (4) Update constructor with arguments: "Coord(expression | x <- 2)"
+   *
+   * Deciding between (3) and (4) unfortunately cannot be done with one
+   * token of lookahead, so after reading the constructor and a left
+   * parenthesis we resort to the following workaround:
+   *
+   * - Parse an expression.
+   * - If the next token is GETS ("<-") we are in case (3).
+   *   We must then ensure that the expression is just a variable
+   *   and recover its name.
+   * - If the next token is PIPE ("|") we are in case (4), and we go on.
+   */
+  _parseExprConstructorOrConstructorUpdate() {
+    var constructorName = this._parseUpperid();
+    if (this._currentToken.tag !== T_LPAREN) {
+      /* Constructor with no arguments, e.g. "Norte" */
+      let result = new ASTExprConstructor(constructorName, []);
+      result.startPos = constructorName.startPos;
+      result.endPos = constructorName.endPos;
+      return result;
+    }
+    this._match(T_LPAREN);
+    if (this._currentToken.tag === T_RPAREN) {
+      /* Constructor with no arguments with explicit parentheses,
+       * e.g. "Nil()" */
+      let result = new ASTExprConstructor(constructorName, []);
+      let endPos = this._currentToken.startPos;
+      this._match(T_RPAREN);
+      result.startPos = constructorName.startPos;
+      result.endPos = endPos;
+      return result;
+    }
+    var subject = this._parseExpression();
+    switch (this._currentToken.tag) {
+      case T_GETS:
+        if (subject.tag !== N_ExprVariable) {
+          throw new GbsSyntaxError(
+            this._currentToken.startPos,
+            i18n('errmsg:expected-but-found')(
+              i18n('T_PIPE'),
+              i18n('T_GETS')
+            )
+          );
+        }
+        return this._parseConstructor(constructorName, subject.variableName);
+      case T_PIPE:
+        return this._parseConstructorUpdate(constructorName, subject);
+      case T_COMMA: case T_RPAREN:
+        /* Issue a specific error message to deal with a common
+         * programming error, namely calling a procedure name
+         * where an expression is expected. */
+        throw new GbsSyntaxError(
+          constructorName.startPos,
+          i18n('errmsg:expected-but-found')(
+            i18n('expression'),
+            i18n('procedure call')
+          )
+        );
+      default:
+        var expected;
+        if (subject.tag === N_ExprVariable) {
+          expected = i18n('<alternative>')([
+                       i18n('T_GETS'),
+                       i18n('T_PIPE')
+                     ]);
+        } else {
+          expected = i18n('T_PIPE');
+        }
+        throw new GbsSyntaxError(
+          constructorName.startPos,
+          i18n('errmsg:expected-but-found')(
+            expected,
+            i18n(Symbol.keyFor(this._currentToken.tag))
+          )
+        );
+    }
+  }
+
+  /* Parse a constructor   A(x1 <- expr1, ..., xN <- exprN)
+   * where N >= 1,
+   * assuming that  "A(x1" has already been read.
+   *
+   * constructorName and fieldName1 correspond to "A" and "x1"
+   * respectively.
+   */
+  _parseConstructor(constructorName, fieldName1) {
+    /* Read "<- expr1" */
+    this._match(T_GETS);
+    let value1 = this._parseExpression();
+    let fieldValue1 = new ASTFieldValue(fieldName1, value1);
+    fieldValue1.startPos = fieldName1.startPos;
+    fieldValue1.endPos = value1.endPos;
+    /* Read "x2 <- expr2, ..., xN <- exprN" (this might be empty) */
+    let self = this;
+    let fieldValues = this._parseNonEmptyDelimitedList(
+                        T_RPAREN, T_COMMA, fieldValue1,
+                        () => self._parseFieldValue()
+                      );
+    /* Read ")" */
+    let endPos = this._currentToken.startPos;
+    this._match(T_RPAREN);
+    /* Return an ExprConstructor node */
+    let result = new ASTExprConstructor(constructorName, fieldValues);
+    result.startPos = constructorName.startPos;
+    result.endPos = endPos;
+    return result;
+  }
+
+  /* Parse a constructor update  A(e | x1 <- expr1, ..., xN <- exprN)
+   * where N >= 1,
+   * assuming that "A(e" has already been read.
+   *
+   * constructorName and original correspond to "A" and "e"
+   * respectively.
+   */
+  _parseConstructorUpdate(constructorName, original) {
+    /* Read "|" */
+    this._match(T_PIPE);
+    /* Read "x2 <- expr2, ..., xN <- exprN" (this might be empty) */
+    let self = this;
+    let fieldValues = this._parseDelimitedList(
+                        T_RPAREN, T_COMMA,
+                        () => self._parseFieldValue()
+                      );
+    /* Read ")" */
+    let endPos = this._currentToken.startPos;
+    this._match(T_RPAREN);
+    /* Return an ExprConstructorUpdate node */
+    let result = new ASTExprConstructorUpdate(
+                      constructorName, original, fieldValues
+                 );
+    result.startPos = constructorName.startPos;
+    result.endPos = endPos;
+    return result;
+  }
+
   /* Read a list of expressions separated by commas and delimited
    * by parentheses. If there is a single expression, return the
    * expression itself. If there are 0 or >=2 expressions, return
@@ -573,12 +739,8 @@ export class Parser {
    */
   _parseExprTuple() {
     var startPos = this._currentToken.startPos;
-    let self = this;
     this._match(T_LPAREN);
-    var expressionList = this._parseDelimitedList(
-                           T_RPAREN, T_COMMA,
-                           () => self._parseExpression()
-                         );
+    var expressionList = this._parseExpressionList(T_RPAREN);
     var endPos = this._currentToken.startPos;
     this._match(T_RPAREN);
 
@@ -610,6 +772,18 @@ export class Parser {
     var result = new ASTSwitchBranch(pattern, body);
     result.startPos = pattern.startPos;
     result.endPos = body.endPos;
+    return result;
+  }
+
+  /** FieldValue **/
+
+  _parseFieldValue() {
+    var fieldName = this._parseLowerid();
+    this._match(T_GETS);
+    var value = this._parseExpression();
+    var result = new ASTFieldValue(fieldName, value);
+    result.startPos = fieldName.startPos;
+    result.endPos = value.endPos;
     return result;
   }
 
@@ -655,7 +829,7 @@ export class Parser {
     this._nextToken();
   }
 
-  /* Generic method to parse a delimited list:
+  /* Parse a delimited list:
    *   rightDelimiter: token tag for the right delimiter
    *   separator: token tag for the separator
    *   parseElement: function that parses one element */
@@ -663,7 +837,19 @@ export class Parser {
     if (this._currentToken.tag === rightDelimiter) {
       return []; /* Empty case */
     }
-    var list = [parseElement()];
+    let first = parseElement();
+    return this._parseNonEmptyDelimitedList(
+             rightDelimiter, separator, first, parseElement
+           );
+  }
+
+  /* Parse a delimited list, assuming the first element is already given.
+   *   rightDelimiter: token tag for the right delimiter
+   *   separator: token tag for the separator
+   *   first: first element (already given)
+   *   parseElement: function that parses one element */
+  _parseNonEmptyDelimitedList(rightDelimiter, separator, first, parseElement) {
+    var list = [first];
     while (this._currentToken.tag === separator) {
       this._match(separator);
       list.push(parseElement());
@@ -689,10 +875,25 @@ export class Parser {
     return lowerid;
   }
 
+  _parseUpperid() {
+    var upperid = this._currentToken;
+    this._match(T_UPPERID);
+    return upperid;
+  }
+
   _parseLoweridList() {
     let self = this;
     return this._parseDelimitedList(
              T_RPAREN, T_COMMA, () => self._parseLowerid()
+           );
+  }
+
+  /* Parse a list of expressions delimited by the given right delimiter
+   * e.g. T_RPAREN or T_RBRACK, without consuming the delimiter. */
+  _parseExpressionList(rightDelimiter) {
+    let self = this;
+    return this._parseDelimitedList(
+             rightDelimiter, T_COMMA, () => self._parseExpression()
            );
   }
 

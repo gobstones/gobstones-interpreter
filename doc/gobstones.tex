@@ -342,11 +342,105 @@ en las producciones, sino por fuera.
 \noindent {\bf Expressions.}
 
 \produccion{\s{expression}}{
+  \s{exprAtom}
+\ALT
+  \s{expression} \s{infixOperator} \s{expression}
+\ALT
+  \s{prefixOperator} \s{expression}
+\ALT
+  \tok{LPAREN} \s{expression} \tok{RPAREN}
+}
+
+\produccion{\s{exprAtom}}{
+  \s{exprVariable}
+\ALT
+  \s{exprFunctionCall}
+\ALT
+  \s{exprConstantNumber}
+\ALT
+  \s{exprConstantString}
+\ALT
+  \s{exprList}
+\ALT
+  \s{exprTuple}
+\ALT
+  \s{exprConstructor}
+\ALT
+  \s{exprConstructorUpdate}
+}
+
+\produccion{\s{exprVariable}}{
+  \tok{LOWERID}
+}
+
+\produccion{\s{exprFunctionCall}}{
+  \tok{LOWERID} \tok{LPAREN} \s{expressionList} \tok{RPAREN}
+}
+
+\produccion{\s{exprConstantNumber}}{
+  \tok{NUM}
+}
+
+\produccion{\s{exprConstantString}}{
+  \tok{STRING}
+}
+
+\produccion{\s{exprList}}{
   \TODO{TODO}
 }
 
 \produccion{\s{exprTuple}}{
   \tok{LPAREN} \s{expressionList} \tok{RPAREN}
+}
+
+\produccion{\s{exprConstructor}}{
+  \tok{UPPERID} (\tok{LPAREN} \s{fieldValueList} \tok{RPAREN})?
+}
+
+\produccion{\s{exprConstructorUpdate}}{
+  \tok{UPPERID} \tok{LPAREN} \s{expression} \tok{PIPE} \s{fieldValueList} \tok{RPAREN}
+}
+
+\produccion{\s{fieldValue}}{
+  \tok{LOWERID} \tok{GETS} \s{expression}
+}
+
+\produccion{\s{infixOperator}}{
+  \tok{OR}
+\ALT
+  \tok{AND}
+\ALT
+  \tok{EQ}
+\ALT
+  \tok{NE}
+\ALT
+  \tok{LE}
+\ALT
+  \tok{GE}
+\ALT
+  \tok{LT}
+\ALT
+  \tok{GT}
+\ALT
+  \tok{CONCAT}
+\ALT
+  \tok{PLUS}
+\ALT
+  \tok{MINUS}
+\ALT
+  \tok{TIMES}
+\ALT
+  \tok{DIV}
+\ALT
+  \tok{MOD}
+\ALT
+  \tok{POW}
+}
+
+\produccion{\s{prefixOperator}}{
+  \tok{MINUS}
+\ALT
+  \tok{NOT}
 }
 
 \produccion{\s{expressionList}}{
@@ -359,5 +453,14 @@ en las producciones, sino por fuera.
   \s{expression} (\tok{COMMA} \s{\nonEmpty{expressionList}})?
 }
 
+\produccion{\s{fieldValueList}}{
+  \EMPTY
+\ALT
+  \s{\nonEmpty{fieldValueList}}
+}
+
+\produccion{\s{\nonEmpty{fieldValueList}}}{
+  \s{fieldValue} (\tok{COMMA} \s{\nonEmpty{fieldValueList}})?
+}
 
 \end{document}

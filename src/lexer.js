@@ -286,7 +286,7 @@ export class Lexer {
       let c = this._reader.peek();
       if (c === '"') {
         this._reader = this._reader.consumeCharacter();
-        return new Token(T_STRING, result.join('', startPos, this._reader));
+        return new Token(T_STRING, result.join(''), startPos, this._reader);
       } else if (c === '\\') {
         this._reader = this._reader.consumeCharacter();
         if (this._reader.eof()) {

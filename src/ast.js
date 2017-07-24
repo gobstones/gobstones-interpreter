@@ -171,14 +171,18 @@ export class ASTSwitchBranch extends ASTNode {
 }
 
 export class ASTStmtAssignVariable extends ASTNode {
-  constructor(variable, expression) {
-    super(N_StmtAssignVariable, [variable, expression]);
+  constructor(variable, value) {
+    super(N_StmtAssignVariable, [variable, value]);
+  }
+
+  get value() {
+    return this._children[1];
   }
 }
 
 export class ASTStmtAssignTuple extends ASTNode {
-  constructor(variables, expression) {
-    super(N_StmtAssignTuple, [variables, expression]);
+  constructor(variables, value) {
+    super(N_StmtAssignTuple, [variables, value]);
   }
 }
 
@@ -214,6 +218,10 @@ export class ASTExprVariable extends ASTNode {
   constructor(variableName) {
     super(N_ExprVariable, [variableName]);
   }
+
+  get variableName() {
+    return this._children[0];
+  }
 }
 
 export class ASTExprConstantNumber extends ASTNode {
@@ -248,17 +256,21 @@ export class ASTExprConstructor extends ASTNode {
   constructor(constructorName, fieldValues) {
     super(N_ExprConstructor, [constructorName, fieldValues]);
   }
+
+  get fieldValues() {
+    return this._children[1];
+  }
 }
 
 export class ASTExprConstructorUpdate extends ASTNode {
-  constructor(constructorName, expr, fieldValues) {
-    super(N_ExprConstructorUpdate, [constructorName, expr, fieldValues]);
+  constructor(constructorName, original, fieldValues) {
+    super(N_ExprConstructorUpdate, [constructorName, original, fieldValues]);
   }
 }
 
 export class ASTFieldValue extends ASTNode {
   constructor(fieldName, value) {
-    super(N_ExprConstructorFieldValue, [fieldName, value]);
+    super(N_FieldValue, [fieldName, value]);
   }
 }
 
@@ -276,7 +288,7 @@ export class ASTExprOr extends ASTNode {
 
 export class ASTExprFunctionCall extends ASTNode {
   constructor(functionName, args) {
-    super(N_ExprFunctionCall, args);
+    super(N_ExprFunctionCall, [functionName, args]);
   }
 }
 
