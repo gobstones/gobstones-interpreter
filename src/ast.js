@@ -28,8 +28,6 @@ export const N_ExprRange = Symbol.for('N_ExprRange');
 export const N_ExprTuple = Symbol.for('N_ExprTuple');
 export const N_ExprConstructor = Symbol.for('N_ExprConstructor');
 export const N_ExprConstructorUpdate = Symbol.for('N_ExprConstructorUpdate');
-export const N_ExprAnd = Symbol.for('N_ExprAnd');
-export const N_ExprOr = Symbol.for('N_ExprOr');
 export const N_ExprFunctionCall = Symbol.for('N_ExprFunctionCall');
 /* SwitchBranch: pattern -> body */
 export const N_SwitchBranch = Symbol.for('N_SwitchBranch');
@@ -279,18 +277,6 @@ export class ASTExprConstructorUpdate extends ASTNode {
 export class ASTFieldValue extends ASTNode {
   constructor(fieldName, value) {
     super(N_FieldValue, [fieldName, value]);
-  }
-}
-
-export class ASTExprAnd extends ASTNode {
-  constructor(constructorName, arg1, arg2) {
-    super(N_ExprAnd, [arg1, arg2]);
-  }
-}
-
-export class ASTExprOr extends ASTNode {
-  constructor(constructorName, arg1, arg2) {
-    super(N_ExprOr, [arg1, arg2]);
   }
 }
 

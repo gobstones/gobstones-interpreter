@@ -31,8 +31,6 @@ import {
   ASTExprTuple,
   ASTExprConstructor,
   ASTExprConstructorUpdate,
-  ASTExprAnd,
-  ASTExprOr,
   ASTExprFunctionCall,
   /* SwitchBranch */
   ASTSwitchBranch,
@@ -2315,5 +2313,1114 @@ it('Parser - Range: keep track of positions', () => {
   expect(tree[0].body.statements[1].value.startPos.column).equals(8);
   expect(tree[0].body.statements[1].value.endPos.line).equals(3);
   expect(tree[0].body.statements[1].value.endPos.column).equals(17);
+});
+
+it('Parser - List/range: fail on invalid symbol after first element', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := [1; 2]\n' +
+                 '}'
+               );
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:expected-but-found')(
+      i18n('<alternative>')([
+        i18n('T_COMMA'),
+        i18n('T_RANGE'),
+        i18n('T_RBRACK')
+      ]),
+      i18n('T_SEMICOLON')
+    )
+  );
+});
+
+it('Parser - List/range: fail on invalid symbol after second element', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := [1, 2; 3]\n' +
+                 '}'
+               );
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:expected-but-found')(
+      i18n('<alternative>')([
+        i18n('T_COMMA'),
+        i18n('T_RANGE'),
+        i18n('T_RBRACK')
+      ]),
+      i18n('T_SEMICOLON')
+    )
+  );
+});
+
+it('Parser - List: fail if it ends prematurely (empty)', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := [\n'
+               );
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:expected-but-found')(
+      i18n('expression'),
+      i18n('T_EOF')
+    )
+  );
+});
+
+it('Parser - List: fail if it ends prematurely (one element)', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := [1,\n'
+               );
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:expected-but-found')(
+      i18n('expression'),
+      i18n('T_EOF')
+    )
+  );
+});
+
+it('Parser - List: fail if it ends prematurely (two elements)', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := [1,2,\n'
+               );
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:expected-but-found')(
+      i18n('expression'),
+      i18n('T_EOF')
+    )
+  );
+});
+
+it('Parser - Range: fail if it ends prematurely', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := [1..\n'
+               );
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:expected-but-found')(
+      i18n('expression'),
+      i18n('T_EOF')
+    )
+  );
+});
+
+it('Parser - Range: fail if it ends prematurely (with second element)', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := [1,2..\n'
+               );
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:expected-but-found')(
+      i18n('expression'),
+      i18n('T_EOF')
+    )
+  );
+});
+
+it('Parser - Operators: nonassoc (infix)', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := 1 == 2\n' +
+                 '  x := 3 /= 4\n' +
+                 '  x := 5 >= 6\n' +
+                 '  x := 7 <= 8\n' +
+                 '  x := 9 > 10\n' +
+                 '  x := 11 < 12\n' +
+                 '}'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefProgram(
+      new ASTStmtBlock([
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(
+            tok(T_LOWERID, '=='),
+            [
+              new ASTExprConstantNumber(tok(T_NUM, '1')),
+              new ASTExprConstantNumber(tok(T_NUM, '2'))
+            ]
+          )
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(
+            tok(T_LOWERID, '/='),
+            [
+              new ASTExprConstantNumber(tok(T_NUM, '3')),
+              new ASTExprConstantNumber(tok(T_NUM, '4'))
+            ]
+          )
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(
+            tok(T_LOWERID, '>='),
+            [
+              new ASTExprConstantNumber(tok(T_NUM, '5')),
+              new ASTExprConstantNumber(tok(T_NUM, '6'))
+            ]
+          )
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(
+            tok(T_LOWERID, '<='),
+            [
+              new ASTExprConstantNumber(tok(T_NUM, '7')),
+              new ASTExprConstantNumber(tok(T_NUM, '8'))
+            ]
+          )
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(
+            tok(T_LOWERID, '>'),
+            [
+              new ASTExprConstantNumber(tok(T_NUM, '9')),
+              new ASTExprConstantNumber(tok(T_NUM, '10'))
+            ]
+          )
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(
+            tok(T_LOWERID, '<'),
+            [
+              new ASTExprConstantNumber(tok(T_NUM, '11')),
+              new ASTExprConstantNumber(tok(T_NUM, '12'))
+            ]
+          )
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - Operators: nonassoc -- keep track of positions', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := foo == bar\n' +
+                 '  x := foo < bar\n' +
+                 '}'
+               );
+  var tree = parser.parse();
+  expect(tree[0].body.statements[0].value.startPos.line).equals(2);
+  expect(tree[0].body.statements[0].value.startPos.column).equals(8);
+  expect(tree[0].body.statements[0].value.endPos.line).equals(2);
+  expect(tree[0].body.statements[0].value.endPos.column).equals(18);
+  expect(tree[0].body.statements[1].value.startPos.line).equals(3);
+  expect(tree[0].body.statements[1].value.startPos.column).equals(8);
+  expect(tree[0].body.statements[1].value.endPos.line).equals(3);
+  expect(tree[0].body.statements[1].value.endPos.column).equals(17);
+});
+
+it('Parser - Operators: fail if associating nonassoc operators (1/3)', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := foo == bar /= baz\n' +
+                 '}'
+               );
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:operators-are-not-associative')(
+      i18n('T_EQ'),
+      i18n('T_NE')
+    )
+  );
+});
+
+it('Parser - Operators: fail if associating nonassoc operators (2/3)', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := foo >= bar <= baz\n' +
+                 '}'
+               );
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:operators-are-not-associative')(
+      i18n('T_GE'),
+      i18n('T_LE')
+    )
+  );
+});
+
+it('Parser - Operators: fail if associating nonassoc operators (3/3)', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := foo > bar < baz\n' +
+                 '}'
+               );
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:operators-are-not-associative')(
+      i18n('T_GT'),
+      i18n('T_LT')
+    )
+  );
+});
+
+it('Parser - Operators: left-associative (infixl)', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := 1 ++ 2\n' +
+                 '  x := 3 + 4\n' +
+                 '  x := 5 - 6\n' +
+                 '  x := 7 * 8\n' +
+                 '  x := 9 div 10\n' +
+                 '  x := 11 mod 12\n' +
+                 '}'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefProgram(
+      new ASTStmtBlock([
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(
+            tok(T_LOWERID, '++'),
+            [
+              new ASTExprConstantNumber(tok(T_NUM, '1')),
+              new ASTExprConstantNumber(tok(T_NUM, '2'))
+            ]
+          )
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(
+            tok(T_LOWERID, '+'),
+            [
+              new ASTExprConstantNumber(tok(T_NUM, '3')),
+              new ASTExprConstantNumber(tok(T_NUM, '4'))
+            ]
+          )
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(
+            tok(T_LOWERID, '-'),
+            [
+              new ASTExprConstantNumber(tok(T_NUM, '5')),
+              new ASTExprConstantNumber(tok(T_NUM, '6'))
+            ]
+          )
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(
+            tok(T_LOWERID, '*'),
+            [
+              new ASTExprConstantNumber(tok(T_NUM, '7')),
+              new ASTExprConstantNumber(tok(T_NUM, '8'))
+            ]
+          )
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(
+            tok(T_LOWERID, 'div'),
+            [
+              new ASTExprConstantNumber(tok(T_NUM, '9')),
+              new ASTExprConstantNumber(tok(T_NUM, '10'))
+            ]
+          )
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(
+            tok(T_LOWERID, 'mod'),
+            [
+              new ASTExprConstantNumber(tok(T_NUM, '11')),
+              new ASTExprConstantNumber(tok(T_NUM, '12'))
+            ]
+          )
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - Operators: left-associative -- check associativity', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := 1 ++ 2 ++ 3\n' +
+                 '  x := 4 + 5 + 6\n' +
+                 '  x := 7 - 8 - 9\n' +
+                 '  x := 10 + 11 - 12 + 13 - 14\n' +
+                 '  x := 15 * 16 * 17\n' +
+                 '  x := 18 div 19 div 20\n' +
+                 '  x := 21 mod 22 mod 23\n' +
+                 '  x := 24 mod 25 div 26 mod 27 div 28\n' +
+                 '}'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefProgram(
+      new ASTStmtBlock([
+
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, '++'), [
+            new ASTExprFunctionCall(tok(T_LOWERID, '++'), [
+              new ASTExprConstantNumber(tok(T_NUM, '1')),
+              new ASTExprConstantNumber(tok(T_NUM, '2'))
+            ]),
+            new ASTExprConstantNumber(tok(T_NUM, '3'))
+          ])
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, '+'), [
+            new ASTExprFunctionCall(tok(T_LOWERID, '+'), [
+              new ASTExprConstantNumber(tok(T_NUM, '4')),
+              new ASTExprConstantNumber(tok(T_NUM, '5'))
+            ]),
+            new ASTExprConstantNumber(tok(T_NUM, '6'))
+          ])
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, '-'), [
+            new ASTExprFunctionCall(tok(T_LOWERID, '-'), [
+              new ASTExprConstantNumber(tok(T_NUM, '7')),
+              new ASTExprConstantNumber(tok(T_NUM, '8'))
+            ]),
+            new ASTExprConstantNumber(tok(T_NUM, '9'))
+          ])
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, '-'), [
+            new ASTExprFunctionCall(tok(T_LOWERID, '+'), [
+              new ASTExprFunctionCall(tok(T_LOWERID, '-'), [
+                new ASTExprFunctionCall(tok(T_LOWERID, '+'), [
+                  new ASTExprConstantNumber(tok(T_NUM, '10')),
+                  new ASTExprConstantNumber(tok(T_NUM, '11'))
+                ]),
+                new ASTExprConstantNumber(tok(T_NUM, '12')),
+              ]),
+              new ASTExprConstantNumber(tok(T_NUM, '13'))
+            ]),
+            new ASTExprConstantNumber(tok(T_NUM, '14'))
+          ])
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, '*'), [
+            new ASTExprFunctionCall(tok(T_LOWERID, '*'), [
+              new ASTExprConstantNumber(tok(T_NUM, '15')),
+              new ASTExprConstantNumber(tok(T_NUM, '16'))
+            ]),
+            new ASTExprConstantNumber(tok(T_NUM, '17'))
+          ])
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, 'div'), [
+            new ASTExprFunctionCall(tok(T_LOWERID, 'div'), [
+              new ASTExprConstantNumber(tok(T_NUM, '18')),
+              new ASTExprConstantNumber(tok(T_NUM, '19'))
+            ]),
+            new ASTExprConstantNumber(tok(T_NUM, '20'))
+          ])
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, 'mod'), [
+            new ASTExprFunctionCall(tok(T_LOWERID, 'mod'), [
+              new ASTExprConstantNumber(tok(T_NUM, '21')),
+              new ASTExprConstantNumber(tok(T_NUM, '22'))
+            ]),
+            new ASTExprConstantNumber(tok(T_NUM, '23'))
+          ])
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, 'div'), [
+            new ASTExprFunctionCall(tok(T_LOWERID, 'mod'), [
+              new ASTExprFunctionCall(tok(T_LOWERID, 'div'), [
+                new ASTExprFunctionCall(tok(T_LOWERID, 'mod'), [
+                  new ASTExprConstantNumber(tok(T_NUM, '24')),
+                  new ASTExprConstantNumber(tok(T_NUM, '25'))
+                ]),
+                new ASTExprConstantNumber(tok(T_NUM, '26')),
+              ]),
+              new ASTExprConstantNumber(tok(T_NUM, '27'))
+            ]),
+            new ASTExprConstantNumber(tok(T_NUM, '28'))
+          ])
+        ),
+      ])
+    )
+  ]);
+});
+
+it('Parser - Operators: infixl -- keep track of positions', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := foo + bar - x\n' +
+                 '  x := foo div bar mod x\n' +
+                 '}'
+               );
+  var tree = parser.parse();
+  expect(tree[0].body.statements[0].value.startPos.line).equals(2);
+  expect(tree[0].body.statements[0].value.startPos.column).equals(8);
+  expect(tree[0].body.statements[0].value.endPos.line).equals(2);
+  expect(tree[0].body.statements[0].value.endPos.column).equals(21);
+  expect(tree[0].body.statements[1].value.startPos.line).equals(3);
+  expect(tree[0].body.statements[1].value.startPos.column).equals(8);
+  expect(tree[0].body.statements[1].value.endPos.line).equals(3);
+  expect(tree[0].body.statements[1].value.endPos.column).equals(25);
+});
+
+it('Parser - Operators: right-associative (infixr)', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := 1 || 2\n' +
+                 '  x := 3 && 4\n' +
+                 '  x := 5 ^ 6\n' +
+                 '}'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefProgram(
+      new ASTStmtBlock([
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(
+            tok(T_LOWERID, '||'),
+            [
+              new ASTExprConstantNumber(tok(T_NUM, '1')),
+              new ASTExprConstantNumber(tok(T_NUM, '2'))
+            ]
+          )
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(
+            tok(T_LOWERID, '&&'),
+            [
+              new ASTExprConstantNumber(tok(T_NUM, '3')),
+              new ASTExprConstantNumber(tok(T_NUM, '4'))
+            ]
+          )
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(
+            tok(T_LOWERID, '^'),
+            [
+              new ASTExprConstantNumber(tok(T_NUM, '5')),
+              new ASTExprConstantNumber(tok(T_NUM, '6'))
+            ]
+          )
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - Operators: right-associative -- check associativity', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := 1 || 2 || 3\n' +
+                 '  x := 4 && 5 && 6\n' +
+                 '  x := 7 ^ 8 ^ 9\n' +
+                 '}'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefProgram(
+      new ASTStmtBlock([
+
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, '||'), [
+            new ASTExprConstantNumber(tok(T_NUM, '1')),
+            new ASTExprFunctionCall(tok(T_LOWERID, '||'), [
+              new ASTExprConstantNumber(tok(T_NUM, '2')),
+              new ASTExprConstantNumber(tok(T_NUM, '3'))
+            ])
+          ])
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, '&&'), [
+            new ASTExprConstantNumber(tok(T_NUM, '4')),
+            new ASTExprFunctionCall(tok(T_LOWERID, '&&'), [
+              new ASTExprConstantNumber(tok(T_NUM, '5')),
+              new ASTExprConstantNumber(tok(T_NUM, '6'))
+            ])
+          ])
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, '^'), [
+            new ASTExprConstantNumber(tok(T_NUM, '7')),
+            new ASTExprFunctionCall(tok(T_LOWERID, '^'), [
+              new ASTExprConstantNumber(tok(T_NUM, '8')),
+              new ASTExprConstantNumber(tok(T_NUM, '9'))
+            ])
+          ])
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - Operators: unary (prefix)', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := not 1\n' +
+                 '  x := -2\n' +
+                 '}'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefProgram(
+      new ASTStmtBlock([
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, 'not'), [
+            new ASTExprConstantNumber(tok(T_NUM, '1'))
+          ])
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, '-(unary)'), [
+            new ASTExprConstantNumber(tok(T_NUM, '2'))
+          ])
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - Operators: unary -- iterate unary operator', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := not not 1\n' +
+                 '  x := - -2\n' +
+                 '}'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefProgram(
+      new ASTStmtBlock([
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, 'not'), [
+            new ASTExprFunctionCall(tok(T_LOWERID, 'not'), [
+              new ASTExprConstantNumber(tok(T_NUM, '1'))
+            ])
+          ])
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, '-(unary)'), [
+            new ASTExprFunctionCall(tok(T_LOWERID, '-(unary)'), [
+              new ASTExprConstantNumber(tok(T_NUM, '2'))
+            ])
+          ])
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - Operators: unary -- keep track of positions', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := not foo\n' +
+                 '  x := -\nfoo\n' +
+                 '}'
+               );
+  var tree = parser.parse();
+  expect(tree[0].body.statements[0].value.startPos.line).equals(2);
+  expect(tree[0].body.statements[0].value.startPos.column).equals(8);
+  expect(tree[0].body.statements[0].value.endPos.line).equals(2);
+  expect(tree[0].body.statements[0].value.endPos.column).equals(15);
+  expect(tree[0].body.statements[1].value.startPos.line).equals(3);
+  expect(tree[0].body.statements[1].value.startPos.column).equals(8);
+  expect(tree[0].body.statements[1].value.endPos.line).equals(4);
+  expect(tree[0].body.statements[1].value.endPos.column).equals(4);
+});
+
+it('Parser - Tuples/parenthesized expressions', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := ()\n' +
+                 '  x := (1)\n' +
+                 '  x := (2,3)\n' +
+                 '  x := (4,5,6)\n' +
+                 '}'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefProgram(
+      new ASTStmtBlock([
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprTuple([])
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprConstantNumber(tok(T_NUM, '1'))
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprTuple([
+            new ASTExprConstantNumber(tok(T_NUM, '2')),
+            new ASTExprConstantNumber(tok(T_NUM, '3'))
+          ])
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprTuple([
+            new ASTExprConstantNumber(tok(T_NUM, '4')),
+            new ASTExprConstantNumber(tok(T_NUM, '5')),
+            new ASTExprConstantNumber(tok(T_NUM, '6'))
+          ])
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - Operator precedence: && vs. ||', () => {
+
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := a && b || c && d\n' +
+                 '}'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefProgram(
+      new ASTStmtBlock([
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, '||'), [
+            new ASTExprFunctionCall(tok(T_LOWERID, '&&'), [
+              new ASTExprVariable(tok(T_LOWERID, 'a')),
+              new ASTExprVariable(tok(T_LOWERID, 'b'))
+            ]),
+            new ASTExprFunctionCall(tok(T_LOWERID, '&&'), [
+              new ASTExprVariable(tok(T_LOWERID, 'c')),
+              new ASTExprVariable(tok(T_LOWERID, 'd'))
+            ])
+          ])
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - Operator precedence: && vs. not', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := not a && not b' +
+                 '}'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefProgram(
+      new ASTStmtBlock([
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, '&&'), [
+            new ASTExprFunctionCall(tok(T_LOWERID, 'not'), [
+              new ASTExprVariable(tok(T_LOWERID, 'a'))
+            ]),
+            new ASTExprFunctionCall(tok(T_LOWERID, 'not'), [
+              new ASTExprVariable(tok(T_LOWERID, 'b')),
+            ])
+          ])
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - Operator precedence: not vs. relational', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := not a == b' +
+                 '  x := not a /= b' +
+                 '  x := not a >= b' +
+                 '  x := not a <= b' +
+                 '  x := not a > b' +
+                 '  x := not a < b' +
+                 '}'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefProgram(
+      new ASTStmtBlock([
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, 'not'), [
+            new ASTExprFunctionCall(tok(T_LOWERID, '=='), [
+              new ASTExprVariable(tok(T_LOWERID, 'a')),
+              new ASTExprVariable(tok(T_LOWERID, 'b'))
+            ])
+          ])
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, 'not'), [
+            new ASTExprFunctionCall(tok(T_LOWERID, '/='), [
+              new ASTExprVariable(tok(T_LOWERID, 'a')),
+              new ASTExprVariable(tok(T_LOWERID, 'b'))
+            ])
+          ])
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, 'not'), [
+            new ASTExprFunctionCall(tok(T_LOWERID, '>='), [
+              new ASTExprVariable(tok(T_LOWERID, 'a')),
+              new ASTExprVariable(tok(T_LOWERID, 'b'))
+            ])
+          ])
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, 'not'), [
+            new ASTExprFunctionCall(tok(T_LOWERID, '<='), [
+              new ASTExprVariable(tok(T_LOWERID, 'a')),
+              new ASTExprVariable(tok(T_LOWERID, 'b'))
+            ])
+          ])
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, 'not'), [
+            new ASTExprFunctionCall(tok(T_LOWERID, '>'), [
+              new ASTExprVariable(tok(T_LOWERID, 'a')),
+              new ASTExprVariable(tok(T_LOWERID, 'b'))
+            ])
+          ])
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, 'not'), [
+            new ASTExprFunctionCall(tok(T_LOWERID, '<'), [
+              new ASTExprVariable(tok(T_LOWERID, 'a')),
+              new ASTExprVariable(tok(T_LOWERID, 'b'))
+            ])
+          ])
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - Operator precedence: relational vs. ++', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := a ++ b == c ++ d' +
+                 '  x := a ++ b /= c ++ d' +
+                 '  x := a ++ b >= c ++ d' +
+                 '  x := a ++ b <= c ++ d' +
+                 '  x := a ++ b > c ++ d' +
+                 '  x := a ++ b < c ++ d' +
+                 '}'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefProgram(
+      new ASTStmtBlock([
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, '=='), [
+            new ASTExprFunctionCall(tok(T_LOWERID, '++'), [
+              new ASTExprVariable(tok(T_LOWERID, 'a')),
+              new ASTExprVariable(tok(T_LOWERID, 'b'))
+            ]),
+            new ASTExprFunctionCall(tok(T_LOWERID, '++'), [
+              new ASTExprVariable(tok(T_LOWERID, 'c')),
+              new ASTExprVariable(tok(T_LOWERID, 'd'))
+            ])
+          ])
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, '/='), [
+            new ASTExprFunctionCall(tok(T_LOWERID, '++'), [
+              new ASTExprVariable(tok(T_LOWERID, 'a')),
+              new ASTExprVariable(tok(T_LOWERID, 'b'))
+            ]),
+            new ASTExprFunctionCall(tok(T_LOWERID, '++'), [
+              new ASTExprVariable(tok(T_LOWERID, 'c')),
+              new ASTExprVariable(tok(T_LOWERID, 'd'))
+            ])
+          ])
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, '>='), [
+            new ASTExprFunctionCall(tok(T_LOWERID, '++'), [
+              new ASTExprVariable(tok(T_LOWERID, 'a')),
+              new ASTExprVariable(tok(T_LOWERID, 'b'))
+            ]),
+            new ASTExprFunctionCall(tok(T_LOWERID, '++'), [
+              new ASTExprVariable(tok(T_LOWERID, 'c')),
+              new ASTExprVariable(tok(T_LOWERID, 'd'))
+            ])
+          ])
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, '<='), [
+            new ASTExprFunctionCall(tok(T_LOWERID, '++'), [
+              new ASTExprVariable(tok(T_LOWERID, 'a')),
+              new ASTExprVariable(tok(T_LOWERID, 'b'))
+            ]),
+            new ASTExprFunctionCall(tok(T_LOWERID, '++'), [
+              new ASTExprVariable(tok(T_LOWERID, 'c')),
+              new ASTExprVariable(tok(T_LOWERID, 'd'))
+            ])
+          ])
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, '>'), [
+            new ASTExprFunctionCall(tok(T_LOWERID, '++'), [
+              new ASTExprVariable(tok(T_LOWERID, 'a')),
+              new ASTExprVariable(tok(T_LOWERID, 'b'))
+            ]),
+            new ASTExprFunctionCall(tok(T_LOWERID, '++'), [
+              new ASTExprVariable(tok(T_LOWERID, 'c')),
+              new ASTExprVariable(tok(T_LOWERID, 'd'))
+            ])
+          ])
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, '<'), [
+            new ASTExprFunctionCall(tok(T_LOWERID, '++'), [
+              new ASTExprVariable(tok(T_LOWERID, 'a')),
+              new ASTExprVariable(tok(T_LOWERID, 'b'))
+            ]),
+            new ASTExprFunctionCall(tok(T_LOWERID, '++'), [
+              new ASTExprVariable(tok(T_LOWERID, 'c')),
+              new ASTExprVariable(tok(T_LOWERID, 'd'))
+            ])
+          ])
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - Operator precedence: ++ vs. additive', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := a - b ++ c + d' +
+                 '  x := a + b ++ c - d' +
+                 '}'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefProgram(
+      new ASTStmtBlock([
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, '++'), [
+            new ASTExprFunctionCall(tok(T_LOWERID, '-'), [
+              new ASTExprVariable(tok(T_LOWERID, 'a')),
+              new ASTExprVariable(tok(T_LOWERID, 'b'))
+            ]),
+            new ASTExprFunctionCall(tok(T_LOWERID, '+'), [
+              new ASTExprVariable(tok(T_LOWERID, 'c')),
+              new ASTExprVariable(tok(T_LOWERID, 'd'))
+            ])
+          ])
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, '++'), [
+            new ASTExprFunctionCall(tok(T_LOWERID, '+'), [
+              new ASTExprVariable(tok(T_LOWERID, 'a')),
+              new ASTExprVariable(tok(T_LOWERID, 'b'))
+            ]),
+            new ASTExprFunctionCall(tok(T_LOWERID, '-'), [
+              new ASTExprVariable(tok(T_LOWERID, 'c')),
+              new ASTExprVariable(tok(T_LOWERID, 'd'))
+            ])
+          ])
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - Operator precedence: additive vs. multiplicative', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := a * b + c * d' +
+                 '  x := a * b - c * d' +
+                 '}'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefProgram(
+      new ASTStmtBlock([
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, '+'), [
+            new ASTExprFunctionCall(tok(T_LOWERID, '*'), [
+              new ASTExprVariable(tok(T_LOWERID, 'a')),
+              new ASTExprVariable(tok(T_LOWERID, 'b'))
+            ]),
+            new ASTExprFunctionCall(tok(T_LOWERID, '*'), [
+              new ASTExprVariable(tok(T_LOWERID, 'c')),
+              new ASTExprVariable(tok(T_LOWERID, 'd'))
+            ])
+          ])
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, '-'), [
+            new ASTExprFunctionCall(tok(T_LOWERID, '*'), [
+              new ASTExprVariable(tok(T_LOWERID, 'a')),
+              new ASTExprVariable(tok(T_LOWERID, 'b'))
+            ]),
+            new ASTExprFunctionCall(tok(T_LOWERID, '*'), [
+              new ASTExprVariable(tok(T_LOWERID, 'c')),
+              new ASTExprVariable(tok(T_LOWERID, 'd'))
+            ])
+          ])
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - Operator precedence: multiplicative vs. division', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := a div b * c mod d' +
+                 '  x := a mod b * c div d' +
+                 '}'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefProgram(
+      new ASTStmtBlock([
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, '*'), [
+            new ASTExprFunctionCall(tok(T_LOWERID, 'div'), [
+              new ASTExprVariable(tok(T_LOWERID, 'a')),
+              new ASTExprVariable(tok(T_LOWERID, 'b'))
+            ]),
+            new ASTExprFunctionCall(tok(T_LOWERID, 'mod'), [
+              new ASTExprVariable(tok(T_LOWERID, 'c')),
+              new ASTExprVariable(tok(T_LOWERID, 'd'))
+            ])
+          ])
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, '*'), [
+            new ASTExprFunctionCall(tok(T_LOWERID, 'mod'), [
+              new ASTExprVariable(tok(T_LOWERID, 'a')),
+              new ASTExprVariable(tok(T_LOWERID, 'b'))
+            ]),
+            new ASTExprFunctionCall(tok(T_LOWERID, 'div'), [
+              new ASTExprVariable(tok(T_LOWERID, 'c')),
+              new ASTExprVariable(tok(T_LOWERID, 'd'))
+            ])
+          ])
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - Operator precedence: division vs. pow', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := a ^ b div c ^ d' +
+                 '  x := a ^ b mod c ^ d' +
+                 '}'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefProgram(
+      new ASTStmtBlock([
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, 'div'), [
+            new ASTExprFunctionCall(tok(T_LOWERID, '^'), [
+              new ASTExprVariable(tok(T_LOWERID, 'a')),
+              new ASTExprVariable(tok(T_LOWERID, 'b'))
+            ]),
+            new ASTExprFunctionCall(tok(T_LOWERID, '^'), [
+              new ASTExprVariable(tok(T_LOWERID, 'c')),
+              new ASTExprVariable(tok(T_LOWERID, 'd'))
+            ])
+          ])
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, 'mod'), [
+            new ASTExprFunctionCall(tok(T_LOWERID, '^'), [
+              new ASTExprVariable(tok(T_LOWERID, 'a')),
+              new ASTExprVariable(tok(T_LOWERID, 'b'))
+            ]),
+            new ASTExprFunctionCall(tok(T_LOWERID, '^'), [
+              new ASTExprVariable(tok(T_LOWERID, 'c')),
+              new ASTExprVariable(tok(T_LOWERID, 'd'))
+            ])
+          ])
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - Operator precedence: pow vs. unary minus', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := -a ^ -b' +
+                 '}'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefProgram(
+      new ASTStmtBlock([
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, '^'), [
+            new ASTExprFunctionCall(tok(T_LOWERID, '-(unary)'), [
+              new ASTExprVariable(tok(T_LOWERID, 'a'))
+            ]),
+            new ASTExprFunctionCall(tok(T_LOWERID, '-(unary)'), [
+              new ASTExprVariable(tok(T_LOWERID, 'b'))
+            ])
+          ])
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - Operator precedence: override precedence with parens', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := -(a || b)' +
+                 '  x := (a + b) * (c - d)' +
+                 '}'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefProgram(
+      new ASTStmtBlock([
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, '-(unary)'), [
+            new ASTExprFunctionCall(tok(T_LOWERID, '||'), [
+              new ASTExprVariable(tok(T_LOWERID, 'a')),
+              new ASTExprVariable(tok(T_LOWERID, 'b'))
+            ])
+          ])
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprFunctionCall(tok(T_LOWERID, '*'), [
+            new ASTExprFunctionCall(tok(T_LOWERID, '+'), [
+              new ASTExprVariable(tok(T_LOWERID, 'a')),
+              new ASTExprVariable(tok(T_LOWERID, 'b'))
+            ]),
+            new ASTExprFunctionCall(tok(T_LOWERID, '-'), [
+              new ASTExprVariable(tok(T_LOWERID, 'c')),
+              new ASTExprVariable(tok(T_LOWERID, 'd'))
+            ])
+          ])
+        )
+      ])
+    )
+  ]);
 });
 

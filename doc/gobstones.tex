@@ -401,7 +401,9 @@ en t\'erminos, factores, \'atomos, etc., tal como se hace en la gram\'atica ofic
 }
 
 \produccion{\s{exprTuple}}{
-  \tok{LPAREN} \s{expressionSeq} \tok{RPAREN}
+  \tok{LPAREN} \tok{RPAREN}
+\ALT
+  \tok{LPAREN} \s{expression} \tok{COMMA} \s{\nonEmpty{expressionSeq}} \tok{RPAREN}
 }
 
 \produccion{\s{exprConstructor}}{

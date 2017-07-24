@@ -47,12 +47,20 @@ const ES = {
     },
 
   'errmsg:pattern-tuple-cannot-be-singleton':
-    'El patrón para una tupla no puede tener una sola componente.\n'
+    'El patrón para una tupla no puede tener una sola componente. '
   + 'Las tuplas tienen 0, 2, 3, o más componentes, pero no 1.',
 
   'errmsg:assignment-tuple-cannot-be-singleton':
-    'La asignación a una tupla no puede constar de una sola componente.\n'
+    'La asignación a una tupla no puede constar de una sola componente. '
   + 'Las tuplas tienen 0, 2, 3, o más componentes, pero no 1.',
+  
+  'errmsg:operators-are-not-associative':
+    function (op1, op2) {
+      return 'La expresión usa '
+           + op1 + ' y ' + op2
+           + ', pero estos operadores no se pueden asociar. '
+           + 'Quizás faltan paréntesis.';
+    },
 
   /* Descriptions of syntactic constructions and tokens */
   'definition':
