@@ -21,6 +21,9 @@
 \newcommand{\ALT}{
   \\ & $\mid$ &
 }
+\newcommand{\ALTA}{
+  $\mid$
+}
 \newcommand{\TODO}[1]{\textcolor{red}{****#1****}}
 \section{Gram\'atica de XGobstones}
 
@@ -187,10 +190,10 @@ En una lista de ramas deber\'ia haber un \'unico gui\'on bajo, y deber\'ia ser e
 patr\'on de la lista pero esto, de nuevo, se relega a la etapa de lint.
 \end{itemize}
 
-Esta gram\'atica se puede expresar como LL(1) usando las t\'ecnicas
-usuales (factorizando las producciones a izquierda y estratificando las expresiones en t\'erminos, factores, \'atomos, etc.).
 Las convenciones de asociatividad y precedencia de operadores no se reflejan
-en las producciones, sino por fuera.
+en las producciones, sino en la tabla de precedencia.
+(Para expresar esto en la gram\'atica ser\'ia necesario estratificar las expresiones
+en t\'erminos, factores, \'atomos, etc., tal como se hace en la gram\'atica oficial).
 \bigskip
 
 \produccion{\s{start}}{\s{definition}*}
@@ -216,25 +219,25 @@ en las producciones, sino por fuera.
 }
 
 \produccion{\s{defProcedure}}{
-  \tok{PROCEDURE} \tok{LPAREN} \s{loweridList} \tok{RPAREN} \s{stmtBlock}
+  \tok{PROCEDURE} \tok{LPAREN} \s{loweridSeq} \tok{RPAREN} \s{stmtBlock}
 }
 
 \produccion{\s{defFunction}}{
-  \tok{FUNCTION} \tok{LPAREN} \s{loweridList} \tok{RPAREN} \s{stmtBlock}
+  \tok{FUNCTION} \tok{LPAREN} \s{loweridSeq} \tok{RPAREN} \s{stmtBlock}
 }
 
 \produccion{\s{defType}}{
   \TODO{TODO}
 }
 
-\produccion{\s{loweridList}}{
+\produccion{\s{loweridSeq}}{
   \EMPTY
 \ALT
-  \s{\nonEmpty{loweridList}}
+  \s{\nonEmpty{loweridSeq}}
 }
 
-\produccion{\s{\nonEmpty{loweridList}}}{
-  \tok{LOWERID} (\tok{COMMA} \s{\nonEmpty{loweridList}})?
+\produccion{\s{\nonEmpty{loweridSeq}}}{
+  \tok{LOWERID} (\tok{COMMA} \s{\nonEmpty{loweridSeq}})?
 }
 
 \noindent {\bf Statements.}
@@ -266,7 +269,7 @@ en las producciones, sino por fuera.
 }
 
 \produccion{\s{stmtReturn}}{
-  \tok{RETURN} \tok{LPAREN} \s{expressionList} \tok{RPAREN}
+  \tok{RETURN} \tok{LPAREN} \s{expressionSeq} \tok{RPAREN}
 }
 
 \produccion{\s{stmtIf}}{
@@ -308,11 +311,11 @@ en las producciones, sino por fuera.
 \produccion{\s{stmtTupleAssignment}}{
   \tok{LPAREN} \tok{RPAREN} \tok{ASSIGN} \s{expression}
 \ALT
-  \tok{LPAREN} \tok{LOWERID} \tok{COMMA} \s{\nonEmpty{loweridList}} \tok{RPAREN} \tok{ASSIGN} \s{expression}
+  \tok{LPAREN} \tok{LOWERID} \tok{COMMA} \s{\nonEmpty{loweridSeq}} \tok{RPAREN} \tok{ASSIGN} \s{expression}
 }
 
 \produccion{\s{stmtProcedureCall}}{
-  \tok{UPPERID} \tok{LPAREN} \s{expressionList} \tok{RPAREN}
+  \tok{UPPERID} \tok{LPAREN} \s{expressionSeq} \tok{RPAREN}
 }
 
 \noindent {\bf Patterns.}
@@ -330,13 +333,13 @@ en las producciones, sino por fuera.
 }
 
 \produccion{\s{patternConstructor}}{
-  \tok{UPPERID} (\tok{LPAREN} \s{loweridList} \tok{RPAREN})?
+  \tok{UPPERID} (\tok{LPAREN} \s{loweridSeq} \tok{RPAREN})?
 }
 
 \produccion{\s{patternTuple}}{
   \tok{LPAREN} \tok{RPAREN}
 \ALT
-  \tok{LPAREN} \tok{LOWERID} \tok{COMMA} \s{\nonEmpty{loweridList}} \tok{RPAREN}
+  \tok{LPAREN} \tok{LOWERID} \tok{COMMA} \s{\nonEmpty{loweridSeq}} \tok{RPAREN}
 }
 
 \noindent {\bf Expressions.}
@@ -362,6 +365,8 @@ en las producciones, sino por fuera.
 \ALT
   \s{exprList}
 \ALT
+  \s{exprRange}
+\ALT
   \s{exprTuple}
 \ALT
   \s{exprConstructor}
@@ -374,7 +379,7 @@ en las producciones, sino por fuera.
 }
 
 \produccion{\s{exprFunctionCall}}{
-  \tok{LOWERID} \tok{LPAREN} \s{expressionList} \tok{RPAREN}
+  \tok{LOWERID} \tok{LPAREN} \s{expressionSeq} \tok{RPAREN}
 }
 
 \produccion{\s{exprConstantNumber}}{
@@ -386,54 +391,70 @@ en las producciones, sino por fuera.
 }
 
 \produccion{\s{exprList}}{
-  \TODO{TODO}
+  \tok{LBRACK} \s{expressionSeq} \tok{RBRACK}
+}
+
+\produccion{\s{exprRange}}{
+  \tok{LBRACK} \s{expression} \tok{RANGE} \s{expression} \tok{RBRACK}
+\ALT
+  \tok{LBRACK} \s{expression} \tok{COMMA} \s{expression} \tok{RANGE} \s{expression} \tok{RBRACK}
 }
 
 \produccion{\s{exprTuple}}{
-  \tok{LPAREN} \s{expressionList} \tok{RPAREN}
+  \tok{LPAREN} \s{expressionSeq} \tok{RPAREN}
 }
 
 \produccion{\s{exprConstructor}}{
-  \tok{UPPERID} (\tok{LPAREN} \s{fieldValueList} \tok{RPAREN})?
+  \tok{UPPERID} (\tok{LPAREN} \s{fieldValueSeq} \tok{RPAREN})?
 }
 
 \produccion{\s{exprConstructorUpdate}}{
-  \tok{UPPERID} \tok{LPAREN} \s{expression} \tok{PIPE} \s{fieldValueList} \tok{RPAREN}
+  \tok{UPPERID} \tok{LPAREN} \s{expression} \tok{PIPE} \s{fieldValueSeq} \tok{RPAREN}
 }
 
 \produccion{\s{fieldValue}}{
   \tok{LOWERID} \tok{GETS} \s{expression}
 }
 
+\produccion{\s{fieldValueSeq}}{
+  \EMPTY
+\ALT
+  \s{\nonEmpty{fieldValueSeq}}
+}
+
+\produccion{\s{\nonEmpty{fieldValueSeq}}}{
+  \s{fieldValue} (\tok{COMMA} \s{\nonEmpty{fieldValueSeq}})?
+}
+
 \produccion{\s{infixOperator}}{
   \tok{OR}
-\ALT
+\ALTA
   \tok{AND}
-\ALT
+\ALTA
   \tok{EQ}
-\ALT
+\ALTA
   \tok{NE}
-\ALT
+\ALTA
   \tok{LE}
-\ALT
+\ALTA
   \tok{GE}
-\ALT
+\ALTA
   \tok{LT}
-\ALT
+\ALTA
   \tok{GT}
-\ALT
+\ALTA
   \tok{CONCAT}
 \ALT
   \tok{PLUS}
-\ALT
+\ALTA
   \tok{MINUS}
-\ALT
+\ALTA
   \tok{TIMES}
-\ALT
+\ALTA
   \tok{DIV}
-\ALT
+\ALTA
   \tok{MOD}
-\ALT
+\ALTA
   \tok{POW}
 }
 
@@ -443,24 +464,51 @@ en las producciones, sino por fuera.
   \tok{NOT}
 }
 
-\produccion{\s{expressionList}}{
+\produccion{\s{expressionSeq}}{
   \EMPTY
 \ALT
-  \s{\nonEmpty{expressionList}}
+  \s{\nonEmpty{expressionSeq}}
 }
 
-\produccion{\s{\nonEmpty{expressionList}}}{
-  \s{expression} (\tok{COMMA} \s{\nonEmpty{expressionList}})?
+\produccion{\s{\nonEmpty{expressionSeq}}}{
+  \s{expression} (\tok{COMMA} \s{\nonEmpty{expressionSeq}})?
 }
 
-\produccion{\s{fieldValueList}}{
-  \EMPTY
-\ALT
-  \s{\nonEmpty{fieldValueList}}
-}
+\subsubsection{Precedencia de operadores}
 
-\produccion{\s{\nonEmpty{fieldValueList}}}{
-  \s{fieldValue} (\tok{COMMA} \s{\nonEmpty{fieldValueList}})?
-}
+Los operadores se organizan seg\'un la siguiente tabla.
+Cada fila corresponde a un nivel de precedencia, ordenados de menor a mayor precedencia.
+Las {\em fixities} posibles son:
+operador binario asociativo a derecha ({\bf InfixR}),
+operador binario asociativo a izquierda ({\bf InfixL}),
+operador binario no asociativo ({\bf Infix}),
+operador unario prefijo ({\bf Prefix}).
+
+\begin{itemize}
+\item {\bf InfixR:} \tok{OR} (\texttt{||})
+\item {\bf InfixR:} \tok{AND} (\texttt{\&\&})
+\item {\bf Prefix:} \tok{NOT} (\texttt{not})
+\item {\bf Infix:}
+  \tok{EQ} (\texttt{==})
+  \tok{NE} (\texttt{/=})
+  \tok{LE} (\texttt{<=})
+  \tok{GE} (\texttt{>=})
+  \tok{LT} (\texttt{<})
+  \tok{GT} (\texttt{>})
+\item {\bf InfixL:}
+  \tok{CONCAT} (\texttt{++})
+\item {\bf InfixL:}
+  \tok{PLUS} (\texttt{+})
+  \tok{MINUS} (\texttt{-})
+\item {\bf InfixL:}
+  \tok{TIMES} (\texttt{*})
+\item {\bf InfixL:}
+  \tok{DIV} (\texttt{div})
+  \tok{MOD} (\texttt{mod})
+\item {\bf InfixR:}
+  \tok{POW} (\texttt{\^})
+\item {\bf Prefix:}
+  \tok{MINUS} (\texttt{-}, menos unario)
+\end{itemize}
 
 \end{document}

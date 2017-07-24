@@ -40,6 +40,7 @@ import {
   ASTExprConstantNumber,
   ASTExprConstantString,
   ASTExprList,
+  ASTExprRange,
   ASTExprTuple,
   ASTExprConstructor,
   ASTExprConstructorUpdate,
@@ -540,9 +541,8 @@ export class Parser {
         // tuple / non-atomic expression with operators, following the
         // OPERATORS table
         throw Error('TODO');
-      case T_LBRACE:
-        // lists / ranges! [1..10]  [1,2..10]
-        throw Error('TODO');
+      case T_LBRACK:
+        return this._parseExprListOrRange();
       default:
         throw new GbsSyntaxError(
                     this._currentToken.startPos,
@@ -691,7 +691,7 @@ export class Parser {
     /* Read "x2 <- expr2, ..., xN <- exprN" (this might be empty) */
     let self = this;
     let fieldValues = this._parseNonEmptyDelimitedList(
-                        T_RPAREN, T_COMMA, fieldValue1,
+                        T_RPAREN, T_COMMA, [fieldValue1],
                         () => self._parseFieldValue()
                       );
     /* Read ")" */
@@ -728,6 +728,96 @@ export class Parser {
                       constructorName, original, fieldValues
                  );
     result.startPos = constructorName.startPos;
+    result.endPos = endPos;
+    return result;
+  }
+
+  /* Read a list
+   *   [expr1, ..., exprN]
+   * a range expression
+   *   [first .. last]
+   * or a range expression with step
+   *   [first, second .. last]
+   */
+  _parseExprListOrRange() {
+    var startPos = this._currentToken.startPos;
+    this._match(T_LBRACK);
+    if (this._currentToken.tag === T_RBRACK) {
+      return this._parseExprListRemainder(startPos, []);
+    }
+    var first = this._parseExpression();
+    switch (this._currentToken.tag) {
+      case T_RBRACK:
+        return this._parseExprListRemainder(startPos, [first]);
+      case T_RANGE:
+        return this._parseExprRange(startPos, first, null);
+      case T_COMMA:
+        this._match(T_COMMA);
+        var second = this._parseExpression();
+        switch (this._currentToken.tag) {
+          case T_RBRACK:
+          case T_COMMA:
+            return this._parseExprListRemainder(startPos, [first, second]);
+          case T_RANGE:
+            return this._parseExprRange(startPos, first, second);
+          default:
+            throw new GbsSyntaxError(
+              startPos,
+              i18n('errmsg:expected-but-found')(
+                i18n('<alternative>')([
+                  i18n('T_COMMA'),
+                  i18n('T_RANGE'),
+                  i18n('T_RBRACK')
+                ]),
+                i18n(Symbol.keyFor(this._currentToken.tag))
+              )
+            );
+        }
+      default:
+        throw new GbsSyntaxError(
+          startPos,
+          i18n('errmsg:expected-but-found')(
+            i18n('<alternative>')([
+              i18n('T_COMMA'),
+              i18n('T_RANGE'),
+              i18n('T_RBRACK')
+            ]),
+            i18n(Symbol.keyFor(this._currentToken.tag))
+          )
+        );
+    }
+  }
+
+  /* Read the end of a list "[expr1, ..., exprN]" assumming we have
+   * already read "[expr1, ..., exprK" up to some point K >= 1.
+   * - startPos is the position of "["
+   * - prefix is the list of elements we have already read
+   */
+  _parseExprListRemainder(startPos, prefix) {
+    let self = this;
+    var elements = this._parseNonEmptyDelimitedList(
+                     T_RBRACK, T_COMMA, prefix,
+                     () => self._parseExpression()
+                   );
+    var endPos = this._currentToken.startPos;
+    this._match(T_RBRACK);
+    var result = new ASTExprList(elements);
+    result.startPos = startPos;
+    result.endPos = endPos;
+    return result;
+  }
+
+  /* Read a range "[first..last]" or "[first,second..last]"
+   * assumming we are left to read "..last]"
+   * - startPos is the position of "[".
+   * - second may be null */
+  _parseExprRange(startPos, first, second) {
+    this._match(T_RANGE);
+    var last = this._parseExpression();
+    let endPos = this._currentToken.startPos;
+    this._match(T_RBRACK);
+    let result = new ASTExprRange(first, second, last);
+    result.startPos = startPos;
     result.endPos = endPos;
     return result;
   }
@@ -839,17 +929,17 @@ export class Parser {
     }
     let first = parseElement();
     return this._parseNonEmptyDelimitedList(
-             rightDelimiter, separator, first, parseElement
+             rightDelimiter, separator, [first], parseElement
            );
   }
 
-  /* Parse a delimited list, assuming the first element is already given.
+  /* Parse a delimited list, assuming the first elements are already given.
    *   rightDelimiter: token tag for the right delimiter
    *   separator: token tag for the separator
-   *   first: first element (already given)
+   *   prefix: non-empty list of all the first elements (already given)
    *   parseElement: function that parses one element */
-  _parseNonEmptyDelimitedList(rightDelimiter, separator, first, parseElement) {
-    var list = [first];
+  _parseNonEmptyDelimitedList(rightDelimiter, separator, prefix, parseElement) {
+    var list = prefix;
     while (this._currentToken.tag === separator) {
       this._match(separator);
       list.push(parseElement());

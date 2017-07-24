@@ -24,6 +24,7 @@ export const N_ExprVariable = Symbol.for('N_ExprVariable');
 export const N_ExprConstantNumber = Symbol.for('N_ExprConstantNumber');
 export const N_ExprConstantString = Symbol.for('N_ExprConstantString');
 export const N_ExprList = Symbol.for('N_ExprList');
+export const N_ExprRange = Symbol.for('N_ExprRange');
 export const N_ExprTuple = Symbol.for('N_ExprTuple');
 export const N_ExprConstructor = Symbol.for('N_ExprConstructor');
 export const N_ExprConstructorUpdate = Symbol.for('N_ExprConstructorUpdate');
@@ -237,8 +238,15 @@ export class ASTExprConstantString extends ASTNode {
 }
 
 export class ASTExprList extends ASTNode {
-  constructor(expressions) {
-    super(N_ExprList, expressions);
+  constructor(elements) {
+    super(N_ExprList, elements);
+  }
+}
+
+export class ASTExprRange extends ASTNode {
+  // Note: second may be null
+  constructor(first, second, last) {
+    super(N_ExprRange, [first, second, last]);
   }
 }
 

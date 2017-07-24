@@ -27,6 +27,7 @@ import {
   ASTExprConstantNumber,
   ASTExprConstantString,
   ASTExprList,
+  ASTExprRange,
   ASTExprTuple,
   ASTExprConstructor,
   ASTExprConstructorUpdate,
@@ -2094,5 +2095,225 @@ it('Parser - Constructor update: keep track of positions', () => {
   expect(tree[0].body.statements[0].value.startPos.column).equals(9);
   expect(tree[0].body.statements[0].value.endPos.line).equals(3);
   expect(tree[0].body.statements[0].value.endPos.column).equals(25);
+});
+
+it('Parser - List: empty list', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := []' +
+                 '}'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefProgram(
+      new ASTStmtBlock([
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprList([])
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - List: singleton', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := [a]' +
+                 '}'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefProgram(
+      new ASTStmtBlock([
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprList([
+            new ASTExprVariable(tok(T_LOWERID, 'a'))
+          ])
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - List: more elements', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := [foo, bar]' +
+                 '  y := [1, 2, 3]' +
+                 '  z := [1, 2, 3, 4, 5, 6]' +
+                 '}'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefProgram(
+      new ASTStmtBlock([
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprList([
+            new ASTExprVariable(tok(T_LOWERID, 'foo')),
+            new ASTExprVariable(tok(T_LOWERID, 'bar'))
+          ])
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'y'),
+          new ASTExprList([
+            new ASTExprConstantNumber(tok(T_NUM, '1')),
+            new ASTExprConstantNumber(tok(T_NUM, '2')),
+            new ASTExprConstantNumber(tok(T_NUM, '3'))
+          ])
+        ),
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'z'),
+          new ASTExprList([
+            new ASTExprConstantNumber(tok(T_NUM, '1')),
+            new ASTExprConstantNumber(tok(T_NUM, '2')),
+            new ASTExprConstantNumber(tok(T_NUM, '3')),
+            new ASTExprConstantNumber(tok(T_NUM, '4')),
+            new ASTExprConstantNumber(tok(T_NUM, '5')),
+            new ASTExprConstantNumber(tok(T_NUM, '6'))
+          ])
+        ),
+      ])
+    )
+  ]);
+});
+
+it('Parser - List: nested lists', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := [[], [1], [1, 2], [1, 2, 3]]' +
+                 '}'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefProgram(
+      new ASTStmtBlock([
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprList([
+            new ASTExprList([]),
+            new ASTExprList([
+              new ASTExprConstantNumber(tok(T_NUM, '1'))
+            ]),
+            new ASTExprList([
+              new ASTExprConstantNumber(tok(T_NUM, '1')),
+              new ASTExprConstantNumber(tok(T_NUM, '2'))
+            ]),
+            new ASTExprList([
+              new ASTExprConstantNumber(tok(T_NUM, '1')),
+              new ASTExprConstantNumber(tok(T_NUM, '2')),
+              new ASTExprConstantNumber(tok(T_NUM, '3'))
+            ])
+          ])
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - List: empty list: keep track of positions', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := [\n' +
+                 '  ]' +
+                 '}'
+               );
+  var tree = parser.parse();
+  expect(tree[0].body.statements[0].value.startPos.line).equals(2);
+  expect(tree[0].body.statements[0].value.startPos.column).equals(8);
+  expect(tree[0].body.statements[0].value.endPos.line).equals(3);
+  expect(tree[0].body.statements[0].value.endPos.column).equals(3);
+});
+
+it('Parser - List: singleton: keep track of positions', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := [\n' +
+                 '    1\n' +
+                 '  ]' +
+                 '}'
+               );
+  var tree = parser.parse();
+  expect(tree[0].body.statements[0].value.startPos.line).equals(2);
+  expect(tree[0].body.statements[0].value.startPos.column).equals(8);
+  expect(tree[0].body.statements[0].value.endPos.line).equals(4);
+  expect(tree[0].body.statements[0].value.endPos.column).equals(3);
+});
+
+it('Parser - List: more elements: keep track of positions', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := [\n' +
+                 '    1,\n' +
+                 '    2,\n' +
+                 '    3\n' +
+                 '  ]' +
+                 '}'
+               );
+  var tree = parser.parse();
+  expect(tree[0].body.statements[0].value.startPos.line).equals(2);
+  expect(tree[0].body.statements[0].value.startPos.column).equals(8);
+  expect(tree[0].body.statements[0].value.endPos.line).equals(6);
+  expect(tree[0].body.statements[0].value.endPos.column).equals(3);
+});
+
+it('Parser - Range: without second element', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := [first..last]' +
+                 '}'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefProgram(
+      new ASTStmtBlock([
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprRange(
+            new ASTExprVariable(tok(T_LOWERID, 'first')),
+            null,
+            new ASTExprVariable(tok(T_LOWERID, 'last'))
+          )
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - Range: with second element', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := [first,second..last]' +
+                 '}'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefProgram(
+      new ASTStmtBlock([
+        new ASTStmtAssignVariable(
+          tok(T_LOWERID, 'x'),
+          new ASTExprRange(
+            new ASTExprVariable(tok(T_LOWERID, 'first')),
+            new ASTExprVariable(tok(T_LOWERID, 'second')),
+            new ASTExprVariable(tok(T_LOWERID, 'last'))
+          )
+        )
+      ])
+    )
+  ]);
+});
+
+it('Parser - Range: keep track of positions', () => {
+  var parser = new Parser(
+                 'program {\n' +
+                 '  x := [1..100]\n' +
+                 '  y := [2,4..100]' +
+                 '}'
+               );
+  var tree = parser.parse();
+  expect(tree[0].body.statements[0].value.startPos.line).equals(2);
+  expect(tree[0].body.statements[0].value.startPos.column).equals(8);
+  expect(tree[0].body.statements[0].value.endPos.line).equals(2);
+  expect(tree[0].body.statements[0].value.endPos.column).equals(15);
+  expect(tree[0].body.statements[1].value.startPos.line).equals(3);
+  expect(tree[0].body.statements[1].value.startPos.column).equals(8);
+  expect(tree[0].body.statements[1].value.endPos.line).equals(3);
+  expect(tree[0].body.statements[1].value.endPos.column).equals(17);
 });
 
