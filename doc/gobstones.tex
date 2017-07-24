@@ -227,7 +227,17 @@ en t\'erminos, factores, \'atomos, etc., tal como se hace en la gram\'atica ofic
 }
 
 \produccion{\s{defType}}{
-  \TODO{TODO}
+  \tok{TYPE} \tok{UPPERID} \tok{IS} \tok{RECORD} \tok{LBRACE} \s{fieldDeclaration}* \tok{RBRACE}
+\ALT
+  \tok{TYPE} \tok{UPPERID} \tok{IS} \tok{VARIANT} \tok{LBRACE} \s{constructorDeclaration}* \tok{RBRACE}
+}
+
+\produccion{\s{constructorDeclaration}}{
+  \tok{CASE} \tok{UPPERID} \tok{LBRACE} \s{fieldDeclaration}* \tok{RBRACE}
+}
+
+\produccion{\s{fieldDeclaration}}{
+  \tok{FIELD} \tok{LOWERID}
 }
 
 \produccion{\s{loweridSeq}}{

@@ -20,6 +20,7 @@ import {
   ASTDefProgram,
   ASTDefProcedure,
   ASTDefFunction,
+  ASTDefType,
   /* Statements */
   ASTStmtBlock,
   ASTStmtReturn,
@@ -49,6 +50,8 @@ import {
   ASTSwitchBranch,
   /* FieldValue */
   ASTFieldValue,
+  /* ConstructorDeclaration */
+  ASTConstructorDeclaration,
   //
   N_ExprVariable,
 } from './ast';
@@ -163,14 +166,7 @@ export class Parser {
     while (this._currentToken.tag !== T_EOF) {
       definitions.push(this._parseDefinition());
     }
-    if (definitions.length == 0) {
-      throw new GbsSyntaxError(
-                  this._currentToken.startPos,
-                  i18n('errmsg:empty-source')
-                );
-    } else {
-      return definitions;
-    }
+    return definitions;
   }
 
   /** Definitions **/
@@ -187,8 +183,7 @@ export class Parser {
       case T_FUNCTION:
         return this._parseDefFunction();
       case T_TYPE:
-        this._nextToken();
-        throw Error('TODO');
+        return this._parseDefType();
       default:
         throw new GbsSyntaxError(
                     this._currentToken.startPos,
@@ -237,6 +232,82 @@ export class Parser {
     result.startPos = startPos;
     result.endPos = block.endPos;
     return result;
+  }
+
+  _parseDefType() {
+    var startPos = this._currentToken.startPos;
+    this._match(T_TYPE);
+    var typeName = this._parseUpperid();
+    this._match(T_IS);
+    switch (this._currentToken.tag) {
+      case T_RECORD:
+        return this._parseDefTypeRecord(startPos, typeName);
+      case T_VARIANT:
+        return this._parseDefTypeVariant(startPos, typeName);
+      default:
+        throw new GbsSyntaxError(
+          this._currentToken.startPos,
+          i18n('errmsg:expected-but-found')(
+            i18n('<alternative>')([
+              i18n('T_RECORD'),
+              i18n('T_VARIANT')
+            ]),
+            i18n(Symbol.keyFor(this._currentToken.tag))
+          )
+        );
+    }
+  }
+
+  _parseDefTypeRecord(startPos, typeName) {
+    this._match(T_RECORD);
+    this._match(T_LBRACE);
+    var fieldNames = this._parseFieldNames();
+    var endPos = this._currentToken.startPos;
+    this._match(T_RBRACE);
+    var result = new ASTDefType(typeName, [
+                   new ASTConstructorDeclaration(typeName, fieldNames)
+                 ]);
+    result.startPos = startPos;
+    result.endPos = endPos;
+    return result;
+  }
+
+  _parseDefTypeVariant(startPos, typeName) {
+    var constructorDeclarations = [];
+    this._match(T_VARIANT);
+    this._match(T_LBRACE);
+    while (this._currentToken.tag === T_CASE) {
+      constructorDeclarations.push(this._parseConstructorDeclaration());
+    }
+    var endPos = this._currentToken.endPos
+    this._match(T_RBRACE);
+    var result = new ASTDefType(typeName, constructorDeclarations);
+    result.startPos = startPos;
+    result.endPos = endPos;
+    return result;
+  }
+
+  _parseConstructorDeclaration() {
+    var startPos = this._currentToken.startPos;
+    this._match(T_CASE);
+    var constructorName = this._parseUpperid();
+    this._match(T_LBRACE);
+    var fieldNames = this._parseFieldNames();
+    var endPos = this._currentToken.startPos;
+    this._match(T_RBRACE);
+    var result = new ASTConstructorDeclaration(constructorName, fieldNames);
+    result.startPos = startPos;
+    result.endPos = endPos;
+    return result;
+  }
+
+  _parseFieldNames() {
+    var fieldNames = []
+    while (this._currentToken.tag === T_FIELD) {
+      this._match(T_FIELD);
+      fieldNames.push(this._parseLowerid());
+    }
+    return fieldNames;
   }
 
   /** Statements **/

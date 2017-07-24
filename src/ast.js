@@ -4,6 +4,7 @@ import { UnknownPosition } from './reader';
 export const N_DefProgram = Symbol.for('N_DefProgram');
 export const N_DefProcedure = Symbol.for('N_DefProcedure');
 export const N_DefFunction = Symbol.for('N_DefFunction');
+export const N_DefType = Symbol.for('N_DefType');
 /* Statements */
 export const N_StmtBlock = Symbol.for('N_StmtBlock');
 export const N_StmtReturn = Symbol.for('N_StmtReturn');
@@ -33,6 +34,8 @@ export const N_ExprFunctionCall = Symbol.for('N_ExprFunctionCall');
 export const N_SwitchBranch = Symbol.for('N_SwitchBranch');
 /* FieldValue: field <- value */
 export const N_FieldValue = Symbol.for('N_FieldValue');
+/* ConstructorDeclaration */
+export const N_ConstructorDeclaration = Symbol.for('N_ConstructorDeclaration');
 
 /* An instance of ASTNode represents a node of the abstract syntax tree.
  * - tag should be a node tag symbol.
@@ -107,6 +110,12 @@ export class ASTDefFunction extends ASTNode {
 
   get body() {
     return this.children[2];
+  }
+}
+
+export class ASTDefType extends ASTNode {
+  constructor(typeName, constructorDeclarations) {
+    super(N_DefType, [typeName, constructorDeclarations]);
   }
 }
 
@@ -274,15 +283,21 @@ export class ASTExprConstructorUpdate extends ASTNode {
   }
 }
 
+export class ASTExprFunctionCall extends ASTNode {
+  constructor(functionName, args) {
+    super(N_ExprFunctionCall, [functionName, args]);
+  }
+}
+
 export class ASTFieldValue extends ASTNode {
   constructor(fieldName, value) {
     super(N_FieldValue, [fieldName, value]);
   }
 }
 
-export class ASTExprFunctionCall extends ASTNode {
-  constructor(functionName, args) {
-    super(N_ExprFunctionCall, [functionName, args]);
+export class ASTConstructorDeclaration extends ASTNode {
+  constructor(constructorName, fieldNames) {
+    super(N_ConstructorDeclaration, [constructorName, fieldNames]);
   }
 }
 

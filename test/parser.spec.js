@@ -7,6 +7,7 @@ import {
   ASTDefProgram,
   ASTDefProcedure,
   ASTDefFunction,
+  ASTDefType,
   /* Statements */
   ASTStmtBlock,
   ASTStmtReturn,
@@ -36,6 +37,8 @@ import {
   ASTSwitchBranch,
   /* FieldValue */
   ASTFieldValue,
+  /* ConstructorDeclaration */
+  ASTConstructorDeclaration,
 } from '../src/ast';
 import { UnknownPosition } from '../src/reader';
 import {
@@ -107,9 +110,9 @@ it('Parser - Accept empty program definition', () => {
   ]);
 });
 
-it('Parser - Reject empty source', () => {
+it('Parser - Accept empty source', () => {
   var parser = new Parser('');
-  expect(() => parser.parse()).throws(i18n('errmsg:empty-source'));
+  expectAST(parser.parse(), []);
 });
 
 it('Parser - Reject things other than definitions at the toplevel', () => {
@@ -3423,4 +3426,78 @@ it('Parser - Operator precedence: override precedence with parens', () => {
     )
   ]);
 });
+
+it('Parser - Type definition: expect "variant" or "record"', () => {
+  var parser = new Parser('type A is while');
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:expected-but-found')(
+      i18n('<alternative>')([
+        i18n('T_RECORD'),
+        i18n('T_VARIANT')
+      ]),
+      i18n('T_WHILE')
+    )
+  );
+});
+
+it('Parser - Type definition: record types', () => {
+  var parser = new Parser(
+                 'type A is record {\n'
+               + '}\n'
+               + 'type B is record {\n'
+               + '  field x\n'
+               + '}\n'
+               + 'type C is record {\n'
+               + '  field x\n'
+               + '  field y\n'
+               + '}\n'
+               );
+  expectAST(parser.parse(), [
+      new ASTDefType(tok(T_UPPERID, 'A'), [
+        new ASTConstructorDeclaration(tok(T_UPPERID, 'A'), [
+        ])
+      ]),
+      new ASTDefType(tok(T_UPPERID, 'B'), [
+        new ASTConstructorDeclaration(tok(T_UPPERID, 'B'), [
+          tok(T_LOWERID, 'x')
+        ])
+      ]),
+      new ASTDefType(tok(T_UPPERID, 'C'), [
+        new ASTConstructorDeclaration(tok(T_UPPERID, 'C'), [
+          tok(T_LOWERID, 'x'),
+          tok(T_LOWERID, 'y')
+        ])
+      ])
+  ]);
+});
+
+it('Parser - Type definition: variant types', () => {
+  var parser = new Parser(
+                 'type A is variant {\n'
+               + '  case A1 {}\n'
+               + '  case A2 {\n'
+               + '    field x\n'
+               + '  }\n'
+               + '  case A3 {\n'
+               + '    field y\n'
+               + '    field z\n'
+               + '  }\n'
+               + '}\n'
+               );
+  expectAST(parser.parse(), [
+      new ASTDefType(tok(T_UPPERID, 'A'), [
+        new ASTConstructorDeclaration(tok(T_UPPERID, 'A1'), [
+        ]),
+        new ASTConstructorDeclaration(tok(T_UPPERID, 'A2'), [
+          tok(T_LOWERID, 'x')
+        ]),
+        new ASTConstructorDeclaration(tok(T_UPPERID, 'A3'), [
+          tok(T_LOWERID, 'y'),
+          tok(T_LOWERID, 'z')
+        ])
+      ])
+  ]);
+});
+
+// TODO: check that type definitions keep track of positions
 
