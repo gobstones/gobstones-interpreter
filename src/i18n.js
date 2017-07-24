@@ -53,7 +53,7 @@ const ES = {
   'errmsg:assignment-tuple-cannot-be-singleton':
     'La asignación a una tupla no puede constar de una sola componente. '
   + 'Las tuplas tienen 0, 2, 3, o más componentes, pero no 1.',
-  
+
   'errmsg:operators-are-not-associative':
     function (op1, op2) {
       return 'La expresión usa '
