@@ -32,6 +32,7 @@ export const T_VARIANT = Symbol.for('T_VARIANT');
 export const T_CASE = Symbol.for('T_CASE');
 export const T_FIELD = Symbol.for('T_FIELD');
 export const T_UNDERSCORE = Symbol.for('T_UNDERSCORE');
+export const T_TIMEOUT = Symbol.for('T_TIMEOUT');
 
 /* Symbols */
 export const T_LPAREN = Symbol.for('T_LPAREN');

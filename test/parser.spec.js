@@ -5,6 +5,7 @@ import {
   ASTNode,
   /* Definitions */
   ASTDefProgram,
+  ASTDefInteractiveProgram,
   ASTDefProcedure,
   ASTDefFunction,
   ASTDefType,
@@ -23,6 +24,7 @@ import {
   ASTPatternWildcard,
   ASTPatternConstructor,
   ASTPatternTuple,
+  ASTPatternTimeout,
   /* Expressions */
   ASTExprVariable,
   ASTExprConstantNumber,
@@ -49,6 +51,7 @@ import {
   T_IF, T_THEN, T_ELSE, T_REPEAT, T_FOREACH, T_IN, T_WHILE,
   T_SWITCH, T_TO, T_LET, T_NOT, T_DIV, T_MOD, T_TYPE,
   T_IS, T_RECORD, T_VARIANT, T_CASE, T_FIELD, T_UNDERSCORE,
+  T_TIMEOUT,
   /* Symbols */
   T_LPAREN, T_RPAREN, T_LBRACE, T_RBRACE, T_LBRACK, T_RBRACK, T_COMMA,
   T_SEMICOLON, T_RANGE, T_GETS, T_PIPE, T_ASSIGN,
@@ -422,7 +425,7 @@ it('Parser - Return: two results', () => {
 it('Parser - Return: keep track of positions (no results)', () => {
   var parser = new Parser('program {\n\n\n return\n() }');
   var tree = parser.parse();
-  expect(tree[0].body.statements[0].result.expressions.length).equals(0);
+  expect(tree[0].body.statements[0].result.elements.length).equals(0);
   expect(tree[0].body.statements[0].startPos.line).equals(4);
   expect(tree[0].body.statements[0].startPos.column).equals(2);
   expect(tree[0].body.statements[0].endPos.line).equals(5);
@@ -441,7 +444,7 @@ it('Parser - Return: keep track of positions (one result)', () => {
 it('Parser - Return: keep track of positions (two results)', () => {
   var parser = new Parser('program {\n\n\n return\n(col,dir) }');
   var tree = parser.parse();
-  expect(tree[0].body.statements[0].result.expressions.length).equals(2);
+  expect(tree[0].body.statements[0].result.elements.length).equals(2);
   expect(tree[0].body.statements[0].startPos.line).equals(4);
   expect(tree[0].body.statements[0].startPos.column).equals(2);
   expect(tree[0].body.statements[0].endPos.line).equals(5);
@@ -3427,6 +3430,26 @@ it('Parser - Operator precedence: override precedence with parens', () => {
   ]);
 });
 
+it('Parser - Type definition: type name should be an upperid', () => {
+  var parser = new Parser('type a');
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:expected-but-found')(
+      i18n('T_UPPERID'),
+      i18n('T_LOWERID')
+    )
+  );
+});
+
+it('Parser - Type definition: expect "is"', () => {
+  var parser = new Parser('type A');
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:expected-but-found')(
+      i18n('T_IS'),
+      i18n('T_EOF')
+    )
+  );
+});
+
 it('Parser - Type definition: expect "variant" or "record"', () => {
   var parser = new Parser('type A is while');
   expect(() => parser.parse()).throws(
@@ -3436,6 +3459,65 @@ it('Parser - Type definition: expect "variant" or "record"', () => {
         i18n('T_VARIANT')
       ]),
       i18n('T_WHILE')
+    )
+  );
+});
+
+it('Parser - Type definition: expect "field" for records', () => {
+  var parser = new Parser('type A is record { x }');
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:expected-but-found')(
+      i18n('<alternative>')([
+        i18n('T_FIELD'),
+        i18n('T_RBRACE')
+      ]),
+      i18n('T_LOWERID')
+    )
+  );
+});
+
+it('Parser - Type definition: field name should be lowerid', () => {
+  var parser = new Parser('type A is record { field Z } ');
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:expected-but-found')(
+      i18n('T_LOWERID'),
+      i18n('T_UPPERID')
+    )
+  );
+});
+
+it('Parser - Type definition: expect "case" for variants', () => {
+  var parser = new Parser('type A is variant { x }');
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:expected-but-found')(
+      i18n('<alternative>')([
+        i18n('T_CASE'),
+        i18n('T_RBRACE')
+      ]),
+      i18n('T_LOWERID')
+    )
+  );
+});
+
+it('Parser - Type definition: constructor names should be upperid', () => {
+  var parser = new Parser('type A is variant { case b } ');
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:expected-but-found')(
+      i18n('T_UPPERID'),
+      i18n('T_LOWERID')
+    )
+  );
+});
+
+it('Parser - Type definition: expect "field" for variant constructors', () => {
+  var parser = new Parser('type A is variant { case B { x } }');
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:expected-but-found')(
+      i18n('<alternative>')([
+        i18n('T_FIELD'),
+        i18n('T_RBRACE')
+      ]),
+      i18n('T_LOWERID')
     )
   );
 });
@@ -3499,5 +3581,109 @@ it('Parser - Type definition: variant types', () => {
   ]);
 });
 
-// TODO: check that type definitions keep track of positions
+it('Parser - Type definition: keep track of positions in records', () => {
+  var parser = new Parser(
+                 'type A is record {\n'
+               + '  field x\n'
+               + '  field y\n'
+               + '}\n'
+               );
+  var tree = parser.parse();
+  expect(tree[0].startPos.line).equals(1);
+  expect(tree[0].startPos.column).equals(1);
+  expect(tree[0].endPos.line).equals(4);
+  expect(tree[0].endPos.column).equals(1);
+
+  expect(tree[0].constructorDeclarations.length).equals(1);
+  expect(tree[0].constructorDeclarations[0].fieldNames.length).equals(2);
+
+  var fx = tree[0].constructorDeclarations[0].fieldNames[0];
+  expect(fx.startPos.line).equals(2);
+  expect(fx.startPos.column).equals(9);
+  expect(fx.endPos.line).equals(2);
+  expect(fx.endPos.column).equals(10);
+
+  var fy = tree[0].constructorDeclarations[0].fieldNames[1];
+  expect(fy.startPos.line).equals(3);
+  expect(fy.startPos.column).equals(9);
+  expect(fy.endPos.line).equals(3);
+  expect(fy.endPos.column).equals(10);
+});
+
+it('Parser - Type definition: keep track of positions in variants', () => {
+  var parser = new Parser(
+                 'type A is variant {\n'
+               + '  case A0 {}\n'
+               + '  case A1 {\n'
+               + '    field x\n'
+               + '    field y\n'
+               + '  }\n'
+               + '}\n'
+               );
+  var tree = parser.parse();
+  expect(tree[0].startPos.line).equals(1);
+  expect(tree[0].startPos.column).equals(1);
+  expect(tree[0].endPos.line).equals(7);
+  expect(tree[0].endPos.column).equals(1);
+
+  expect(tree[0].constructorDeclarations.length).equals(2);
+  expect(tree[0].constructorDeclarations[0].fieldNames.length).equals(0);
+  expect(tree[0].constructorDeclarations[1].fieldNames.length).equals(2);
+
+  expect(tree[0].constructorDeclarations[0].startPos.line).equals(2);
+  expect(tree[0].constructorDeclarations[0].startPos.column).equals(3);
+  expect(tree[0].constructorDeclarations[0].endPos.line).equals(2);
+  expect(tree[0].constructorDeclarations[0].endPos.column).equals(12);
+
+  expect(tree[0].constructorDeclarations[1].startPos.line).equals(3);
+  expect(tree[0].constructorDeclarations[1].startPos.column).equals(3);
+  expect(tree[0].constructorDeclarations[1].endPos.line).equals(6);
+  expect(tree[0].constructorDeclarations[1].endPos.column).equals(3);
+
+  var fx = tree[0].constructorDeclarations[1].fieldNames[0]
+  expect(fx.startPos.line).equals(4);
+  expect(fx.startPos.column).equals(11);
+  expect(fx.endPos.line).equals(4);
+  expect(fx.endPos.column).equals(12);
+});
+
+it('Parser - Interactive program', () => {
+  var parser = new Parser(
+                 'interactive program {\n'
+               + '  INIT -> {}\n'
+               + '  TIMEOUT(500) -> {}\n'
+               /*
+               + '  PRESS(x, y) -> {}\n'
+               + '  _ -> {}\n'
+               */
+               + '}\n'
+               );
+  expectAST(parser.parse(), [
+    new ASTDefInteractiveProgram([
+      new ASTSwitchBranch(
+        new ASTPatternConstructor(tok(T_UPPERID, 'INIT'), []),
+        new ASTStmtBlock([])
+      ),
+      new ASTSwitchBranch(
+        '?',
+        //new ASTPatternTimeout(tok(T_NUM, '500')),
+        new ASTStmtBlock([])
+      ),
+      /*
+      new ASTSwitchBranch(
+        new ASTPatternConstructor(tok(T_UPPERID, 'PRESS'), [
+          tok(T_LOWERID, 'x'),
+          tok(T_LOWERID, 'y')
+        ]),
+        new ASTStmtBlock([])
+      ),
+      new ASTSwitchBranch(
+        new ASTPatternWildcard(
+          new ASTStmtBlock([])
+        )
+      )
+      */
+    ])
+  ]);
+});
 

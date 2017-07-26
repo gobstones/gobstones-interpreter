@@ -7,6 +7,7 @@ import {
   T_IF, T_THEN, T_ELSE, T_REPEAT, T_FOREACH, T_IN, T_WHILE,
   T_SWITCH, T_TO, T_LET, T_NOT, T_DIV, T_MOD, T_TYPE,
   T_IS, T_RECORD, T_VARIANT, T_CASE, T_FIELD, T_UNDERSCORE,
+  T_TIMEOUT,
   /* Symbols */
   T_LPAREN, T_RPAREN, T_LBRACE, T_RBRACE, T_LBRACK, T_RBRACK, T_COMMA,
   T_SEMICOLON, T_RANGE, T_GETS, T_PIPE, T_ARROW, T_ASSIGN,
@@ -379,7 +380,8 @@ it('Lexer - Keywords', () => {
     'variant',
     'case',
     'field',
-    '_'
+    '_',
+    'TIMEOUT',
   ];
   var lexer = new Lexer(words.join(' '));
   expectTokenTypes(lexer, [
@@ -409,6 +411,7 @@ it('Lexer - Keywords', () => {
     T_CASE,
     T_FIELD,
     T_UNDERSCORE,
+    T_TIMEOUT,
     T_EOF
   ]);
 });

@@ -2,6 +2,7 @@ import { UnknownPosition } from './reader';
 
 /* Definitions */
 export const N_DefProgram = Symbol.for('N_DefProgram');
+export const N_DefInteractiveProgram = Symbol.for('N_DefInteractiveProgram');
 export const N_DefProcedure = Symbol.for('N_DefProcedure');
 export const N_DefFunction = Symbol.for('N_DefFunction');
 export const N_DefType = Symbol.for('N_DefType');
@@ -20,6 +21,7 @@ export const N_StmtProcedureCall = Symbol.for('N_StmtProcedureCall');
 export const N_PatternWildcard = Symbol.for('N_PatternWildcard');
 export const N_PatternConstructor = Symbol.for('N_PatternConstructor');
 export const N_PatternTuple = Symbol.for('N_PatternTuple');
+export const N_PatternTimeout = Symbol.for('N_PatternTimeout');
 /* Expressions */
 export const N_ExprVariable = Symbol.for('N_ExprVariable');
 export const N_ExprConstantNumber = Symbol.for('N_ExprConstantNumber');
@@ -51,8 +53,7 @@ export class ASTNode {
     this._startPos = UnknownPosition;
     this._endPos = UnknownPosition;
 
-    // Assert this invariant to protect against a common mistake
-    // in the interpreter.
+    /* Assert this invariant to protect against common mistakes. */
     if (!(children instanceof Array)) {
       throw Error('The children of an ASTNode should be an array.');
     }
@@ -83,6 +84,8 @@ export class ASTNode {
   }
 }
 
+/* Definitions */
+
 export class ASTDefProgram extends ASTNode {
   constructor(body) {
     super(N_DefProgram, [body]);
@@ -90,6 +93,12 @@ export class ASTDefProgram extends ASTNode {
 
   get body() {
     return this.children[0];
+  }
+}
+
+export class ASTDefInteractiveProgram extends ASTNode {
+  constructor(branches) {
+    super(N_DefInteractiveProgram, branches);
   }
 }
 
@@ -116,6 +125,10 @@ export class ASTDefFunction extends ASTNode {
 export class ASTDefType extends ASTNode {
   constructor(typeName, constructorDeclarations) {
     super(N_DefType, [typeName, constructorDeclarations]);
+  }
+
+  get constructorDeclarations() {
+    return this._children[1];
   }
 }
 
@@ -209,14 +222,20 @@ export class ASTPatternWildcard extends ASTNode {
 }
 
 export class ASTPatternConstructor extends ASTNode {
-  constructor(constructor, parameters) {
-    super(N_PatternConstructor, [constructor, parameters]);
+  constructor(constructorName, parameters) {
+    super(N_PatternConstructor, [constructorName, parameters]);
   }
 }
 
 export class ASTPatternTuple extends ASTNode {
   constructor(parameters) {
     super(N_PatternTuple, parameters);
+  }
+}
+
+export class ASTPatternTimeout extends ASTNode {
+  constructor(timeout) {
+    super(N_PatternTimeout, [timeout]);
   }
 }
 
@@ -258,11 +277,11 @@ export class ASTExprRange extends ASTNode {
 }
 
 export class ASTExprTuple extends ASTNode {
-  constructor(expressions) {
-    super(N_ExprTuple, expressions);
+  constructor(elements) {
+    super(N_ExprTuple, elements);
   }
 
-  get expressions() {
+  get elements() {
     return this.children;
   }
 }
@@ -298,6 +317,10 @@ export class ASTFieldValue extends ASTNode {
 export class ASTConstructorDeclaration extends ASTNode {
   constructor(constructorName, fieldNames) {
     super(N_ConstructorDeclaration, [constructorName, fieldNames]);
+  }
+
+  get fieldNames() {
+    return this._children[1];
   }
 }
 

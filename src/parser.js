@@ -8,6 +8,7 @@ import {
   T_IF, T_THEN, T_ELSE, T_REPEAT, T_FOREACH, T_IN, T_WHILE,
   T_SWITCH, T_TO, T_LET, T_NOT, T_DIV, T_MOD, T_TYPE,
   T_IS, T_RECORD, T_VARIANT, T_CASE, T_FIELD, T_UNDERSCORE,
+  T_TIMEOUT,
   /* Symbols */
   T_LPAREN, T_RPAREN, T_LBRACE, T_RBRACE, T_LBRACK, T_RBRACK, T_COMMA,
   T_SEMICOLON, T_RANGE, T_GETS, T_PIPE, T_ARROW, T_ASSIGN,
@@ -18,6 +19,7 @@ import {
   ASTNode,
   /* Definitions */
   ASTDefProgram,
+  ASTDefInteractiveProgram,
   ASTDefProcedure,
   ASTDefFunction,
   ASTDefType,
@@ -36,6 +38,7 @@ import {
   ASTPatternWildcard,
   ASTPatternConstructor,
   ASTPatternTuple,
+  ASTPatternTimeout,
   /* Expressions */
   ASTExprVariable,
   ASTExprConstantNumber,
@@ -176,8 +179,7 @@ export class Parser {
       case T_PROGRAM:
         return this._parseDefProgram();
       case T_INTERACTIVE:
-        this._nextToken();
-        throw Error('TODO');
+        return this._parseDefInteractiveProgram();
       case T_PROCEDURE:
         return this._parseDefProcedure();
       case T_FUNCTION:
@@ -202,6 +204,20 @@ export class Parser {
     var result = new ASTDefProgram(block);
     result.startPos = startPos;
     result.endPos = block.endPos;
+    return result;
+  }
+
+  _parseDefInteractiveProgram() {
+    var startPos = this._currentToken.startPos;
+    this._match(T_INTERACTIVE);
+    this._match(T_PROGRAM);
+    this._match(T_LBRACE);
+    var branches = this._parseSwitchBranches();
+    var endPos = this._currentToken.startPos;
+    this._match(T_RBRACE);
+    var result = new ASTDefInteractiveProgram(branches);
+    result.startPos = startPos;
+    result.endPos = endPos;
     return result;
   }
 
@@ -263,7 +279,7 @@ export class Parser {
     this._match(T_LBRACE);
     var fieldNames = this._parseFieldNames();
     var endPos = this._currentToken.startPos;
-    this._match(T_RBRACE);
+    this._matchExpected(T_RBRACE, [T_FIELD, T_RBRACE]);
     var result = new ASTDefType(typeName, [
                    new ASTConstructorDeclaration(typeName, fieldNames)
                  ]);
@@ -279,8 +295,8 @@ export class Parser {
     while (this._currentToken.tag === T_CASE) {
       constructorDeclarations.push(this._parseConstructorDeclaration());
     }
-    var endPos = this._currentToken.endPos
-    this._match(T_RBRACE);
+    var endPos = this._currentToken.startPos;
+    this._matchExpected(T_RBRACE, [T_CASE, T_RBRACE]);
     var result = new ASTDefType(typeName, constructorDeclarations);
     result.startPos = startPos;
     result.endPos = endPos;
@@ -294,7 +310,7 @@ export class Parser {
     this._match(T_LBRACE);
     var fieldNames = this._parseFieldNames();
     var endPos = this._currentToken.startPos;
-    this._match(T_RBRACE);
+    this._matchExpected(T_RBRACE, [T_FIELD, T_RBRACE]);
     var result = new ASTConstructorDeclaration(constructorName, fieldNames);
     result.startPos = startPos;
     result.endPos = endPos;
@@ -540,20 +556,23 @@ export class Parser {
   /** Patterns **/
 
   _parsePattern() {
-    if (this._currentToken.tag === T_UNDERSCORE) {
-      return this._parsePatternWildcard();
-    } else if (this._currentToken.tag === T_UPPERID) {
-      return this._parsePatternConstructor();
-    } else if (this._currentToken.tag === T_LPAREN) {
-      return this._parsePatternTuple();
-    } else {
-      throw new GbsSyntaxError(
-        this._currentToken.startPos,
-        i18n('errmsg:expected-but-found')(
-          i18n('pattern'),
-          i18n(Symbol.keyFor(this._currentToken.tag))
-        )
-      );
+    switch (this._currentToken.tag) {
+      case T_UNDERSCORE:
+        return this._parsePatternWildcard();
+      case T_UPPERID:
+        return this._parsePatternConstructor();
+      case T_LPAREN:
+        return this._parsePatternTuple();
+      case T_TIMEOUT:
+        return this._parsePatternTimeout();
+      default:
+        throw new GbsSyntaxError(
+          this._currentToken.startPos,
+          i18n('errmsg:expected-but-found')(
+            i18n('pattern'),
+            i18n(Symbol.keyFor(this._currentToken.tag))
+          )
+        );
     }
   }
 
@@ -599,6 +618,19 @@ export class Parser {
     var endPos = this._currentToken.startPos;
     this._match(T_RPAREN);
     var result = new ASTPatternTuple(parameters);
+    result.startPos = startPos;
+    result.endPos = endPos;
+    return result;
+  }
+
+  _parsePatternTimeout() {
+    var startPos = this._currentToken.startPos;
+    this._match(T_TIMEOUT);
+    this._match(T_LPAREN);
+    var timeout = this._match(T_NUM);
+    var endPos = this._currentToken.endPos;
+    this._match(T_RPAREN);
+    var result = new ASTPatternTimeout(timeout);
     result.startPos = startPos;
     result.endPos = endPos;
     return result;

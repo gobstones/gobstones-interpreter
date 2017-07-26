@@ -1,14 +1,19 @@
 \documentclass{article}
+\usepackage{geometry}
 \usepackage{xcolor}
 \usepackage{amsmath}
 \usepackage{tabularx}
 \usepackage[spanish]{babel}
 \begin{document}
+\colorlet{darkgreen}{green!60!black}
 \newcommand{\chr}[1]{\texttt{'}\textcolor{blue}{\texttt{#1}}\texttt{'}}
 \newcommand{\str}[1]{\texttt{"}\textcolor{blue}{\texttt{#1}}\texttt{"}}
 \newcommand{\tok}[1]{\textcolor{red}{\texttt{#1}}}
 \newcommand{\symbolentry}[3]{#1 & #2 && #3 \\}
 \newcommand{\nb}[1]{\footnotesize{#1}}
+\newcommand{\NB}[1]{
+  & {\footnotesize {#1}}
+}
 \newcommand{\s}[1]{\textcolor{blue}{{\it$\langle$#1$\rangle$}}}
 \newcommand{\nonEmpty}[1]{#1$_{1}$}
 \newcommand{\produccion}[2]{
@@ -25,6 +30,20 @@
   $\mid$
 }
 \newcommand{\TODO}[1]{\textcolor{red}{****#1****}}
+
+\newcommand{\type}[1]{\textcolor{blue}{\texttt{#1}}}
+\renewcommand{\ast}[1]{\textcolor{darkgreen}{\texttt{\underline{#1}}}}
+\newcommand{\typedecl}[2]{\noindent
+  \begin{tabularx}{\textwidth}{lrlr}
+  #1 & $=$ & #2
+  \end{tabularx}\\
+}
+\newcommand{\datadecl}[2]{\noindent
+  \begin{tabularx}{\textwidth}{lrp{13cm}r}
+  #1 & $::=$ & #2
+  \end{tabularx}\\
+}
+
 \section{Gram\'atica de XGobstones}
 
 \subsection{Sintaxis l\'exica}
@@ -112,6 +131,7 @@ con su significado acostumbrado en la tradici\'on de C
 \symbolentry{\texttt{case}}{\tok{CASE}}{\nb{Para las alternativas de tipos variantes.}}
 \symbolentry{\texttt{field}}{\tok{FIELD}}{\nb{Para los campos de tipos registro.}}
 \symbolentry{\texttt{\_}}{\tok{UNDERSCORE}}{\nb{Para marcar el caso ``default'' en un switch/match.}}
+\symbolentry{\texttt{TIMEOUT}}{\tok{TIMEOUT}}{\nb{Para la rama ``timeout'' en un interactive program.}}
 \end{tabularx}\bigskip
 
 \noindent{\bf S\'imbolos}\medskip\\
@@ -188,6 +208,8 @@ izquierdo de las ramas de un \texttt{switch} y en el lado izquierdo de las ramas
 \texttt{interactive program}.
 En una lista de ramas deber\'ia haber un \'unico gui\'on bajo, y deber\'ia ser el \'ultimo
 patr\'on de la lista pero esto, de nuevo, se relega a la etapa de lint.
+\item Los patrones del interactive program (\texttt{TIMEOUT}, \texttt{K\_ENTER}, etc.) se
+admiten como patrones en cualquier switch.
 \end{itemize}
 
 Las convenciones de asociatividad y precedencia de operadores no se reflejan
@@ -215,7 +237,7 @@ en t\'erminos, factores, \'atomos, etc., tal como se hace en la gram\'atica ofic
 }
 
 \produccion{\s{defInteractiveProgram}}{
-  \TODO{TODO}
+  \tok{INTERACTIVE} \tok{PROGRAM} \tok{LBRACE} \s{stmtSwitchBranch}* \tok{RBRACE}
 }
 
 \produccion{\s{defProcedure}}{
@@ -336,6 +358,8 @@ en t\'erminos, factores, \'atomos, etc., tal como se hace en la gram\'atica ofic
   \s{patternConstructor}
 \ALT
   \s{patternTuple}
+\ALT
+  \s{patternTimeout}
 }
 
 \produccion{\s{patternWildcard}}{
@@ -351,6 +375,11 @@ en t\'erminos, factores, \'atomos, etc., tal como se hace en la gram\'atica ofic
 \ALT
   \tok{LPAREN} \tok{LOWERID} \tok{COMMA} \s{\nonEmpty{loweridSeq}} \tok{RPAREN}
 }
+
+\produccion{\s{patternTimeout}}{
+  \tok{TIMEOUT} \tok{LPAREN} \tok{NUM} \tok{RPAREN}
+}
+
 
 \noindent {\bf Expressions.}
 
@@ -522,5 +551,132 @@ operador unario prefijo ({\bf Prefix}).
 \item {\bf Prefix:}
   \tok{MINUS} (\texttt{-}, menos unario)
 \end{itemize}
+
+\subsection{\'Arbol de sintaxis abstracta}
+
+El resultado de analizar sint\'acticamente un programa es un objeto.
+El objeto representa un \'arbol sint\'actico y est\'a construido
+recursivamente de la siguiente manera:
+\begin{itemize}
+\item Las hojas del \'arbol son instancias de la clase \texttt{Token}
+      cuyo atributo 
+      \texttt{tag} representa el tipo de token (por ejemplo,
+      \texttt{T\_UPPERID})
+      y cuyo atributo \texttt{value} representa el valor le\'ido
+      (por ejemplo, ``\texttt{PonerN}'').
+\item Los nodos internos del \'arbol son instancias de la clase
+      \texttt{ASTNode} o, m\'as precisamente, de alguna de sus subclases.
+      Un nodo interno tiene dos atributos:
+      \begin{itemize}
+      \item \texttt{tag}: indica el ``tipo'' de nodo del que se trata.
+            Por ejemplo
+            una instancia de la clase \texttt{ASTStmtIf}
+            representa un comando \texttt{if-then-else},
+            y el tag asociado es el s\'imbolo \texttt{N\_StmtIf}.
+      \item \texttt{children}: es la lista de hijos del nodo.
+            Por ejemplo,
+            las instancias de la clase \texttt{ASTStmtIf}
+            tienen exactamente tres hijos:
+            el primero es una expresi\'on que representa la condici\'on
+            del if,
+            el segundo es un comando que representa la rama \texttt{then},
+            y el tercero puede ser \texttt{null} (si la rama \texttt{else})
+            se encuentra ausente), o un comando que representa la rama \texttt{else}.
+      \end{itemize}
+\item Como se mencion\'o arriba, en algunos (pocos) casos
+      las hojas del \'arbol tambi\'en pueden ser \texttt{null},
+      que se usa para indicar la ausencia de algunas
+      componentes opcionales del \'arbol (tales como la rama \texttt{else}
+      de un \texttt{if}).
+\item Los hijos eventualmente tambi\'en pueden ser listas de ASTs.
+\end{itemize}
+
+Abajo se especifica la forma que tiene un \'arbol usando una sintaxis
+similar a la de la declaraci\'on de un tipo de datos inductivo en
+Haskell.
+Los tipos escritos \type{EN\_MAY\'USCULAS} representan el tipo de los tokens.
+Los tipos escritos \type{EnMin\'usculas} representan categor\'ias
+abstractas de ASTs
+(por ejemplo, \type{Statement} es la categor\'ia abstracta de aquellos
+AST que representan comandos).
+Las palabras escritas \ast{EnVerde} representan categor\'ias concretas
+(en la terminolog\'ia de Haskell, constructores; en el caso de JavaScript
+corresponden a subclases de \texttt{ASTNode}).
+Por ejemplo, \ast{StmtIf} es la categor\'ia concreta de los AST que
+representan un comando if-then-else.
+En JavaScript, su clase asociada se llama \texttt{ASTStmtIf},
+y su tag asociado es el s\'imbolo \texttt{N\_StmtIf}.
+
+\typedecl{\type{ID}}{String}
+\typedecl{\type{NUM}}{Int}
+\typedecl{\type{STRING}}{String}
+\typedecl{\type{Start}}{[\type{Definition}]}
+\datadecl{\type{Definition}}{
+  \ast{DefProgram}(body : \type{Statement})
+\ALT
+  \ast{DefInteractiveProgram}(branches : [\type{SwitchBranch}])
+\ALT
+  \ast{DefProcedure}(name : \type{ID}, parameters : [\type{ID}], body : \type{Statement})
+\ALT
+  \ast{DefFunction}(name : \type{ID}, parameters : [\type{ID}], body : \type{Statement})
+\ALT
+  \ast{DefType}(typeName : \type{ID}, constructorDeclarations : [\type{ConstructorDeclaration}])
+}
+\datadecl{\type{Statement}}{
+  \ast{StmtBlock}(statements : [\type{Statement}])
+\ALT
+  \ast{StmtReturn}(result : [\type{Expression}])
+\ALT
+  \ast{StmtIf}(condition : \type{Expression}, thenBlock : \type{Expression}, elseBlock : \type{Expression}?)
+\ALT
+  \ast{StmtForeach}(index : \type{ID}, range : \type{Expression}, body : \type{Statement})
+\ALT
+  \ast{StmtWhile}(condition : \type{Expression}, body : \type{Statement})
+\ALT
+  \ast{StmtSwitch}(subject : \type{Expression}, branches : [\type{SwitchBranch}])
+\ALT
+  \ast{StmtAssignVariable}(variable : \type{ID}, value : \type{Expression})
+\ALT
+  \ast{StmtAssignTuple}(variables : [\type{ID}], value : \type{Expression})
+\ALT
+  \ast{StmtProcedureCall}(procedureName : [\type{ID}], args : [\type{Expression}])
+}
+\datadecl{\type{SwitchBranch}}{
+  \ast{SwitchBranch}(pattern : \type{Pattern}, body : \type{Expression})
+}
+\datadecl{\type{Pattern}}{
+  \ast{PatternWildcard}()
+\ALT
+  \ast{PatternConstructor}(constructorName : \type{ID}, parameters : [\type{ID}])
+\ALT
+  \ast{PatternTuple}(parameters : [\type{ID}])
+\ALT
+  \ast{PatternTimeout}(timeout : \type{NUM})
+}
+\datadecl{\type{Expression}}{
+  \ast{ExprVariable}(variableName : \type{ID})
+\ALT
+  \ast{ExprConstantNumber}(number : \type{NUM})
+\ALT
+  \ast{ExprConstantString}(string : \type{STRING})
+\ALT
+  \ast{ExprList}(elements : [\type{Expression}])
+\ALT
+  \ast{ExprRange}(first : \type{Expression}, second : \type{Expression}?, last : \type{Expression})
+\ALT
+  \ast{ExprTuple}(elements : [\type{Expression}])
+\ALT
+  \ast{ExprConstructor}(constructorName : \type{ID}, fieldValues : [\type{FieldValue}])
+\ALT
+  \ast{ExprConstructorUpdate}(constructorName : \type{ID}, original : \type{Expression}, fieldValues : [\type{FieldValue}])
+\ALT
+  \ast{ExprFunctionCall}(functionName : \type{ID}, args : [\type{Expression}])
+}
+\datadecl{\type{ConstructorDeclaration}}{
+  \ast{ConstructorDeclaration}(constructorName : \type{ID}, fieldNames : [\type{ID}])
+}
+\datadecl{\type{FieldValue}}{
+  \ast{FieldValue}(fieldName : \type{ID}, value : \type{Expression})
+}
 
 \end{document}
