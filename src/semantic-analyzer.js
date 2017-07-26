@@ -1,4 +1,34 @@
 
+/* A semantic analyzer receives
+ *   a global environment (instance of GlobalEnvironment)
+ *   an abstract syntax tree (the output of a parser)
+ *
+ * Then:
+ *
+ * - It performs semantic checks (linting) to ensure that the
+ *   program is well-formed.
+ *
+ * - It builds a symbol table with information on global identifiers
+ *   such as procedures, functions, types, constructors, and fields.
+ *
+ * - The semantic analysis is structured as a recursive visit over the
+ *   AST.
+ *
+ * We assume that the AST is the valid output of a parser.
+ */
+class SemanticAnalyzer {
+
+  constructor(globalEnvironment, ast) {
+    this._globalEnvironment = globalEnvironment;
+    this._ast = ast;
+  }
+
+  check(definitions) {
+
+  }
+
+}
+
 // TODO: 
 // - dentro de una función, no se pueden mezclar los roles de
 //   + variables

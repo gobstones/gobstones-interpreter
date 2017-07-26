@@ -165,7 +165,7 @@ export class Parser {
 
   /* Return the AST that results from parsing a full program */
   parse() {
-    var definitions = [];
+     var definitions = [];
     while (this._currentToken.tag !== T_EOF) {
       definitions.push(this._parseDefinition());
     }
@@ -198,62 +198,62 @@ export class Parser {
   }
 
   _parseDefProgram() {
-    var startPos = this._currentToken.startPos;
+    let startPos = this._currentToken.startPos;
     this._match(T_PROGRAM);
-    var block = this._parseStmtBlock();
-    var result = new ASTDefProgram(block);
+    let block = this._parseStmtBlock();
+    let result = new ASTDefProgram(block);
     result.startPos = startPos;
     result.endPos = block.endPos;
     return result;
   }
 
   _parseDefInteractiveProgram() {
-    var startPos = this._currentToken.startPos;
+    let startPos = this._currentToken.startPos;
     this._match(T_INTERACTIVE);
     this._match(T_PROGRAM);
     this._match(T_LBRACE);
-    var branches = this._parseSwitchBranches();
-    var endPos = this._currentToken.startPos;
+    let branches = this._parseSwitchBranches();
+    let endPos = this._currentToken.startPos;
     this._match(T_RBRACE);
-    var result = new ASTDefInteractiveProgram(branches);
+    let result = new ASTDefInteractiveProgram(branches);
     result.startPos = startPos;
     result.endPos = endPos;
     return result;
   }
 
   _parseDefProcedure() {
-    var startPos = this._currentToken.startPos;
+    let startPos = this._currentToken.startPos;
     this._match(T_PROCEDURE);
-    var name = this._parseUpperid();
+    let name = this._parseUpperid();
     this._match(T_LPAREN);
-    var parameters = this._parseLoweridSeq();
+    let parameters = this._parseLoweridSeq();
     this._match(T_RPAREN);
-    var block = this._parseStmtBlock();
-    var result = new ASTDefProcedure(name, parameters, block);
+    let block = this._parseStmtBlock();
+    let result = new ASTDefProcedure(name, parameters, block);
     result.startPos = startPos;
     result.endPos = block.endPos;
     return result;
   }
 
   _parseDefFunction() {
-    var startPos = this._currentToken.startPos;
+    let startPos = this._currentToken.startPos;
     this._match(T_FUNCTION);
-    var name = this._currentToken;
+    let name = this._currentToken;
     this._match(T_LOWERID);
     this._match(T_LPAREN);
-    var parameters = this._parseLoweridSeq();
+    let parameters = this._parseLoweridSeq();
     this._match(T_RPAREN);
-    var block = this._parseStmtBlock();
-    var result = new ASTDefFunction(name, parameters, block);
+    let block = this._parseStmtBlock();
+    let result = new ASTDefFunction(name, parameters, block);
     result.startPos = startPos;
     result.endPos = block.endPos;
     return result;
   }
 
   _parseDefType() {
-    var startPos = this._currentToken.startPos;
+    let startPos = this._currentToken.startPos;
     this._match(T_TYPE);
-    var typeName = this._parseUpperid();
+    let typeName = this._parseUpperid();
     this._match(T_IS);
     switch (this._currentToken.tag) {
       case T_RECORD:
@@ -277,10 +277,10 @@ export class Parser {
   _parseDefTypeRecord(startPos, typeName) {
     this._match(T_RECORD);
     this._match(T_LBRACE);
-    var fieldNames = this._parseFieldNames();
-    var endPos = this._currentToken.startPos;
+    let fieldNames = this._parseFieldNames();
+    let endPos = this._currentToken.startPos;
     this._matchExpected(T_RBRACE, [T_FIELD, T_RBRACE]);
-    var result = new ASTDefType(typeName, [
+    let result = new ASTDefType(typeName, [
                    new ASTConstructorDeclaration(typeName, fieldNames)
                  ]);
     result.startPos = startPos;
@@ -289,36 +289,36 @@ export class Parser {
   }
 
   _parseDefTypeVariant(startPos, typeName) {
-    var constructorDeclarations = [];
+    let constructorDeclarations = [];
     this._match(T_VARIANT);
     this._match(T_LBRACE);
     while (this._currentToken.tag === T_CASE) {
       constructorDeclarations.push(this._parseConstructorDeclaration());
     }
-    var endPos = this._currentToken.startPos;
+    let endPos = this._currentToken.startPos;
     this._matchExpected(T_RBRACE, [T_CASE, T_RBRACE]);
-    var result = new ASTDefType(typeName, constructorDeclarations);
+    let result = new ASTDefType(typeName, constructorDeclarations);
     result.startPos = startPos;
     result.endPos = endPos;
     return result;
   }
 
   _parseConstructorDeclaration() {
-    var startPos = this._currentToken.startPos;
+    let startPos = this._currentToken.startPos;
     this._match(T_CASE);
-    var constructorName = this._parseUpperid();
+    let constructorName = this._parseUpperid();
     this._match(T_LBRACE);
-    var fieldNames = this._parseFieldNames();
-    var endPos = this._currentToken.startPos;
+    let fieldNames = this._parseFieldNames();
+    let endPos = this._currentToken.startPos;
     this._matchExpected(T_RBRACE, [T_FIELD, T_RBRACE]);
-    var result = new ASTConstructorDeclaration(constructorName, fieldNames);
+    let result = new ASTConstructorDeclaration(constructorName, fieldNames);
     result.startPos = startPos;
     result.endPos = endPos;
     return result;
   }
 
   _parseFieldNames() {
-    var fieldNames = []
+    let fieldNames = []
     while (this._currentToken.tag === T_FIELD) {
       this._match(T_FIELD);
       fieldNames.push(this._parseLowerid());
@@ -330,7 +330,7 @@ export class Parser {
 
   /* Statement, optionally followed by semicolon */
   _parseStatement() {
-    var statement = this._parsePureStatement();
+    let statement = this._parsePureStatement();
     if (this._currentToken.tag === T_SEMICOLON) {
       this._match(T_SEMICOLON);
     }
@@ -372,8 +372,8 @@ export class Parser {
   }
 
   _parseStmtBlock() {
-    var startPos = this._currentToken.startPos;
-    var statements = [];
+    let startPos = this._currentToken.startPos;
+    let statements = [];
     this._match(T_LBRACE);
     while (this._currentToken.tag !== T_RBRACE) {
       statements.push(this._parseStatement());
@@ -381,37 +381,37 @@ export class Parser {
         this._match(T_SEMICOLON);
       }
     }
-    var endPos = this._currentToken.startPos; 
+    let endPos = this._currentToken.startPos; 
     this._match(T_RBRACE);
-    var result = new ASTStmtBlock(statements);
+    let result = new ASTStmtBlock(statements);
     result.startPos = startPos;
     result.endPos = endPos;
     return result;
   }
 
   _parseStmtReturn() {
-    var startPos = this._currentToken.startPos;
+    let startPos = this._currentToken.startPos;
     this._match(T_RETURN);
-    var tuple = this._parseExprTuple();
-    var result = new ASTStmtReturn(tuple);
+    let tuple = this._parseExprTuple();
+    let result = new ASTStmtReturn(tuple);
     result.startPos = startPos;
     result.endPos = tuple.endPos;
     return result;
   }
 
   _parseStmtIf() {
-    var startPos = this._currentToken.startPos;
+    let startPos = this._currentToken.startPos;
     this._match(T_IF);
     this._match(T_LPAREN);
-    var condition = this._parseExpression();
+    let condition = this._parseExpression();
     this._match(T_RPAREN);
     /* Optional 'then' */
     if (this._currentToken.tag === T_THEN) {
       this._match(T_THEN);
     }
-    var thenBlock = this._parseStmtBlock();
-    var endPos;
-    var elseBlock;
+    let thenBlock = this._parseStmtBlock();
+    let endPos;
+    let elseBlock;
     if (this._currentToken.tag === T_ELSE) {
       this._match(T_ELSE);
       elseBlock = this._parseStmtBlock();
@@ -420,74 +420,74 @@ export class Parser {
       elseBlock = null;
       endPos = thenBlock.endPos;
     }
-    var result = new ASTStmtIf(condition, thenBlock, elseBlock);
+    let result = new ASTStmtIf(condition, thenBlock, elseBlock);
     result.startPos = startPos;
     result.endPos = endPos;
     return result;
   }
 
   _parseStmtRepeat() {
-    var startPos = this._currentToken.startPos;
+    let startPos = this._currentToken.startPos;
     this._match(T_REPEAT);
     this._match(T_LPAREN);
-    var times = this._parseExpression();
+    let times = this._parseExpression();
     this._match(T_RPAREN);
-    var body = this._parseStmtBlock();
-    var result = new ASTStmtRepeat(times, body);
+    let body = this._parseStmtBlock();
+    let result = new ASTStmtRepeat(times, body);
     result.startPos = startPos;
     result.endPos = body.endPos
     return result;
   }
 
   _parseStmtForeach() {
-    var startPos = this._currentToken.startPos;
+    let startPos = this._currentToken.startPos;
     this._match(T_FOREACH);
-    var index = this._parseLowerid();
+    let index = this._parseLowerid();
     this._match(T_IN);
-    var range = this._parseExpression();
-    var body = this._parseStmtBlock();
-    var result = new ASTStmtForeach(index, range, body);
+    let range = this._parseExpression();
+    let body = this._parseStmtBlock();
+    let result = new ASTStmtForeach(index, range, body);
     result.startPos = startPos;
     result.endPos = body.endPos
     return result;
   }
 
   _parseStmtWhile() {
-    var startPos = this._currentToken.startPos;
+    let startPos = this._currentToken.startPos;
     this._match(T_WHILE);
     this._match(T_LPAREN);
-    var condition = this._parseExpression();
+    let condition = this._parseExpression();
     this._match(T_RPAREN);
-    var body = this._parseStmtBlock();
-    var result = new ASTStmtWhile(condition, body);
+    let body = this._parseStmtBlock();
+    let result = new ASTStmtWhile(condition, body);
     result.startPos = startPos;
     result.endPos = body.endPos
     return result;
   }
 
   _parseStmtSwitch() {
-    var startPos = this._currentToken.startPos;
+    let startPos = this._currentToken.startPos;
     this._match(T_SWITCH);
     this._match(T_LPAREN);
-    var subject = this._parseExpression();
+    let subject = this._parseExpression();
     this._match(T_RPAREN);
     if (this._currentToken.tag === T_TO) {
       this._match(T_TO);
     }
     this._match(T_LBRACE);
-    var branches = this._parseSwitchBranches();
-    var endPos = this._currentToken.startPos;
+    let branches = this._parseSwitchBranches();
+    let endPos = this._currentToken.startPos;
     this._match(T_RBRACE);
-    var result = new ASTStmtSwitch(subject, branches);
+    let result = new ASTStmtSwitch(subject, branches);
     result.startPos = startPos;
     result.endPos = endPos;
     return result;
   }
 
   _parseStmtLet() {
-    var startPos = this._currentToken.startPos;
+    let startPos = this._currentToken.startPos;
     this._match(T_LET);
-    var result;
+    let result;
     if (this._currentToken.tag == T_LOWERID) {
       result = this._parseStmtAssignVariable();
     } else if (this._currentToken.tag == T_LPAREN) {
@@ -509,9 +509,9 @@ export class Parser {
   }
 
   _parseStmtAssignVariable() {
-    var variable = this._parseLowerid();
+    let variable = this._parseLowerid();
     this._match(T_ASSIGN);
-    var value = this._parseExpression();
+    let value = this._parseExpression();
     let result = new ASTStmtAssignVariable(variable, value);
     result.startPos = variable.startPos;
     result.endPos = value.endPos;
@@ -519,9 +519,9 @@ export class Parser {
   }
 
   _parseStmtAssignTuple() {
-    var startPos = this._currentToken.startPos;
+    let startPos = this._currentToken.startPos;
     this._match(T_LPAREN);
-    var variables = this._parseLoweridSeq();
+    let variables = this._parseLoweridSeq();
     if (variables.length === 1) {
       throw new GbsSyntaxError(
         this._currentToken.startPos,
@@ -530,7 +530,7 @@ export class Parser {
     }
     this._match(T_RPAREN);
     this._match(T_ASSIGN);
-    var value = this._parseExpression();
+    let value = this._parseExpression();
     let result = new ASTStmtAssignTuple(variables, value);
     result.startPos = startPos;
     result.endPos = value.endPos;
@@ -538,16 +538,16 @@ export class Parser {
   }
 
   _parseStmtProcedureCall() {
-    var procedureName = this._parseUpperid();
+    let procedureName = this._parseUpperid();
     this._match(T_LPAREN);
     let self = this;
-    var args = this._parseDelimitedSeq(
+    let args = this._parseDelimitedSeq(
                  T_RPAREN, T_COMMA,
                  () => self._parseExpression()
                );
-    var endPos = this._currentToken.startPos;
+    let endPos = this._currentToken.startPos;
     this._match(T_RPAREN);
-    var result = new ASTStmtProcedureCall(procedureName, args);
+    let result = new ASTStmtProcedureCall(procedureName, args);
     result.startPos = procedureName.startPos;
     result.endPos = endPos;
     return result;
@@ -577,20 +577,20 @@ export class Parser {
   }
 
   _parsePatternWildcard() {
-    var startPos = this._currentToken.startPos;
+    let startPos = this._currentToken.startPos;
     this._match(T_UNDERSCORE);
-    var result = new ASTPatternWildcard();
-    var endPos = startPos;
+    let result = new ASTPatternWildcard();
+    let endPos = startPos;
     result.startPos = startPos;
     result.endPos = endPos;
     return result;
   }
 
   _parsePatternConstructor() {
-    var startPos = this._currentToken.startPos;
-    var endPos = this._currentToken.startPos;
-    var constructor = this._parseUpperid();
-    var parameters;
+    let startPos = this._currentToken.startPos;
+    let endPos = this._currentToken.startPos;
+    let constructor = this._parseUpperid();
+    let parameters;
     if (this._currentToken.tag === T_LPAREN) {
       this._match(T_LPAREN);
       parameters = this._parseLoweridSeq();
@@ -599,38 +599,38 @@ export class Parser {
     } else {
       parameters = [];
     }
-    var result = new ASTPatternConstructor(constructor, parameters);
+    let result = new ASTPatternConstructor(constructor, parameters);
     result.startPos = startPos;
     result.endPos = endPos;
     return result;
   }
 
   _parsePatternTuple() {
-    var startPos = this._currentToken.startPos;
+    let startPos = this._currentToken.startPos;
     this._match(T_LPAREN);
-    var parameters = this._parseLoweridSeq();
+    let parameters = this._parseLoweridSeq();
     if (parameters.length === 1) {
       throw new GbsSyntaxError(
         this._currentToken.startPos,
         i18n('errmsg:pattern-tuple-cannot-be-singleton')
       );
     }
-    var endPos = this._currentToken.startPos;
+    let endPos = this._currentToken.startPos;
     this._match(T_RPAREN);
-    var result = new ASTPatternTuple(parameters);
+    let result = new ASTPatternTuple(parameters);
     result.startPos = startPos;
     result.endPos = endPos;
     return result;
   }
 
   _parsePatternTimeout() {
-    var startPos = this._currentToken.startPos;
+    let startPos = this._currentToken.startPos;
     this._match(T_TIMEOUT);
     this._match(T_LPAREN);
-    var timeout = this._match(T_NUM);
-    var endPos = this._currentToken.endPos;
+    let timeout = this._match(T_NUM);
+    let endPos = this._currentToken.endPos;
     this._match(T_RPAREN);
-    var result = new ASTPatternTimeout(timeout);
+    let result = new ASTPatternTimeout(timeout);
     result.startPos = startPos;
     result.endPos = endPos;
     return result;
@@ -671,11 +671,11 @@ export class Parser {
   }
 
   _parseExprOperatorInfix(level) {
-    var left = this._parseExprOperator(level + 1);
+    let left = this._parseExprOperator(level + 1);
     if (OPERATORS[level].isOperator(this._currentToken)) {
-      var op = this._currentToken;
+      let op = this._currentToken;
       this._nextToken();
-      var right = this._parseExprOperator(level + 1);
+      let right = this._parseExprOperator(level + 1);
 
       /* Check that it is not used associatively */
       if (OPERATORS[level].isOperator(this._currentToken)) {
@@ -688,7 +688,7 @@ export class Parser {
         );
       }
 
-      var result = new ASTExprFunctionCall(
+      let result = new ASTExprFunctionCall(
                      OPERATORS[level].functionName(op), [left, right]
                    );
       result.startPos = left.startPos;
@@ -700,12 +700,12 @@ export class Parser {
   }
   
   _parseExprOperatorInfixL(level) {
-    var result = this._parseExprOperator(level + 1);
+    let result = this._parseExprOperator(level + 1);
     while (OPERATORS[level].isOperator(this._currentToken)) {
-      var op = this._currentToken;
+      let op = this._currentToken;
       this._nextToken();
-      var right = this._parseExprOperator(level + 1);
-      var result2 = new ASTExprFunctionCall(
+      let right = this._parseExprOperator(level + 1);
+      let result2 = new ASTExprFunctionCall(
                       OPERATORS[level].functionName(op), [result, right]
                     );
       result2.startPos = result.startPos;
@@ -716,12 +716,12 @@ export class Parser {
   }
 
   _parseExprOperatorInfixR(level) {
-    var left = this._parseExprOperator(level + 1);
+    let left = this._parseExprOperator(level + 1);
     if (OPERATORS[level].isOperator(this._currentToken)) {
-      var op = this._currentToken;
+      let op = this._currentToken;
       this._nextToken();
-      var right = this._parseExprOperator(level); /* same level */
-      var result = new ASTExprFunctionCall(
+      let right = this._parseExprOperator(level); /* same level */
+      let result = new ASTExprFunctionCall(
                       OPERATORS[level].functionName(op), [left, right]
                     );
       result.startPos = left.startPos;
@@ -734,10 +734,10 @@ export class Parser {
 
   _parseExprOperatorPrefix(level) {
     if (OPERATORS[level].isOperator(this._currentToken)) {
-      var op = this._currentToken;
+      let op = this._currentToken;
       this._nextToken();
-      var inner = this._parseExprOperator(level); /* same level */
-      var result = new ASTExprFunctionCall(
+      let inner = this._parseExprOperator(level); /* same level */
+      let result = new ASTExprFunctionCall(
                       OPERATORS[level].functionName(op), [inner]
                     );
       result.startPos = op.startPos;
@@ -776,12 +776,12 @@ export class Parser {
   }
 
   _parseExprVariableOrFunctionCall() {
-    var id = this._parseLowerid();
-    var result;
-    var endPos;
+    let id = this._parseLowerid();
+    let result;
+    let endPos;
     if (this._currentToken.tag == T_LPAREN) {
       this._match(T_LPAREN);
-      var args = this._parseExpressionSeq(T_RPAREN);
+      let args = this._parseExpressionSeq(T_RPAREN);
       result = new ASTExprFunctionCall(id, args);
       endPos = this._currentToken.startPos;
       this._match(T_RPAREN);
@@ -795,18 +795,18 @@ export class Parser {
   }
 
   _parseExprConstantNumber() {
-    var number = this._currentToken;
+    let number = this._currentToken;
     this._match(T_NUM);
-    var result = new ASTExprConstantNumber(number);
+    let result = new ASTExprConstantNumber(number);
     result.startPos = number.startPos;
     result.endPos = number.endPos;
     return result;
   }
 
   _parseExprConstantString() {
-    var string = this._currentToken;
+    let string = this._currentToken;
     this._match(T_STRING);
-    var result = new ASTExprConstantString(string);
+    let result = new ASTExprConstantString(string);
     result.startPos = string.startPos;
     result.endPos = string.endPos;
     return result;
@@ -830,7 +830,7 @@ export class Parser {
    * - If the next token is PIPE ("|") we are in case (4), and we go on.
    */
   _parseExprConstructorOrConstructorUpdate() {
-    var constructorName = this._parseUpperid();
+    let constructorName = this._parseUpperid();
     if (this._currentToken.tag !== T_LPAREN) {
       /* Constructor with no arguments, e.g. "Norte" */
       let result = new ASTExprConstructor(constructorName, []);
@@ -849,7 +849,7 @@ export class Parser {
       result.endPos = endPos;
       return result;
     }
-    var subject = this._parseExpression();
+    let subject = this._parseExpression();
     switch (this._currentToken.tag) {
       case T_GETS:
         if (subject.tag !== N_ExprVariable) {
@@ -876,7 +876,7 @@ export class Parser {
           )
         );
       default:
-        var expected;
+        let expected;
         if (subject.tag === N_ExprVariable) {
           expected = i18n('<alternative>')([
                        i18n('T_GETS'),
@@ -961,12 +961,12 @@ export class Parser {
    *   [first, second .. last]
    */
   _parseExprListOrRange() {
-    var startPos = this._currentToken.startPos;
+    let startPos = this._currentToken.startPos;
     this._match(T_LBRACK);
     if (this._currentToken.tag === T_RBRACK) {
       return this._parseExprListRemainder(startPos, []);
     }
-    var first = this._parseExpression();
+    let first = this._parseExpression();
     switch (this._currentToken.tag) {
       case T_RBRACK:
         return this._parseExprListRemainder(startPos, [first]);
@@ -974,7 +974,7 @@ export class Parser {
         return this._parseExprRange(startPos, first, null);
       case T_COMMA:
         this._match(T_COMMA);
-        var second = this._parseExpression();
+        let second = this._parseExpression();
         switch (this._currentToken.tag) {
           case T_RBRACK:
           case T_COMMA:
@@ -1016,13 +1016,13 @@ export class Parser {
    */
   _parseExprListRemainder(startPos, prefix) {
     let self = this;
-    var elements = this._parseNonEmptyDelimitedSeq(
+    let elements = this._parseNonEmptyDelimitedSeq(
                      T_RBRACK, T_COMMA, prefix,
                      () => self._parseExpression()
                    );
-    var endPos = this._currentToken.startPos;
+    let endPos = this._currentToken.startPos;
     this._match(T_RBRACK);
-    var result = new ASTExprList(elements);
+    let result = new ASTExprList(elements);
     result.startPos = startPos;
     result.endPos = endPos;
     return result;
@@ -1034,7 +1034,7 @@ export class Parser {
    * - second may be null */
   _parseExprRange(startPos, first, second) {
     this._match(T_RANGE);
-    var last = this._parseExpression();
+    let last = this._parseExpression();
     let endPos = this._currentToken.startPos;
     this._match(T_RBRACK);
     let result = new ASTExprRange(first, second, last);
@@ -1049,13 +1049,13 @@ export class Parser {
    * a tuple.
    */
   _parseExprTuple() {
-    var startPos = this._currentToken.startPos;
+    let startPos = this._currentToken.startPos;
     this._match(T_LPAREN);
-    var expressionList = this._parseExpressionSeq(T_RPAREN);
-    var endPos = this._currentToken.startPos;
+    let expressionList = this._parseExpressionSeq(T_RPAREN);
+    let endPos = this._currentToken.startPos;
     this._match(T_RPAREN);
 
-    var result;
+    let result;
     if (expressionList.length == 1) {
       result = expressionList[0];
     } else {
@@ -1069,7 +1069,7 @@ export class Parser {
   /** SwitchBranch **/
 
   _parseSwitchBranches() {
-    var branches = []
+    let branches = []
     while (this._currentToken.tag !== T_RBRACE) {
       branches.push(this._parseSwitchBranch());
     }
@@ -1077,10 +1077,10 @@ export class Parser {
   }
 
   _parseSwitchBranch() {
-    var pattern = this._parsePattern();
+    let pattern = this._parsePattern();
     this._match(T_ARROW);
-    var body = this._parseStmtBlock();
-    var result = new ASTSwitchBranch(pattern, body);
+    let body = this._parseStmtBlock();
+    let result = new ASTSwitchBranch(pattern, body);
     result.startPos = pattern.startPos;
     result.endPos = body.endPos;
     return result;
@@ -1089,10 +1089,10 @@ export class Parser {
   /** FieldValue **/
 
   _parseFieldValue() {
-    var fieldName = this._parseLowerid();
+    let fieldName = this._parseLowerid();
     this._match(T_GETS);
-    var value = this._parseExpression();
-    var result = new ASTFieldValue(fieldName, value);
+    let value = this._parseExpression();
+    let result = new ASTFieldValue(fieldName, value);
     result.startPos = fieldName.startPos;
     result.endPos = value.endPos;
     return result;
@@ -1160,7 +1160,7 @@ export class Parser {
    *   prefix: non-empty list of all the first elements (already given)
    *   parseElement: function that parses one element */
   _parseNonEmptyDelimitedSeq(rightDelimiter, separator, prefix, parseElement) {
-    var list = prefix;
+    let list = prefix;
     while (this._currentToken.tag === separator) {
       this._match(separator);
       list.push(parseElement());
@@ -1181,13 +1181,13 @@ export class Parser {
   }
 
   _parseLowerid() {
-    var lowerid = this._currentToken;
+    let lowerid = this._currentToken;
     this._match(T_LOWERID);
     return lowerid;
   }
 
   _parseUpperid() {
-    var upperid = this._currentToken;
+    let upperid = this._currentToken;
     this._match(T_UPPERID);
     return upperid;
   }

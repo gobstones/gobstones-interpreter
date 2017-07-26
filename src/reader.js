@@ -3,7 +3,7 @@
  * It keeps track of line and column numbers.
  * Methods are non-destructive. For example:
  *
- *     var r = new SourceReader('foo.gbs', 'if\n(True)');
+ *     let r = new SourceReader('foo.gbs', 'if\n(True)');
  *
  *     r.peek();                       // ~~> 'i'
  *     r = r.consumeCharacter();       // Note: returns a new file reader.
@@ -28,7 +28,7 @@ export class SourceReader {
   }
 
   _clone() {
-    var r = new SourceReader(this._filename, this._string);
+    let r = new SourceReader(this._filename, this._string);
     r._index = this._index;
     r._line = this._line;
     r._column = this._column;
@@ -58,7 +58,7 @@ export class SourceReader {
 
   /* Consume one character */
   consumeCharacter() {
-    var r = this._clone();
+    let r = this._clone();
     if (r.peek() === '\n') {
       r._line++;
       r._column = 1;
@@ -72,8 +72,8 @@ export class SourceReader {
   /* Consume characters from the input, one per each character in the string
    * (the contents of the string are ignored). */
   consumeString(string) {
-    var r = this;
-    for (var _ in string) {
+    let r = this;
+    for (let _ in string) {
       r = r.consumeCharacter();
     }
     return r;
@@ -83,7 +83,7 @@ export class SourceReader {
    * Invisible characters affect the index but not the line or column.
    */
   consumeInvisibleCharacter() {
-    var r = this._clone();
+    let r = this._clone();
     r._index++;
     return r;
   }
@@ -91,8 +91,8 @@ export class SourceReader {
   /* Consume 'invisible' characters from the input, one per each character
    * in the string */
   consumeInvisibleString(string) {
-    var r = this;
-    for (var _ in string) {
+    let r = this;
+    for (let _ in string) {
       r = r.consumeInvisibleCharacter();
     }
     return r;
@@ -100,8 +100,8 @@ export class SourceReader {
 
   /* Return true if the substring occurs at the current point. */
   startsWith(sub) {
-    var i = this._index;
-    var j = this._index + sub.length;
+    let i = this._index;
+    let j = this._index + sub.length;
     return j <= this._string.length && this._string.substring(i, j) === sub;
   }
 
@@ -117,14 +117,14 @@ export class SourceReader {
 
   /* Push a region to the stack of regions (non-destructively) */
   beginRegion(region) {
-    var r = this._clone();
+    let r = this._clone();
     r._regions = [region].concat(r._regions);
     return r;
   }
 
   /* Pop a region from the stack of regions (non-destructively) */
   endRegion() {
-    var r = this._clone();
+    let r = this._clone();
     if (r._regions.length > 0) {
       r._regions = r._regions.slice(1);
     }
@@ -172,7 +172,7 @@ export class MultifileReader {
   /* Return a SourceReader for the current files */
   readCurrentFile() {
     if (this._index < this._filenames.length) {
-      var filename = this._filenames[this._index];
+      let filename = this._filenames[this._index];
       return new SourceReader(filename, this._input[filename]);
     } else {
       return new SourceReader('(?)', '');

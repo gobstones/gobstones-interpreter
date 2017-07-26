@@ -175,7 +175,7 @@ function leadingZeroes(string) {
 /* An instance of Lexer scans source code for tokens.
  * Example:
  *
- *     var tok = new Lexer('if (a)');
+ *     let tok = new Lexer('if (a)');
  *     tok.nextToken(); // ~~> new Token(T_IF, null, ...)
  *     tok.nextToken(); // ~~> new Token(T_LPAREN, null, ...)
  *     tok.nextToken(); // ~~> new Token(T_LOWERID, 'a', ...)
@@ -196,8 +196,8 @@ export class Lexer {
 
   /* Return the next token from the input, checking for warnings */
   nextToken() {
-    var startPos = this._reader;
-    var tok = this._nextToken();
+    let startPos = this._reader;
+    let tok = this._nextToken();
     this._obsoleteTupleAssignmentRecognizer.feed(startPos, tok.tag);
     return tok;
   }
@@ -268,7 +268,7 @@ export class Lexer {
   /* Read a string while the given condition holds for the current
    * character */
   _readStringWhile(condition) {
-    var result = [];
+    let result = [];
     while (!this._reader.eof()) {
       if (!condition(this._reader.peek())) {
         break;
@@ -282,8 +282,8 @@ export class Lexer {
   /* Reads a quote-delimited string constant.
    * Escapes are recognized. */
   _readStringConstant() {
-    var startPos = this._reader;
-    var result = [];
+    let startPos = this._reader;
+    let result = [];
     this._reader = this._reader.consumeCharacter();
     while (!this._reader.eof()) {
       let c = this._reader.peek();
@@ -336,7 +336,7 @@ export class Lexer {
 
   /* Read a symbol */
   _readSymbol() {
-    for (var [symbol, tag] of SYMBOLS) {
+    for (let [symbol, tag] of SYMBOLS) {
       if (this._reader.startsWith(symbol)) {
         let startPos = this._reader;
         this._reader = this._reader.consumeString(symbol);
@@ -371,7 +371,7 @@ export class Lexer {
       this._ignoreSingleLineComment();
       return true;
     } else if (this._reader.startsWith('/*@')) {
-      var startPos = this._reader;
+      let startPos = this._reader;
       this._evaluatePragma(startPos,
                            this._readInvisiblePragma('/*', '*/', '@'));
       return true;
@@ -406,8 +406,8 @@ export class Lexer {
   /* Skips a multiline comment with the given left/right delimiters.
    * Multi-line comments may be nested. */
   _ignoreMultilineComment(left, right) {
-    var nesting = 0;
-    var startPos = this._reader;
+    let nesting = 0;
+    let startPos = this._reader;
     while (!this._reader.eof()) {
       if (this._reader.startsWith(left)) {
         this._reader = this._reader.consumeString(left);
@@ -436,8 +436,8 @@ export class Lexer {
    *   @part1@part2@...@partN@
    */
   _readInvisiblePragma(left, right, pragmaDelim) {
-    var pragma = [];
-    var startPos = this._reader;
+    let pragma = [];
+    let startPos = this._reader;
     this._reader = this._reader.consumeInvisibleString(left);
     this._reader = this._reader.consumeInvisibleString(pragmaDelim);
     while (!this._reader.eof()) {
@@ -456,8 +456,8 @@ export class Lexer {
 
   /* Read an invisible string until the given delimiter is found */
   _readInvisibleStringUntilDelimiter(delimiter) {
-    var startPos = this._reader;
-    var result = [];
+    let startPos = this._reader;
+    let result = [];
     while (!this._reader.eof()) {
       if (this._reader.peek() === delimiter) {
         return result.join('');
@@ -475,7 +475,7 @@ export class Lexer {
     if (pragma.length === 0) {
       this._emitWarning(startPos, i18n('warning:empty-pragma'));
     } else if (pragma[0] === 'BEGIN_REGION') {
-      var region = pragma[1];
+      let region = pragma[1];
       this._reader = this._reader.beginRegion(region);
     } else if (pragma[0] === 'END_REGION') {
       this._reader = this._reader.endRegion();

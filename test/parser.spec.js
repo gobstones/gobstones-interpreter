@@ -85,7 +85,7 @@ function syntacticallyEqual(e1, e2) {
     if (e1.length !== e2.length) {
       return false;
     }
-    for (var i = 0; i < e1.length; i++) {
+    for (let i = 0; i < e1.length; i++) {
       if (!syntacticallyEqual(e1[i], e2[i])) {
         return false;
       }
@@ -105,7 +105,7 @@ function expectAST(obtainedAst, expectedAst) {
 }
 
 it('Parser - Accept empty program definition', () => {
-  var parser = new Parser('program {}');
+  let parser = new Parser('program {}');
   expectAST(parser.parse(), [
     new ASTDefProgram(
       new ASTStmtBlock([])
@@ -114,12 +114,12 @@ it('Parser - Accept empty program definition', () => {
 });
 
 it('Parser - Accept empty source', () => {
-  var parser = new Parser('');
+  let parser = new Parser('');
   expectAST(parser.parse(), []);
 });
 
 it('Parser - Reject things other than definitions at the toplevel', () => {
-  var parser = new Parser('if');
+  let parser = new Parser('if');
   expect(() => parser.parse()).throws(
       i18n('errmsg:expected-but-found')(
         i18n('definition'),
@@ -129,7 +129,7 @@ it('Parser - Reject things other than definitions at the toplevel', () => {
 });
 
 it('Parser - Program definition: fail on no left brace', () => {
-  var parser = new Parser('program');
+  let parser = new Parser('program');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
       i18n('T_LBRACE'),
@@ -139,7 +139,7 @@ it('Parser - Program definition: fail on no left brace', () => {
 });
 
 it('Parser - Program definition: fail on no right brace', () => {
-  var parser = new Parser('program {');
+  let parser = new Parser('program {');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
       i18n('statement'),
@@ -149,8 +149,8 @@ it('Parser - Program definition: fail on no right brace', () => {
 });
 
 it('Parser - Program definition: keep track of positions', () => {
-  var parser = new Parser('\n   program {\n\n\n}');
-  var tree = parser.parse();
+  let parser = new Parser('\n   program {\n\n\n}');
+  let tree = parser.parse();
   expect(tree.length).equals(1);
   expect(tree[0].startPos.line).equals(2);
   expect(tree[0].startPos.column).equals(4);
@@ -159,7 +159,7 @@ it('Parser - Program definition: keep track of positions', () => {
 });
 
 it('Parser - Procedure definition with no parameters', () => {
-  var parser = new Parser('procedure P() {}');
+  let parser = new Parser('procedure P() {}');
   expectAST(parser.parse(), [
     new ASTDefProcedure(
       tok(T_UPPERID, 'P'),
@@ -170,7 +170,7 @@ it('Parser - Procedure definition with no parameters', () => {
 });
 
 it('Parser - Procedure definition with one parameters', () => {
-  var parser = new Parser('procedure Poner(color) {}');
+  let parser = new Parser('procedure Poner(color) {}');
   expectAST(parser.parse(), [
     new ASTDefProcedure(
       tok(T_UPPERID, 'Poner'),
@@ -181,7 +181,7 @@ it('Parser - Procedure definition with one parameters', () => {
 });
 
 it('Parser - Procedure definition with two parameters', () => {
-  var parser = new Parser('procedure PonerN(n,col) {}');
+  let parser = new Parser('procedure PonerN(n,col) {}');
   expectAST(parser.parse(), [
     new ASTDefProcedure(
       tok(T_UPPERID, 'PonerN'),
@@ -192,7 +192,7 @@ it('Parser - Procedure definition with two parameters', () => {
 });
 
 it('Parser - Procedure definition with three parameters', () => {
-  var parser = new Parser('procedure Q(x ,y, z) {}');
+  let parser = new Parser('procedure Q(x ,y, z) {}');
   expectAST(parser.parse(), [
     new ASTDefProcedure(
       tok(T_UPPERID, 'Q'),
@@ -203,7 +203,7 @@ it('Parser - Procedure definition with three parameters', () => {
 });
 
 it('Parser - Procedure definition: fail on missing argument list', () => {
-  var parser = new Parser('procedure P {}');
+  let parser = new Parser('procedure P {}');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
       i18n('T_LPAREN'),
@@ -213,7 +213,7 @@ it('Parser - Procedure definition: fail on missing argument list', () => {
 });
 
 it('Parser - Procedure definition: fail on missing comma', () => {
-  var parser = new Parser('procedure P(x y) {}');
+  let parser = new Parser('procedure P(x y) {}');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
       i18n('<alternative>')([
@@ -226,7 +226,7 @@ it('Parser - Procedure definition: fail on missing comma', () => {
 });
 
 it('Parser - Procedure definition: reject initial comma', () => {
-  var parser = new Parser('procedure P(,x) {}');
+  let parser = new Parser('procedure P(,x) {}');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
       i18n('T_LOWERID'),
@@ -236,7 +236,7 @@ it('Parser - Procedure definition: reject initial comma', () => {
 });
 
 it('Parser - Procedure definition: reject trailing comma', () => {
-  var parser = new Parser('procedure P(x,y,) {}');
+  let parser = new Parser('procedure P(x,y,) {}');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
       i18n('T_LOWERID'),
@@ -246,7 +246,7 @@ it('Parser - Procedure definition: reject trailing comma', () => {
 });
 
 it('Parser - Procedure definition: fail on invalid name', () => {
-  var parser = new Parser('procedure p(x, y) {}');
+  let parser = new Parser('procedure p(x, y) {}');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
       i18n('T_UPPERID'),
@@ -256,7 +256,7 @@ it('Parser - Procedure definition: fail on invalid name', () => {
 });
 
 it('Parser - Procedure definition: fail on invalid parameter', () => {
-  var parser = new Parser('procedure P(x, Y) {}');
+  let parser = new Parser('procedure P(x, Y) {}');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
       i18n('T_LOWERID'),
@@ -266,7 +266,7 @@ it('Parser - Procedure definition: fail on invalid parameter', () => {
 });
 
 it('Parser - Procedure definition: fail on invalid block', () => {
-  var parser = new Parser('procedure P\n(x, y) }');
+  let parser = new Parser('procedure P\n(x, y) }');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
       i18n('T_LBRACE'),
@@ -276,12 +276,12 @@ it('Parser - Procedure definition: fail on invalid block', () => {
 });
  
 it('Parser - Procedure definition: keep track of positions', () => {
-  var parser = new Parser(
+  let parser = new Parser(
       '/*@BEGIN_REGION@A@*//*ignore*/procedure P\n' +
       '/*@BEGIN_REGION@B@*/(x,y){} procedure Q()\n' +
       '{     /*@END_REGION@B@*/            }'
   );
-  var tree = parser.parse();
+  let tree = parser.parse();
   expect(tree.length).equals(2);
   expect(tree[0].startPos.line).equals(1);
   expect(tree[0].startPos.column).equals(11);
@@ -298,7 +298,7 @@ it('Parser - Procedure definition: keep track of positions', () => {
 });
 
 it('Parser - Function definition with no parameters', () => {
-  var parser = new Parser('function f() {}');
+  let parser = new Parser('function f() {}');
   expectAST(parser.parse(), [
     new ASTDefFunction(
       tok(T_LOWERID, 'f'),
@@ -309,7 +309,7 @@ it('Parser - Function definition with no parameters', () => {
 });
 
 it('Parser - Function definition with one parameter', () => {
-  var parser = new Parser('function nroBolitas(color) {}');
+  let parser = new Parser('function nroBolitas(color) {}');
   expectAST(parser.parse(), [
     new ASTDefFunction(
       tok(T_LOWERID, 'nroBolitas'),
@@ -320,7 +320,7 @@ it('Parser - Function definition with one parameter', () => {
 });
 
 it('Parser - Function definition with two parameters', () => {
-  var parser = new Parser('function nroBolitasAl(c, d) {}');
+  let parser = new Parser('function nroBolitasAl(c, d) {}');
   expectAST(parser.parse(), [
     new ASTDefFunction(
       tok(T_LOWERID, 'nroBolitasAl'),
@@ -331,7 +331,7 @@ it('Parser - Function definition with two parameters', () => {
 });
 
 it('Parser - Function definition with three parameters', () => {
-  var parser = new Parser('function gg(x,yy,zzz) {}');
+  let parser = new Parser('function gg(x,yy,zzz) {}');
   expectAST(parser.parse(), [
     new ASTDefFunction(
       tok(T_LOWERID, 'gg'),
@@ -342,7 +342,7 @@ it('Parser - Function definition with three parameters', () => {
 });
 
 it('Parser - Mixed function and procedure definitions', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'function f(x) {}\n' +
                  'procedure P() {}\n' +
                  'procedure Q(x, y) {}\n' +
@@ -371,7 +371,7 @@ it('Parser - Mixed function and procedure definitions', () => {
 });
 
 it('Parser - Reject non-statement when expecting statement', () => {
-  var parser = new Parser('program { + }');
+  let parser = new Parser('program { + }');
   expect(() => parser.parse()).throws(
       i18n('errmsg:expected-but-found')(
         i18n('statement'),
@@ -381,7 +381,7 @@ it('Parser - Reject non-statement when expecting statement', () => {
 });
 
 it('Parser - Return: no results', () => {
-  var parser = new Parser('program { return () }');
+  let parser = new Parser('program { return () }');
   expectAST(parser.parse(), [
     new ASTDefProgram(
       new ASTStmtBlock([
@@ -394,7 +394,7 @@ it('Parser - Return: no results', () => {
 });
 
 it('Parser - Return: one result', () => {
-  var parser = new Parser('function f() { return (x) }');
+  let parser = new Parser('function f() { return (x) }');
   expectAST(parser.parse(), [
     new ASTDefFunction(tok(T_LOWERID, 'f'), [],
           new ASTStmtBlock([
@@ -407,7 +407,7 @@ it('Parser - Return: one result', () => {
 });
 
 it('Parser - Return: two results', () => {
-  var parser = new Parser('program { return (z1,z2) }');
+  let parser = new Parser('program { return (z1,z2) }');
   expectAST(parser.parse(), [
     new ASTDefProgram(
           new ASTStmtBlock([
@@ -423,8 +423,8 @@ it('Parser - Return: two results', () => {
 });
 
 it('Parser - Return: keep track of positions (no results)', () => {
-  var parser = new Parser('program {\n\n\n return\n() }');
-  var tree = parser.parse();
+  let parser = new Parser('program {\n\n\n return\n() }');
+  let tree = parser.parse();
   expect(tree[0].body.statements[0].result.elements.length).equals(0);
   expect(tree[0].body.statements[0].startPos.line).equals(4);
   expect(tree[0].body.statements[0].startPos.column).equals(2);
@@ -433,8 +433,8 @@ it('Parser - Return: keep track of positions (no results)', () => {
 });
 
 it('Parser - Return: keep track of positions (one result)', () => {
-  var parser = new Parser('program {\n\n\n return\n(col) }');
-  var tree = parser.parse();
+  let parser = new Parser('program {\n\n\n return\n(col) }');
+  let tree = parser.parse();
   expect(tree[0].body.statements[0].startPos.line).equals(4);
   expect(tree[0].body.statements[0].startPos.column).equals(2);
   expect(tree[0].body.statements[0].endPos.line).equals(5);
@@ -442,8 +442,8 @@ it('Parser - Return: keep track of positions (one result)', () => {
 });
 
 it('Parser - Return: keep track of positions (two results)', () => {
-  var parser = new Parser('program {\n\n\n return\n(col,dir) }');
-  var tree = parser.parse();
+  let parser = new Parser('program {\n\n\n return\n(col,dir) }');
+  let tree = parser.parse();
   expect(tree[0].body.statements[0].result.elements.length).equals(2);
   expect(tree[0].body.statements[0].startPos.line).equals(4);
   expect(tree[0].body.statements[0].startPos.column).equals(2);
@@ -452,7 +452,7 @@ it('Parser - Return: keep track of positions (two results)', () => {
 });
 
 it('Parser - Nested block statements', () => {
-  var parser = new Parser('program { { { {} } {} } { {} } {} }');
+  let parser = new Parser('program { { { {} } {} } { {} } {} }');
   expectAST(parser.parse(), [
     new ASTDefProgram(
       new ASTStmtBlock([
@@ -476,7 +476,7 @@ it('Parser - Nested block statements', () => {
 });
 
 it('Parser - If without "else"', () => {
-  var parser = new Parser('program { if (a) {} }');
+  let parser = new Parser('program { if (a) {} }');
   expectAST(parser.parse(), [
     new ASTDefProgram(
       new ASTStmtBlock([
@@ -491,7 +491,7 @@ it('Parser - If without "else"', () => {
 });
 
 it('Parser - If using the optional "then" keyword', () => {
-  var parser = new Parser('program { if (cond) then {} }');
+  let parser = new Parser('program { if (cond) then {} }');
   expectAST(parser.parse(), [
     new ASTDefProgram(
       new ASTStmtBlock([
@@ -506,7 +506,7 @@ it('Parser - If using the optional "then" keyword', () => {
 });
 
 it('Parser - If with "else"', () => {
-  var parser = new Parser('program { if (xxx) {} else {} }');
+  let parser = new Parser('program { if (xxx) {} else {} }');
   expectAST(parser.parse(), [
     new ASTDefProgram(
       new ASTStmtBlock([
@@ -521,7 +521,7 @@ it('Parser - If with "else"', () => {
 });
 
 it('Parser - Nested if', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  if (a) {\n' +
                  '    if (b) then {\n' +
@@ -593,7 +593,7 @@ it('Parser - Nested if', () => {
 });
 
 it('Parser - If: fail if missing left parenthesis', () => {
-  var parser = new Parser('program { if xxx) {} else {} }');
+  let parser = new Parser('program { if xxx) {} else {} }');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
       i18n('T_LPAREN'),
@@ -603,7 +603,7 @@ it('Parser - If: fail if missing left parenthesis', () => {
 });
 
 it('Parser - If: fail if missing right parenthesis', () => {
-  var parser = new Parser('program { if (xxx {} else {} }');
+  let parser = new Parser('program { if (xxx {} else {} }');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
       i18n('T_RPAREN'),
@@ -613,7 +613,7 @@ it('Parser - If: fail if missing right parenthesis', () => {
 });
 
 it('Parser - If: fail if missing then block', () => {
-  var parser = new Parser('program { if(xxx)');
+  let parser = new Parser('program { if(xxx)');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
       i18n('T_LBRACE'),
@@ -623,7 +623,7 @@ it('Parser - If: fail if missing then block', () => {
 });
 
 it('Parser - If: fail if missing else block', () => {
-  var parser = new Parser('program { if(xxx) {} else');
+  let parser = new Parser('program { if(xxx) {} else');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
       i18n('T_LBRACE'),
@@ -634,8 +634,8 @@ it('Parser - If: fail if missing else block', () => {
 
 
 it('Parser - If: keep track of positions', () => {
-  var parser = new Parser('program {\n  if (xxx) {\n  } else {\n  }\n}');
-  var tree = parser.parse();
+  let parser = new Parser('program {\n  if (xxx) {\n  } else {\n  }\n}');
+  let tree = parser.parse();
   expect(tree[0].body.statements.length).equals(1);
   expect(tree[0].body.statements[0].startPos.line).equals(2);
   expect(tree[0].body.statements[0].startPos.column).equals(3);
@@ -644,7 +644,7 @@ it('Parser - If: keep track of positions', () => {
 });
 
 it('Parser - Repeat', () => {
-  var parser = new Parser('program { repeat (n) {} }');
+  let parser = new Parser('program { repeat (n) {} }');
   expectAST(parser.parse(), [
     new ASTDefProgram(
       new ASTStmtBlock([
@@ -658,7 +658,7 @@ it('Parser - Repeat', () => {
 });
 
 it('Parser - Nested repeat', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  repeat (nro1) {\n' +
                  '    repeat (nro2) {}\n' +
@@ -692,7 +692,7 @@ it('Parser - Nested repeat', () => {
 
 
 it('Parser - Repeat: fail if missing left parenthesis', () => {
-  var parser = new Parser('program { repeat n) {} }');
+  let parser = new Parser('program { repeat n) {} }');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
       i18n('T_LPAREN'),
@@ -702,7 +702,7 @@ it('Parser - Repeat: fail if missing left parenthesis', () => {
 });
 
 it('Parser - Repeat: fail if missing right parenthesis', () => {
-  var parser = new Parser('program { repeat (n');
+  let parser = new Parser('program { repeat (n');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
       i18n('T_RPAREN'),
@@ -712,8 +712,8 @@ it('Parser - Repeat: fail if missing right parenthesis', () => {
 });
 
 it('Parser - Repeat: keep track of positions', () => {
-  var parser = new Parser('program { repeat (n) { } repeat(m) { } }');
-  var tree = parser.parse();
+  let parser = new Parser('program { repeat (n) { } repeat(m) { } }');
+  let tree = parser.parse();
   expect(tree[0].body.statements.length).equals(2);
   expect(tree[0].body.statements[0].startPos.line).equals(1);
   expect(tree[0].body.statements[0].startPos.column).equals(11);
@@ -726,7 +726,7 @@ it('Parser - Repeat: keep track of positions', () => {
 });
 
 it('Parser - Foreach', () => {
-  var parser = new Parser('program { foreach i in expr {} }');
+  let parser = new Parser('program { foreach i in expr {} }');
   expectAST(parser.parse(), [
     new ASTDefProgram(
       new ASTStmtBlock([
@@ -741,7 +741,7 @@ it('Parser - Foreach', () => {
 });
 
 it('Parser - Nested foreach', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  foreach dir in lista1 {\n' +
                  '    foreach col in lista2 {\n' +
@@ -777,7 +777,7 @@ it('Parser - Nested foreach', () => {
 
 
 it('Parser - Foreach: fail if wrong index name', () => {
-  var parser = new Parser('program { foreach I in expr {} }');
+  let parser = new Parser('program { foreach I in expr {} }');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
       i18n('T_LOWERID'),
@@ -787,7 +787,7 @@ it('Parser - Foreach: fail if wrong index name', () => {
 });
 
 it('Parser - Foreach: fail if missing "in"', () => {
-  var parser = new Parser('program { foreach i ( expr ) {} }');
+  let parser = new Parser('program { foreach i ( expr ) {} }');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
       i18n('T_IN'),
@@ -797,7 +797,7 @@ it('Parser - Foreach: fail if missing "in"', () => {
 });
 
 it('Parser - Foreach: fail if missing block', () => {
-  var parser = new Parser('program { foreach i in expr }');
+  let parser = new Parser('program { foreach i in expr }');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
       i18n('T_LBRACE'),
@@ -807,8 +807,8 @@ it('Parser - Foreach: fail if missing block', () => {
 });
 
 it('Parser - Foreach: keep track of positions', () => {
-  var parser = new Parser('program {\nforeach\ni\nin\nexpr\n{\n}\n}');
-  var tree = parser.parse();
+  let parser = new Parser('program {\nforeach\ni\nin\nexpr\n{\n}\n}');
+  let tree = parser.parse();
   expect(tree[0].body.statements.length).equals(1);
   expect(tree[0].body.statements[0].startPos.line).equals(2);
   expect(tree[0].body.statements[0].startPos.column).equals(1);
@@ -817,7 +817,7 @@ it('Parser - Foreach: keep track of positions', () => {
 });
 
 it('Parser - While', () => {
-  var parser = new Parser('program { while (cond) {} }');
+  let parser = new Parser('program { while (cond) {} }');
   expectAST(parser.parse(), [
     new ASTDefProgram(
       new ASTStmtBlock([
@@ -831,7 +831,7 @@ it('Parser - While', () => {
 });
 
 it('Parser - Nested while', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  while (cond1) {\n' +
                  '    while (cond2) {\n' +
@@ -863,7 +863,7 @@ it('Parser - Nested while', () => {
 });
 
 it('Parser - While: fail if missing left parenthesis', () => {
-  var parser = new Parser('program { while cond {} }');
+  let parser = new Parser('program { while cond {} }');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
       i18n('T_LPAREN'),
@@ -873,7 +873,7 @@ it('Parser - While: fail if missing left parenthesis', () => {
 });
 
 it('Parser - While: fail if missing right parenthesis', () => {
-  var parser = new Parser('program { while (cond while {} }');
+  let parser = new Parser('program { while (cond while {} }');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
       i18n('T_RPAREN'),
@@ -883,7 +883,7 @@ it('Parser - While: fail if missing right parenthesis', () => {
 });
 
 it('Parser - While: fail if missing block', () => {
-  var parser = new Parser('program { while (cond) /*{}*/ }');
+  let parser = new Parser('program { while (cond) /*{}*/ }');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
       i18n('T_LBRACE'),
@@ -893,7 +893,7 @@ it('Parser - While: fail if missing block', () => {
 });
 
 it('Parser - Switch: empty (no branches)', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {' +
                  '  switch (a) {' +
                  '  }' +
@@ -912,7 +912,7 @@ it('Parser - Switch: empty (no branches)', () => {
 });
 
 it('Parser - Switch: empty with optional keyword "to"', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {' +
                  '  switch (foo) to {' +
                  '  }' +
@@ -931,7 +931,7 @@ it('Parser - Switch: empty with optional keyword "to"', () => {
 });
 
 it('Parser - Switch: empty with keyword "match"', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {' +
                  '  match (bar) to {' +
                  '  }' +
@@ -950,7 +950,7 @@ it('Parser - Switch: empty with keyword "match"', () => {
 });
 
 it('Parser - Switch: wildcard', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {' +
                  '  switch (foo) {' +
                  '    _ -> {' +
@@ -983,7 +983,7 @@ it('Parser - Switch: wildcard', () => {
 });
 
 it('Parser - Switch: constructors without arguments', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {' +
                  '  switch (foo) {' +
                  '    Norte -> {}' +
@@ -1032,7 +1032,7 @@ it('Parser - Switch: constructors without arguments', () => {
 });
 
 it('Parser - Switch: constructors with arguments', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {' +
                  '  switch (foo) {' +
                  '    INIT()           -> {}' +
@@ -1096,7 +1096,7 @@ it('Parser - Switch: constructors with arguments', () => {
 });
 
 it('Parser - Switch: tuples', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {' +
                  '  switch (foo) {' +
                  '    ()    -> {}' +
@@ -1143,7 +1143,7 @@ it('Parser - Switch: tuples', () => {
 });
 
 it('Parser - Switch: reject singleton tuple pattern', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {' +
                  '  switch (foo) {' +
                  '    (x)    -> {}' +
@@ -1156,7 +1156,7 @@ it('Parser - Switch: reject singleton tuple pattern', () => {
 });
 
 it('Parser - Switch: reject if missing braces', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {' +
                  '  switch (foo)' +
                  '    _ -> {}' +
@@ -1171,7 +1171,7 @@ it('Parser - Switch: reject if missing braces', () => {
 });
 
 it('Parser - Switch: reject malformed pattern (single variable)', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {' +
                  '  switch (foo) {' +
                  '    x -> {}' +
@@ -1187,7 +1187,7 @@ it('Parser - Switch: reject malformed pattern (single variable)', () => {
 });
 
 it('Parser - Switch: reject malformed pattern (nested tuples)', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {' +
                  '  switch (foo) {' +
                  '    ((x,y),z) -> {}' +
@@ -1203,14 +1203,14 @@ it('Parser - Switch: reject malformed pattern (nested tuples)', () => {
 });
 
 it('Parser - Switch: keep track of positions', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  switch (foo) {\n' +
                  '    A(b) -> {}\n' +
                  '  }\n' +
                  '}\n'
                );
-  var tree = parser.parse();
+  let tree = parser.parse();
   expect(tree[0].body.statements[0].startPos.line).equals(2);
   expect(tree[0].body.statements[0].startPos.column).equals(3);
   expect(tree[0].body.statements[0].endPos.line).equals(4);
@@ -1218,7 +1218,7 @@ it('Parser - Switch: keep track of positions', () => {
 });
 
 it('Parser - Let: variable assignment', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {' +
                  '  let foo := bar' +
                  '  let bar := baz' +
@@ -1241,7 +1241,7 @@ it('Parser - Let: variable assignment', () => {
 });
 
 it('Parser - Let: nullary tuple assignment', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {' +
                  '  let () := bar' +
                  '}\n'
@@ -1259,7 +1259,7 @@ it('Parser - Let: nullary tuple assignment', () => {
 });
 
 it('Parser - Let: tuple assignment', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {' +
                  '  let (x,y) := bar2' +
                  '  let (x,y,z) := bar3' +
@@ -1299,7 +1299,7 @@ it('Parser - Let: tuple assignment', () => {
 });
 
 it('Parser - Let: reject singleton tuple assignment', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {' +
                  '  let (foo) := bar' +
                  '}'
@@ -1310,13 +1310,13 @@ it('Parser - Let: reject singleton tuple assignment', () => {
 });
 
 it('Parser - Let: keep track of positions', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  let foo := bar\n' +
                  '  let (foo, bar) := baz\n' +
                  '}\n'
                );
-  var tree = parser.parse();
+  let tree = parser.parse();
   expect(tree[0].body.statements.length).equals(2);
   expect(tree[0].body.statements[0].startPos.line).equals(2);
   expect(tree[0].body.statements[0].startPos.column).equals(3);
@@ -1329,7 +1329,7 @@ it('Parser - Let: keep track of positions', () => {
 });
 
 it('Parser - Variable assignment', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  a := b\n' +
                  '  b := c\n' +
@@ -1354,7 +1354,7 @@ it('Parser - Variable assignment', () => {
 });
 
 it('Parser - Variable assignment: keep track of positions', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  /**/\n' +
                  '  /**/foo\n' +
@@ -1362,7 +1362,7 @@ it('Parser - Variable assignment: keep track of positions', () => {
                  '  /**/\n' +
                  '}\n'
                );
-  var tree = parser.parse();
+  let tree = parser.parse();
   expect(tree[0].body.statements.length).equals(1);
   expect(tree[0].body.statements[0].startPos.line).equals(3);
   expect(tree[0].body.statements[0].startPos.column).equals(7);
@@ -1371,7 +1371,7 @@ it('Parser - Variable assignment: keep track of positions', () => {
 });
 
 it('Parser - Procedure call', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  VaciarTablero()\n' +
                  '  Mover(dir)\n' +
@@ -1402,7 +1402,7 @@ it('Parser - Procedure call', () => {
 });
 
 it('Parser - Procedure call: reject if missing left parenthesis', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  P\n' +
                  '}\n'
@@ -1416,7 +1416,7 @@ it('Parser - Procedure call: reject if missing left parenthesis', () => {
 });
 
 it('Parser - Procedure call: reject if missing right parenthesis', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  P(\n' +
                  '}\n'
@@ -1430,8 +1430,8 @@ it('Parser - Procedure call: reject if missing right parenthesis', () => {
 });
 
 it('Parser - Procedure call: keep track of positions', () => {
-  var parser = new Parser('program{P(a,a,a)}');
-  var tree = parser.parse();
+  let parser = new Parser('program{P(a,a,a)}');
+  let tree = parser.parse();
   expect(tree[0].body.statements.length).equals(1);
   expect(tree[0].body.statements[0].startPos.line).equals(1);
   expect(tree[0].body.statements[0].startPos.column).equals(9);
@@ -1440,7 +1440,7 @@ it('Parser - Procedure call: keep track of positions', () => {
 });
 
 it('Parser - Allow semicolon as statement separator', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  P();Q();R();S()\n' +
                  '}'
@@ -1458,7 +1458,7 @@ it('Parser - Allow semicolon as statement separator', () => {
 });
 
 it('Parser - Function call', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  a1 := f()\n' +
                  '  a2 := g(x)\n' +
@@ -1500,7 +1500,7 @@ it('Parser - Function call', () => {
 });
 
 it('Parser - Function call: occurrences in various constructions', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  if (f1()) {}\n' +
                  '  repeat (f2()) {}\n' +
@@ -1562,7 +1562,7 @@ it('Parser - Function call: occurrences in various constructions', () => {
 });
 
 it('Parser - Function call: nested calls', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := f(g(h(a),i(b,c)),j(k(),l()),d)\n' +
                  '}'
@@ -1597,12 +1597,12 @@ it('Parser - Function call: nested calls', () => {
 });
 
 it('Parser - Function call: keep track of positions', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  '\nprogram {\n' +
                  '  x := f(/*)*/)\n' +
                  '}'
                );
-  var tree = parser.parse();
+  let tree = parser.parse();
   expect(tree[0].body.statements[0].value.startPos.line).equals(3);
   expect(tree[0].body.statements[0].value.startPos.column).equals(8);
   expect(tree[0].body.statements[0].value.endPos.line).equals(3);
@@ -1610,7 +1610,7 @@ it('Parser - Function call: keep track of positions', () => {
 });
 
 it('Parser - Number constant', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x1 := 0\n' +
                  '  x2 := 11\n' +
@@ -1645,13 +1645,13 @@ it('Parser - Number constant', () => {
 });
 
 it('Parser - Number constant: keep track of positions', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := 0\n' +
                  '  y := 123\n' +
                  '}'
                );
-  var tree = parser.parse();
+  let tree = parser.parse();
   expect(tree[0].body.statements[0].value.startPos.line).equals(2);
   expect(tree[0].body.statements[0].value.startPos.column).equals(8);
   expect(tree[0].body.statements[0].value.endPos.line).equals(2);
@@ -1664,7 +1664,7 @@ it('Parser - Number constant: keep track of positions', () => {
 
 
 it('Parser - String constant', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x1 := ""\n' +
                  '  x2 := "a"\n' +
@@ -1697,12 +1697,12 @@ it('Parser - String constant', () => {
 });
 
 it('Parser - String constant: keep track of positions', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := "...\\n..."\n' +
                  '}'
                );
-  var tree = parser.parse();
+  let tree = parser.parse();
   expect(tree[0].body.statements.length).equals(1);
   expect(tree[0].body.statements[0].value.startPos.line).equals(2);
   expect(tree[0].body.statements[0].value.startPos.column).equals(8);
@@ -1711,7 +1711,7 @@ it('Parser - String constant: keep track of positions', () => {
 });
 
 it('Parser - Constructor with no arguments, no parentheses', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := Norte\n' +
                  '}'
@@ -1729,7 +1729,7 @@ it('Parser - Constructor with no arguments, no parentheses', () => {
 });
 
 it('Parser - Constructor with no arguments, parentheses', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := Norte()\n' +
                  '}'
@@ -1747,7 +1747,7 @@ it('Parser - Constructor with no arguments, parentheses', () => {
 });
 
 it('Parser - Constructor: fail if it seems a procedure call (paren)', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := P(1)\n' +
                  '}'
@@ -1761,7 +1761,7 @@ it('Parser - Constructor: fail if it seems a procedure call (paren)', () => {
 });
 
 it('Parser - Constructor: fail if it seems a procedure call (comma)', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := P(1, 2)\n' +
                  '}'
@@ -1775,7 +1775,7 @@ it('Parser - Constructor: fail if it seems a procedure call (comma)', () => {
 });
 
 it('Parser - Constructor: fail: field name followed by invalid symbol', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := Coord(x -> 2)\n' +
                  '}'
@@ -1792,7 +1792,7 @@ it('Parser - Constructor: fail: field name followed by invalid symbol', () => {
 });
 
 it('Parser - Constructor: fail: expression followed by invalid symbol', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := Coord(foo() -> 2)\n' +
                  '}'
@@ -1806,7 +1806,7 @@ it('Parser - Constructor: fail: expression followed by invalid symbol', () => {
 });
 
 it('Parser - Constructor: fail: expression followed by "<-"', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := Coord(foo() <- 3)\n' +
                  '}'
@@ -1820,7 +1820,7 @@ it('Parser - Constructor: fail: expression followed by "<-"', () => {
 });
 
 it('Parser - Constructor: one field', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  c := Coord(x <- 1)\n' +
                  '}'
@@ -1843,7 +1843,7 @@ it('Parser - Constructor: one field', () => {
 });
 
 it('Parser - Constructor: two fields', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  c := Coord(x <- 1, y <- 2)\n' +
                  '}'
@@ -1870,7 +1870,7 @@ it('Parser - Constructor: two fields', () => {
 });
 
 it('Parser - Constructor: three fields', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  c := Coord(x<-1,y<-2,z<-3)\n' +
                  '}'
@@ -1901,7 +1901,7 @@ it('Parser - Constructor: three fields', () => {
 });
 
 it('Parser - Constructor: reject dangling comma (one argument)', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  c := Coord(x<-1,)\n' +
                  '}'
@@ -1915,7 +1915,7 @@ it('Parser - Constructor: reject dangling comma (one argument)', () => {
 });
 
 it('Parser - Constructor: reject dangling comma (two arguments)', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  c := Coord(x<-1,y<-2,)\n' +
                  '}'
@@ -1929,7 +1929,7 @@ it('Parser - Constructor: reject dangling comma (two arguments)', () => {
 });
 
 it('Parser - Constructor: nested constructors', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  c := Box(left<-Coord(x<-10,y<-20),\n' +
                  '           right<-Coord(x<-11,y<-22))\n' +
@@ -1975,7 +1975,7 @@ it('Parser - Constructor: nested constructors', () => {
 });
 
 it('Parser - Constructor: keep track of positions', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  c0 := A\n' +
                  '  c0 := B()\n' +
@@ -1983,7 +1983,7 @@ it('Parser - Constructor: keep track of positions', () => {
                  '  c2 := D(y <- 20, z <- 30)\n' +
                  '}'
                );
-  var tree = parser.parse();
+  let tree = parser.parse();
   expect(tree[0].body.statements.length).equals(4);
 
   /* A */
@@ -2005,7 +2005,7 @@ it('Parser - Constructor: keep track of positions', () => {
   expect(tree[0].body.statements[2].value.endPos.column).equals(18);
 
   /* x <- 10 */
-  var fvx = tree[0].body.statements[2].value.fieldValues[0];
+  let fvx = tree[0].body.statements[2].value.fieldValues[0];
   expect(fvx.startPos.line).equals(4);
   expect(fvx.startPos.column).equals(11);
   expect(fvx.endPos.line).equals(4);
@@ -2018,14 +2018,14 @@ it('Parser - Constructor: keep track of positions', () => {
   expect(tree[0].body.statements[3].value.endPos.column).equals(27);
 
   /* y <- 20 */
-  var fvy = tree[0].body.statements[3].value.fieldValues[0];
+  let fvy = tree[0].body.statements[3].value.fieldValues[0];
   expect(fvy.startPos.line).equals(5);
   expect(fvy.startPos.column).equals(11);
   expect(fvy.endPos.line).equals(5);
   expect(fvy.endPos.column).equals(18);
 
   /* z <- 30 */
-  var fvz = tree[0].body.statements[3].value.fieldValues[1];
+  let fvz = tree[0].body.statements[3].value.fieldValues[1];
   expect(fvz.startPos.line).equals(5);
   expect(fvz.startPos.column).equals(20);
   expect(fvz.endPos.line).equals(5);
@@ -2033,7 +2033,7 @@ it('Parser - Constructor: keep track of positions', () => {
 });
 
 it('Parser - Constructor update', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  c1 := Coord(c0 | x <- 10)\n' +
                  '  c2 := Coord(c1 | x <- 10, y <- 20)\n' +
@@ -2088,13 +2088,13 @@ it('Parser - Constructor update', () => {
 });
 
 it('Parser - Constructor update: keep track of positions', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  c1 := Coord(c0 |\n' +
                  '              x <- 12000)\n' +
                  '}'
                );
-  var tree = parser.parse();
+  let tree = parser.parse();
   expect(tree[0].body.statements[0].value.startPos.line).equals(2);
   expect(tree[0].body.statements[0].value.startPos.column).equals(9);
   expect(tree[0].body.statements[0].value.endPos.line).equals(3);
@@ -2102,7 +2102,7 @@ it('Parser - Constructor update: keep track of positions', () => {
 });
 
 it('Parser - List: empty list', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := []' +
                  '}'
@@ -2120,7 +2120,7 @@ it('Parser - List: empty list', () => {
 });
 
 it('Parser - List: singleton', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := [a]' +
                  '}'
@@ -2140,7 +2140,7 @@ it('Parser - List: singleton', () => {
 });
 
 it('Parser - List: more elements', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := [foo, bar]' +
                  '  y := [1, 2, 3]' +
@@ -2182,7 +2182,7 @@ it('Parser - List: more elements', () => {
 });
 
 it('Parser - List: nested lists', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := [[], [1], [1, 2], [1, 2, 3]]' +
                  '}'
@@ -2214,13 +2214,13 @@ it('Parser - List: nested lists', () => {
 });
 
 it('Parser - List: empty list: keep track of positions', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := [\n' +
                  '  ]' +
                  '}'
                );
-  var tree = parser.parse();
+  let tree = parser.parse();
   expect(tree[0].body.statements[0].value.startPos.line).equals(2);
   expect(tree[0].body.statements[0].value.startPos.column).equals(8);
   expect(tree[0].body.statements[0].value.endPos.line).equals(3);
@@ -2228,14 +2228,14 @@ it('Parser - List: empty list: keep track of positions', () => {
 });
 
 it('Parser - List: singleton: keep track of positions', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := [\n' +
                  '    1\n' +
                  '  ]' +
                  '}'
                );
-  var tree = parser.parse();
+  let tree = parser.parse();
   expect(tree[0].body.statements[0].value.startPos.line).equals(2);
   expect(tree[0].body.statements[0].value.startPos.column).equals(8);
   expect(tree[0].body.statements[0].value.endPos.line).equals(4);
@@ -2243,7 +2243,7 @@ it('Parser - List: singleton: keep track of positions', () => {
 });
 
 it('Parser - List: more elements: keep track of positions', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := [\n' +
                  '    1,\n' +
@@ -2252,7 +2252,7 @@ it('Parser - List: more elements: keep track of positions', () => {
                  '  ]' +
                  '}'
                );
-  var tree = parser.parse();
+  let tree = parser.parse();
   expect(tree[0].body.statements[0].value.startPos.line).equals(2);
   expect(tree[0].body.statements[0].value.startPos.column).equals(8);
   expect(tree[0].body.statements[0].value.endPos.line).equals(6);
@@ -2260,7 +2260,7 @@ it('Parser - List: more elements: keep track of positions', () => {
 });
 
 it('Parser - Range: without second element', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := [first..last]' +
                  '}'
@@ -2282,7 +2282,7 @@ it('Parser - Range: without second element', () => {
 });
 
 it('Parser - Range: with second element', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := [first,second..last]' +
                  '}'
@@ -2304,13 +2304,13 @@ it('Parser - Range: with second element', () => {
 });
 
 it('Parser - Range: keep track of positions', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := [1..100]\n' +
                  '  y := [2,4..100]' +
                  '}'
                );
-  var tree = parser.parse();
+  let tree = parser.parse();
   expect(tree[0].body.statements[0].value.startPos.line).equals(2);
   expect(tree[0].body.statements[0].value.startPos.column).equals(8);
   expect(tree[0].body.statements[0].value.endPos.line).equals(2);
@@ -2322,7 +2322,7 @@ it('Parser - Range: keep track of positions', () => {
 });
 
 it('Parser - List/range: fail on invalid symbol after first element', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := [1; 2]\n' +
                  '}'
@@ -2340,7 +2340,7 @@ it('Parser - List/range: fail on invalid symbol after first element', () => {
 });
 
 it('Parser - List/range: fail on invalid symbol after second element', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := [1, 2; 3]\n' +
                  '}'
@@ -2358,7 +2358,7 @@ it('Parser - List/range: fail on invalid symbol after second element', () => {
 });
 
 it('Parser - List: fail if it ends prematurely (empty)', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := [\n'
                );
@@ -2371,7 +2371,7 @@ it('Parser - List: fail if it ends prematurely (empty)', () => {
 });
 
 it('Parser - List: fail if it ends prematurely (one element)', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := [1,\n'
                );
@@ -2384,7 +2384,7 @@ it('Parser - List: fail if it ends prematurely (one element)', () => {
 });
 
 it('Parser - List: fail if it ends prematurely (two elements)', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := [1,2,\n'
                );
@@ -2397,7 +2397,7 @@ it('Parser - List: fail if it ends prematurely (two elements)', () => {
 });
 
 it('Parser - Range: fail if it ends prematurely', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := [1..\n'
                );
@@ -2410,7 +2410,7 @@ it('Parser - Range: fail if it ends prematurely', () => {
 });
 
 it('Parser - Range: fail if it ends prematurely (with second element)', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := [1,2..\n'
                );
@@ -2423,7 +2423,7 @@ it('Parser - Range: fail if it ends prematurely (with second element)', () => {
 });
 
 it('Parser - Operators: nonassoc (infix)', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := 1 == 2\n' +
                  '  x := 3 /= 4\n' +
@@ -2502,13 +2502,13 @@ it('Parser - Operators: nonassoc (infix)', () => {
 });
 
 it('Parser - Operators: nonassoc -- keep track of positions', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := foo == bar\n' +
                  '  x := foo < bar\n' +
                  '}'
                );
-  var tree = parser.parse();
+  let tree = parser.parse();
   expect(tree[0].body.statements[0].value.startPos.line).equals(2);
   expect(tree[0].body.statements[0].value.startPos.column).equals(8);
   expect(tree[0].body.statements[0].value.endPos.line).equals(2);
@@ -2520,7 +2520,7 @@ it('Parser - Operators: nonassoc -- keep track of positions', () => {
 });
 
 it('Parser - Operators: fail if associating nonassoc operators (1/3)', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := foo == bar /= baz\n' +
                  '}'
@@ -2534,7 +2534,7 @@ it('Parser - Operators: fail if associating nonassoc operators (1/3)', () => {
 });
 
 it('Parser - Operators: fail if associating nonassoc operators (2/3)', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := foo >= bar <= baz\n' +
                  '}'
@@ -2548,7 +2548,7 @@ it('Parser - Operators: fail if associating nonassoc operators (2/3)', () => {
 });
 
 it('Parser - Operators: fail if associating nonassoc operators (3/3)', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := foo > bar < baz\n' +
                  '}'
@@ -2562,7 +2562,7 @@ it('Parser - Operators: fail if associating nonassoc operators (3/3)', () => {
 });
 
 it('Parser - Operators: left-associative (infixl)', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := 1 ++ 2\n' +
                  '  x := 3 + 4\n' +
@@ -2641,7 +2641,7 @@ it('Parser - Operators: left-associative (infixl)', () => {
 });
 
 it('Parser - Operators: left-associative -- check associativity', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := 1 ++ 2 ++ 3\n' +
                  '  x := 4 + 5 + 6\n' +
@@ -2755,13 +2755,13 @@ it('Parser - Operators: left-associative -- check associativity', () => {
 });
 
 it('Parser - Operators: infixl -- keep track of positions', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := foo + bar - x\n' +
                  '  x := foo div bar mod x\n' +
                  '}'
                );
-  var tree = parser.parse();
+  let tree = parser.parse();
   expect(tree[0].body.statements[0].value.startPos.line).equals(2);
   expect(tree[0].body.statements[0].value.startPos.column).equals(8);
   expect(tree[0].body.statements[0].value.endPos.line).equals(2);
@@ -2773,7 +2773,7 @@ it('Parser - Operators: infixl -- keep track of positions', () => {
 });
 
 it('Parser - Operators: right-associative (infixr)', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := 1 || 2\n' +
                  '  x := 3 && 4\n' +
@@ -2819,7 +2819,7 @@ it('Parser - Operators: right-associative (infixr)', () => {
 });
 
 it('Parser - Operators: right-associative -- check associativity', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := 1 || 2 || 3\n' +
                  '  x := 4 && 5 && 6\n' +
@@ -2866,7 +2866,7 @@ it('Parser - Operators: right-associative -- check associativity', () => {
 });
 
 it('Parser - Operators: unary (prefix)', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := not 1\n' +
                  '  x := -2\n' +
@@ -2893,7 +2893,7 @@ it('Parser - Operators: unary (prefix)', () => {
 });
 
 it('Parser - Operators: unary -- iterate unary operator', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := not not 1\n' +
                  '  x := - -2\n' +
@@ -2924,13 +2924,13 @@ it('Parser - Operators: unary -- iterate unary operator', () => {
 });
 
 it('Parser - Operators: unary -- keep track of positions', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := not foo\n' +
                  '  x := -\nfoo\n' +
                  '}'
                );
-  var tree = parser.parse();
+  let tree = parser.parse();
   expect(tree[0].body.statements[0].value.startPos.line).equals(2);
   expect(tree[0].body.statements[0].value.startPos.column).equals(8);
   expect(tree[0].body.statements[0].value.endPos.line).equals(2);
@@ -2942,7 +2942,7 @@ it('Parser - Operators: unary -- keep track of positions', () => {
 });
 
 it('Parser - Tuples/parenthesized expressions', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := ()\n' +
                  '  x := (1)\n' +
@@ -2983,7 +2983,7 @@ it('Parser - Tuples/parenthesized expressions', () => {
 
 it('Parser - Operator precedence: && vs. ||', () => {
 
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := a && b || c && d\n' +
                  '}'
@@ -3010,7 +3010,7 @@ it('Parser - Operator precedence: && vs. ||', () => {
 });
 
 it('Parser - Operator precedence: && vs. not', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := not a && not b' +
                  '}'
@@ -3035,7 +3035,7 @@ it('Parser - Operator precedence: && vs. not', () => {
 });
 
 it('Parser - Operator precedence: not vs. relational', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := not a == b' +
                  '  x := not a /= b' +
@@ -3108,7 +3108,7 @@ it('Parser - Operator precedence: not vs. relational', () => {
 });
 
 it('Parser - Operator precedence: relational vs. ++', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := a ++ b == c ++ d' +
                  '  x := a ++ b /= c ++ d' +
@@ -3205,7 +3205,7 @@ it('Parser - Operator precedence: relational vs. ++', () => {
 });
 
 it('Parser - Operator precedence: ++ vs. additive', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := a - b ++ c + d' +
                  '  x := a + b ++ c - d' +
@@ -3246,7 +3246,7 @@ it('Parser - Operator precedence: ++ vs. additive', () => {
 });
 
 it('Parser - Operator precedence: additive vs. multiplicative', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := a * b + c * d' +
                  '  x := a * b - c * d' +
@@ -3287,7 +3287,7 @@ it('Parser - Operator precedence: additive vs. multiplicative', () => {
 });
 
 it('Parser - Operator precedence: multiplicative vs. division', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := a div b * c mod d' +
                  '  x := a mod b * c div d' +
@@ -3328,7 +3328,7 @@ it('Parser - Operator precedence: multiplicative vs. division', () => {
 });
 
 it('Parser - Operator precedence: division vs. pow', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := a ^ b div c ^ d' +
                  '  x := a ^ b mod c ^ d' +
@@ -3369,7 +3369,7 @@ it('Parser - Operator precedence: division vs. pow', () => {
 });
 
 it('Parser - Operator precedence: pow vs. unary minus', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := -a ^ -b' +
                  '}'
@@ -3394,7 +3394,7 @@ it('Parser - Operator precedence: pow vs. unary minus', () => {
 });
 
 it('Parser - Operator precedence: override precedence with parens', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'program {\n' +
                  '  x := -(a || b)' +
                  '  x := (a + b) * (c - d)' +
@@ -3431,7 +3431,7 @@ it('Parser - Operator precedence: override precedence with parens', () => {
 });
 
 it('Parser - Type definition: type name should be an upperid', () => {
-  var parser = new Parser('type a');
+  let parser = new Parser('type a');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
       i18n('T_UPPERID'),
@@ -3441,7 +3441,7 @@ it('Parser - Type definition: type name should be an upperid', () => {
 });
 
 it('Parser - Type definition: expect "is"', () => {
-  var parser = new Parser('type A');
+  let parser = new Parser('type A');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
       i18n('T_IS'),
@@ -3451,7 +3451,7 @@ it('Parser - Type definition: expect "is"', () => {
 });
 
 it('Parser - Type definition: expect "variant" or "record"', () => {
-  var parser = new Parser('type A is while');
+  let parser = new Parser('type A is while');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
       i18n('<alternative>')([
@@ -3464,7 +3464,7 @@ it('Parser - Type definition: expect "variant" or "record"', () => {
 });
 
 it('Parser - Type definition: expect "field" for records', () => {
-  var parser = new Parser('type A is record { x }');
+  let parser = new Parser('type A is record { x }');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
       i18n('<alternative>')([
@@ -3477,7 +3477,7 @@ it('Parser - Type definition: expect "field" for records', () => {
 });
 
 it('Parser - Type definition: field name should be lowerid', () => {
-  var parser = new Parser('type A is record { field Z } ');
+  let parser = new Parser('type A is record { field Z } ');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
       i18n('T_LOWERID'),
@@ -3487,7 +3487,7 @@ it('Parser - Type definition: field name should be lowerid', () => {
 });
 
 it('Parser - Type definition: expect "case" for variants', () => {
-  var parser = new Parser('type A is variant { x }');
+  let parser = new Parser('type A is variant { x }');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
       i18n('<alternative>')([
@@ -3500,7 +3500,7 @@ it('Parser - Type definition: expect "case" for variants', () => {
 });
 
 it('Parser - Type definition: constructor names should be upperid', () => {
-  var parser = new Parser('type A is variant { case b } ');
+  let parser = new Parser('type A is variant { case b } ');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
       i18n('T_UPPERID'),
@@ -3510,7 +3510,7 @@ it('Parser - Type definition: constructor names should be upperid', () => {
 });
 
 it('Parser - Type definition: expect "field" for variant constructors', () => {
-  var parser = new Parser('type A is variant { case B { x } }');
+  let parser = new Parser('type A is variant { case B { x } }');
   expect(() => parser.parse()).throws(
     i18n('errmsg:expected-but-found')(
       i18n('<alternative>')([
@@ -3523,7 +3523,7 @@ it('Parser - Type definition: expect "field" for variant constructors', () => {
 });
 
 it('Parser - Type definition: record types', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'type A is record {\n'
                + '}\n'
                + 'type B is record {\n'
@@ -3554,7 +3554,7 @@ it('Parser - Type definition: record types', () => {
 });
 
 it('Parser - Type definition: variant types', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'type A is variant {\n'
                + '  case A1 {}\n'
                + '  case A2 {\n'
@@ -3582,13 +3582,13 @@ it('Parser - Type definition: variant types', () => {
 });
 
 it('Parser - Type definition: keep track of positions in records', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'type A is record {\n'
                + '  field x\n'
                + '  field y\n'
                + '}\n'
                );
-  var tree = parser.parse();
+  let tree = parser.parse();
   expect(tree[0].startPos.line).equals(1);
   expect(tree[0].startPos.column).equals(1);
   expect(tree[0].endPos.line).equals(4);
@@ -3597,13 +3597,13 @@ it('Parser - Type definition: keep track of positions in records', () => {
   expect(tree[0].constructorDeclarations.length).equals(1);
   expect(tree[0].constructorDeclarations[0].fieldNames.length).equals(2);
 
-  var fx = tree[0].constructorDeclarations[0].fieldNames[0];
+  let fx = tree[0].constructorDeclarations[0].fieldNames[0];
   expect(fx.startPos.line).equals(2);
   expect(fx.startPos.column).equals(9);
   expect(fx.endPos.line).equals(2);
   expect(fx.endPos.column).equals(10);
 
-  var fy = tree[0].constructorDeclarations[0].fieldNames[1];
+  let fy = tree[0].constructorDeclarations[0].fieldNames[1];
   expect(fy.startPos.line).equals(3);
   expect(fy.startPos.column).equals(9);
   expect(fy.endPos.line).equals(3);
@@ -3611,7 +3611,7 @@ it('Parser - Type definition: keep track of positions in records', () => {
 });
 
 it('Parser - Type definition: keep track of positions in variants', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'type A is variant {\n'
                + '  case A0 {}\n'
                + '  case A1 {\n'
@@ -3620,7 +3620,7 @@ it('Parser - Type definition: keep track of positions in variants', () => {
                + '  }\n'
                + '}\n'
                );
-  var tree = parser.parse();
+  let tree = parser.parse();
   expect(tree[0].startPos.line).equals(1);
   expect(tree[0].startPos.column).equals(1);
   expect(tree[0].endPos.line).equals(7);
@@ -3640,7 +3640,7 @@ it('Parser - Type definition: keep track of positions in variants', () => {
   expect(tree[0].constructorDeclarations[1].endPos.line).equals(6);
   expect(tree[0].constructorDeclarations[1].endPos.column).equals(3);
 
-  var fx = tree[0].constructorDeclarations[1].fieldNames[0]
+  let fx = tree[0].constructorDeclarations[1].fieldNames[0]
   expect(fx.startPos.line).equals(4);
   expect(fx.startPos.column).equals(11);
   expect(fx.endPos.line).equals(4);
@@ -3648,7 +3648,7 @@ it('Parser - Type definition: keep track of positions in variants', () => {
 });
 
 it('Parser - Interactive program', () => {
-  var parser = new Parser(
+  let parser = new Parser(
                  'interactive program {\n'
                + '  INIT -> {}\n'
                + '  TIMEOUT(500) -> {}\n'

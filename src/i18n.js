@@ -136,9 +136,9 @@ const ES = {
     },
 };
 
-var language = 'ES';
+let language = 'ES';
 
-var dictionaries = {
+let dictionaries = {
   'ES': ES
 };
 

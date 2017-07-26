@@ -21,25 +21,25 @@ chai.expect();
 const expect = chai.expect;
 
 it('Lexer - Empty source', () => {
-  var lexer = new Lexer('');
-  var tok = lexer.nextToken();
+  let lexer = new Lexer('');
+  let tok = lexer.nextToken();
   expect(tok.tag).equals(T_EOF);
 });
 
 it('Lexer - Ignore whitespace', () => {
-  var lexer = new Lexer('   \n\t   \r\n  \n\n ');
-  var tok = lexer.nextToken();
+  let lexer = new Lexer('   \n\t   \r\n  \n\n ');
+  let tok = lexer.nextToken();
   expect(tok.tag).equals(T_EOF);
   expect(tok.startPos.line).equals(5);
   expect(tok.startPos.column).equals(2);
 });
 
 it('Lexer - Numbers', () => {
-  var lexer = new Lexer('1  222\n34567890123');
-  var t1 = lexer.nextToken();
-  var t2 = lexer.nextToken();
-  var t3 = lexer.nextToken();
-  var t4 = lexer.nextToken();
+  let lexer = new Lexer('1  222\n34567890123');
+  let t1 = lexer.nextToken();
+  let t2 = lexer.nextToken();
+  let t3 = lexer.nextToken();
+  let t4 = lexer.nextToken();
 
   expect(t1.tag).equals(T_NUM);
   expect(t1.value).equals('1');
@@ -71,63 +71,63 @@ function expectToken(actualToken, expectedType, expectedValue) {
 }
 
 function expectTokens(lexer, expected) {
-  for (var [expectedType, expectedValue] of expected) {
-    var actualToken = lexer.nextToken();
+  for (let [expectedType, expectedValue] of expected) {
+    let actualToken = lexer.nextToken();
     expectToken(actualToken, expectedType, expectedValue);
   }
 }
 
 function expectTokenTypes(lexer, expected) {
-  for (var expectedType of expected) {
-    var actualToken = lexer.nextToken();
+  for (let expectedType of expected) {
+    let actualToken = lexer.nextToken();
     expect(actualToken.tag).equals(expectedType);
   }
 }
 
 it('Lexer - Accept the number zero', () => {
-  var lexer = new Lexer('  0  0');
+  let lexer = new Lexer('  0  0');
   expectTokens(lexer, [
     [T_NUM, '0'], [T_NUM, '0'], [T_EOF, null]
   ]);
 });
 
 it('Lexer - Reject the number zero when written with two digits', () => {
-  var lexer = new Lexer('  00 ');
+  let lexer = new Lexer('  00 ');
   expect(() => lexer.nextToken()).throws(
     i18n('errmsg:numeric-constant-should-not-have-leading-zeroes')
   );
 });
 
 it('Lexer - Reject the number zero when written with three digits', () => {
-  var lexer = new Lexer('  000 ');
+  let lexer = new Lexer('  000 ');
   expect(() => lexer.nextToken()).throws(
     i18n('errmsg:numeric-constant-should-not-have-leading-zeroes')
   );
 });
 
 it('Lexer - Reject other constants with leading zeroes', () => {
-  var lexer = new Lexer('  00007 ');
+  let lexer = new Lexer('  00007 ');
   expect(() => lexer.nextToken()).throws(
     i18n('errmsg:numeric-constant-should-not-have-leading-zeroes')
   );
 });
 
 it('Lexer - C-style single line comments', () => {
-  var lexer = new Lexer('// 1 2 3 ñácate\n 4  5 // 6\n 7 // 8 9');
+  let lexer = new Lexer('// 1 2 3 ñácate\n 4  5 // 6\n 7 // 8 9');
   expectTokens(lexer, [
     [T_NUM, '4'], [T_NUM, '5'], [T_NUM, '7'], [T_EOF, null]
   ]);
 });
 
 it('Lexer - Haskell-style single line comments', () => {
-  var lexer = new Lexer('10------20\n30-----40');
+  let lexer = new Lexer('10------20\n30-----40');
   expectTokens(lexer, [
     [T_NUM, '10'], [T_NUM, '30'], [T_EOF, null]
   ]);
 });
 
 it('Lexer - Shell-style single line comments', () => {
-  var lexer = new Lexer('1 2 3 # 4 5 6\n10 20 30 # 40 50 60');
+  let lexer = new Lexer('1 2 3 # 4 5 6\n10 20 30 # 40 50 60');
   expectTokens(lexer, [
     [T_NUM, '1'], [T_NUM, '2'], [T_NUM, '3'],
     [T_NUM, '10'], [T_NUM, '20'], [T_NUM, '30'],
@@ -137,39 +137,39 @@ it('Lexer - Shell-style single line comments', () => {
 
 
 it('Lexer - C-style multiline comments', () => {
-  var lexer = new Lexer('1 2 /*3 4 \n\n\nññfsdalkfaf\n 5 6*/ 7 8 /*9*/ 10');
+  let lexer = new Lexer('1 2 /*3 4 \n\n\nññfsdalkfaf\n 5 6*/ 7 8 /*9*/ 10');
   expectTokens(lexer, [
     [T_NUM, '1'], [T_NUM, '2'], [T_NUM, '7'], [T_NUM, '8']
   ]);
-  var tok = lexer.nextToken();
+  let tok = lexer.nextToken();
   expect(tok.startPos.line).equals(5);
   expect(tok.startPos.column).equals(18);
 });
 
 it('Lexer - Haskell-style multiline comments', () => {
-  var lexer = new Lexer('{-\n\n\n-}1{--}2{--}3\n4');
+  let lexer = new Lexer('{-\n\n\n-}1{--}2{--}3\n4');
   expectTokens(lexer, [[T_NUM, '1'], [T_NUM, '2'], [T_NUM, '3']]);
-  var tok = lexer.nextToken();
+  let tok = lexer.nextToken();
   expect(tok.startPos.line).equals(5);
   expect(tok.startPos.column).equals(1);
 });
 
 it('Lexer - Nested C-style multiline comments', () => {
-  var lexer = new Lexer('1 /* 2 /* 3 /*4*/ 5 /*6*/ 7 */ 8 /*9*/ 10//--*/ 11');
+  let lexer = new Lexer('1 /* 2 /* 3 /*4*/ 5 /*6*/ 7 */ 8 /*9*/ 10//--*/ 11');
   expectTokens(lexer, [
     [T_NUM, '1'], [T_NUM, '11'], [T_EOF, null]
   ]);
 });
 
 it('Lexer - Nested Haskell-style multiline comments', () => {
-  var lexer = new Lexer('5{-{-{-{-{-4-}-}-}-}-}3{-{-{-{-{-2-}-}-}-}-}1');
+  let lexer = new Lexer('5{-{-{-{-{-4-}-}-}-}-}3{-{-{-{-{-2-}-}-}-}-}1');
   expectTokens(lexer, [
     [T_NUM, '5'], [T_NUM, '3'], [T_NUM, '1'], [T_EOF, null]
   ]);
 });
 
 it('Lexer - Unclosed C-style multiline comment', () => {
-  var lexer = new Lexer('1 /* /**/');
+  let lexer = new Lexer('1 /* /**/');
   expect(lexer.nextToken().tag).equals(T_NUM);
   expect(() => lexer.nextToken()).throws(
                  i18n('errmsg:unclosed-multiline-comment')
@@ -177,14 +177,14 @@ it('Lexer - Unclosed C-style multiline comment', () => {
 });
 
 it('Lexer - Unclosed Haskell-style multiline comment', () => {
-  var lexer = new Lexer('  {-\n\n---/***/  ');
+  let lexer = new Lexer('  {-\n\n---/***/  ');
   expect(() => lexer.nextToken()).throws(
                  i18n('errmsg:unclosed-multiline-comment')
                );
 });
 
 it('Lexer - Reading from many files', () => {
-  var lexer = new Lexer({
+  let lexer = new Lexer({
     'A': '1 22',
     'B': '333',
     'C': '4 5 6',
@@ -196,7 +196,7 @@ it('Lexer - Reading from many files', () => {
 });
 
 it('Lexer - Reading from many files: skip empty files', () => {
-  var lexer = new Lexer({
+  let lexer = new Lexer({
     'A': '1 2 \n',
     'B': '    \n\n\n /*  \n */ ',
     'C': '    \n\n\n 3',
@@ -207,7 +207,7 @@ it('Lexer - Reading from many files: skip empty files', () => {
 });
 
 it('Lexer - Reading from many files: skip multiple empty files', () => {
-  var lexer = new Lexer({
+  let lexer = new Lexer({
     'A': '\n',
     'B': '    \n\n\n /*  \n */ ',
     'C': '',
@@ -217,12 +217,12 @@ it('Lexer - Reading from many files: skip multiple empty files', () => {
 });
 
 it('Lexer - Reading from many files: no files', () => {
-  var lexer = new Lexer({});
+  let lexer = new Lexer({});
   expectTokens(lexer, [[T_EOF, null]]);
 });
 
 it('Lexer - Reading from many files: check for premature end-of-file', () => {
-  var lexer = new Lexer({
+  let lexer = new Lexer({
     'A': '/*', // Should report premature end-of-file
     'B': '1',  // (Multiline comments cannot span multiple files)
     'C': '*/',
@@ -231,17 +231,17 @@ it('Lexer - Reading from many files: check for premature end-of-file', () => {
 });
 
 it('Lexer - Reading from many files: report positions correctly', () => {
-  var lexer = new Lexer({
+  let lexer = new Lexer({
     'A': '1\n 2',
     'B': '3\n 4',
     'C': '5\n 6',
   });
-  var tA1 = lexer.nextToken();
-  var tA2 = lexer.nextToken();
-  var tB3 = lexer.nextToken();
-  var tB4 = lexer.nextToken();
-  var tC5 = lexer.nextToken();
-  var tC6 = lexer.nextToken();
+  let tA1 = lexer.nextToken();
+  let tA2 = lexer.nextToken();
+  let tB3 = lexer.nextToken();
+  let tB4 = lexer.nextToken();
+  let tC5 = lexer.nextToken();
+  let tC6 = lexer.nextToken();
 
   expect(tA1.startPos.filename).equals('A');
   expect(tA1.startPos.line).equals(1);
@@ -269,24 +269,24 @@ it('Lexer - Reading from many files: report positions correctly', () => {
 });
 
 it('Lexer - Unclosed pragma', () => {
-  var lexer = new Lexer('/*@');
+  let lexer = new Lexer('/*@');
   expect(() => lexer.nextToken()).throws(
                  i18n('errmsg:unclosed-multiline-comment')
                );
 });
 
 it('Lexer - Unclosed pragma fragment', () => {
-  var lexer = new Lexer('/*@BEGIN_REGION@foo');
+  let lexer = new Lexer('/*@BEGIN_REGION@foo');
   expect(() => lexer.nextToken()).throws(
                  i18n('errmsg:unclosed-multiline-comment')
                );
 });
 
 it('Lexer - Empty pragma', () => {
-  var lexer = new Lexer('/*@FOO@BAR@*/');
+  let lexer = new Lexer('/*@FOO@BAR@*/');
   expectTokens(lexer, [[T_EOF, null]]);
 
-  var w = lexer.warnings();
+  let w = lexer.warnings();
   expect(w.length).equals(1);
   expect(w[0].message).equals(
     i18n('warning:unknown-pragma')('FOO')
@@ -294,7 +294,7 @@ it('Lexer - Empty pragma', () => {
 });
 
 it('Lexer - Pragma BEGIN_REGION .. END_REGION', () => {
-  var lexer = new Lexer(
+  let lexer = new Lexer(
       '/*@BEGIN_REGION@region A@*/' +
       '1' +
       '/*@BEGIN_REGION@region B@*/' +
@@ -307,12 +307,12 @@ it('Lexer - Pragma BEGIN_REGION .. END_REGION', () => {
       '5' +
       '/*@END_REGION@*/'
   );
-  var t1 = lexer.nextToken();
-  var t2 = lexer.nextToken();
-  var t3 = lexer.nextToken();
-  var t4 = lexer.nextToken();
-  var t5 = lexer.nextToken();
-  var t6 = lexer.nextToken();
+  let t1 = lexer.nextToken();
+  let t2 = lexer.nextToken();
+  let t3 = lexer.nextToken();
+  let t4 = lexer.nextToken();
+  let t5 = lexer.nextToken();
+  let t6 = lexer.nextToken();
   expectToken(t1, T_NUM, '1');
   expect(t1.startPos.region).equals('region A');
   expectToken(t2, T_NUM, '2');
@@ -328,7 +328,7 @@ it('Lexer - Pragma BEGIN_REGION .. END_REGION', () => {
 });
 
 it('Lexer - Identifiers', () => {
-  var lexer = new Lexer(
+  let lexer = new Lexer(
                 "x x' x42 Poner Poner' PonerN Mover nroBolitas Rojo a_b_c"
               );
   expectTokens(lexer, [
@@ -347,14 +347,14 @@ it('Lexer - Identifiers', () => {
 });
 
 it('Lexer - Reject identifier started with single quote', () => {
-  var lexer = new Lexer("'hola");
+  let lexer = new Lexer("'hola");
   expect(() => lexer.nextToken()).throws(
     i18n('errmsg:identifier-must-start-with-alphabetic-character')
   );
 });
 
 it('Lexer - Keywords', () => {
-  var words = [
+  let words = [
     'program',
     'interactive',
     'procedure',
@@ -383,7 +383,7 @@ it('Lexer - Keywords', () => {
     '_',
     'TIMEOUT',
   ];
-  var lexer = new Lexer(words.join(' '));
+  let lexer = new Lexer(words.join(' '));
   expectTokenTypes(lexer, [
     T_PROGRAM,
     T_INTERACTIVE,
@@ -417,7 +417,7 @@ it('Lexer - Keywords', () => {
 });
 
 it('Lexer - Symbols', () => {
-  var words = [
+  let words = [
     '(',
     ')',
     '{',
@@ -445,7 +445,7 @@ it('Lexer - Symbols', () => {
     '*',
     '^'
   ];
-  var lexer = new Lexer(words.join(' '));
+  let lexer = new Lexer(words.join(' '));
   expectTokenTypes(lexer, [
     T_LPAREN,
     T_RPAREN,
@@ -477,12 +477,12 @@ it('Lexer - Symbols', () => {
 });
 
 it('Lexer - Unknown token', () => {
-  var lexer = new Lexer('%');
+  let lexer = new Lexer('%');
   expect(() => lexer.nextToken()).throws(i18n('errmsg:unknown-token')('%'));
 });
 
 it('Lexer - Basic string constants', () => {
-  var lexer = new Lexer('"" "a" "hola""chau"');
+  let lexer = new Lexer('"" "a" "hola""chau"');
   expectTokens(lexer, [
       [T_STRING, ''],
       [T_STRING, 'a'],
@@ -493,7 +493,7 @@ it('Lexer - Basic string constants', () => {
 });
 
 it('Lexer - String constants with escapes', () => {
-  var lexer = new Lexer(
+  let lexer = new Lexer(
                 '"","\\"","\\\\","\\a","\\b","\\f","\\n","\\r","\\t","\\v"'
               );
   expectTokens(lexer, [
@@ -521,21 +521,21 @@ it('Lexer - String constants with escapes', () => {
 });
 
 it('Lexer - Unclosed string constant', () => {
-  var lexer = new Lexer(' "hola \n ');
+  let lexer = new Lexer(' "hola \n ');
   expect(() => lexer.nextToken()).throws(
     i18n('errmsg:unclosed-string-constant')
   );
 });
 
 it('Lexer - Unclosed string constant after escape', () => {
-  var lexer = new Lexer(' "hola \\');
+  let lexer = new Lexer(' "hola \\');
   expect(() => lexer.nextToken()).throws(
     i18n('errmsg:unclosed-string-constant')
   );
 });
 
 it('Lexer - Reject obsolete tuple assignment: empty tuple', () => {
-  var lexer = new Lexer('() :=');
+  let lexer = new Lexer('() :=');
   lexer.nextToken();
   lexer.nextToken();
   expect(() => lexer.nextToken()).throws(
@@ -544,8 +544,8 @@ it('Lexer - Reject obsolete tuple assignment: empty tuple', () => {
 });
 
 it('Lexer - Reject obsolete tuple assignment: singleton', () => {
-  var lexer = new Lexer('(x) :=');
-  for (var i = 0; i < 3; i++) {
+  let lexer = new Lexer('(x) :=');
+  for (let i = 0; i < 3; i++) {
     lexer.nextToken();
   }
   expect(() => lexer.nextToken()).throws(
@@ -554,8 +554,8 @@ it('Lexer - Reject obsolete tuple assignment: singleton', () => {
 });
 
 it('Lexer - Reject obsolete tuple assignment: proper tuple', () => {
-  var lexer = new Lexer('(x,y,z) :=');
-  for (var i = 0; i < 7; i++) {
+  let lexer = new Lexer('(x,y,z) :=');
+  for (let i = 0; i < 7; i++) {
     lexer.nextToken();
   }
   expect(() => lexer.nextToken()).throws(
@@ -564,17 +564,17 @@ it('Lexer - Reject obsolete tuple assignment: proper tuple', () => {
 });
 
 it('Lexer - Accept tuple assignment with let: empty tuple', () => {
-  var lexer = new Lexer('let () :=');
+  let lexer = new Lexer('let () :=');
   expectTokenTypes(lexer, [T_LET, T_LPAREN, T_RPAREN, T_ASSIGN, T_EOF]);
 });
 
 it('Lexer - Accept tuple assignment with let: singleton', () => {
-  var lexer = new Lexer('let (x) :=');
+  let lexer = new Lexer('let (x) :=');
   expectTokenTypes(lexer, [T_LET, T_LPAREN, T_LOWERID, T_RPAREN, T_ASSIGN, T_EOF]);
 });
 
 it('Lexer - Accept tuple assignment with let: proper tuple', () => {
-  var lexer = new Lexer('let (x,y,z) :=');
+  let lexer = new Lexer('let (x,y,z) :=');
   expectTokenTypes(lexer, [
       T_LET, T_LPAREN, T_LOWERID, T_COMMA, T_LOWERID, T_COMMA, T_LOWERID,
       T_RPAREN, T_ASSIGN, T_EOF
