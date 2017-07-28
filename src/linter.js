@@ -1,4 +1,6 @@
 
+import { visitAST } from './ast';
+
 /* A semantic analyzer receives
  *   a global environment (instance of GlobalEnvironment)
  *   an abstract syntax tree (the output of a parser)
@@ -16,15 +18,20 @@
  *
  * We assume that the AST is the valid output of a parser.
  */
-class SemanticAnalyzer {
+export class Linter {
 
   constructor(globalEnvironment, ast) {
     this._globalEnvironment = globalEnvironment;
     this._ast = ast;
   }
 
-  check(definitions) {
+  lint() {
+    visitAST(this._visitNode, this._ast);
+  }
 
+  /* Visit a single node of the AST */
+  _visitNode(ast) {
+    console.log(ast);
   }
 
 }

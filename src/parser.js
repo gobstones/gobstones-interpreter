@@ -17,6 +17,8 @@ import {
 } from './token';
 import {
   ASTNode,
+  /* Main */
+  ASTMain,
   /* Definitions */
   ASTDefProgram,
   ASTDefInteractiveProgram,
@@ -165,11 +167,11 @@ export class Parser {
 
   /* Return the AST that results from parsing a full program */
   parse() {
-     var definitions = [];
+    let definitions = [];
     while (this._currentToken.tag !== T_EOF) {
       definitions.push(this._parseDefinition());
     }
-    return definitions;
+    return new ASTMain(definitions);
   }
 
   /** Definitions **/
@@ -627,8 +629,9 @@ export class Parser {
     let startPos = this._currentToken.startPos;
     this._match(T_TIMEOUT);
     this._match(T_LPAREN);
-    let timeout = this._match(T_NUM);
-    let endPos = this._currentToken.endPos;
+    let timeout = this._currentToken;
+    this._match(T_NUM);
+    let endPos = this._currentToken.startPos;
     this._match(T_RPAREN);
     let result = new ASTPatternTimeout(timeout);
     result.startPos = startPos;

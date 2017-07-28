@@ -3,6 +3,8 @@ import chai from 'chai';
 import { i18n } from '../src/i18n';
 import {
   ASTNode,
+  /* Main */
+  ASTMain,
   /* Definitions */
   ASTDefProgram,
   ASTDefInteractiveProgram,
@@ -70,9 +72,11 @@ const expect = chai.expect;
  * - a node (instance of ASTNode) whose children are expressions,
  * - a list of expressions. */
 function syntacticallyEqual(e1, e2) {
+  /*** May be useful for debugging:
   if (e1 === '?' || e2 === '?') {
     return true;
   }
+  */
   if (e1 === null && e2 === null) {
     return true;
   } else if (e1 instanceof Token && e2 instanceof Token) {
@@ -101,7 +105,12 @@ function tok(tag, value) {
 }
 
 function expectAST(obtainedAst, expectedAst) {
-  return expect(syntacticallyEqual(obtainedAst, expectedAst)).equals(true);
+  return expect(
+           syntacticallyEqual(
+             obtainedAst,
+             new ASTMain(expectedAst)
+           )
+         ).equals(true);
 }
 
 it('Parser - Accept empty program definition', () => {
@@ -150,12 +159,12 @@ it('Parser - Program definition: fail on no right brace', () => {
 
 it('Parser - Program definition: keep track of positions', () => {
   let parser = new Parser('\n   program {\n\n\n}');
-  let tree = parser.parse();
-  expect(tree.length).equals(1);
-  expect(tree[0].startPos.line).equals(2);
-  expect(tree[0].startPos.column).equals(4);
-  expect(tree[0].endPos.line).equals(5);
-  expect(tree[0].endPos.column).equals(1);
+  let ast = parser.parse().definitions;
+  expect(ast.length).equals(1);
+  expect(ast[0].startPos.line).equals(2);
+  expect(ast[0].startPos.column).equals(4);
+  expect(ast[0].endPos.line).equals(5);
+  expect(ast[0].endPos.column).equals(1);
 });
 
 it('Parser - Procedure definition with no parameters', () => {
@@ -281,20 +290,20 @@ it('Parser - Procedure definition: keep track of positions', () => {
       '/*@BEGIN_REGION@B@*/(x,y){} procedure Q()\n' +
       '{     /*@END_REGION@B@*/            }'
   );
-  let tree = parser.parse();
-  expect(tree.length).equals(2);
-  expect(tree[0].startPos.line).equals(1);
-  expect(tree[0].startPos.column).equals(11);
-  expect(tree[0].startPos.region).equals('A');
-  expect(tree[0].endPos.line).equals(2);
-  expect(tree[0].endPos.column).equals(7);
-  expect(tree[0].endPos.region).equals('B');
-  expect(tree[1].startPos.line).equals(2);
-  expect(tree[1].startPos.column).equals(9);
-  expect(tree[1].startPos.region).equals('B');
-  expect(tree[1].endPos.line).equals(3);
-  expect(tree[1].endPos.column).equals(19);
-  expect(tree[1].endPos.region).equals('A');
+  let ast = parser.parse().definitions;
+  expect(ast.length).equals(2);
+  expect(ast[0].startPos.line).equals(1);
+  expect(ast[0].startPos.column).equals(11);
+  expect(ast[0].startPos.region).equals('A');
+  expect(ast[0].endPos.line).equals(2);
+  expect(ast[0].endPos.column).equals(7);
+  expect(ast[0].endPos.region).equals('B');
+  expect(ast[1].startPos.line).equals(2);
+  expect(ast[1].startPos.column).equals(9);
+  expect(ast[1].startPos.region).equals('B');
+  expect(ast[1].endPos.line).equals(3);
+  expect(ast[1].endPos.column).equals(19);
+  expect(ast[1].endPos.region).equals('A');
 });
 
 it('Parser - Function definition with no parameters', () => {
@@ -424,31 +433,31 @@ it('Parser - Return: two results', () => {
 
 it('Parser - Return: keep track of positions (no results)', () => {
   let parser = new Parser('program {\n\n\n return\n() }');
-  let tree = parser.parse();
-  expect(tree[0].body.statements[0].result.elements.length).equals(0);
-  expect(tree[0].body.statements[0].startPos.line).equals(4);
-  expect(tree[0].body.statements[0].startPos.column).equals(2);
-  expect(tree[0].body.statements[0].endPos.line).equals(5);
-  expect(tree[0].body.statements[0].endPos.column).equals(2);
+  let ast = parser.parse().definitions;
+  expect(ast[0].body.statements[0].result.elements.length).equals(0);
+  expect(ast[0].body.statements[0].startPos.line).equals(4);
+  expect(ast[0].body.statements[0].startPos.column).equals(2);
+  expect(ast[0].body.statements[0].endPos.line).equals(5);
+  expect(ast[0].body.statements[0].endPos.column).equals(2);
 });
 
 it('Parser - Return: keep track of positions (one result)', () => {
   let parser = new Parser('program {\n\n\n return\n(col) }');
-  let tree = parser.parse();
-  expect(tree[0].body.statements[0].startPos.line).equals(4);
-  expect(tree[0].body.statements[0].startPos.column).equals(2);
-  expect(tree[0].body.statements[0].endPos.line).equals(5);
-  expect(tree[0].body.statements[0].endPos.column).equals(5);
+  let ast = parser.parse().definitions;
+  expect(ast[0].body.statements[0].startPos.line).equals(4);
+  expect(ast[0].body.statements[0].startPos.column).equals(2);
+  expect(ast[0].body.statements[0].endPos.line).equals(5);
+  expect(ast[0].body.statements[0].endPos.column).equals(5);
 });
 
 it('Parser - Return: keep track of positions (two results)', () => {
   let parser = new Parser('program {\n\n\n return\n(col,dir) }');
-  let tree = parser.parse();
-  expect(tree[0].body.statements[0].result.elements.length).equals(2);
-  expect(tree[0].body.statements[0].startPos.line).equals(4);
-  expect(tree[0].body.statements[0].startPos.column).equals(2);
-  expect(tree[0].body.statements[0].endPos.line).equals(5);
-  expect(tree[0].body.statements[0].endPos.column).equals(9);
+  let ast = parser.parse().definitions;
+  expect(ast[0].body.statements[0].result.elements.length).equals(2);
+  expect(ast[0].body.statements[0].startPos.line).equals(4);
+  expect(ast[0].body.statements[0].startPos.column).equals(2);
+  expect(ast[0].body.statements[0].endPos.line).equals(5);
+  expect(ast[0].body.statements[0].endPos.column).equals(9);
 });
 
 it('Parser - Nested block statements', () => {
@@ -635,12 +644,12 @@ it('Parser - If: fail if missing else block', () => {
 
 it('Parser - If: keep track of positions', () => {
   let parser = new Parser('program {\n  if (xxx) {\n  } else {\n  }\n}');
-  let tree = parser.parse();
-  expect(tree[0].body.statements.length).equals(1);
-  expect(tree[0].body.statements[0].startPos.line).equals(2);
-  expect(tree[0].body.statements[0].startPos.column).equals(3);
-  expect(tree[0].body.statements[0].endPos.line).equals(4);
-  expect(tree[0].body.statements[0].endPos.column).equals(3);
+  let ast = parser.parse().definitions;
+  expect(ast[0].body.statements.length).equals(1);
+  expect(ast[0].body.statements[0].startPos.line).equals(2);
+  expect(ast[0].body.statements[0].startPos.column).equals(3);
+  expect(ast[0].body.statements[0].endPos.line).equals(4);
+  expect(ast[0].body.statements[0].endPos.column).equals(3);
 });
 
 it('Parser - Repeat', () => {
@@ -713,16 +722,16 @@ it('Parser - Repeat: fail if missing right parenthesis', () => {
 
 it('Parser - Repeat: keep track of positions', () => {
   let parser = new Parser('program { repeat (n) { } repeat(m) { } }');
-  let tree = parser.parse();
-  expect(tree[0].body.statements.length).equals(2);
-  expect(tree[0].body.statements[0].startPos.line).equals(1);
-  expect(tree[0].body.statements[0].startPos.column).equals(11);
-  expect(tree[0].body.statements[0].endPos.line).equals(1);
-  expect(tree[0].body.statements[0].endPos.column).equals(24);
-  expect(tree[0].body.statements[1].startPos.line).equals(1);
-  expect(tree[0].body.statements[1].startPos.column).equals(26);
-  expect(tree[0].body.statements[1].endPos.line).equals(1);
-  expect(tree[0].body.statements[1].endPos.column).equals(38);
+  let ast = parser.parse().definitions;
+  expect(ast[0].body.statements.length).equals(2);
+  expect(ast[0].body.statements[0].startPos.line).equals(1);
+  expect(ast[0].body.statements[0].startPos.column).equals(11);
+  expect(ast[0].body.statements[0].endPos.line).equals(1);
+  expect(ast[0].body.statements[0].endPos.column).equals(24);
+  expect(ast[0].body.statements[1].startPos.line).equals(1);
+  expect(ast[0].body.statements[1].startPos.column).equals(26);
+  expect(ast[0].body.statements[1].endPos.line).equals(1);
+  expect(ast[0].body.statements[1].endPos.column).equals(38);
 });
 
 it('Parser - Foreach', () => {
@@ -808,12 +817,12 @@ it('Parser - Foreach: fail if missing block', () => {
 
 it('Parser - Foreach: keep track of positions', () => {
   let parser = new Parser('program {\nforeach\ni\nin\nexpr\n{\n}\n}');
-  let tree = parser.parse();
-  expect(tree[0].body.statements.length).equals(1);
-  expect(tree[0].body.statements[0].startPos.line).equals(2);
-  expect(tree[0].body.statements[0].startPos.column).equals(1);
-  expect(tree[0].body.statements[0].endPos.line).equals(7);
-  expect(tree[0].body.statements[0].endPos.column).equals(1);
+  let ast = parser.parse().definitions;
+  expect(ast[0].body.statements.length).equals(1);
+  expect(ast[0].body.statements[0].startPos.line).equals(2);
+  expect(ast[0].body.statements[0].startPos.column).equals(1);
+  expect(ast[0].body.statements[0].endPos.line).equals(7);
+  expect(ast[0].body.statements[0].endPos.column).equals(1);
 });
 
 it('Parser - While', () => {
@@ -1210,11 +1219,11 @@ it('Parser - Switch: keep track of positions', () => {
                  '  }\n' +
                  '}\n'
                );
-  let tree = parser.parse();
-  expect(tree[0].body.statements[0].startPos.line).equals(2);
-  expect(tree[0].body.statements[0].startPos.column).equals(3);
-  expect(tree[0].body.statements[0].endPos.line).equals(4);
-  expect(tree[0].body.statements[0].endPos.column).equals(3);
+  let ast = parser.parse().definitions;
+  expect(ast[0].body.statements[0].startPos.line).equals(2);
+  expect(ast[0].body.statements[0].startPos.column).equals(3);
+  expect(ast[0].body.statements[0].endPos.line).equals(4);
+  expect(ast[0].body.statements[0].endPos.column).equals(3);
 });
 
 it('Parser - Let: variable assignment', () => {
@@ -1316,16 +1325,16 @@ it('Parser - Let: keep track of positions', () => {
                  '  let (foo, bar) := baz\n' +
                  '}\n'
                );
-  let tree = parser.parse();
-  expect(tree[0].body.statements.length).equals(2);
-  expect(tree[0].body.statements[0].startPos.line).equals(2);
-  expect(tree[0].body.statements[0].startPos.column).equals(3);
-  expect(tree[0].body.statements[0].endPos.line).equals(2);
-  expect(tree[0].body.statements[0].endPos.column).equals(17);
-  expect(tree[0].body.statements[1].startPos.line).equals(3);
-  expect(tree[0].body.statements[1].startPos.column).equals(3);
-  expect(tree[0].body.statements[1].endPos.line).equals(3);
-  expect(tree[0].body.statements[1].endPos.column).equals(24);
+  let ast = parser.parse().definitions;
+  expect(ast[0].body.statements.length).equals(2);
+  expect(ast[0].body.statements[0].startPos.line).equals(2);
+  expect(ast[0].body.statements[0].startPos.column).equals(3);
+  expect(ast[0].body.statements[0].endPos.line).equals(2);
+  expect(ast[0].body.statements[0].endPos.column).equals(17);
+  expect(ast[0].body.statements[1].startPos.line).equals(3);
+  expect(ast[0].body.statements[1].startPos.column).equals(3);
+  expect(ast[0].body.statements[1].endPos.line).equals(3);
+  expect(ast[0].body.statements[1].endPos.column).equals(24);
 });
 
 it('Parser - Variable assignment', () => {
@@ -1362,12 +1371,12 @@ it('Parser - Variable assignment: keep track of positions', () => {
                  '  /**/\n' +
                  '}\n'
                );
-  let tree = parser.parse();
-  expect(tree[0].body.statements.length).equals(1);
-  expect(tree[0].body.statements[0].startPos.line).equals(3);
-  expect(tree[0].body.statements[0].startPos.column).equals(7);
-  expect(tree[0].body.statements[0].endPos.line).equals(4);
-  expect(tree[0].body.statements[0].endPos.column).equals(9);
+  let ast = parser.parse().definitions;
+  expect(ast[0].body.statements.length).equals(1);
+  expect(ast[0].body.statements[0].startPos.line).equals(3);
+  expect(ast[0].body.statements[0].startPos.column).equals(7);
+  expect(ast[0].body.statements[0].endPos.line).equals(4);
+  expect(ast[0].body.statements[0].endPos.column).equals(9);
 });
 
 it('Parser - Procedure call', () => {
@@ -1431,12 +1440,12 @@ it('Parser - Procedure call: reject if missing right parenthesis', () => {
 
 it('Parser - Procedure call: keep track of positions', () => {
   let parser = new Parser('program{P(a,a,a)}');
-  let tree = parser.parse();
-  expect(tree[0].body.statements.length).equals(1);
-  expect(tree[0].body.statements[0].startPos.line).equals(1);
-  expect(tree[0].body.statements[0].startPos.column).equals(9);
-  expect(tree[0].body.statements[0].endPos.line).equals(1);
-  expect(tree[0].body.statements[0].endPos.column).equals(16);
+  let ast = parser.parse().definitions;
+  expect(ast[0].body.statements.length).equals(1);
+  expect(ast[0].body.statements[0].startPos.line).equals(1);
+  expect(ast[0].body.statements[0].startPos.column).equals(9);
+  expect(ast[0].body.statements[0].endPos.line).equals(1);
+  expect(ast[0].body.statements[0].endPos.column).equals(16);
 });
 
 it('Parser - Allow semicolon as statement separator', () => {
@@ -1602,11 +1611,11 @@ it('Parser - Function call: keep track of positions', () => {
                  '  x := f(/*)*/)\n' +
                  '}'
                );
-  let tree = parser.parse();
-  expect(tree[0].body.statements[0].value.startPos.line).equals(3);
-  expect(tree[0].body.statements[0].value.startPos.column).equals(8);
-  expect(tree[0].body.statements[0].value.endPos.line).equals(3);
-  expect(tree[0].body.statements[0].value.endPos.column).equals(15);
+  let ast = parser.parse().definitions;
+  expect(ast[0].body.statements[0].value.startPos.line).equals(3);
+  expect(ast[0].body.statements[0].value.startPos.column).equals(8);
+  expect(ast[0].body.statements[0].value.endPos.line).equals(3);
+  expect(ast[0].body.statements[0].value.endPos.column).equals(15);
 });
 
 it('Parser - Number constant', () => {
@@ -1651,15 +1660,15 @@ it('Parser - Number constant: keep track of positions', () => {
                  '  y := 123\n' +
                  '}'
                );
-  let tree = parser.parse();
-  expect(tree[0].body.statements[0].value.startPos.line).equals(2);
-  expect(tree[0].body.statements[0].value.startPos.column).equals(8);
-  expect(tree[0].body.statements[0].value.endPos.line).equals(2);
-  expect(tree[0].body.statements[0].value.endPos.column).equals(9);
-  expect(tree[0].body.statements[1].value.startPos.line).equals(3);
-  expect(tree[0].body.statements[1].value.startPos.column).equals(8);
-  expect(tree[0].body.statements[1].value.endPos.line).equals(3);
-  expect(tree[0].body.statements[1].value.endPos.column).equals(11);
+  let ast = parser.parse().definitions;
+  expect(ast[0].body.statements[0].value.startPos.line).equals(2);
+  expect(ast[0].body.statements[0].value.startPos.column).equals(8);
+  expect(ast[0].body.statements[0].value.endPos.line).equals(2);
+  expect(ast[0].body.statements[0].value.endPos.column).equals(9);
+  expect(ast[0].body.statements[1].value.startPos.line).equals(3);
+  expect(ast[0].body.statements[1].value.startPos.column).equals(8);
+  expect(ast[0].body.statements[1].value.endPos.line).equals(3);
+  expect(ast[0].body.statements[1].value.endPos.column).equals(11);
 });
 
 
@@ -1702,12 +1711,12 @@ it('Parser - String constant: keep track of positions', () => {
                  '  x := "...\\n..."\n' +
                  '}'
                );
-  let tree = parser.parse();
-  expect(tree[0].body.statements.length).equals(1);
-  expect(tree[0].body.statements[0].value.startPos.line).equals(2);
-  expect(tree[0].body.statements[0].value.startPos.column).equals(8);
-  expect(tree[0].body.statements[0].value.endPos.line).equals(2);
-  expect(tree[0].body.statements[0].value.endPos.column).equals(18);
+  let ast = parser.parse().definitions;
+  expect(ast[0].body.statements.length).equals(1);
+  expect(ast[0].body.statements[0].value.startPos.line).equals(2);
+  expect(ast[0].body.statements[0].value.startPos.column).equals(8);
+  expect(ast[0].body.statements[0].value.endPos.line).equals(2);
+  expect(ast[0].body.statements[0].value.endPos.column).equals(18);
 });
 
 it('Parser - Constructor with no arguments, no parentheses', () => {
@@ -1983,49 +1992,49 @@ it('Parser - Constructor: keep track of positions', () => {
                  '  c2 := D(y <- 20, z <- 30)\n' +
                  '}'
                );
-  let tree = parser.parse();
-  expect(tree[0].body.statements.length).equals(4);
+  let ast = parser.parse().definitions;
+  expect(ast[0].body.statements.length).equals(4);
 
   /* A */
-  expect(tree[0].body.statements[0].value.startPos.line).equals(2);
-  expect(tree[0].body.statements[0].value.startPos.column).equals(9);
-  expect(tree[0].body.statements[0].value.endPos.line).equals(2);
-  expect(tree[0].body.statements[0].value.endPos.column).equals(10);
+  expect(ast[0].body.statements[0].value.startPos.line).equals(2);
+  expect(ast[0].body.statements[0].value.startPos.column).equals(9);
+  expect(ast[0].body.statements[0].value.endPos.line).equals(2);
+  expect(ast[0].body.statements[0].value.endPos.column).equals(10);
 
   /* B() */
-  expect(tree[0].body.statements[1].value.startPos.line).equals(3);
-  expect(tree[0].body.statements[1].value.startPos.column).equals(9);
-  expect(tree[0].body.statements[1].value.endPos.line).equals(3);
-  expect(tree[0].body.statements[1].value.endPos.column).equals(11);
+  expect(ast[0].body.statements[1].value.startPos.line).equals(3);
+  expect(ast[0].body.statements[1].value.startPos.column).equals(9);
+  expect(ast[0].body.statements[1].value.endPos.line).equals(3);
+  expect(ast[0].body.statements[1].value.endPos.column).equals(11);
 
   /* C(x <- 10) */
-  expect(tree[0].body.statements[2].value.startPos.line).equals(4);
-  expect(tree[0].body.statements[2].value.startPos.column).equals(9);
-  expect(tree[0].body.statements[2].value.endPos.line).equals(4);
-  expect(tree[0].body.statements[2].value.endPos.column).equals(18);
+  expect(ast[0].body.statements[2].value.startPos.line).equals(4);
+  expect(ast[0].body.statements[2].value.startPos.column).equals(9);
+  expect(ast[0].body.statements[2].value.endPos.line).equals(4);
+  expect(ast[0].body.statements[2].value.endPos.column).equals(18);
 
   /* x <- 10 */
-  let fvx = tree[0].body.statements[2].value.fieldValues[0];
+  let fvx = ast[0].body.statements[2].value.fieldValues[0];
   expect(fvx.startPos.line).equals(4);
   expect(fvx.startPos.column).equals(11);
   expect(fvx.endPos.line).equals(4);
   expect(fvx.endPos.column).equals(18);
 
   /* D(y <- 20, z <- 30) */
-  expect(tree[0].body.statements[3].value.startPos.line).equals(5);
-  expect(tree[0].body.statements[3].value.startPos.column).equals(9);
-  expect(tree[0].body.statements[3].value.endPos.line).equals(5);
-  expect(tree[0].body.statements[3].value.endPos.column).equals(27);
+  expect(ast[0].body.statements[3].value.startPos.line).equals(5);
+  expect(ast[0].body.statements[3].value.startPos.column).equals(9);
+  expect(ast[0].body.statements[3].value.endPos.line).equals(5);
+  expect(ast[0].body.statements[3].value.endPos.column).equals(27);
 
   /* y <- 20 */
-  let fvy = tree[0].body.statements[3].value.fieldValues[0];
+  let fvy = ast[0].body.statements[3].value.fieldValues[0];
   expect(fvy.startPos.line).equals(5);
   expect(fvy.startPos.column).equals(11);
   expect(fvy.endPos.line).equals(5);
   expect(fvy.endPos.column).equals(18);
 
   /* z <- 30 */
-  let fvz = tree[0].body.statements[3].value.fieldValues[1];
+  let fvz = ast[0].body.statements[3].value.fieldValues[1];
   expect(fvz.startPos.line).equals(5);
   expect(fvz.startPos.column).equals(20);
   expect(fvz.endPos.line).equals(5);
@@ -2094,11 +2103,11 @@ it('Parser - Constructor update: keep track of positions', () => {
                  '              x <- 12000)\n' +
                  '}'
                );
-  let tree = parser.parse();
-  expect(tree[0].body.statements[0].value.startPos.line).equals(2);
-  expect(tree[0].body.statements[0].value.startPos.column).equals(9);
-  expect(tree[0].body.statements[0].value.endPos.line).equals(3);
-  expect(tree[0].body.statements[0].value.endPos.column).equals(25);
+  let ast = parser.parse().definitions;
+  expect(ast[0].body.statements[0].value.startPos.line).equals(2);
+  expect(ast[0].body.statements[0].value.startPos.column).equals(9);
+  expect(ast[0].body.statements[0].value.endPos.line).equals(3);
+  expect(ast[0].body.statements[0].value.endPos.column).equals(25);
 });
 
 it('Parser - List: empty list', () => {
@@ -2220,11 +2229,11 @@ it('Parser - List: empty list: keep track of positions', () => {
                  '  ]' +
                  '}'
                );
-  let tree = parser.parse();
-  expect(tree[0].body.statements[0].value.startPos.line).equals(2);
-  expect(tree[0].body.statements[0].value.startPos.column).equals(8);
-  expect(tree[0].body.statements[0].value.endPos.line).equals(3);
-  expect(tree[0].body.statements[0].value.endPos.column).equals(3);
+  let ast = parser.parse().definitions;
+  expect(ast[0].body.statements[0].value.startPos.line).equals(2);
+  expect(ast[0].body.statements[0].value.startPos.column).equals(8);
+  expect(ast[0].body.statements[0].value.endPos.line).equals(3);
+  expect(ast[0].body.statements[0].value.endPos.column).equals(3);
 });
 
 it('Parser - List: singleton: keep track of positions', () => {
@@ -2235,11 +2244,11 @@ it('Parser - List: singleton: keep track of positions', () => {
                  '  ]' +
                  '}'
                );
-  let tree = parser.parse();
-  expect(tree[0].body.statements[0].value.startPos.line).equals(2);
-  expect(tree[0].body.statements[0].value.startPos.column).equals(8);
-  expect(tree[0].body.statements[0].value.endPos.line).equals(4);
-  expect(tree[0].body.statements[0].value.endPos.column).equals(3);
+  let ast = parser.parse().definitions;
+  expect(ast[0].body.statements[0].value.startPos.line).equals(2);
+  expect(ast[0].body.statements[0].value.startPos.column).equals(8);
+  expect(ast[0].body.statements[0].value.endPos.line).equals(4);
+  expect(ast[0].body.statements[0].value.endPos.column).equals(3);
 });
 
 it('Parser - List: more elements: keep track of positions', () => {
@@ -2252,11 +2261,11 @@ it('Parser - List: more elements: keep track of positions', () => {
                  '  ]' +
                  '}'
                );
-  let tree = parser.parse();
-  expect(tree[0].body.statements[0].value.startPos.line).equals(2);
-  expect(tree[0].body.statements[0].value.startPos.column).equals(8);
-  expect(tree[0].body.statements[0].value.endPos.line).equals(6);
-  expect(tree[0].body.statements[0].value.endPos.column).equals(3);
+  let ast = parser.parse().definitions;
+  expect(ast[0].body.statements[0].value.startPos.line).equals(2);
+  expect(ast[0].body.statements[0].value.startPos.column).equals(8);
+  expect(ast[0].body.statements[0].value.endPos.line).equals(6);
+  expect(ast[0].body.statements[0].value.endPos.column).equals(3);
 });
 
 it('Parser - Range: without second element', () => {
@@ -2310,15 +2319,15 @@ it('Parser - Range: keep track of positions', () => {
                  '  y := [2,4..100]' +
                  '}'
                );
-  let tree = parser.parse();
-  expect(tree[0].body.statements[0].value.startPos.line).equals(2);
-  expect(tree[0].body.statements[0].value.startPos.column).equals(8);
-  expect(tree[0].body.statements[0].value.endPos.line).equals(2);
-  expect(tree[0].body.statements[0].value.endPos.column).equals(15);
-  expect(tree[0].body.statements[1].value.startPos.line).equals(3);
-  expect(tree[0].body.statements[1].value.startPos.column).equals(8);
-  expect(tree[0].body.statements[1].value.endPos.line).equals(3);
-  expect(tree[0].body.statements[1].value.endPos.column).equals(17);
+  let ast = parser.parse().definitions;
+  expect(ast[0].body.statements[0].value.startPos.line).equals(2);
+  expect(ast[0].body.statements[0].value.startPos.column).equals(8);
+  expect(ast[0].body.statements[0].value.endPos.line).equals(2);
+  expect(ast[0].body.statements[0].value.endPos.column).equals(15);
+  expect(ast[0].body.statements[1].value.startPos.line).equals(3);
+  expect(ast[0].body.statements[1].value.startPos.column).equals(8);
+  expect(ast[0].body.statements[1].value.endPos.line).equals(3);
+  expect(ast[0].body.statements[1].value.endPos.column).equals(17);
 });
 
 it('Parser - List/range: fail on invalid symbol after first element', () => {
@@ -2508,15 +2517,15 @@ it('Parser - Operators: nonassoc -- keep track of positions', () => {
                  '  x := foo < bar\n' +
                  '}'
                );
-  let tree = parser.parse();
-  expect(tree[0].body.statements[0].value.startPos.line).equals(2);
-  expect(tree[0].body.statements[0].value.startPos.column).equals(8);
-  expect(tree[0].body.statements[0].value.endPos.line).equals(2);
-  expect(tree[0].body.statements[0].value.endPos.column).equals(18);
-  expect(tree[0].body.statements[1].value.startPos.line).equals(3);
-  expect(tree[0].body.statements[1].value.startPos.column).equals(8);
-  expect(tree[0].body.statements[1].value.endPos.line).equals(3);
-  expect(tree[0].body.statements[1].value.endPos.column).equals(17);
+  let ast = parser.parse().definitions;
+  expect(ast[0].body.statements[0].value.startPos.line).equals(2);
+  expect(ast[0].body.statements[0].value.startPos.column).equals(8);
+  expect(ast[0].body.statements[0].value.endPos.line).equals(2);
+  expect(ast[0].body.statements[0].value.endPos.column).equals(18);
+  expect(ast[0].body.statements[1].value.startPos.line).equals(3);
+  expect(ast[0].body.statements[1].value.startPos.column).equals(8);
+  expect(ast[0].body.statements[1].value.endPos.line).equals(3);
+  expect(ast[0].body.statements[1].value.endPos.column).equals(17);
 });
 
 it('Parser - Operators: fail if associating nonassoc operators (1/3)', () => {
@@ -2761,15 +2770,15 @@ it('Parser - Operators: infixl -- keep track of positions', () => {
                  '  x := foo div bar mod x\n' +
                  '}'
                );
-  let tree = parser.parse();
-  expect(tree[0].body.statements[0].value.startPos.line).equals(2);
-  expect(tree[0].body.statements[0].value.startPos.column).equals(8);
-  expect(tree[0].body.statements[0].value.endPos.line).equals(2);
-  expect(tree[0].body.statements[0].value.endPos.column).equals(21);
-  expect(tree[0].body.statements[1].value.startPos.line).equals(3);
-  expect(tree[0].body.statements[1].value.startPos.column).equals(8);
-  expect(tree[0].body.statements[1].value.endPos.line).equals(3);
-  expect(tree[0].body.statements[1].value.endPos.column).equals(25);
+  let ast = parser.parse().definitions;
+  expect(ast[0].body.statements[0].value.startPos.line).equals(2);
+  expect(ast[0].body.statements[0].value.startPos.column).equals(8);
+  expect(ast[0].body.statements[0].value.endPos.line).equals(2);
+  expect(ast[0].body.statements[0].value.endPos.column).equals(21);
+  expect(ast[0].body.statements[1].value.startPos.line).equals(3);
+  expect(ast[0].body.statements[1].value.startPos.column).equals(8);
+  expect(ast[0].body.statements[1].value.endPos.line).equals(3);
+  expect(ast[0].body.statements[1].value.endPos.column).equals(25);
 });
 
 it('Parser - Operators: right-associative (infixr)', () => {
@@ -2930,15 +2939,15 @@ it('Parser - Operators: unary -- keep track of positions', () => {
                  '  x := -\nfoo\n' +
                  '}'
                );
-  let tree = parser.parse();
-  expect(tree[0].body.statements[0].value.startPos.line).equals(2);
-  expect(tree[0].body.statements[0].value.startPos.column).equals(8);
-  expect(tree[0].body.statements[0].value.endPos.line).equals(2);
-  expect(tree[0].body.statements[0].value.endPos.column).equals(15);
-  expect(tree[0].body.statements[1].value.startPos.line).equals(3);
-  expect(tree[0].body.statements[1].value.startPos.column).equals(8);
-  expect(tree[0].body.statements[1].value.endPos.line).equals(4);
-  expect(tree[0].body.statements[1].value.endPos.column).equals(4);
+  let ast = parser.parse().definitions;
+  expect(ast[0].body.statements[0].value.startPos.line).equals(2);
+  expect(ast[0].body.statements[0].value.startPos.column).equals(8);
+  expect(ast[0].body.statements[0].value.endPos.line).equals(2);
+  expect(ast[0].body.statements[0].value.endPos.column).equals(15);
+  expect(ast[0].body.statements[1].value.startPos.line).equals(3);
+  expect(ast[0].body.statements[1].value.startPos.column).equals(8);
+  expect(ast[0].body.statements[1].value.endPos.line).equals(4);
+  expect(ast[0].body.statements[1].value.endPos.column).equals(4);
 });
 
 it('Parser - Tuples/parenthesized expressions', () => {
@@ -3588,22 +3597,22 @@ it('Parser - Type definition: keep track of positions in records', () => {
                + '  field y\n'
                + '}\n'
                );
-  let tree = parser.parse();
-  expect(tree[0].startPos.line).equals(1);
-  expect(tree[0].startPos.column).equals(1);
-  expect(tree[0].endPos.line).equals(4);
-  expect(tree[0].endPos.column).equals(1);
+  let ast = parser.parse().definitions;
+  expect(ast[0].startPos.line).equals(1);
+  expect(ast[0].startPos.column).equals(1);
+  expect(ast[0].endPos.line).equals(4);
+  expect(ast[0].endPos.column).equals(1);
 
-  expect(tree[0].constructorDeclarations.length).equals(1);
-  expect(tree[0].constructorDeclarations[0].fieldNames.length).equals(2);
+  expect(ast[0].constructorDeclarations.length).equals(1);
+  expect(ast[0].constructorDeclarations[0].fieldNames.length).equals(2);
 
-  let fx = tree[0].constructorDeclarations[0].fieldNames[0];
+  let fx = ast[0].constructorDeclarations[0].fieldNames[0];
   expect(fx.startPos.line).equals(2);
   expect(fx.startPos.column).equals(9);
   expect(fx.endPos.line).equals(2);
   expect(fx.endPos.column).equals(10);
 
-  let fy = tree[0].constructorDeclarations[0].fieldNames[1];
+  let fy = ast[0].constructorDeclarations[0].fieldNames[1];
   expect(fy.startPos.line).equals(3);
   expect(fy.startPos.column).equals(9);
   expect(fy.endPos.line).equals(3);
@@ -3620,27 +3629,27 @@ it('Parser - Type definition: keep track of positions in variants', () => {
                + '  }\n'
                + '}\n'
                );
-  let tree = parser.parse();
-  expect(tree[0].startPos.line).equals(1);
-  expect(tree[0].startPos.column).equals(1);
-  expect(tree[0].endPos.line).equals(7);
-  expect(tree[0].endPos.column).equals(1);
+  let ast = parser.parse().definitions;
+  expect(ast[0].startPos.line).equals(1);
+  expect(ast[0].startPos.column).equals(1);
+  expect(ast[0].endPos.line).equals(7);
+  expect(ast[0].endPos.column).equals(1);
 
-  expect(tree[0].constructorDeclarations.length).equals(2);
-  expect(tree[0].constructorDeclarations[0].fieldNames.length).equals(0);
-  expect(tree[0].constructorDeclarations[1].fieldNames.length).equals(2);
+  expect(ast[0].constructorDeclarations.length).equals(2);
+  expect(ast[0].constructorDeclarations[0].fieldNames.length).equals(0);
+  expect(ast[0].constructorDeclarations[1].fieldNames.length).equals(2);
 
-  expect(tree[0].constructorDeclarations[0].startPos.line).equals(2);
-  expect(tree[0].constructorDeclarations[0].startPos.column).equals(3);
-  expect(tree[0].constructorDeclarations[0].endPos.line).equals(2);
-  expect(tree[0].constructorDeclarations[0].endPos.column).equals(12);
+  expect(ast[0].constructorDeclarations[0].startPos.line).equals(2);
+  expect(ast[0].constructorDeclarations[0].startPos.column).equals(3);
+  expect(ast[0].constructorDeclarations[0].endPos.line).equals(2);
+  expect(ast[0].constructorDeclarations[0].endPos.column).equals(12);
 
-  expect(tree[0].constructorDeclarations[1].startPos.line).equals(3);
-  expect(tree[0].constructorDeclarations[1].startPos.column).equals(3);
-  expect(tree[0].constructorDeclarations[1].endPos.line).equals(6);
-  expect(tree[0].constructorDeclarations[1].endPos.column).equals(3);
+  expect(ast[0].constructorDeclarations[1].startPos.line).equals(3);
+  expect(ast[0].constructorDeclarations[1].startPos.column).equals(3);
+  expect(ast[0].constructorDeclarations[1].endPos.line).equals(6);
+  expect(ast[0].constructorDeclarations[1].endPos.column).equals(3);
 
-  let fx = tree[0].constructorDeclarations[1].fieldNames[0]
+  let fx = ast[0].constructorDeclarations[1].fieldNames[0]
   expect(fx.startPos.line).equals(4);
   expect(fx.startPos.column).equals(11);
   expect(fx.endPos.line).equals(4);
@@ -3652,10 +3661,8 @@ it('Parser - Interactive program', () => {
                  'interactive program {\n'
                + '  INIT -> {}\n'
                + '  TIMEOUT(500) -> {}\n'
-               /*
                + '  PRESS(x, y) -> {}\n'
                + '  _ -> {}\n'
-               */
                + '}\n'
                );
   expectAST(parser.parse(), [
@@ -3665,11 +3672,9 @@ it('Parser - Interactive program', () => {
         new ASTStmtBlock([])
       ),
       new ASTSwitchBranch(
-        '?',
-        //new ASTPatternTimeout(tok(T_NUM, '500')),
+        new ASTPatternTimeout(tok(T_NUM, '500')),
         new ASTStmtBlock([])
       ),
-      /*
       new ASTSwitchBranch(
         new ASTPatternConstructor(tok(T_UPPERID, 'PRESS'), [
           tok(T_LOWERID, 'x'),
@@ -3680,9 +3685,9 @@ it('Parser - Interactive program', () => {
       new ASTSwitchBranch(
         new ASTPatternWildcard(
           new ASTStmtBlock([])
-        )
+        ),
+        new ASTStmtBlock([])
       )
-      */
     ])
   ]);
 });

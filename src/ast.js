@@ -1,5 +1,7 @@
 import { UnknownPosition } from './reader';
+import { Token } from './token';
 
+export const N_Main = Symbol.for('N_Main');
 /* Definitions */
 export const N_DefProgram = Symbol.for('N_DefProgram');
 export const N_DefInteractiveProgram = Symbol.for('N_DefInteractiveProgram');
@@ -81,6 +83,42 @@ export class ASTNode {
 
   get endPos() {
     return this._endPos;
+  }
+
+}
+
+/* Recursively visit all the nodes of an AST */
+let level = 0;
+export function visitAST(visitor, ast) {
+  if (ast === null || ast instanceof Token) {
+    return;
+  } else if (ast instanceof Array) {
+    level++;
+    for (let child of ast) {
+      visitAST(visitor, child);
+    }
+    level--;
+  } else if (ast instanceof ASTNode) {
+    level++;
+    visitor(ast);
+    for (let child of ast.children) {
+      visitAST(visitor, child);
+    }
+    level--;
+  } else {
+    throw Error('Malformed AST: ' + typeof ast + ' ' + level);
+  }
+}
+
+/* Main */
+
+export class ASTMain extends ASTNode {
+  constructor(definitions) {
+    super(N_Main, definitions);
+  }
+
+  get definitions() {
+    return this._children;
   }
 }
 
@@ -323,4 +361,5 @@ export class ASTConstructorDeclaration extends ASTNode {
     return this._children[1];
   }
 }
+
 
