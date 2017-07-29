@@ -191,7 +191,8 @@ export class Lexer {
     this._multifileReader = new MultifileReader(input);
     this._reader = this._multifileReader.readCurrentFile();
     this._warnings = [];
-    this._obsoleteTupleAssignmentRecognizer = new ObsoleteTupleAssignmentRecognizer();
+    this._obsoleteTupleAssignmentRecognizer =
+      new ObsoleteTupleAssignmentRecognizer();
   }
 
   /* Return the next token from the input, checking for warnings */

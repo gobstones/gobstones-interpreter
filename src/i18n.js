@@ -163,7 +163,7 @@ const ES = {
   'errmsg:repeated-field-name':
     function (constructorName, fieldName) {
       return 'El campo "' + fieldName + '" no puede estar repetido '
-           + 'para el constructor "' + constructorName + '".'
+           + 'para el constructor "' + constructorName + '".';
     },
 
   'errmsg:function-and-field-cannot-have-the-same-name':
