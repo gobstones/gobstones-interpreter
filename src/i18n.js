@@ -71,6 +71,11 @@ const ES = {
   'T_TIMES': 'el operador de producto ("*")',
   'T_POW': 'el operador de potencia ("^")',
 
+  /* Local name categories */
+  'LocalVariable': 'variable',
+  'LocalIndex': 'índice',
+  'LocalParameter': 'parámetro',
+
   /* Lexer */
   'errmsg:unclosed-multiline-comment':
     'El comentario se abre pero nunca se cierra.',
@@ -90,10 +95,6 @@ const ES = {
     function (symbol) {
       return 'Símbolo desconocido en la entrada: "' + symbol + '".';
     },
-
-  'errmsg:obsolete-tuple-assignment':
-    'La sintaxis de asignación de tuplas "(x1, ..., xN) := y" está obsoleta.'
-  + 'Usar "let (x1, ..., xN) := y".',
 
   'warning:empty-pragma':
     'Directiva pragma vacía.',
@@ -128,6 +129,11 @@ const ES = {
            + ', pero estos operadores no se pueden asociar. '
            + 'Quizás faltan paréntesis.';
     },
+
+  'errmsg:obsolete-tuple-assignment':
+    'Se esperaba un comando pero se encontró un paréntesis izquierdo. '
+  + 'Nota: la sintaxis de asignación de tuplas "(x1, ..., xN) := y" '
+  + 'está obsoleta. Usar "let (x1, ..., xN) := y".',
 
   /* Linter */
   'errmsg:program-already-defined':
@@ -181,18 +187,31 @@ const ES = {
 
   'errmsg:procedure-should-not-have-return':
     function (name) {
-      return 'El procedimiento "' + name + '"'
-           + 'no debería tener un comando "return".'
+      return 'El procedimiento "' + name + '" '
+           + 'no debería tener un comando "return".';
     },
 
   'errmsg:function-should-have-return':
     function (name) {
-      return 'La función "' + name + '" debería tener un comando "return".'
+      return 'La función "' + name + '" debería tener un comando "return".';
     },
 
   'errmsg:return-statement-not-allowed-here':
     'El comando "return" solo puede aparecer como el último comando '
   + 'de una función o como el último comando del programa.',
+
+  'errmsg:local-name-conflict':
+    function (name, oldCat, oldPos, newCat, newPos) {
+      return 'Conflicto de nombres: "' + name + '" se usa dos veces: '
+           + 'como ' + oldCat + ' en ' + oldPos + ', y '
+           + 'como ' + newCat + ' en ' + newPos + '.';
+    },
+
+  'errmsg:repeated-variable-in-tuple-assignment':
+    function (name) {
+      return 'La variable "' + name + '" está repetida en la asignación '
+           + 'de tuplas.';
+    },
 
   /* Helpers */
   '<alternative>':

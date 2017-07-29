@@ -362,6 +362,16 @@ export class Parser {
         return this._parseStmtAssignVariable();
       case T_UPPERID:
         return this._parseStmtProcedureCall();
+      case T_LPAREN:
+        /* Special error for rejecting tuple assignments
+         *   (x1, ..., xN) := expression
+         * in favour of
+         *   let (x1, ..., xN) := expression
+         */
+        throw new GbsSyntaxError(
+                    this._currentToken.startPos,
+                    i18n('errmsg:obsolete-tuple-assignment')
+                  );
       default:
         throw new GbsSyntaxError(
                     this._currentToken.startPos,

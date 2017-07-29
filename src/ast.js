@@ -198,11 +198,31 @@ export class ASTStmtIf extends ASTNode {
   constructor(condition, thenBlock, elseBlock) {
     super(N_StmtIf, [condition, thenBlock, elseBlock]);
   }
+
+  get condition() {
+    return this._children[0];
+  }
+
+  get thenBlock() {
+    return this._children[1];
+  }
+
+  get elseBlock() {
+    return this._children[2];
+  }
 }
 
 export class ASTStmtRepeat extends ASTNode {
   constructor(times, body) {
     super(N_StmtRepeat, [times, body]);
+  }
+
+  get times() {
+    return this._children[0];
+  }
+
+  get body() {
+    return this._children[1];
   }
 }
 
@@ -210,11 +230,31 @@ export class ASTStmtForeach extends ASTNode {
   constructor(index, range, body) {
     super(N_StmtForeach, [index, range, body]);
   }
+
+  get index() {
+    return this._children[0];
+  }
+
+  get range() {
+    return this._children[1];
+  }
+
+  get body() {
+    return this._children[2];
+  }
 }
 
 export class ASTStmtWhile extends ASTNode {
   constructor(condition, body) {
     super(N_StmtWhile, [condition, body]);
+  }
+
+  get condition() {
+    return this._children[0];
+  }
+
+  get body() {
+    return this._children[1];
   }
 }
 
@@ -235,6 +275,10 @@ export class ASTStmtAssignVariable extends ASTNode {
     super(N_StmtAssignVariable, [variable, value]);
   }
 
+  get variable() {
+    return this._children[0];
+  }
+
   get value() {
     return this._children[1];
   }
@@ -243,6 +287,14 @@ export class ASTStmtAssignVariable extends ASTNode {
 export class ASTStmtAssignTuple extends ASTNode {
   constructor(variables, value) {
     super(N_StmtAssignTuple, [variables, value]);
+  }
+
+  get variables() {
+    return this._children[0];
+  }
+
+  get value() {
+    return this._children[1];
   }
 }
 

@@ -1,6 +1,7 @@
 import { i18n, i18nPosition } from './i18n';
 import { GbsSyntaxError } from './exceptions';
 
+/* Description of a field */
 class FieldDescriptor {
   constructor(typeName, constructorName, index) {
     this._typeName = typeName;
@@ -21,8 +22,28 @@ class FieldDescriptor {
   }
 }
 
-/* A global environment keeps track of definitions that should be available
- * globally, associating:
+/* Local name categories */
+export const LocalVariable = Symbol.for('LocalVariable');
+export const LocalParameter = Symbol.for('LocalParameter');
+export const LocalIndex = Symbol.for('LocalIndex');
+
+/* Description of a local name */
+class LocalNameDescriptor {
+  constructor(category, position) {
+    this._category = category;
+    this._position = position;
+  }
+
+  get category() {
+    return this._category;
+  }
+
+  get position() {
+    return this._position;
+  }
+}
+
+/* A symbol table keeps track of definitions, associating:
  * - procedure and function names to their code
  * - type definitions, constructors, and fields
  */
@@ -33,8 +54,14 @@ export class SymbolTable {
     /* Each procedure name is mapped to its definition */
     this._procedures = {};
 
+    /* Each procedure name is mapped to its parameters */
+    this._procedureParameters = {};
+
     /* Each function name is mapped to its definition */
     this._functions = {};
+
+    /* Each function name is mapped to its parameters */
+    this._functionParameters = {};
 
     /* Each type name is mapped to its definition */
     this._types = {};
@@ -61,6 +88,21 @@ export class SymbolTable {
      *   given constructor (starting from 0)
      */
     this._fields = {};
+
+    /* Local names include parameters, indices and variables,
+     * which are only meaningful within a routine.
+     *
+     * Local names may be bound/referenced in the following places:
+     * - formal parameters,
+     * - indices of a "foreach",
+     * - pattern matching (formal parameters of a "switch"),
+     * - assignments and tuple assignments,
+     * - reading local variables.
+     *
+     * _localNames maps a name to a descriptor of the form:
+     *   new LocalNameDescriptor(category, position)
+     */
+    this._localNames = {};
   }
 
   get program() {
@@ -75,9 +117,25 @@ export class SymbolTable {
     }
   }
 
+  procedureParameters(name) {
+    if (name in this._procedures) {
+      return this._procedureParameters[name];
+    } else {
+      throw Error('Undefined procedure.');
+    }
+  }
+
   functionDefinition(name) {
     if (name in this._functions) {
       return this._functions[name];
+    } else {
+      throw Error('Undefined function.');
+    }
+  }
+
+  functionParameters(name) {
+    if (name in this._functions) {
+      return this._functionParameters[name];
     } else {
       throw Error('Undefined function.');
     }
@@ -160,7 +218,12 @@ export class SymbolTable {
         )
       );
     }
+    let parameters = [];
+    for (let parameter of definition.parameters) {
+      parameters.push(parameter.value);
+    }
     this._procedures[name] = definition;
+    this._procedureParameters[name] = parameters;
   }
 
   defFunction(definition) {
@@ -186,7 +249,12 @@ export class SymbolTable {
         )
       );
     }
+    let parameters = [];
+    for (let parameter of definition.parameters) {
+      parameters.push(parameter.value);
+    }
     this._functions[name] = definition;
+    this._functionParameters[name] = parameters;
   }
 
   defType(definition) {
@@ -262,6 +330,53 @@ export class SymbolTable {
     this._fields[fieldName].push(
         new FieldDescriptor(typeName, constructorName, index)
     );
+  }
+
+  /* Adds a new local name, failing if it already exists. */
+  addNewLocalName(localName, category) {
+    if (localName.value in this._localNames) {
+      throw new GbsSyntaxError(
+        localName.startPos,
+        i18n('errmsg:local-name-conflict')(
+          localName.value,
+          i18n(Symbol.keyFor(this._localNames[localName.value].category)),
+          i18nPosition(this._localNames[localName.value].position),
+          i18n(Symbol.keyFor(category)),
+          i18nPosition(localName.startPos)
+        )
+      );
+    }
+    this.setLocalName(localName, category);
+  }
+
+  /* Sets a local name.
+   * It fails if it already exists with a different category. */
+  setLocalName(localName, category) {
+    if (localName.value in this._localNames &&
+        this._localNames[localName.value].category !== category) {
+      throw new GbsSyntaxError(
+        localName.startPos,
+        i18n('errmsg:local-name-conflict')(
+          localName.value,
+          i18n(Symbol.keyFor(this._localNames[localName.value].category)),
+          i18nPosition(this._localNames[localName.value].position),
+          i18n(Symbol.keyFor(category)),
+          i18nPosition(localName.startPos)
+        )
+      );
+    }
+    this._localNames[localName.value] =
+      new LocalNameDescriptor(category, localName.startPos);
+  }
+
+  /* Removes a local name. */
+  removeLocalName(localName) {
+    delete this._localNames[localName.value];
+  }
+
+  /* Removes all local names. */
+  exitScope() {
+    this._localNames = {};
   }
 
 }

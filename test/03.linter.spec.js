@@ -377,3 +377,179 @@ it('Linter - Reject return in nested block', () => {
   );
 });
 
+it('Linter - Reject repeated parameters in a function', () => {
+  let code = [
+    'function f(x, y, x) { return (1) }',
+    'program {}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:local-name-conflict')(
+      'x',
+      i18n('LocalParameter'),
+      i18n('<position>')('(?)', 1, 12),
+      i18n('LocalParameter'),
+      i18n('<position>')('(?)', 1, 18),
+    )
+  );
+});
+
+it('Linter - Reject repeated parameters in a procedure', () => {
+  let code = [
+    'procedure P(bar, foo, foo) {}',
+    'program {}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:local-name-conflict')(
+      'foo',
+      i18n('LocalParameter'),
+      i18n('<position>')('(?)', 1, 18),
+      i18n('LocalParameter'),
+      i18n('<position>')('(?)', 1, 23),
+    )
+  );
+});
+
+it('Linter - Accept repeated parameters in different routines', () => {
+  let code = [
+    'function f(x,y) { return (1) }',
+    'procedure P(x) { }',
+    'function g(x,y) { return (2) }',
+    'procedure Q(x,y,z) { }',
+    'program {}',
+  ].join('\n');
+  expect(lint(code).functionParameters('f')).deep.equals(['x', 'y']);
+  expect(lint(code).functionParameters('g')).deep.equals(['x', 'y']);
+  expect(lint(code).procedureParameters('P')).deep.equals(['x']);
+  expect(lint(code).procedureParameters('Q')).deep.equals(['x', 'y', 'z']);
+});
+
+it("Linter - Reject repeated indices in nested foreach's", () => {
+  let code = [
+    'program {',
+    '  foreach i in [] {',
+    '    foreach i in [] {',
+    '    }',
+    '  }',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:local-name-conflict')(
+      'i',
+      i18n('LocalIndex'),
+      i18n('<position>')('(?)', 2, 11),
+      i18n('LocalIndex'),
+      i18n('<position>')('(?)', 3, 13),
+    )
+  );
+});
+
+it("Linter - Allow repeated indices in independent foreach's", () => {
+  let code = [
+    'program {',
+    '  foreach i in [] {',
+    '  }',
+    '  foreach i in [] {',
+    '  }',
+    '}',
+  ].join('\n');
+  expect(lint(code).program === null).equals(false);
+});
+
+it('Linter - Allow repeated assignments to a local variable', () => {
+  let code = [
+    'program {',
+    '  x := 1',
+    '  x := 2',
+    '}',
+  ].join('\n');
+  expect(lint(code).program === null).equals(false);
+});
+
+it('Linter - Reject assignment to parameter', () => {
+  let code = [
+    'procedure P(x) {',
+    '  x := 1',
+    '}',
+    'program {',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:local-name-conflict')(
+      'x',
+      i18n('LocalParameter'),
+      i18n('<position>')('(?)', 1, 13),
+      i18n('LocalVariable'),
+      i18n('<position>')('(?)', 2, 3),
+    )
+  );
+});
+
+it('Linter - Reject assignment to index', () => {
+  let code = [
+    'program {',
+    '  foreach i in [] {',
+    '    i := i + 1',
+    '  }',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:local-name-conflict')(
+      'i',
+      i18n('LocalIndex'),
+      i18n('<position>')('(?)', 2, 11),
+      i18n('LocalVariable'),
+      i18n('<position>')('(?)', 3, 5),
+    )
+  );
+});
+
+it('Linter - Reject tuple assignment to parameter', () => {
+  let code = [
+    'function f(x,y) {',
+    '  let (y,x) := 1',
+    '  return (x)',
+    '}',
+    'program {',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:local-name-conflict')(
+      'y',
+      i18n('LocalParameter'),
+      i18n('<position>')('(?)', 1, 14),
+      i18n('LocalVariable'),
+      i18n('<position>')('(?)', 2, 8),
+    )
+  );
+});
+
+it('Linter - Reject tuple assignment to index', () => {
+  let code = [
+    'program {',
+    '  foreach i in [] {',
+    '    let (x,i) := 1',
+    '  }',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:local-name-conflict')(
+      'i',
+      i18n('LocalIndex'),
+      i18n('<position>')('(?)', 2, 11),
+      i18n('LocalVariable'),
+      i18n('<position>')('(?)', 3, 12),
+    )
+  );
+});
+
+it('Linter - Reject repeated names in tuple assignment', () => {
+  let code = [
+    'program {',
+    '  let (x,y,x) := 1',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:repeated-variable-in-tuple-assignment')('x')
+  );
+});
+

@@ -40,6 +40,7 @@ import {
   /* ConstructorDeclaration */
   N_ConstructorDeclaration,
 } from './ast';
+import { LocalParameter, LocalIndex, LocalVariable } from './symtable';
 import { GbsSyntaxError } from './exceptions';
 import { i18n } from './i18n';
 
@@ -115,20 +116,15 @@ export class Linter {
   _addDefinitionToSymbolTable(definition) {
     switch (definition.tag) {
       case N_DefProgram:
-        this._symtable.defProgram(definition);
-        break;
+        return this._symtable.defProgram(definition);
       case N_DefInteractiveProgram:
-        this._symtable.defInteractiveProgram(definition);
-        break;
+        return this._symtable.defInteractiveProgram(definition);
       case N_DefProcedure:
-        this._symtable.defProcedure(definition);
-        break;
+        return this._symtable.defProcedure(definition);
       case N_DefFunction:
-        this._symtable.defFunction(definition);
-        break;
+        return this._symtable.defFunction(definition);
       case N_DefType:
-        this._symtable.defType(definition);
-        break;
+        return this._symtable.defType(definition);
       default:
         throw Error('Unknown definition: ' + Symbol.keyFor(definition.tag));
     }
@@ -137,17 +133,14 @@ export class Linter {
   _lintDefinition(definition) {
     switch (definition.tag) {
       case N_DefProgram:
-        this._lintDefProgram(definition);
-        break;
+        return this._lintDefProgram(definition);
       case N_DefInteractiveProgram:
         // TODO
         break;
       case N_DefProcedure:
-        this._lintDefProcedure(definition);
-        break;
+        return this._lintDefProcedure(definition);
       case N_DefFunction:
-        this._lintDefFunction(definition);
-        break;
+        return this._lintDefFunction(definition);
       case N_DefType:
         // TODO
         break;
@@ -160,52 +153,79 @@ export class Linter {
   }
 
   _lintDefProgram(definition) {
+    /* Lint body */
     this._lintStmtBlock(definition.body, true/*allowReturn*/);
+
+    /* Remove all local names */
+    this._symtable.exitScope();
   }
   
   _lintDefProcedure(definition) {
+    /* Check that it does not have a return statement */
     if (isBlockWithReturn(definition.body)) {
       throw new GbsSyntaxError(
         definition.startPos,
         i18n('errmsg:procedure-should-not-have-return')(definition.name.value)
       );
     }
+
+    /* Add parameters as local names */
+    for (var parameter of definition.parameters) {
+      this._symtable.addNewLocalName(parameter, LocalParameter);
+    }
+
+    /* Lint body */
     this._lintStmtBlock(definition.body, false/*!allowReturn*/);
+
+    /* Remove all local names */
+    this._symtable.exitScope();
   }
 
   _lintDefFunction(definition) {
+    /* Check that it has a return statement */
     if (!isBlockWithReturn(definition.body)) {
       throw new GbsSyntaxError(
         definition.startPos,
         i18n('errmsg:function-should-have-return')(definition.name.value)
       );
     }
+
+    /* Add parameters as local names */
+    for (var parameter of definition.parameters) {
+      this._symtable.addNewLocalName(parameter, LocalParameter);
+    }
+
+    /* Lint body */
     this._lintStmtBlock(definition.body, true/*allowReturn*/);
+
+    /* Remove all local names */
+    this._symtable.exitScope();
   }
 
   _lintStatement(statement) {
     switch (statement.tag) {
       case N_StmtBlock:
         /* Do not allow return in nested blocks */
-        this._lintStmtBlock(statement, false/*!allowReturn*/);
-        break;
+        return this._lintStmtBlock(statement, false/*!allowReturn*/);
       case N_StmtReturn:
-        break;
+        return this._lintStmtReturn(statement);
       case N_StmtIf:
-        break;
+        return this._lintStmtIf(statement);
       case N_StmtRepeat:
-        break;
+        return this._lintStmtRepeat(statement);
       case N_StmtForeach:
-        break;
+        return this._lintStmtForeach(statement);
       case N_StmtWhile:
-        break;
+        return this._lintStmtWhile(statement);
       case N_StmtSwitch:
+        // TODO
         break;
       case N_StmtAssignVariable:
-        break;
+        return this._lintStmtAssignVariable(statement);
       case N_StmtAssignTuple:
-        break;
-      case N_StmtProcedureCallcase:
+        return this._lintStmtAssignTuple(statement);
+      case N_StmtProcedureCall:
+        // TODO
         break;
       default:
         throw Error(
@@ -230,6 +250,60 @@ export class Linter {
     }
   }
 
+  _lintStmtReturn(statement) {
+    this._lintExpression(statement.result);
+  }
+
+  _lintStmtIf(statement) {
+    this._lintExpression(statement.condition);
+    this._lintStatement(statement.thenBlock);
+    if (statement.elseBlock !== null) {
+      this._lintStatement(statement.elseBlock);
+    }
+  }
+
+  _lintStmtRepeat(statement) {
+    this._lintExpression(statement.times);
+    this._lintStatement(statement.body);
+  }
+
+  _lintStmtForeach(statement) {
+    this._lintExpression(statement.range);
+    this._symtable.addNewLocalName(statement.index, LocalIndex);
+    this._lintStatement(statement.body);
+    this._symtable.removeLocalName(statement.index);
+  }
+
+  _lintStmtWhile(statement) {
+    this._lintExpression(statement.condition);
+    this._lintStatement(statement.body);
+  }
+
+  // _lintStmtSwitch : TODO
+
+  _lintStmtAssignVariable(statement) {
+    this._symtable.setLocalName(statement.variable, LocalVariable);
+    this._lintExpression(statement.value);
+  }
+
+  _lintStmtAssignTuple(statement) {
+    let variables = {};
+    for (var variable of statement.variables) {
+      this._symtable.setLocalName(variable, LocalVariable);
+      if (variable.value in variables) {
+        throw new GbsSyntaxError(
+          variable.startPos,
+          i18n('errmsg:repeated-variable-in-tuple-assignment')(variable.value)
+        );
+      }
+      variables[variable.value] = true;
+    }
+    this._lintExpression(statement.value);
+  }
+
+  _lintExpression(expression) {
+    // TODO
+  }
 }
 
 // TODO: 

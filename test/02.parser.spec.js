@@ -3692,3 +3692,10 @@ it('Parser - Interactive program', () => {
   ]);
 });
 
+it('Parser - Reject obsolete tuple assignment', () => {
+  let parser = new Parser('program { (x, y) := 1 }');
+  expect(() => parser.parse()).throws(
+    i18n('errmsg:obsolete-tuple-assignment')
+  );
+});
+

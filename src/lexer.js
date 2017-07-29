@@ -117,57 +117,6 @@ const SYMBOLS = [
   ['^', T_POW]
 ];
 
-/* Class that recognizes the presence of the obsolete tuple assignment syntax
- *
- *   (x1, ..., xN) := ...
- *
- * in favour of
- *
- *   let (x1, ..., xN) := ...
- *
- * This is done using a simple finite automaton with five states:
- *
- *   1: no information
- *   2: we have read "(x1,...,xN," with N >= 1 or just "(", without "let"
- *   3: we have read "(x1,...,xN"  with N >= 1, without "let"
- *   4: we have read "(x1,...,xN)", without "let"
- *   5: we have read "let
- *
- * If it finds a tuple assignment without let, it throws a GbsSyntaxError.
- */
-class ObsoleteTupleAssignmentRecognizer {
-  constructor() {
-    this._state = 1;
-    this._table = {1: {}, 2: {}, 3: {}, 4: {}, 5: {}};
-    this._table[1][T_LPAREN] = 2;
-    this._table[1][T_LET] = 5;
-    this._table[2][T_LPAREN] = 2;
-    this._table[2][T_RPAREN] = 4;
-    this._table[2][T_LOWERID] = 3;
-    this._table[2][T_LET] = 5;
-    this._table[3][T_LPAREN] = 2;
-    this._table[3][T_RPAREN] = 4;
-    this._table[3][T_COMMA] = 2;
-    this._table[3][T_LET] = 5;
-    this._table[4][T_LPAREN] = 2;
-    this._table[4][T_ASSIGN] = 1; /* throws warning */
-    this._table[4][T_LET] = 5;
-    this._table[5][T_LPAREN] = 1;
-    this._table[5][T_LET] = 5;
-  }
-
-  feed(pos, tokenTag) {
-    if (this._state === 4 && tokenTag === T_ASSIGN) {
-      throw new GbsSyntaxError(pos, i18n('errmsg:obsolete-tuple-assignment'));
-    }
-    if (tokenTag in this._table[this._state]) {
-      this._state = this._table[this._state][tokenTag];
-    } else {
-      this._state = 1;
-    }
-  }
-}
-
 function leadingZeroes(string) {
   return string.length >= 0 && string[0] === '0';
 }
@@ -191,26 +140,10 @@ export class Lexer {
     this._multifileReader = new MultifileReader(input);
     this._reader = this._multifileReader.readCurrentFile();
     this._warnings = [];
-    this._obsoleteTupleAssignmentRecognizer =
-      new ObsoleteTupleAssignmentRecognizer();
   }
 
-  /* Return the next token from the input, checking for warnings */
+  /* Return the next token from the input */
   nextToken() {
-    let startPos = this._reader;
-    let tok = this._nextToken();
-    this._obsoleteTupleAssignmentRecognizer.feed(startPos, tok.tag);
-    return tok;
-  }
-
-  /* When tokenization is done, this function returns the list of all
-   * the warnings collected during tokenization */
-  warnings() {
-    return this._warnings;
-  }
-
-  /* Actually read and return the next token from the input */
-  _nextToken() {
     if (!this._findNextToken()) {
       return new Token(T_EOF, null, this._reader, this._reader);
     }
@@ -246,6 +179,12 @@ export class Lexer {
     } else {
       return this._readSymbol();
     }
+  }
+
+  /* When tokenization is done, this function returns the list of all
+   * the warnings collected during tokenization */
+  warnings() {
+    return this._warnings;
   }
 
   /* Skip whitespace and advance through files until the start of the next

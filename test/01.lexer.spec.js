@@ -534,35 +534,6 @@ it('Lexer - Unclosed string constant after escape', () => {
   );
 });
 
-it('Lexer - Reject obsolete tuple assignment: empty tuple', () => {
-  let lexer = new Lexer('() :=');
-  lexer.nextToken();
-  lexer.nextToken();
-  expect(() => lexer.nextToken()).throws(
-    i18n('errmsg:obsolete-tuple-assignment')
-  );
-});
-
-it('Lexer - Reject obsolete tuple assignment: singleton', () => {
-  let lexer = new Lexer('(x) :=');
-  for (let i = 0; i < 3; i++) {
-    lexer.nextToken();
-  }
-  expect(() => lexer.nextToken()).throws(
-    i18n('errmsg:obsolete-tuple-assignment')
-  );
-});
-
-it('Lexer - Reject obsolete tuple assignment: proper tuple', () => {
-  let lexer = new Lexer('(x,y,z) :=');
-  for (let i = 0; i < 7; i++) {
-    lexer.nextToken();
-  }
-  expect(() => lexer.nextToken()).throws(
-    i18n('errmsg:obsolete-tuple-assignment')
-  );
-});
-
 it('Lexer - Accept tuple assignment with let: empty tuple', () => {
   let lexer = new Lexer('let () :=');
   expectTokenTypes(lexer, [T_LET, T_LPAREN, T_RPAREN, T_ASSIGN, T_EOF]);

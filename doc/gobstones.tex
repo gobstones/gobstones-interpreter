@@ -633,9 +633,11 @@ y su tag asociado es el s\'imbolo \texttt{N\_StmtIf}.
 \datadecl{\type{Statement}}{
   \ast{StmtBlock}(statements : [\type{Statement}])
 \ALT
-  \ast{StmtReturn}(result : [\type{Expression}])
+  \ast{StmtReturn}(result : \type{Expression})
 \ALT
   \ast{StmtIf}(condition : \type{Expression}, thenBlock : \type{Expression}, elseBlock : \type{Expression}?)
+\ALT
+  \ast{StmtRepeat}(times : \type{Expression}, body : \type{Statement})
 \ALT
   \ast{StmtForeach}(index : \type{ID}, range : \type{Expression}, body : \type{Statement})
 \ALT
@@ -689,10 +691,31 @@ y su tag asociado es el s\'imbolo \texttt{N\_StmtIf}.
 
 \section{Linter}
 
-La etapa de an\'alisis sem\'antico (o {\em linting}) verifica las siguientes condiciones:
+La etapa de an\'alisis sem\'antico (o {\em linting}) verifica que el programa cumpla las siguientes condiciones.
+\bigskip
+
+{\bf Programa principal.}
 \begin{itemize}
+\item El programa \PUEDE estar completamente vac\'io (sin ninguna definici\'on).
+\item Si el programa no est\'a completamente vac\'io, \DEBE tener exactamente una definici\'on de programa
+      (ya sea un \ast{DefProgram} o \ast{DefInteractiveProgram}).
 \item El programa \NOPUEDE tener dos (o m\'as) definiciones de programa
       (ya sean \ast{DefProgram} o \ast{DefInteractiveProgram}).
+\end{itemize}
+
+{\bf Nombres globales.}
+\begin{itemize}
+\item Hay cinco tipos de nombres globales:
+  \begin{itemize}
+  \item Nombres de procedimientos, declarados con \texttt{procedure}.
+  \item Nombres de funciones, declaradas con \texttt{function}.
+  \item Nombres de tipos, declarados con \texttt{type}.
+  \item Nombres de constructores.
+        Coinciden con el nombre del tipo en la declaraci\'on de un tipo \texttt{record}.
+        Pueden coincidir o no con el nombre del tipo en la declaraci\'on de un tipo \texttt{variant},
+        en cuyo caso se declaran con \texttt{case}.
+  \item Nombres de campos, declarados con \texttt{field}.
+  \end{itemize}
 \item El programa \NOPUEDE tener dos (o m\'as) funciones con el mismo nombre.
 \item El programa \NOPUEDE tener dos (o m\'as) procedimientos con el mismo nombre.
 \item El programa \NOPUEDE tener dos (o m\'as) tipos con el mismo nombre.
@@ -703,15 +726,52 @@ La etapa de an\'alisis sem\'antico (o {\em linting}) verifica las siguientes con
       ya sea del mismo tipo o de distintos tipos.
       (P.ej. las definiciones: \texttt{type A is record \{ field x \} type B is record \{ field x \}} se aceptan).
 \item El programa \NOPUEDE tener una funci\'on y un campo que tengan el mismo nombre.
-\item El programa \PUEDE estar completamente vac\'io (sin ninguna definici\'on).
-\item Si el programa no est\'a completamente vac\'io, \DEBE tener exactamente una definici\'on de programa
-      (ya sea un \ast{DefProgram} o \ast{DefInteractiveProgram}).
+\end{itemize}
+
+{\bf Return.}
+\begin{itemize}
 \item Los procedimientos \NOPUEDEN tener un \texttt{return}.
 \item Los programas declarados con \texttt{interactive program} \NOPUEDEN tener un \texttt{return}.
 \item Las funciones \DEBEN tener un \texttt{return} como \'ultimo comando del bloque.
 \item Los programas declarados con \texttt{program} \PUEDEN tener un \texttt{return} como \'ultimo comando del bloque.
-\item \NOPUEDE haber un \texttt{return} en ninguna posici\'on, salvo
+\item \NOPUEDE haber un \texttt{return} en ninguna otra posici\'on salvo
+      las mencionadas, es decir,
       como el \'ultimo comando de una funci\'on o como el \'ultimo comando de un \texttt{program}.
+\end{itemize}
+
+{\bf Nombres locales.}
+\begin{itemize}
+\item Hay tres tipos de nombres locales:
+  \begin{itemize}
+  \item Par\'ametros --- est\'an ligados en la lista de par\'ametros de
+        un procedimiento, o en la lista de par\'ametros de una funci\'on, 
+        o en la lista de par\'ametros de un constructor al hacer {\em pattern matching}
+        con \texttt{switch} (por ejemplo los par\'ametros \texttt{x} e \texttt{y} en
+        el comando \texttt{switch (c) \{ Coord(x, y) -> ... \}})
+  \item \'Indices --- est\'an ligados por un \texttt{foreach}.
+  \item Variables --- su valor se declara en una asignaci\'on \texttt{x := e} o en una asignaci\'on
+        a una tupla \texttt{(x1, ..., xN) := e}.
+  \end{itemize}
+\item Alcance de los nombres locales:
+  \begin{itemize}
+  \item Par\'ametros de procedimientos y funciones --- locales a todo el cuerpo del procedimiento o funci\'on.
+  \item Par\'ametros de constructores en un \texttt{switch} --- locales al bloque a la derecha de la correspondiente flecha \texttt{->}.
+  \item \'Indices --- locales al cuerpo del \texttt{foreach}.
+  \item Variables --- locales a todo el cuerpo del procedimiento o funci\'on.
+  \end{itemize}
+\item Los nombres locales \PUEDEN
+      coincidir con los nombres globales (nombres de funciones y campos), sin
+      que unos opaquen a otros.
+\item Los nombres locales \NOPUEDEN coincidir con otros nombres locales que comparten el mismo alcance.
+      En particular:
+  \begin{itemize}
+  \item Las funciones y procedimientos \NOPUEDEN tener nombres de par\'ametros repetidos.
+  \item Los \'indices de dos \texttt{foreach} anidados \NOPUEDEN tener el mismo nombre.
+  \item Los \'indices de dos \texttt{foreach} que no est\'an anidados \PUEDEN tener el mismo nombre.
+  \item Los nombres de variables, \'indices, y par\'ametros \NOPUEDEN coincidir.
+  \end{itemize}
+\item En una asignaci\'on de tuplas \texttt{let (x$_1$, ..., x$_n$) := e}
+      las variables \texttt{x$_1$, ..., x$_n$} \DEBEN ser todas distintas. 
 \end{itemize}
 
 \end{document}
