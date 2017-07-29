@@ -173,6 +173,27 @@ const ES = {
            + 'para un campo en ' + posField + '.';
     },
 
+  'errmsg:source-should-have-a-program-definition':
+    /* Note: the code may actually be completely empty, but
+     * we avoid this technicality since the message could be
+     * confusing. */
+    'El código debe tener una definición de "program { ... }".',
+
+  'errmsg:procedure-should-not-have-return':
+    function (name) {
+      return 'El procedimiento "' + name + '"'
+           + 'no debería tener un comando "return".'
+    },
+
+  'errmsg:function-should-have-return':
+    function (name) {
+      return 'La función "' + name + '" debería tener un comando "return".'
+    },
+
+  'errmsg:return-statement-not-allowed-here':
+    'El comando "return" solo puede aparecer como el último comando '
+  + 'de una función o como el último comando del programa.',
+
   /* Helpers */
   '<alternative>':
     function (strings) {

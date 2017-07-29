@@ -12,6 +12,12 @@ function lint(code) {
   return new Linter(new SymbolTable()).lint(new Parser(code).parse());
 }
 
+it('Linter - Accept completely empty source', () => {
+  let code = '';
+  var symtable = lint(code);
+  expect(symtable.program === null).equals(true);
+});
+
 it('Linter - Accept empty program', () => {
   let code = 'program {}';
   var symtable = lint(code);
@@ -265,7 +271,7 @@ it('Linter - Reject repeated field names for the same constructor', () => {
 
 it('Linter - Reject field named as a function', () => {
   let code = [
-    'function foo() {}',
+    'function foo() { return (1) }',
     'type A is record {',
     '  field foo',
     '}',
@@ -285,7 +291,7 @@ it('Linter - Reject function named as a field', () => {
     'type A is record {',
     '  field foo',
     '}',
-    'function foo() {}',
+    'function foo() { return (1) }',
     'program {}',
   ].join('\n');
   expect(() => lint(code)).throws(
@@ -294,6 +300,80 @@ it('Linter - Reject function named as a field', () => {
       i18n('<position>')('(?)', 4, 1),
       i18n('<position>')('(?)', 1, 1)
     )
+  );
+});
+
+it('Linter - Reject source with definitions but without a program', () => {
+  let code = 'function foo() { return (1) }';
+  expect(() => lint(code)).throws(
+    i18n('errmsg:source-should-have-a-program-definition')
+  );
+});
+
+it('Linter - Reject procedure with return', () => {
+  let code = [
+    'program {}',
+    'procedure P() { }',
+    'procedure Q() { return (1) }',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:procedure-should-not-have-return')('Q')
+  );
+});
+
+it('Linter - Reject function without return', () => {
+  let code = [
+    'program {}',
+    'function f() { return (1) }',
+    'function g() { }',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:function-should-have-return')('g')
+  );
+});
+
+it('Linter - Accept return in program.', () => {
+  let code = [
+    'program { return (1) }',
+  ].join('\n');
+  expect(lint(code).program !== null).equals(true);
+});
+
+it('Linter - Reject return in the middle of program', () => {
+  let code = [
+    'program {',
+    '  return (1)',
+    '  return (2)',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:return-statement-not-allowed-here')
+  );
+});
+
+it('Linter - Reject return in the middle of function', () => {
+  let code = [
+    'program {}',
+    'function foo() {',
+    '  return (1)',
+    '  return (2)',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:return-statement-not-allowed-here')
+  );
+});
+
+it('Linter - Reject return in nested block', () => {
+  let code = [
+    'program {',
+    '  {',
+    '    return (1)',
+    '  }',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:return-statement-not-allowed-here')
   );
 });
 

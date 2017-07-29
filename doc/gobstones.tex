@@ -1,6 +1,7 @@
 \documentclass{article}
 \usepackage{geometry}
 \usepackage{xcolor}
+\usepackage{xspace}
 \usepackage{amsmath}
 \usepackage{tabularx}
 \usepackage[spanish]{babel}
@@ -43,6 +44,13 @@
   #1 & $::=$ & #2
   \end{tabularx}\\
 }
+
+\newcommand{\PUEDE}{{\bf PUEDE}\xspace}
+\newcommand{\PUEDEN}{{\bf PUEDEN}\xspace}
+\newcommand{\NOPUEDE}{{\bf NO PUEDE}\xspace}
+\newcommand{\NOPUEDEN}{{\bf NO PUEDEN}\xspace}
+\newcommand{\DEBE}{{\bf DEBE}\xspace}
+\newcommand{\DEBEN}{{\bf DEBEN}\xspace}
 
 \section{Gram\'atica de XGobstones}
 
@@ -678,5 +686,32 @@ y su tag asociado es el s\'imbolo \texttt{N\_StmtIf}.
 \datadecl{\type{FieldValue}}{
   \ast{FieldValue}(fieldName : \type{ID}, value : \type{Expression})
 }
+
+\section{Linter}
+
+La etapa de an\'alisis sem\'antico (o {\em linting}) verifica las siguientes condiciones:
+\begin{itemize}
+\item El programa \NOPUEDE tener dos (o m\'as) definiciones de programa
+      (ya sean \ast{DefProgram} o \ast{DefInteractiveProgram}).
+\item El programa \NOPUEDE tener dos (o m\'as) funciones con el mismo nombre.
+\item El programa \NOPUEDE tener dos (o m\'as) procedimientos con el mismo nombre.
+\item El programa \NOPUEDE tener dos (o m\'as) tipos con el mismo nombre.
+\item El programa \NOPUEDE tener dos (o m\'as) constructores con el mismo nombre.
+\item El programa \NOPUEDE tener dos (o m\'as) campos con el mismo nombre correspondientes a un mismo constructor.
+      (P.ej. la definici\'on: \texttt{type A is record \{ field x field x \}} se rechaza).
+\item El programa \PUEDE tener dos (o m\'as) campos con el mismo nombre si corresponden a distintos constructores,
+      ya sea del mismo tipo o de distintos tipos.
+      (P.ej. las definiciones: \texttt{type A is record \{ field x \} type B is record \{ field x \}} se aceptan).
+\item El programa \NOPUEDE tener una funci\'on y un campo que tengan el mismo nombre.
+\item El programa \PUEDE estar completamente vac\'io (sin ninguna definici\'on).
+\item Si el programa no est\'a completamente vac\'io, \DEBE tener exactamente una definici\'on de programa
+      (ya sea un \ast{DefProgram} o \ast{DefInteractiveProgram}).
+\item Los procedimientos \NOPUEDEN tener un \texttt{return}.
+\item Los programas declarados con \texttt{interactive program} \NOPUEDEN tener un \texttt{return}.
+\item Las funciones \DEBEN tener un \texttt{return} como \'ultimo comando del bloque.
+\item Los programas declarados con \texttt{program} \PUEDEN tener un \texttt{return} como \'ultimo comando del bloque.
+\item \NOPUEDE haber un \texttt{return} en ninguna posici\'on, salvo
+      como el \'ultimo comando de una funci\'on o como el \'ultimo comando de un \texttt{program}.
+\end{itemize}
 
 \end{document}
