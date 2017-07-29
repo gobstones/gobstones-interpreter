@@ -1,8 +1,14 @@
 
-import { visitAST } from './ast';
+import {
+  N_DefProgram,
+  N_DefInteractiveProgram,
+  N_DefProcedure,
+  N_DefFunction,
+  N_DefType,
+} from './ast';
 
 /* A semantic analyzer receives
- *   a global environment (instance of GlobalEnvironment)
+ *   a symbol table (instance of SymbolTable)
  *   an abstract syntax tree (the output of a parser)
  *
  * Then:
@@ -20,18 +26,51 @@ import { visitAST } from './ast';
  */
 export class Linter {
 
-  constructor(globalEnvironment, ast) {
-    this._globalEnvironment = globalEnvironment;
-    this._ast = ast;
+  constructor(symtable) {
+    this._symtable = symtable;
   }
 
-  lint() {
-    visitAST(this._visitNode, this._ast);
+  lint(ast) {
+    this._lint(ast);
+    return this._symtable;
   }
 
-  /* Visit a single node of the AST */
-  _visitNode(ast) {
-    console.log(ast);
+  _lint(ast) {
+    let dispatch = {
+      'N_Main': (ast) => this._lintMain(ast),
+    };
+    let key = Symbol.keyFor(ast.tag);
+    if (key in dispatch) {
+      dispatch[key](ast);
+    } else {
+      throw Error('Lint for AST node "' + key + '" not implemented.');
+    }
+  }
+
+  _lintMain(ast) {
+    /* Add all definitions to the symbol table */
+    for (let definition of ast.definitions) {
+      switch (definition.tag) {
+        case N_DefProgram:
+          this._symtable.defProgram(definition);
+          break;
+        case N_DefInteractiveProgram:
+          this._symtable.defInteractiveProgram(definition);
+          break;
+        case N_DefProcedure:
+          this._symtable.defProcedure(definition);
+          break;
+        case N_DefFunction:
+          this._symtable.defFunction(definition);
+          break;
+        case N_DefType:
+          this._symtable.defType(definition);
+          break;
+        default:
+          throw Error('Unknown definition: ' + Symbol.keyFor(definition.tag));
+      }
+    }
+    // Check that there is exactly one program
   }
 
 }

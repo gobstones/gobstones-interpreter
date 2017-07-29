@@ -87,29 +87,6 @@ export class ASTNode {
 
 }
 
-/* Recursively visit all the nodes of an AST */
-let level = 0;
-export function visitAST(visitor, ast) {
-  if (ast === null || ast instanceof Token) {
-    return;
-  } else if (ast instanceof Array) {
-    level++;
-    for (let child of ast) {
-      visitAST(visitor, child);
-    }
-    level--;
-  } else if (ast instanceof ASTNode) {
-    level++;
-    visitor(ast);
-    for (let child of ast.children) {
-      visitAST(visitor, child);
-    }
-    level--;
-  } else {
-    throw Error('Malformed AST: ' + typeof ast + ' ' + level);
-  }
-}
-
 /* Main */
 
 export class ASTMain extends ASTNode {
@@ -138,11 +115,23 @@ export class ASTDefInteractiveProgram extends ASTNode {
   constructor(branches) {
     super(N_DefInteractiveProgram, branches);
   }
+
+  get branches() {
+    return this.children;
+  }
 }
 
 export class ASTDefProcedure extends ASTNode {
   constructor(name, parameters, body) {
     super(N_DefProcedure, [name, parameters, body]);
+  }
+
+  get name() {
+    return this.children[0];
+  }
+
+  get parameters() {
+    return this.children[1];
   }
 
   get body() {
@@ -155,6 +144,14 @@ export class ASTDefFunction extends ASTNode {
     super(N_DefFunction, [name, parameters, body]);
   }
 
+  get name() {
+    return this.children[0];
+  }
+
+  get parameters() {
+    return this.children[1];
+  }
+
   get body() {
     return this.children[2];
   }
@@ -163,6 +160,10 @@ export class ASTDefFunction extends ASTNode {
 export class ASTDefType extends ASTNode {
   constructor(typeName, constructorDeclarations) {
     super(N_DefType, [typeName, constructorDeclarations]);
+  }
+
+  get typeName() {
+    return this._children[0];
   }
 
   get constructorDeclarations() {
@@ -355,6 +356,10 @@ export class ASTFieldValue extends ASTNode {
 export class ASTConstructorDeclaration extends ASTNode {
   constructor(constructorName, fieldNames) {
     super(N_ConstructorDeclaration, [constructorName, fieldNames]);
+  }
+
+  get constructorName() {
+    return this._children[0];
   }
 
   get fieldNames() {

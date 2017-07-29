@@ -4,63 +4,6 @@ function laPalabraClave(palabra) {
 }
 
 const ES = {
-  /* Lexer */
-  'errmsg:unclosed-multiline-comment':
-    'El comentario se abre pero nunca se cierra.',
-
-  'errmsg:unclosed-string-constant':
-    'La comilla que abre no tiene una comilla que cierra correspondiente.',
-
-  'errmsg:numeric-constant-should-not-have-leading-zeroes':
-    'Las constantes numéricas no se pueden escribir con ceros a la '
-   + 'izquierda.',
-
-  'errmsg:identifier-must-start-with-alphabetic-character':
-    'Los identificadores deben empezar con un caracter alfabético '
-   + '(a...z,A...Z).',
-
-  'errmsg:unknown-token':
-    function (symbol) {
-      return 'Símbolo desconocido en la entrada: "' + symbol + '".';
-    },
-
-  'errmsg:obsolete-tuple-assignment':
-    'La sintaxis de asignación de tuplas "(x1, ..., xN) := y" está obsoleta.'
-  + 'Usar "let (x1, ..., xN) := y".',
-
-  'warning:empty-pragma':
-    'Directiva pragma vacía.',
-
-  'warning:unknown-pragma':
-    function (pragmaName) {
-      return 'Directiva pragma desconocida: "' + pragmaName + '".';
-    },
-
-  /* Parser */
-  'errmsg:empty-source':
-    'El programa está vacío.',
-
-  'errmsg:expected-but-found':
-    function (expected, found) {
-      return 'Se esperaba ' + expected + '.\n'
-           + 'Se encontró: ' + found + '.';
-    },
-
-  'errmsg:pattern-tuple-cannot-be-singleton':
-    'El patrón para una tupla no puede tener una sola componente. '
-  + 'Las tuplas tienen 0, 2, 3, o más componentes, pero no 1.',
-
-  'errmsg:assignment-tuple-cannot-be-singleton':
-    'La asignación a una tupla no puede constar de una sola componente. '
-  + 'Las tuplas tienen 0, 2, 3, o más componentes, pero no 1.',
-
-  'errmsg:operators-are-not-associative':
-    function (op1, op2) {
-      return 'La expresión usa '
-           + op1 + ' y ' + op2
-           + ', pero estos operadores no se pueden asociar. '
-           + 'Quizás faltan paréntesis.';
-    },
 
   /* Descriptions of syntactic constructions and tokens */
   'definition':
@@ -128,11 +71,117 @@ const ES = {
   'T_TIMES': 'el operador de producto ("*")',
   'T_POW': 'el operador de potencia ("^")',
 
+  /* Lexer */
+  'errmsg:unclosed-multiline-comment':
+    'El comentario se abre pero nunca se cierra.',
+
+  'errmsg:unclosed-string-constant':
+    'La comilla que abre no tiene una comilla que cierra correspondiente.',
+
+  'errmsg:numeric-constant-should-not-have-leading-zeroes':
+    'Las constantes numéricas no se pueden escribir con ceros a la '
+   + 'izquierda.',
+
+  'errmsg:identifier-must-start-with-alphabetic-character':
+    'Los identificadores deben empezar con un caracter alfabético '
+   + '(a...z,A...Z).',
+
+  'errmsg:unknown-token':
+    function (symbol) {
+      return 'Símbolo desconocido en la entrada: "' + symbol + '".';
+    },
+
+  'errmsg:obsolete-tuple-assignment':
+    'La sintaxis de asignación de tuplas "(x1, ..., xN) := y" está obsoleta.'
+  + 'Usar "let (x1, ..., xN) := y".',
+
+  'warning:empty-pragma':
+    'Directiva pragma vacía.',
+
+  'warning:unknown-pragma':
+    function (pragmaName) {
+      return 'Directiva pragma desconocida: "' + pragmaName + '".';
+    },
+
+  /* Parser */
+  'errmsg:empty-source':
+    'El programa está vacío.',
+
+  'errmsg:expected-but-found':
+    function (expected, found) {
+      return 'Se esperaba ' + expected + '.\n'
+           + 'Se encontró: ' + found + '.';
+    },
+
+  'errmsg:pattern-tuple-cannot-be-singleton':
+    'El patrón para una tupla no puede tener una sola componente. '
+  + 'Las tuplas tienen 0, 2, 3, o más componentes, pero no 1.',
+
+  'errmsg:assignment-tuple-cannot-be-singleton':
+    'La asignación a una tupla no puede constar de una sola componente. '
+  + 'Las tuplas tienen 0, 2, 3, o más componentes, pero no 1.',
+
+  'errmsg:operators-are-not-associative':
+    function (op1, op2) {
+      return 'La expresión usa '
+           + op1 + ' y ' + op2
+           + ', pero estos operadores no se pueden asociar. '
+           + 'Quizás faltan paréntesis.';
+    },
+
+  /* Linter */
+  'errmsg:program-already-defined':
+    function (pos1, pos2) {
+      return 'Ya había un programa definido en ' + pos1 + '.\n'
+           + 'No se puede definir un programa en ' + pos2 + '.';
+    },
+
+  'errmsg:procedure-already-defined':
+    function (name, pos1, pos2) {
+      return 'El procedimiento "' + name + '" está definido dos veces: '
+           + 'en ' + pos1 + ' y en ' + pos2 + '.';
+    },
+
+  'errmsg:function-already-defined':
+    function (name, pos1, pos2) {
+      return 'La función "' + name + '" está definida dos veces: '
+           + 'en ' + pos1 + ' y en ' + pos2 + '.';
+    },
+
+  'errmsg:type-already-defined':
+    function (name, pos1, pos2) {
+      return 'El tipo "' + name + '" está definido dos veces: '
+           + 'en ' + pos1 + ' y en ' + pos2 + '.';
+    },
+
+  'errmsg:constructor-already-defined':
+    function (name, pos1, pos2) {
+      return 'El constructor "' + name + '" está definido dos veces: '
+           + 'en ' + pos1 + ' y en ' + pos2 + '.';
+    },
+
+  'errmsg:repeated-field-name':
+    function (constructorName, fieldName) {
+      return 'El campo "' + fieldName + '" no puede estar repetido '
+           + 'para el constructor "' + constructorName + '".'
+    },
+
+  'errmsg:function-and-field-cannot-have-the-same-name':
+    function (name, posFunction, posField) {
+      return 'El nombre "' + name + '" se usa '
+           + 'para una función en ' + posFunction + ' y '
+           + 'para un campo en ' + posField + '.';
+    },
+
   /* Helpers */
   '<alternative>':
     function (strings) {
       return 'alguna de las siguientes alternativas:\n'
            + strings.map(s => '  ' + s).join('\n');
+    },
+  '<position>':
+    function (filename, line, column) {
+      return filename + ':' + line.toString() + ':' + column.toString();
     },
 };
 
@@ -144,5 +193,13 @@ let dictionaries = {
 
 export function i18n(message) {
   return dictionaries[language][message];
+}
+
+export function i18nPosition(position) {
+  return i18n('<position>')(
+           position.filename,
+           position.line,
+           position.column,
+         );
 }
 

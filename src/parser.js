@@ -542,10 +542,9 @@ export class Parser {
   _parseStmtProcedureCall() {
     let procedureName = this._parseUpperid();
     this._match(T_LPAREN);
-    let self = this;
     let args = this._parseDelimitedSeq(
                  T_RPAREN, T_COMMA,
-                 () => self._parseExpression()
+                 () => this._parseExpression()
                );
     let endPos = this._currentToken.startPos;
     this._match(T_RPAREN);
@@ -913,10 +912,9 @@ export class Parser {
     fieldValue1.startPos = fieldName1.startPos;
     fieldValue1.endPos = value1.endPos;
     /* Read "x2 <- expr2, ..., xN <- exprN" (this might be empty) */
-    let self = this;
     let fieldValues = this._parseNonEmptyDelimitedSeq(
                         T_RPAREN, T_COMMA, [fieldValue1],
-                        () => self._parseFieldValue()
+                        () => this._parseFieldValue()
                       );
     /* Read ")" */
     let endPos = this._currentToken.startPos;
@@ -939,10 +937,9 @@ export class Parser {
     /* Read "|" */
     this._match(T_PIPE);
     /* Read "x2 <- expr2, ..., xN <- exprN" (this might be empty) */
-    let self = this;
     let fieldValues = this._parseDelimitedSeq(
                         T_RPAREN, T_COMMA,
-                        () => self._parseFieldValue()
+                        () => this._parseFieldValue()
                       );
     /* Read ")" */
     let endPos = this._currentToken.startPos;
@@ -1018,10 +1015,9 @@ export class Parser {
    * - prefix is the list of elements we have already read
    */
   _parseExprListRemainder(startPos, prefix) {
-    let self = this;
     let elements = this._parseNonEmptyDelimitedSeq(
                      T_RBRACK, T_COMMA, prefix,
-                     () => self._parseExpression()
+                     () => this._parseExpression()
                    );
     let endPos = this._currentToken.startPos;
     this._match(T_RBRACK);
@@ -1196,18 +1192,16 @@ export class Parser {
   }
 
   _parseLoweridSeq() {
-    let self = this;
     return this._parseDelimitedSeq(
-             T_RPAREN, T_COMMA, () => self._parseLowerid()
+             T_RPAREN, T_COMMA, () => this._parseLowerid()
            );
   }
 
   /* Parse a list of expressions delimited by the given right delimiter
    * e.g. T_RPAREN or T_RBRACK, without consuming the delimiter. */
   _parseExpressionSeq(rightDelimiter) {
-    let self = this;
     return this._parseDelimitedSeq(
-             rightDelimiter, T_COMMA, () => self._parseExpression()
+             rightDelimiter, T_COMMA, () => this._parseExpression()
            );
   }
 
