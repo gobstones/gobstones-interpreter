@@ -726,6 +726,12 @@ La etapa de an\'alisis sem\'antico (o {\em linting}) verifica que el programa cu
       ya sea del mismo tipo o de distintos tipos.
       (P.ej. las definiciones: \texttt{type A is record \{ field x \} type B is record \{ field x \}} se aceptan).
 \item El programa \NOPUEDE tener una funci\'on y un campo que tengan el mismo nombre.
+\item El programa \PUEDE tener tipos y constructores con el mismo nombre.
+      P.ej. la definici\'on: \texttt{type A is variant \{ case A {} \}} se acepta.
+      De hecho este es el comportamiento normal cuando se declara un registro:
+      \texttt{type A is record \{ \}} define simult\'aneamente un tipo \texttt{A}
+      y un constructor \texttt{A}.
+\item El programa \PUEDE tener procedimientos con el mismo nombre que un tipo o que un constructor.
 \end{itemize}
 
 {\bf Return.}
@@ -772,6 +778,62 @@ La etapa de an\'alisis sem\'antico (o {\em linting}) verifica que el programa cu
   \end{itemize}
 \item En una asignaci\'on de tuplas \texttt{let (x$_1$, ..., x$_n$) := e}
       las variables \texttt{x$_1$, ..., x$_n$} \DEBEN ser todas distintas. 
+\end{itemize}
+
+{\bf Concordancia par\'ametros/argumentos.}
+\begin{itemize}
+\item El chequeo de aridades se hace est\'aticamente, pero todos los chequeos de tipos son din\'amicos.
+\item El n\'umero de argumentos pasados a un procedimiento \DEBE coincidir con el n\'umero de par\'ametros declarados en su definici\'on.
+\end{itemize}
+
+{\bf Pattern matching.}
+\begin{itemize}
+\item Hay cuatro tipos de patrones:
+  \begin{itemize}
+  \item Patr\'on comod\'in (\texttt{\_}).
+  \item Patr\'on constructor (\texttt{C} o alternativamente \texttt{C(x$_1$, ..., x$_n$)}).
+  \item Patr\'on tupla (\texttt{(x$_1$, ..., x$_n$)}).
+  \item Patr\'on timeout (\texttt{TIMEOUT($n$)}).
+  \end{itemize}
+\item En un patr\'on constructor, el nombre del constructor en cuesti\'on \DEBE ser un constructor existente de
+      alg\'un tipo.
+\item En un patr\'on constructor, el constructor \PUEDE tener $0$ par\'ametros, independientemente del n\'umero
+      de campos que tenga el constructor correspondiente.
+\item Si un patr\'on constructor tiene $1$ o m\'as par\'ametros, el n\'umero \DEBE coincidir con el n\'umero
+      de campos del constructor correspondiente.
+\item En una secuencia de ramas los patrones constructor \PUEDEN aparecer en cualquier orden, sin respetar necesariamente el orden en que est\'an declarados.
+\item Una secuencia de ramas \NOPUEDE tener dos patrones constructor asociados al mismo constructor.
+\item Una secuencia de ramas \NOPUEDE tener dos patrones tupla con la misma longitud.
+\item Una secuencia de ramas \NOPUEDE tener dos patrones timeout.
+\item Una secuencia de ramas \PUEDE tener o no tener un patr\'on comod\'in.
+\item Si una secuencia de ramas tiene un patr\'on comod\'in, el patr\'on comod\'in \DEBE estar en la \'ultima rama.
+\item Una secuencia de ramas \NOPUEDE tener un patr\'on comod\'in en ninguna otra rama que no sea la \'ultima.
+\item Un patr\'on comod\'in \PUEDE ser inalcanzable.
+      Es decir, un patr\'on comod\'in puede estar presente incluso si la secuencia de ramas
+      cubre todas las alternativas de constructores posibles.
+\item En una secuencia de ramas todos los patrones \DEBEN ser compatibles.
+      Son patrones compatibles:
+      \begin{itemize}
+      \item Dos patrones constructor cuyos constructores pertenecen al mismo tipo.
+      \item Un patr\'on timeout con cualquier otro constructor del tipo \texttt{\_EVENT}
+            (que corresponde a los eventos que pueden darse en un programa interactivo).
+      \item El patr\'on comod\'in con cualquier otro patr\'on.
+      \end{itemize}
+      Dos tipos son incompatibles en cualquier otro caso. En particular, son patrones incompatibles:
+      \begin{itemize}
+      \item Dos patrones constructor cuyos constructores pertenecen a distintos tipos.
+      \item Dos patrones tupla con distinto n\'umero de componentes.
+      \item Un patr\'on constructor y un patr\'on tupla.
+      \end{itemize}
+\item Los patrones de las ramas del \texttt{interactive program}
+      \DEBEN ser eventos, es decir:
+      patrones timeout,
+      patrones constructor del tipo \texttt{\_EVENT},
+      o patrones comod\'in.
+\item Los de las ramas de los \texttt{switch} \NOPUEDEN ser eventos, es decir:
+      pueden ser patrones constructor de tipos que no sean \texttt{\_EVENT},
+      patrones tupla,
+      o patrones comod\'in.
 \end{itemize}
 
 \end{document}

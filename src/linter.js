@@ -74,20 +74,8 @@ export class Linter {
   }
 
   lint(ast) {
-    this._lint(ast);
+    this._lintMain(ast);
     return this._symtable;
-  }
-
-  _lint(ast) {
-    let dispatch = {
-      'N_Main': (ast) => this._lintMain(ast),
-    };
-    let key = Symbol.keyFor(ast.tag);
-    if (key in dispatch) {
-      dispatch[key](ast);
-    } else {
-      throw Error('Lint for AST node "' + key + '" not implemented.');
-    }
   }
 
   _lintMain(ast) {
@@ -130,13 +118,14 @@ export class Linter {
     }
   }
 
+  /** Definitions **/
+
   _lintDefinition(definition) {
     switch (definition.tag) {
       case N_DefProgram:
         return this._lintDefProgram(definition);
       case N_DefInteractiveProgram:
-        // TODO
-        break;
+        return this._lintDefInteractiveProgram(definition);
       case N_DefProcedure:
         return this._lintDefProcedure(definition);
       case N_DefFunction:
@@ -159,6 +148,11 @@ export class Linter {
     /* Remove all local names */
     this._symtable.exitScope();
   }
+
+  _lintDefInteractiveProgram(definition) {
+    /* Lint all branches */
+    this._lintSwitchBranches(definition.branches, true/*isInteractiveProgram*/);
+  }
   
   _lintDefProcedure(definition) {
     /* Check that it does not have a return statement */
@@ -170,7 +164,7 @@ export class Linter {
     }
 
     /* Add parameters as local names */
-    for (var parameter of definition.parameters) {
+    for (let parameter of definition.parameters) {
       this._symtable.addNewLocalName(parameter, LocalParameter);
     }
 
@@ -191,7 +185,7 @@ export class Linter {
     }
 
     /* Add parameters as local names */
-    for (var parameter of definition.parameters) {
+    for (let parameter of definition.parameters) {
       this._symtable.addNewLocalName(parameter, LocalParameter);
     }
 
@@ -201,6 +195,8 @@ export class Linter {
     /* Remove all local names */
     this._symtable.exitScope();
   }
+
+  /** Statements **/
 
   _lintStatement(statement) {
     switch (statement.tag) {
@@ -218,15 +214,13 @@ export class Linter {
       case N_StmtWhile:
         return this._lintStmtWhile(statement);
       case N_StmtSwitch:
-        // TODO
-        break;
+        return this._lintStmtSwitch(statement);
       case N_StmtAssignVariable:
         return this._lintStmtAssignVariable(statement);
       case N_StmtAssignTuple:
         return this._lintStmtAssignTuple(statement);
       case N_StmtProcedureCall:
-        // TODO
-        break;
+        return this._lintStmtProcedureCall(statement);
       default:
         throw Error(
                 'Linter: Statement not implemented: '
@@ -236,8 +230,8 @@ export class Linter {
   }
 
   _lintStmtBlock(block, allowReturn) {
-    var i = 0;
-    for (var statement of block.statements) {
+    let i = 0;
+    for (let statement of block.statements) {
       let returnAllowed = allowReturn && i === block.statements.length - 1;
       if (!returnAllowed && statement.tag === N_StmtReturn) {
         throw new GbsSyntaxError(
@@ -279,7 +273,168 @@ export class Linter {
     this._lintStatement(statement.body);
   }
 
-  // _lintStmtSwitch : TODO
+  _lintStmtSwitch(statement) {
+    this._lintExpression(statement.subject);
+    this._lintSwitchBranches(statement.branches, false/*isInteractiveProgram*/);
+  }
+  
+  _lintSwitchBranches(branches, isInteractiveProgram) {
+    /* Check that each pattern is well-formed */
+    for (let branch of branches) {
+      this._lintPattern(branch.pattern);
+    }
+
+    this._switchBranchesCheckWildcard(branches);
+    this._switchBranchesCheckNoRepeats(branches);
+    this._switchBranchesCheckCompatible(branches);
+    if (isInteractiveProgram) {
+      this._switchBranchesCheckTypeEvent(branches);
+    } else {
+      this._switchBranchesCheckTypeNotEvent(branches);
+    }
+
+    /* Lint recursively each branch */
+    for (let branch of branches) {
+      this._lintSwitchBranchBody(branch);
+    }
+  }
+
+  /* Check that there is at most one wildcard at the end */
+  _switchBranchesCheckWildcard(branches) {
+    let i = 0; 
+    const n = branches.length;
+    for (let branch of branches) {
+      if (branch.pattern.tag === N_PatternWildcard && i !== n - 1) {
+        throw new GbsSyntaxError(
+          branch.pattern.startPos,
+          i18n('errmsg:wildcard-pattern-should-be-last')
+        );
+      }
+      i++;
+    }
+  }
+
+  /* Check that there are no repeated constructors in a sequence
+   * of branches. */
+  _switchBranchesCheckNoRepeats(branches) {
+    let coveredConstructors = {};
+    let coveredTuples = {};
+    let coveredTimeout = false;
+    for (let branch of branches) {
+      switch (branch.pattern.tag) {
+        case N_PatternConstructor:
+          let constructorName = branch.pattern.constructorName.value;
+          if (constructorName in coveredConstructors) {
+            throw new GbsSyntaxError(
+              branch.pattern.startPos,
+              i18n('errmsg:constructor-pattern-repeats-constructor')(
+                constructorName
+              )
+            );
+          }
+          coveredConstructors[constructorName] = true;
+          break;
+        case N_PatternTuple:
+          let arity = branch.pattern.parameters.length;
+          if (arity in coveredTuples) {
+            throw new GbsSyntaxError(
+              branch.pattern.startPos,
+              i18n('errmsg:constructor-pattern-repeats-tuple-arity')(arity)
+            );
+          }
+          coveredTuples[arity] = true;
+          break;
+        case N_PatternTimeout:
+          if (coveredTimeout) {
+            throw new GbsSyntaxError(
+              branch.pattern.startPos,
+              i18n('errmsg:constructor-pattern-repeats-timeout')
+            );
+          }
+          coveredTimeout = true;
+          break;
+      }
+    }
+  }
+
+  /* Check that constructors are compatible,
+   * i.e. that they belong to the same type */
+  _switchBranchesCheckCompatible(branches) {
+    let expectedType = null;
+    for (let branch of branches) {
+      let patternType = this._patternType(branch.pattern);
+      if (expectedType === null) {
+        expectedType = patternType;
+      } else if (patternType !== null && expectedType !== patternType) {
+        throw new GbsSyntaxError(
+          branch.pattern.startPos,
+          i18n('errmsg:pattern-does-not-match-type')(
+            i18n('<pattern-type>')(expectedType),
+            i18n('<pattern-type>')(patternType)
+          )
+        );
+      }
+    }
+  }
+
+  /* Check that there are patterns are of type "_EVENT" */
+  _switchBranchesCheckTypeEvent(branches) {
+    for (let branch of branches) {
+      let patternType = this._patternType(branch.pattern);
+      if (patternType !== null && patternType !== '_EVENT') {
+        throw new GbsSyntaxError(
+          branch.pattern.startPos,
+          i18n('errmsg:patterns-in-interactive-program-must-be-events')
+        );
+      }
+    }
+  }
+
+  /* Check that there are no patterns of type "_EVENT" */
+  _switchBranchesCheckTypeNotEvent(branches) {
+    for (let branch of branches) {
+      let patternType = this._patternType(branch.pattern);
+      if (patternType === '_EVENT') {
+        throw new GbsSyntaxError(
+          branch.pattern.startPos,
+          i18n('errmsg:patterns-in-switch-must-not-be-events')
+        );
+      }
+    }
+  }
+
+  /* Recursively lint the body of each branch.
+   * Locally bind parameters.
+   */
+  _lintSwitchBranchBody(branch) {
+    for (var parameter of branch.pattern.parameters) {
+      this._symtable.addNewLocalName(parameter, LocalParameter);
+    }
+    this._lintStatement(branch.body);
+    for (var parameter of branch.pattern.parameters) {
+      this._symtable.removeLocalName(parameter);
+    }
+  }
+
+  /* Return a description of the type of a pattern */
+  _patternType(pattern) {
+    switch (pattern.tag) {
+      case N_PatternWildcard:
+        return null;
+      case N_PatternConstructor:
+        return this._symtable.constructorType(pattern.constructorName.value);
+      case N_PatternTuple:
+        return '_TUPLE_' + pattern.parameters.length.toString();
+      case N_PatternTimeout:
+        return '_EVENT';
+      default:
+        throw Error(
+                'Linter: pattern "'
+              + Symbol.keyFor(branch.tag)
+              + '" not implemented.'
+              );
+    }
+  }
 
   _lintStmtAssignVariable(statement) {
     this._symtable.setLocalName(statement.variable, LocalVariable);
@@ -288,7 +443,7 @@ export class Linter {
 
   _lintStmtAssignTuple(statement) {
     let variables = {};
-    for (var variable of statement.variables) {
+    for (let variable of statement.variables) {
       this._symtable.setLocalName(variable, LocalVariable);
       if (variable.value in variables) {
         throw new GbsSyntaxError(
@@ -300,6 +455,125 @@ export class Linter {
     }
     this._lintExpression(statement.value);
   }
+
+  _lintStmtProcedureCall(statement) {
+    let name = statement.procedureName.value;
+
+    /* Check that it is a procedure */
+    if (!this._symtable.isProcedure(name)) {
+      if (this._symtable.isConstructor(name)) {
+        throw new GbsSyntaxError(
+          statement.startPos,
+          i18n('errmsg:constructor-used-as-procedure')(
+            name,
+            this._symtable.constructorType(name)
+          )
+        );
+      } else {
+        throw new GbsSyntaxError(
+          statement.startPos,
+          i18n('errmsg:undefined-procedure')(name)
+        );
+      }
+    }
+
+    /* Check that the number of argument coincides */
+    let expected = this._symtable.procedureParameters(name).length;
+    let received = statement.args.length;
+    if (expected !== received) {
+      throw new GbsSyntaxError(
+        statement.startPos,
+        i18n('errmsg:procedure-arity-mismatch')(
+          name,
+          expected,
+          received
+        )
+      );
+    }
+
+    /* Check all the arguments */
+    for (let argument of statement.args) {
+      this._lintExpression(argument);
+    }
+  }
+
+  /** Patterns **/
+
+  _lintPattern(pattern) {
+    switch (pattern.tag) {
+      case N_PatternWildcard:
+        return this._lintPatternWildcard(pattern);
+      case N_PatternConstructor:
+        return this._lintPatternConstructor(pattern);
+      case N_PatternTuple:
+        return this._lintPatternTuple(pattern);
+      case N_PatternTimeout:
+        return this._lintPatternTimeout(pattern);
+      default:
+        throw Error(
+                'Linter: pattern "'
+               + Symbol.keyFor(branch.tag)
+               + '" not implemented.'
+              );
+    }
+  }
+
+  _lintPatternWildcard(pattern) {
+    /* No restrictions. */
+  }
+
+  _lintPatternConstructor(pattern) {
+    let name = pattern.constructorName.value;
+
+    /* Check that the constructor exists */
+    if (!this._symtable.isConstructor(name)) {
+      if (this._symtable.isType(name)) {
+        throw new GbsSyntaxError(
+          pattern.startPos,
+          i18n('errmsg:type-used-as-constructor')(
+            name,
+            this._symtable.typeConstructors(name)
+          )
+        );
+      } else if (this._symtable.isProcedure(name)) {
+        throw new GbsSyntaxError(
+          pattern.startPos,
+          i18n('errmsg:procedure-used-as-constructor')(name)
+        );
+      } else {
+        throw new GbsSyntaxError(
+          pattern.startPos,
+          i18n('errmsg:undeclared-constructor')(name)
+        );
+      }
+    }
+
+    /* Check that the number of parameters match.
+     * Note: constructor patterns with 0 arguments are always allowed.
+     */
+    let expected = this._symtable.constructorFields(name).length;
+    let received = pattern.parameters.length;
+    if (received > 0 && expected !== received) {
+      throw new GbsSyntaxError(
+        pattern.startPos,
+        i18n('errmsg:constructor-pattern-arity-mismatch')(
+          name,
+          expected,
+          received
+        )
+      );
+    }
+  }
+
+  _lintPatternTuple(pattern) {
+    /* No restrictions. */
+  }
+
+  _lintPatternTimeout(pattern) {
+    /* No restrictions. */
+  }
+
+  /** Expressions **/
 
   _lintExpression(expression) {
     // TODO

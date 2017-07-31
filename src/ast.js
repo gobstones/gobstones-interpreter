@@ -262,11 +262,27 @@ export class ASTStmtSwitch extends ASTNode {
   constructor(subject, branches) {
     super(N_StmtSwitch, [subject, branches]);
   }
+
+  get subject() {
+    return this._children[0];
+  }
+
+  get branches() {
+    return this._children[1];
+  }
 }
 
 export class ASTSwitchBranch extends ASTNode {
   constructor(pattern, body) {
     super(N_SwitchBranch, [pattern, body]);
+  }
+
+  get pattern() {
+    return this._children[0];
+  }
+
+  get body() {
+    return this._children[1];
   }
 }
 
@@ -302,6 +318,14 @@ export class ASTStmtProcedureCall extends ASTNode {
   constructor(procedureName, args) {
     super(N_StmtProcedureCall, [procedureName, args]);
   }
+
+  get procedureName() {
+    return this._children[0];
+  }
+
+  get args() {
+    return this._children[1];
+  }
 }
 
 /* Patterns */
@@ -310,11 +334,23 @@ export class ASTPatternWildcard extends ASTNode {
   constructor() {
     super(N_PatternWildcard, []);
   }
+
+  get parameters() {
+    return [];
+  }
 }
 
 export class ASTPatternConstructor extends ASTNode {
   constructor(constructorName, parameters) {
     super(N_PatternConstructor, [constructorName, parameters]);
+  }
+
+  get constructorName() {
+    return this._children[0];
+  }
+
+  get parameters() {
+    return this._children[1];
   }
 }
 
@@ -322,11 +358,19 @@ export class ASTPatternTuple extends ASTNode {
   constructor(parameters) {
     super(N_PatternTuple, parameters);
   }
+
+  get parameters() {
+    return this._children;
+  }
 }
 
 export class ASTPatternTimeout extends ASTNode {
   constructor(timeout) {
     super(N_PatternTimeout, [timeout]);
+  }
+
+  get parameters() {
+    return [];
   }
 }
 

@@ -109,8 +109,12 @@ export class SymbolTable {
     return this._program;
   }
 
+  isProcedure(name) {
+    return name in this._procedures;
+  }
+
   procedureDefinition(name) {
-    if (name in this._procedures) {
+    if (this.isProcedure(name)) {
       return this._procedures[name];
     } else {
       throw Error('Undefined procedure.');
@@ -118,15 +122,19 @@ export class SymbolTable {
   }
 
   procedureParameters(name) {
-    if (name in this._procedures) {
+    if (this.isProcedure(name)) {
       return this._procedureParameters[name];
     } else {
       throw Error('Undefined procedure.');
     }
   }
 
+  isFunction(name) {
+    return name in this._functions;
+  }
+
   functionDefinition(name) {
-    if (name in this._functions) {
+    if (this.isFunction(name)) {
       return this._functions[name];
     } else {
       throw Error('Undefined function.');
@@ -134,15 +142,19 @@ export class SymbolTable {
   }
 
   functionParameters(name) {
-    if (name in this._functions) {
+    if (this.isFunction(name)) {
       return this._functionParameters[name];
     } else {
       throw Error('Undefined function.');
     }
   }
 
+  isType(name) {
+    return name in this._types;
+  }
+
   typeDefinition(name) {
-    if (name in this._types) {
+    if (this.isType(name)) {
       return this._types[name];
     } else {
       throw Error('Undefined type.');
@@ -150,15 +162,19 @@ export class SymbolTable {
   }
 
   typeConstructors(name) {
-    if (name in this._typeConstructors) {
+    if (this.isType(name)) {
       return this._typeConstructors[name];
     } else {
       throw Error('Undefined type.');
     }
   }
 
+  isConstructor(name) {
+    return name in this._constructors;
+  }
+
   constructorDeclaration(name) {
-    if (name in this._constructors) {
+    if (this.isConstructor(name)) {
       return this._constructors[name];
     } else {
       throw Error('Undefined constructor.');
@@ -166,7 +182,7 @@ export class SymbolTable {
   }
 
   constructorType(name) {
-    if (name in this._constructorType) {
+    if (this.isConstructor(name)) {
       return this._constructorType[name];
     } else {
       throw Error('Undefined constructor.');
@@ -174,15 +190,19 @@ export class SymbolTable {
   }
 
   constructorFields(name) {
-    if (name in this._constructorFields) {
+    if (this.isConstructor(name)) {
       return this._constructorFields[name];
     } else {
       throw Error('Undefined constructor.');
     }
   }
 
+  isField(name) {
+    return name in this._fields;
+  }
+
   fieldDescriptor(name) {
-    if (name in this._fields) {
+    if (this.isField(name)) {
       return this._fields[name];
     } else {
       throw Error('Undefined field.');

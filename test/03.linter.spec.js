@@ -553,3 +553,389 @@ it('Linter - Reject repeated names in tuple assignment', () => {
   );
 });
 
+it('Linter - Reject procedure call named as constructor', () => {
+  let code = [
+    'type A is variant {',
+    '  case B {}',
+    '}',
+    'program {',
+    '  B()',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:constructor-used-as-procedure')('B', 'A')
+  );
+});
+
+it('Linter - Reject undefined procedure call', () => {
+  let code = [
+    'program {',
+    '  P()',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:undefined-procedure')('P')
+  );
+});
+
+it('Linter - Accept defined procedure call', () => {
+  let code = [
+    'procedure P() {',
+    '}',
+    'program {',
+    '  P()',
+    '}',
+  ].join('\n');
+  expect(lint(code).program !== null).equals(true);
+});
+
+it('Linter - Reject procedure call if arity does not match', () => {
+  let code = [
+    'procedure P(n) {',
+    '}',
+    'program {',
+    '  P()',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:procedure-arity-mismatch')('P', 1, 0)
+  );
+});
+
+it('Linter - Switch: reject type used as constructor', () => {
+  let code = [
+    'type A is variant {',
+    '  case A1 {}',
+    '  case A2 {}',
+    '  case A3 {}',
+    '}',
+    'program {',
+    '  switch (1) {',
+    '    A -> {}',
+    '  }',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:type-used-as-constructor')('A', ['A1', 'A2', 'A3'])
+  );
+});
+
+it('Linter - Switch: reject procedure used as constructor', () => {
+  let code = [
+    'procedure A() {',
+    '}',
+    'program {',
+    '  switch (1) {',
+    '    A(x,y) -> {}',
+    '  }',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:procedure-used-as-constructor')('A')
+  );
+});
+
+it('Linter - Switch: reject undeclared constructor', () => {
+  let code = [
+    'program {',
+    '  switch (1) {',
+    '    A() -> {}',
+    '  }',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:undeclared-constructor')('A')
+  );
+});
+
+it('Linter - Switch: accept pattern with 0 arguments', () => {
+  let code = [
+    'type T is variant {',
+    '  case A {',
+    '    field x',
+    '    field y',
+    '  }',
+    '  case B {',
+    '    field x',
+    '  }',
+    '}',
+    'program {',
+    '  switch (1) {',
+    '    A -> {}',
+    '  }',
+    '}',
+  ].join('\n');
+  expect(lint(code).program !== null).equals(true);
+});
+
+it('Linter - Switch: reject pattern if arity does not match', () => {
+  let code = [
+    'type T is variant {',
+    '  case A {',
+    '    field x',
+    '    field y',
+    '  }',
+    '  case B {',
+    '    field x',
+    '  }',
+    '}',
+    'program {',
+    '  switch (1) {',
+    '    A(x) -> {}',
+    '  }',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:constructor-pattern-arity-mismatch')('A', 2, 1)
+  );
+});
+
+it('Linter - Switch: accept pattern if arity matches', () => {
+  let code = [
+    'type T is variant {',
+    '  case A {',
+    '    field x',
+    '    field y',
+    '  }',
+    '  case B {',
+    '    field x',
+    '  }',
+    '}',
+    'program {',
+    '  switch (1) {',
+    '    A(y,x) -> {}',
+    '  }',
+    '}',
+  ].join('\n');
+  expect(lint(code).program !== null).equals(true);
+});
+
+it('Linter - Switch: reject wildcard not at the end', () => {
+  let code = [
+    'type A is variant {',
+    '  case A1 { field x }',
+    '  case A2 { field x }',
+    '}',
+    'program {',
+    '  switch (1) {',
+    '    A1(x) -> {}',
+    '    _    -> {}',
+    '    A2(x) -> {}',
+    '  }',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:wildcard-pattern-should-be-last')
+  );
+});
+
+it('Linter - Switch: allow wildcard at the end, even if unreachable', () => {
+  let code = [
+    'type A is record {',
+    '  field x',
+    '}',
+    'program {',
+    '  switch (1) {',
+    '    A(x) -> {}',
+    '    _    -> {}',
+    '  }',
+    '}',
+  ].join('\n');
+  expect(lint(code).program !== null).equals(true);
+});
+
+it('Linter - Switch: reject repeated constructor patterns', () => {
+  let code = [
+    'type A is variant {',
+    '  case A1 { field x }',
+    '  case A2 { field x }',
+    '}',
+    'program {',
+    '  switch (1) {',
+    '    A2(y) -> {}',
+    '    A1    -> {}',
+    '    A2    -> {}',
+    '    _     -> {}',
+    '  }',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:constructor-pattern-repeats-constructor')('A2')
+  );
+});
+
+it('Linter - Switch: reject repeated tuple patterns', () => {
+  let code = [
+    'program {',
+    '  switch (1) {',
+    '    (x,y) -> {}',
+    '    (y,z) -> {}',
+    '  }',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:constructor-pattern-repeats-tuple-arity')(2)
+  );
+});
+
+it('Linter - Switch: reject repeated TIMEOUT patterns', () => {
+  let code = [
+    'interactive program {',
+    '  TIMEOUT(1) -> {}',
+    '  TIMEOUT(2) -> {}',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:constructor-pattern-repeats-timeout')
+  );
+});
+
+
+it('Linter - Switch: reject constructor patterns of different types', () => {
+  let code = [
+    'type A is record {',
+    '}',
+    'type B is record {',
+    '}',
+    'program {',
+    '  switch (1) {',
+    '    A -> {}',
+    '    B -> {}',
+    '  }',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:pattern-does-not-match-type')('A', 'B')
+  );
+});
+
+it('Linter - Switch: reject constructor pattern vs. tuple pattern', () => {
+  let code = [
+    'type A is record {',
+    '}',
+    'program {',
+    '  switch (1) {',
+    '    A  -> {}',
+    '    () -> {}',
+    '  }',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:pattern-does-not-match-type')(
+      'A',
+      i18n('<pattern-type>')('_TUPLE_0')
+    )
+  );
+});
+
+it('Linter - Switch: reject tuple patterns of different lengths', () => {
+  let code = [
+    'type A is record {',
+    '}',
+    'program {',
+    '  switch (1) {',
+    '    (x,y)   -> {}',
+    '    (x,y,z) -> {}',
+    '  }',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:pattern-does-not-match-type')(
+      i18n('<pattern-type>')('_TUPLE_2'),
+      i18n('<pattern-type>')('_TUPLE_3')
+    )
+  );
+});
+
+it('Linter - Switch: reject events outside interactive program', () => {
+  let code = [
+    'program {',
+    '  switch (1) {',
+    '    TIMEOUT(100) -> {}',
+    '  }',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:patterns-in-switch-must-not-be-events')
+  );
+});
+
+it('Linter - Switch: accept events and wildcards in interactive program', () => {
+  let code = [
+    'interactive program {',
+    '  TIMEOUT(100) -> {}',
+    '  _            -> {}',
+    '}',
+  ].join('\n');
+  expect(lint(code).program !== null).equals(true);
+});
+
+it('Linter - Switch: reject non-events in interactive program', () => {
+  let code = [
+    'interactive program {',
+    '  (x,y,z) -> {}',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:patterns-in-interactive-program-must-be-events')
+  );
+});
+
+it('Linter - Switch: reject repeated names in constructor pattern', () => {
+  let code = [
+    'type A is record {',
+    '  field x',
+    '  field y',
+    '}',
+    'program {',
+    '  switch (1) {',
+    '    A(x, x) -> {}',
+    '  }',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:local-name-conflict')(
+      'x',
+      i18n('LocalParameter'),
+      i18n('<position>')('(?)', 7, 7),
+      i18n('LocalParameter'),
+      i18n('<position>')('(?)', 7, 10),
+    )
+  );
+});
+
+it('Linter - Switch: reject repeated names in tuple pattern', () => {
+  let code = [
+    'program {',
+    '  switch (1) {',
+    '    (foo, foo) -> {}',
+    '  }',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:local-name-conflict')(
+      'foo',
+      i18n('LocalParameter'),
+      i18n('<position>')('(?)', 3, 6),
+      i18n('LocalParameter'),
+      i18n('<position>')('(?)', 3, 11),
+    )
+  );
+});
+
+it('Linter - Switch: accept repeated names in disjoint patterns', () => {
+  let code = [
+    'type A is variant {',
+    '  case B { field x }',
+    '  case C { field x }',
+    '}',
+    'program {',
+    '  switch (1) {',
+    '    B(x) -> {}',
+    '    C(x) -> {}',
+    '  }',
+    '}',
+  ].join('\n');
+  expect(lint(code).program !== null).equals(true);
+});
+

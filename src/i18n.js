@@ -3,6 +3,16 @@ function laPalabraClave(palabra) {
   return 'la palabra clave "' + palabra + '"';
 }
 
+function masculino(n, singular, plural) {
+  if (n === 0) {
+    return 'ningún ' + singular;
+  } else if (n === 1) {
+    return 'un ' + singular;
+  } else {
+    return n.toString() + ' ' + plural;
+  }
+}
+
 const ES = {
 
   /* Descriptions of syntactic constructions and tokens */
@@ -213,6 +223,84 @@ const ES = {
            + 'de tuplas.';
     },
 
+  'errmsg:constructor-used-as-procedure':
+    function (name, type) {
+      return 'El procedimiento "' + name + '" no está definido. '
+           + 'El nombre "' + name + '" es el nombre de un constructor '
+           + 'del tipo "' + type + '".';
+    },
+
+  'errmsg:undefined-procedure':
+    function (name) {
+      return 'El procedimiento "' + name + '" no está definido.';
+    },
+
+  'errmsg:procedure-arity-mismatch':
+    function (name, expected, received) {
+      return 'El procedimiento "' + name + '" espera recibir '
+           + ES['<n>-parameters'](expected)
+           + ' pero se lo invoca con '
+           + ES['<n>-arguments'](received) + '.';
+    },
+
+  'errmsg:constructor-pattern-arity-mismatch':
+    function (name, expected, received) {
+      return 'El constructor "' + name + '" tiene '
+           + ES['<n>-fields'](expected)
+           + ' pero el patrón tiene '
+           + ES['<n>-parameters'](received) + '.';
+    },
+
+  'errmsg:type-used-as-constructor':
+    function (name, constructorNames) {
+      return 'El constructor "' + name + '" no está definido. '
+           + 'El nombre "' + name + '" es el nombre de un tipo '
+           + '(sus constructores son: '
+           + constructorNames.join(', ')
+           + ').';
+    },
+
+  'errmsg:procedure-used-as-constructor':
+    function (name) {
+      return 'El constructor "' + name + '" no está definido. '
+           + 'El nombre "' + name + '" es el nombre de un procedimiento.';
+    },
+
+  'errmsg:undeclared-constructor':
+    function (name) {
+      return 'El constructor "' + name + '" no está definido.';
+    },
+
+  'errmsg:wildcard-pattern-should-be-last':
+    'El comodín "_" tiene que ser la última rama del switch.',
+
+  'errmsg:constructor-pattern-repeats-constructor':
+    function (name) {
+      return 'Hay dos ramas distintas para el constructor "' + name + '".';
+    },
+
+  'errmsg:constructor-pattern-repeats-tuple-arity':
+    function (arity) {
+      return 'Hay dos ramas distintas para las tuplas de ' + arity.toString()
+           + ' componentes.';
+    },
+
+  'errmsg:constructor-pattern-repeats-timeout':
+    'Hay dos ramas distintas para el TIMEOUT.',
+
+  'errmsg:pattern-does-not-match-type':
+    function (expectedType, patternType) {
+      return 'Los patrones tienen que ser todos del mismo tipo. '
+           + 'El patrón debería ser de tipo "' + expectedType + '" '
+           + 'pero es de tipo "' + patternType + '".';
+    },
+
+  'errmsg:patterns-in-interactive-program-must-be-events':
+    'Los patrones de un "interactive program" deben ser eventos.',
+
+  'errmsg:patterns-in-switch-must-not-be-events':
+    'Los patrones de un "switch" no pueden ser eventos.',
+
   /* Helpers */
   '<alternative>':
     function (strings) {
@@ -222,6 +310,28 @@ const ES = {
   '<position>':
     function (filename, line, column) {
       return filename + ':' + line.toString() + ':' + column.toString();
+    },
+  '<n>-parameters':
+    function (n) {
+      return masculino(n, 'parámetro', 'parámetros');
+    },
+  '<n>-arguments':
+    function (n) {
+      return masculino(n, 'argumento', 'argumentos');
+    },
+  '<n>-fields':
+    function (n) {
+      return masculino(n, 'campo', 'campos');
+    },
+  '<pattern-type>':
+    function (patternType) {
+      if (patternType.substring(0, 6) === '_EVENT') {
+        return 'evento del programa interactivo';
+      } else if (patternType.substring(0, 7) === '_TUPLE_') {
+        return 'tupla de ' + patternType.substring(7) + ' componentes';
+      } else {
+        return patternType;
+      }
     },
 };
 
