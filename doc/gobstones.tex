@@ -780,12 +780,6 @@ La etapa de an\'alisis sem\'antico (o {\em linting}) verifica de manera est\'ati
       las variables \texttt{x$_1$, ..., x$_n$} \DEBEN ser todas distintas. 
 \end{itemize}
 
-{\bf Concordancia par\'ametros/argumentos.}
-\begin{itemize}
-\item El chequeo de aridades se hace est\'aticamente, pero todos los chequeos de tipos son din\'amicos.
-\item El n\'umero de argumentos pasados a un procedimiento \DEBE coincidir con el n\'umero de par\'ametros declarados en su definici\'on.
-\end{itemize}
-
 {\bf Pattern matching.}
 \begin{itemize}
 \item Hay cuatro tipos de patrones:
@@ -855,5 +849,18 @@ La etapa de an\'alisis sem\'antico (o {\em linting}) verifica de manera est\'ati
       del entorno global en el que se eval\'ue el programa, pero t\'ipicamente
       los eventos son las teclas como \texttt{K\_ENTER}, etc.).
 \end{itemize}
+
+{\bf Invocaciones a funciones y procedimientos.}
+\begin{itemize}
+\item En las invocaciones a procedimientos, el nombre del procedimiento \DEBE corresponder a un procedimiento definido.
+\item En las invocaciones a funciones, el nombre de la funci\'on \DEBE corresponder
+      o bien a una funci\'on definida o bien al nombre de un campo (usado como funci\'on observadora).
+\item El chequeo de coincidencia del n\'umero de argumentos (aridades) se hace est\'aticamente.
+      Todos los chequeos de tipos son din\'amicos.
+\item El n\'umero de argumentos pasados a un procedimiento \DEBE coincidir con el n\'umero de par\'ametros declarados en su definici\'on.
+\item El n\'umero de argumentos pasados a una funci\'on \DEBE coincidir con el n\'umero de par\'ametros declarados en su definici\'on.
+\item El n\'umero de argumentos pasados a un campo (usado como funci\'on observadora) \DEBE ser exactamente 1.
+\end{itemize}
+
 
 \end{document}

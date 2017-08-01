@@ -235,11 +235,24 @@ const ES = {
       return 'El procedimiento "' + name + '" no está definido.';
     },
 
+  'errmsg:undefined-function':
+    function (name) {
+      return 'La función "' + name + '" no está definida.';
+    },
+
   'errmsg:procedure-arity-mismatch':
     function (name, expected, received) {
       return 'El procedimiento "' + name + '" espera recibir '
            + ES['<n>-parameters'](expected)
            + ' pero se lo invoca con '
+           + ES['<n>-arguments'](received) + '.';
+    },
+
+  'errmsg:function-arity-mismatch':
+    function (name, expected, received) {
+      return 'La función "' + name + '" espera recibir '
+           + ES['<n>-parameters'](expected)
+           + ' pero se la invoca con '
            + ES['<n>-arguments'](received) + '.';
     },
 

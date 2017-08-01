@@ -1141,3 +1141,190 @@ it('Linter - Accept typical constructor update', () => {
   expect(lint(code).program !== null).equals(true);
 });
 
+it('Linter - Reject undefined function call', () => {
+  let code = [
+    'program {',
+    '  x := f()',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:undefined-function')('f')
+  );
+});
+
+it('Linter - Reject function call if arity does not match', () => {
+  let code = [
+    'function f(x,y) { return (x) }',
+    'program {',
+    '  x := f(1)',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:function-arity-mismatch')('f', 2, 1)
+  );
+});
+
+it('Linter - Reject function call if arity does not match (field)', () => {
+  let code = [
+    'type A is record {',
+    '  field foo',
+    '  field bar',
+    '}',
+    'program {',
+    '  x := bar(1,2,3)',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:function-arity-mismatch')('bar', 1, 3)
+  );
+});
+
+it('Linter - Recursively lint expressions (return)', () => {
+  let code = [
+    'program {',
+    '  return (foo())',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:undefined-function')('foo')
+  );
+});
+
+it('Linter - Recursively lint expressions (if)', () => {
+  let code = [
+    'program {',
+    '  if (foo()) {}',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:undefined-function')('foo')
+  );
+});
+
+it('Linter - Recursively lint expressions (repeat)', () => {
+  let code = [
+    'program {',
+    '  repeat (foo()) {}',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:undefined-function')('foo')
+  );
+});
+
+it('Linter - Recursively lint expressions (foreach)', () => {
+  let code = [
+    'program {',
+    '  foreach i in foo() {}',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:undefined-function')('foo')
+  );
+});
+
+it('Linter - Recursively lint expressions (while)', () => {
+  let code = [
+    'program {',
+    '  while (foo()) {}',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:undefined-function')('foo')
+  );
+});
+
+it('Linter - Recursively lint expressions (switch)', () => {
+  let code = [
+    'program {',
+    '  switch (foo()) {}',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:undefined-function')('foo')
+  );
+});
+
+it('Linter - Recursively lint expressions (variable assignment)', () => {
+  let code = [
+    'program {',
+    '  x := foo()',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:undefined-function')('foo')
+  );
+});
+
+it('Linter - Recursively lint expressions (tuple assignment)', () => {
+  let code = [
+    'program {',
+    '  let (x, y) := foo()',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:undefined-function')('foo')
+  );
+});
+
+it('Linter - Recursively lint expressions (procedure call)', () => {
+  let code = [
+    'procedure P(x,y) {}',
+    'program {',
+    '  P(1, foo())',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:undefined-function')('foo')
+  );
+});
+
+it('Linter - Recursively lint expressions (range: first)', () => {
+  let code = [
+    'program {',
+    '  x := [foo()..100]',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:undefined-function')('foo')
+  );
+});
+
+it('Linter - Recursively lint expressions (range: second)', () => {
+  let code = [
+    'program {',
+    '  x := [1,foo()..100]',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:undefined-function')('foo')
+  );
+});
+
+it('Linter - Recursively lint expressions (range: last)', () => {
+  let code = [
+    'program {',
+    '  x := [1..foo()]',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:undefined-function')('foo')
+  );
+});
+
+it('Linter - Recursively lint expressions (more expressions)', () => {
+  let code = [
+    'type A is record { field x field y }',
+    'function g(x, y) { return (x) }',
+    'program {',
+    '  a := A(x <- 1, y <- 2)',
+    '  x := [(1,2), (3,4), (5,',
+    '    A(x <- 1, y <- A(a | y <- g(1, g(foo(), 2))))',
+    '  )]',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:undefined-function')('foo')
+  );
+});
+

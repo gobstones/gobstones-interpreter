@@ -406,9 +406,7 @@ export class Linter {
     }
   }
 
-  /* Recursively lint the body of each branch.
-   * Locally bind parameters.
-   */
+  /* Recursively lint the body of each branch. Locally bind parameters. */
   _lintSwitchBranchBody(branch) {
     for (var parameter of branch.pattern.parameters) {
       this._symtable.addNewLocalName(parameter, LocalParameter);
@@ -580,9 +578,7 @@ export class Linter {
       case N_ExprConstructorUpdate:
         return this._lintExprConstructorUpdate(expression);
       case N_ExprFunctionCall:
-        // TODO
-        // NOTE: it might be a field!
-        break;
+        return this._lintExprFunctionCall(expression);
       default:
         throw Error(
                 'Linter: Expression not implemented: '
@@ -735,6 +731,42 @@ export class Linter {
          constructorName
         )
       );
+    }
+  }
+
+  _lintExprFunctionCall(expression) {
+    /* Check that it is a function or a field */
+    let name = expression.functionName.value;
+    if (!this._symtable.isFunction(name) && !this._symtable.isField(name)) {
+      throw new GbsSyntaxError(
+        expression.startPos,
+        i18n('errmsg:undefined-function')(name)
+      );
+    }
+
+    /* Check that the number of argument coincides */
+    let expected;
+    if (this._symtable.isFunction(name)) {
+      expected = this._symtable.functionParameters(name).length;
+    } else {
+      /* Fields always have exactly one parameter */
+      expected = 1;
+    }
+    let received = expression.args.length;
+    if (expected !== received) {
+      throw new GbsSyntaxError(
+        expression.startPos,
+        i18n('errmsg:function-arity-mismatch')(
+          name,
+          expected,
+          received
+        )
+      );
+    }
+
+    /* Recursively check arguments */
+    for (let argument of expression.args) {
+      this._lintExpression(argument);
     }
   }
 
