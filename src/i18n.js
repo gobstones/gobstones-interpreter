@@ -254,12 +254,13 @@ const ES = {
   'errmsg:type-used-as-constructor':
     function (name, constructorNames) {
       let msg;
-      if (constructorNames.length == 0) {
-        msg = '(no tiene constructores)'
-      } else if (constructorNames.length == 1) {
-        msg = '(tiene un constructor: ' + constructorNames[0] + ')'
+      if (constructorNames.length === 0) {
+        msg = '(no tiene constructores).';
+      } else if (constructorNames.length === 1) {
+        msg = '(tiene un constructor: ' + constructorNames[0] + ').';
       } else {
-        msg = '(sus constructores son: ' + constructorNames.join(', ') + ')'
+        msg = '(sus constructores son: '
+            + constructorNames.join(', ') + ').';
       }
       return 'El constructor "' + name + '" no está definido. '
            + 'El nombre "' + name + '" es el nombre de un tipo '
