@@ -5,6 +5,10 @@ import { Linter } from '../src/linter';
 import { SymbolTable } from '../src/symtable';
 import { i18n, i18nPosition } from '../src/i18n';
 
+import { ASTDefType, ASTConstructorDeclaration } from '../src/ast';
+import { Token, T_UPPERID } from '../src/token';
+import { UnknownPosition } from '../src/reader';
+
 chai.expect();
 const expect = chai.expect;
 
@@ -934,6 +938,204 @@ it('Linter - Switch: accept repeated names in disjoint patterns', () => {
     '    B(x) -> {}',
     '    C(x) -> {}',
     '  }',
+    '}',
+  ].join('\n');
+  expect(lint(code).program !== null).equals(true);
+});
+
+it('Linter - Recursively lint statements', () => {
+  let code = [
+    'program {',
+    '  {',
+    '    if (1) {',
+    '      if (2) {',
+    '      } else {',
+    '        repeat (1) {',
+    '          foreach x in [1] {',
+    '            while (1) {',
+    '              switch (1) {',
+    '                _ -> {',
+    '                  P()',
+    '                }',
+    '              }',
+    '            }',
+    '          }',
+    '        }',
+    '      }',
+    '    }',
+    '  }',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:undefined-procedure')('P')
+  );
+});
+
+it('Linter - Reject type used as constructor', () => {
+  let code = [
+    'type A is variant {',
+    '  case B {}',
+    '}',
+    'program {',
+    '  x := A()',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:type-used-as-constructor')('A', ['B'])
+  );
+});
+
+it('Linter - Reject procedure used as constructor', () => {
+  let code = [
+    'procedure P() {',
+    '}',
+    'program {',
+    '  x := P()',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:procedure-used-as-constructor')('P')
+  );
+});
+
+it('Linter - Accept constructor with no arguments', () => {
+  let code = [
+    'procedure A() {',
+    '}',
+    'type A is record {',
+    '}',
+    'program {',
+    '  x := A()',
+    '}',
+  ].join('\n');
+  expect(lint(code).program !== null).equals(true);
+});
+
+it('Linter - Reject constructor instantiation with repeated fields', () => {
+  let code = [
+    'type A is record {',
+    '  field x',
+    '  field y',
+    '}',
+    'program {',
+    '  x := A(x <- 1, y <- 2, x <- 1)',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:constructor-instantiation-repeated-field')('A', 'x')
+  );
+});
+
+it('Linter - Reject constructor instantiation with invalid fields', () => {
+  let code = [
+    'type A is record {',
+    '  field x',
+    '  field y',
+    '}',
+    'program {',
+    '  x := A(x <- 1, y <- 2, z <- 3)',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:constructor-instantiation-invalid-field')('A', 'z')
+  );
+});
+
+it('Linter - Reject constructor instantiation with missing fields', () => {
+  let code = [
+    'type A is record {',
+    '  field x',
+    '  field y',
+    '  field z',
+    '}',
+    'program {',
+    '  x := A(x <- 1, z <- 3)',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:constructor-instantiation-missing-field')('A', 'y')
+  );
+});
+
+it('Linter - Accept typical constructor instantiation', () => {
+  let code = [
+    'type A is record {',
+    '  field x',
+    '  field y',
+    '  field z',
+    '}',
+    'program {',
+    '  x := A(z <- 3, x <- 1, y <- 2)',
+    '}',
+  ].join('\n');
+  expect(lint(code).program !== null).equals(true);
+});
+
+function tok(tag, value) {
+  return new Token(tag, value, UnknownPosition, UnknownPosition);
+}
+
+it('Linter - Reject constructor instantiation of an _EVENT', () => {
+  let code = [
+    'program {',
+    '  x := K_ENTER',
+    '}',
+  ].join('\n');
+  let symtable = new SymbolTable();
+  symtable.defType(
+    new ASTDefType(tok(T_UPPERID, '_EVENT'), [
+      new ASTConstructorDeclaration(tok(T_UPPERID, 'K_ENTER'), [
+      ])
+    ])
+  );
+  expect(
+    () => new Linter(symtable).lint(new Parser(code).parse())
+  ).throws(
+    i18n('errmsg:constructor-instantiation-cannot-be-an-event')('K_ENTER')
+  );
+});
+
+it('Linter - Reject constructor update with repeated fields', () => {
+  let code = [
+    'type A is record {',
+    '  field x',
+    '  field y',
+    '}',
+    'program {',
+    '  x := A(x <- 1, y <- 2)',
+    '  x := A(x | y <- 3, y <- 4)',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:constructor-instantiation-repeated-field')('A', 'y')
+  );
+});
+
+it('Linter - Reject constructor update with invalid fields', () => {
+  let code = [
+    'type A is record {',
+    '  field x',
+    '  field y',
+    '}',
+    'program {',
+    '  x := A(x <- 1, y <- 2)',
+    '  x := A(x | z <- 3)',
+    '}',
+  ].join('\n');
+  expect(() => lint(code)).throws(
+    i18n('errmsg:constructor-instantiation-invalid-field')('A', 'z')
+  );
+});
+
+it('Linter - Accept typical constructor update', () => {
+  let code = [
+    'type A is record {',
+    '  field x',
+    '  field y',
+    '}',
+    'program {',
+    '  x := A(x <- 1, y <- 2)',
+    '  x := A(x | y <- 3)',
     '}',
   ].join('\n');
   expect(lint(code).program !== null).equals(true);

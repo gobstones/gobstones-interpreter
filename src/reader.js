@@ -73,7 +73,7 @@ export class SourceReader {
    * (the contents of the string are ignored). */
   consumeString(string) {
     let r = this;
-    for (let _ in string) {
+    for (let _ of string) {
       r = r.consumeCharacter();
     }
     return r;
@@ -92,7 +92,7 @@ export class SourceReader {
    * in the string */
   consumeInvisibleString(string) {
     let r = this;
-    for (let _ in string) {
+    for (let _ of string) {
       r = r.consumeInvisibleCharacter();
     }
     return r;

@@ -39,8 +39,8 @@ import {
   ASTExprFunctionCall,
   /* SwitchBranch */
   ASTSwitchBranch,
-  /* FieldValue */
-  ASTFieldValue,
+  /* FieldBinding */
+  ASTFieldBinding,
   /* ConstructorDeclaration */
   ASTConstructorDeclaration,
 } from '../src/ast';
@@ -1840,7 +1840,7 @@ it('Parser - Constructor: one field', () => {
         new ASTStmtAssignVariable(
           tok(T_LOWERID, 'c'),
           new ASTExprConstructor(tok(T_UPPERID, 'Coord'), [
-            new ASTFieldValue(
+            new ASTFieldBinding(
               tok(T_LOWERID, 'x'),
               new ASTExprConstantNumber(tok(T_NUM, '1'))
             )
@@ -1863,11 +1863,11 @@ it('Parser - Constructor: two fields', () => {
         new ASTStmtAssignVariable(
           tok(T_LOWERID, 'c'),
           new ASTExprConstructor(tok(T_UPPERID, 'Coord'), [
-            new ASTFieldValue(
+            new ASTFieldBinding(
               tok(T_LOWERID, 'x'),
               new ASTExprConstantNumber(tok(T_NUM, '1'))
             ),
-            new ASTFieldValue(
+            new ASTFieldBinding(
               tok(T_LOWERID, 'y'),
               new ASTExprConstantNumber(tok(T_NUM, '2'))
             )
@@ -1890,15 +1890,15 @@ it('Parser - Constructor: three fields', () => {
         new ASTStmtAssignVariable(
           tok(T_LOWERID, 'c'),
           new ASTExprConstructor(tok(T_UPPERID, 'Coord'), [
-            new ASTFieldValue(
+            new ASTFieldBinding(
               tok(T_LOWERID, 'x'),
               new ASTExprConstantNumber(tok(T_NUM, '1'))
             ),
-            new ASTFieldValue(
+            new ASTFieldBinding(
               tok(T_LOWERID, 'y'),
               new ASTExprConstantNumber(tok(T_NUM, '2'))
             ),
-            new ASTFieldValue(
+            new ASTFieldBinding(
               tok(T_LOWERID, 'z'),
               new ASTExprConstantNumber(tok(T_NUM, '3'))
             )
@@ -1950,27 +1950,27 @@ it('Parser - Constructor: nested constructors', () => {
         new ASTStmtAssignVariable(
           tok(T_LOWERID, 'c'),
           new ASTExprConstructor(tok(T_UPPERID, 'Box'), [
-            new ASTFieldValue(
+            new ASTFieldBinding(
               tok(T_LOWERID, 'left'),
               new ASTExprConstructor(tok(T_UPPERID, 'Coord'), [
-                new ASTFieldValue(
+                new ASTFieldBinding(
                   tok(T_LOWERID, 'x'),
                   new ASTExprConstantNumber(tok(T_NUM, '10'))
                 ),
-                new ASTFieldValue(
+                new ASTFieldBinding(
                   tok(T_LOWERID, 'y'),
                   new ASTExprConstantNumber(tok(T_NUM, '20'))
                 )
               ])
             ),
-            new ASTFieldValue(
+            new ASTFieldBinding(
               tok(T_LOWERID, 'right'),
               new ASTExprConstructor(tok(T_UPPERID, 'Coord'), [
-                new ASTFieldValue(
+                new ASTFieldBinding(
                   tok(T_LOWERID, 'x'),
                   new ASTExprConstantNumber(tok(T_NUM, '11'))
                 ),
-                new ASTFieldValue(
+                new ASTFieldBinding(
                   tok(T_LOWERID, 'y'),
                   new ASTExprConstantNumber(tok(T_NUM, '22'))
                 )
@@ -2014,7 +2014,7 @@ it('Parser - Constructor: keep track of positions', () => {
   expect(ast[0].body.statements[2].value.endPos.column).equals(18);
 
   /* x <- 10 */
-  let fvx = ast[0].body.statements[2].value.fieldValues[0];
+  let fvx = ast[0].body.statements[2].value.fieldBindings[0];
   expect(fvx.startPos.line).equals(4);
   expect(fvx.startPos.column).equals(11);
   expect(fvx.endPos.line).equals(4);
@@ -2027,14 +2027,14 @@ it('Parser - Constructor: keep track of positions', () => {
   expect(ast[0].body.statements[3].value.endPos.column).equals(27);
 
   /* y <- 20 */
-  let fvy = ast[0].body.statements[3].value.fieldValues[0];
+  let fvy = ast[0].body.statements[3].value.fieldBindings[0];
   expect(fvy.startPos.line).equals(5);
   expect(fvy.startPos.column).equals(11);
   expect(fvy.endPos.line).equals(5);
   expect(fvy.endPos.column).equals(18);
 
   /* z <- 30 */
-  let fvz = ast[0].body.statements[3].value.fieldValues[1];
+  let fvz = ast[0].body.statements[3].value.fieldBindings[1];
   expect(fvz.startPos.line).equals(5);
   expect(fvz.startPos.column).equals(20);
   expect(fvz.endPos.line).equals(5);
@@ -2058,7 +2058,7 @@ it('Parser - Constructor update', () => {
             tok(T_UPPERID, 'Coord'),
             new ASTExprVariable(tok(T_LOWERID, 'c0')),
             [
-              new ASTFieldValue(
+              new ASTFieldBinding(
                 tok(T_LOWERID, 'x'),
                 new ASTExprConstantNumber(tok(T_NUM, '10'))
               )
@@ -2071,11 +2071,11 @@ it('Parser - Constructor update', () => {
             tok(T_UPPERID, 'Coord'),
             new ASTExprVariable(tok(T_LOWERID, 'c1')),
             [
-              new ASTFieldValue(
+              new ASTFieldBinding(
                 tok(T_LOWERID, 'x'),
                 new ASTExprConstantNumber(tok(T_NUM, '10'))
               ),
-              new ASTFieldValue(
+              new ASTFieldBinding(
                 tok(T_LOWERID, 'y'),
                 new ASTExprConstantNumber(tok(T_NUM, '20'))
               ),

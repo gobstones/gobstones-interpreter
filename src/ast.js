@@ -36,8 +36,8 @@ export const N_ExprConstructorUpdate = Symbol.for('N_ExprConstructorUpdate');
 export const N_ExprFunctionCall = Symbol.for('N_ExprFunctionCall');
 /* SwitchBranch: pattern -> body */
 export const N_SwitchBranch = Symbol.for('N_SwitchBranch');
-/* FieldValue: field <- value */
-export const N_FieldValue = Symbol.for('N_FieldValue');
+/* FieldBinding: fieldName <- value */
+export const N_FieldBinding = Symbol.for('N_FieldBinding');
 /* ConstructorDeclaration */
 export const N_ConstructorDeclaration = Symbol.for('N_ConstructorDeclaration');
 
@@ -402,12 +402,28 @@ export class ASTExprList extends ASTNode {
   constructor(elements) {
     super(N_ExprList, elements);
   }
+
+  get elements() {
+    return this._children;
+  }
 }
 
 export class ASTExprRange extends ASTNode {
   // Note: second may be null
   constructor(first, second, last) {
     super(N_ExprRange, [first, second, last]);
+  }
+
+  get first() {
+    return this._children[0];
+  }
+
+  get second() {
+    return this._children[1];
+  }
+
+  get last() {
+    return this._children[2];
   }
 }
 
@@ -422,18 +438,50 @@ export class ASTExprTuple extends ASTNode {
 }
 
 export class ASTExprConstructor extends ASTNode {
-  constructor(constructorName, fieldValues) {
-    super(N_ExprConstructor, [constructorName, fieldValues]);
+  constructor(constructorName, fieldBindings) {
+    super(N_ExprConstructor, [constructorName, fieldBindings]);
   }
 
-  get fieldValues() {
+  get constructorName() {
+    return this._children[0];
+  }
+
+  get fieldBindings() {
     return this._children[1];
+  }
+
+  fieldNames() {
+    let names = [];
+    for (let fieldBinding of this.fieldBindings) {
+      names.push(fieldBinding.fieldName.value);
+    }
+    return names;
   }
 }
 
 export class ASTExprConstructorUpdate extends ASTNode {
-  constructor(constructorName, original, fieldValues) {
-    super(N_ExprConstructorUpdate, [constructorName, original, fieldValues]);
+  constructor(constructorName, original, fieldBindings) {
+    super(N_ExprConstructorUpdate, [constructorName, original, fieldBindings]);
+  }
+
+  get constructorName() {
+    return this._children[0];
+  }
+
+  get original() {
+    return this._children[1];
+  }
+
+  get fieldBindings() {
+    return this._children[2];
+  }
+
+  fieldNames() {
+    let names = [];
+    for (let fieldBinding of this.fieldBindings) {
+      names.push(fieldBinding.fieldName.value);
+    }
+    return names;
   }
 }
 
@@ -441,11 +489,27 @@ export class ASTExprFunctionCall extends ASTNode {
   constructor(functionName, args) {
     super(N_ExprFunctionCall, [functionName, args]);
   }
+
+  get functionName() {
+    return this._children[0];
+  }
+
+  get args() {
+    return this._children[1];
+  }
 }
 
-export class ASTFieldValue extends ASTNode {
+export class ASTFieldBinding extends ASTNode {
   constructor(fieldName, value) {
-    super(N_FieldValue, [fieldName, value]);
+    super(N_FieldBinding, [fieldName, value]);
+  }
+
+  get fieldName() {
+    return this._children[0];
+  }
+
+  get value() {
+    return this._children[1];
   }
 }
 

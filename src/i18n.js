@@ -253,11 +253,17 @@ const ES = {
 
   'errmsg:type-used-as-constructor':
     function (name, constructorNames) {
+      let msg;
+      if (constructorNames.length == 0) {
+        msg = '(no tiene constructores)'
+      } else if (constructorNames.length == 1) {
+        msg = '(tiene un constructor: ' + constructorNames[0] + ')'
+      } else {
+        msg = '(sus constructores son: ' + constructorNames.join(', ') + ')'
+      }
       return 'El constructor "' + name + '" no está definido. '
            + 'El nombre "' + name + '" es el nombre de un tipo '
-           + '(sus constructores son: '
-           + constructorNames.join(', ')
-           + ').';
+           + msg;
     },
 
   'errmsg:procedure-used-as-constructor':
@@ -300,6 +306,32 @@ const ES = {
 
   'errmsg:patterns-in-switch-must-not-be-events':
     'Los patrones de un "switch" no pueden ser eventos.',
+
+  'errmsg:constructor-instantiation-repeated-field':
+    function (constructorName, fieldName) {
+      return 'El campo "' + fieldName + '" está repetido en '
+           + 'la instanciación del constructor "' + constructorName + '".';
+    },
+
+  'errmsg:constructor-instantiation-invalid-field':
+    function (constructorName, fieldName) {
+      return 'El campo "' + fieldName + '" no es un campo válido '
+           + 'para el constructor "' + constructorName + '".';
+    },
+
+  'errmsg:constructor-instantiation-missing-field':
+    function (constructorName, fieldName) {
+      return 'Falta darle valor al campo "' + fieldName + '" '
+           + 'del constructor "' + constructorName + '".';
+    },
+
+  'errmsg:constructor-instantiation-cannot-be-an-event':
+    function (constructorName) {
+      return 'El constructor "' + constructorName + '" corresponde a un '
+           + 'evento, y solamente se puede manejar implícitamente '
+           + 'en un programa interactivo (el usuario no puede construir '
+           + 'instancias).';
+    },
 
   /* Helpers */
   '<alternative>':

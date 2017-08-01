@@ -53,8 +53,8 @@ import {
   ASTExprFunctionCall,
   /* SwitchBranch */
   ASTSwitchBranch,
-  /* FieldValue */
-  ASTFieldValue,
+  /* FieldBinding */
+  ASTFieldBinding,
   /* ConstructorDeclaration */
   ASTConstructorDeclaration,
   //
@@ -918,19 +918,19 @@ export class Parser {
     /* Read "<- expr1" */
     this._match(T_GETS);
     let value1 = this._parseExpression();
-    let fieldValue1 = new ASTFieldValue(fieldName1, value1);
-    fieldValue1.startPos = fieldName1.startPos;
-    fieldValue1.endPos = value1.endPos;
+    let fieldBinding1 = new ASTFieldBinding(fieldName1, value1);
+    fieldBinding1.startPos = fieldName1.startPos;
+    fieldBinding1.endPos = value1.endPos;
     /* Read "x2 <- expr2, ..., xN <- exprN" (this might be empty) */
-    let fieldValues = this._parseNonEmptyDelimitedSeq(
-                        T_RPAREN, T_COMMA, [fieldValue1],
-                        () => this._parseFieldValue()
-                      );
+    let fieldBindings = this._parseNonEmptyDelimitedSeq(
+                          T_RPAREN, T_COMMA, [fieldBinding1],
+                          () => this._parseFieldBinding()
+                        );
     /* Read ")" */
     let endPos = this._currentToken.startPos;
     this._match(T_RPAREN);
     /* Return an ExprConstructor node */
-    let result = new ASTExprConstructor(constructorName, fieldValues);
+    let result = new ASTExprConstructor(constructorName, fieldBindings);
     result.startPos = constructorName.startPos;
     result.endPos = endPos;
     return result;
@@ -947,16 +947,16 @@ export class Parser {
     /* Read "|" */
     this._match(T_PIPE);
     /* Read "x2 <- expr2, ..., xN <- exprN" (this might be empty) */
-    let fieldValues = this._parseDelimitedSeq(
-                        T_RPAREN, T_COMMA,
-                        () => this._parseFieldValue()
-                      );
+    let fieldBindings = this._parseDelimitedSeq(
+                          T_RPAREN, T_COMMA,
+                          () => this._parseFieldBinding()
+                        );
     /* Read ")" */
     let endPos = this._currentToken.startPos;
     this._match(T_RPAREN);
     /* Return an ExprConstructorUpdate node */
     let result = new ASTExprConstructorUpdate(
-                      constructorName, original, fieldValues
+                      constructorName, original, fieldBindings
                  );
     result.startPos = constructorName.startPos;
     result.endPos = endPos;
@@ -1095,13 +1095,13 @@ export class Parser {
     return result;
   }
 
-  /** FieldValue **/
+  /** FieldBinding **/
 
-  _parseFieldValue() {
+  _parseFieldBinding() {
     let fieldName = this._parseLowerid();
     this._match(T_GETS);
     let value = this._parseExpression();
-    let result = new ASTFieldValue(fieldName, value);
+    let result = new ASTFieldBinding(fieldName, value);
     result.startPos = fieldName.startPos;
     result.endPos = value.endPos;
     return result;

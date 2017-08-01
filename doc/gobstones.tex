@@ -454,25 +454,25 @@ en t\'erminos, factores, \'atomos, etc., tal como se hace en la gram\'atica ofic
 }
 
 \produccion{\s{exprConstructor}}{
-  \tok{UPPERID} (\tok{LPAREN} \s{fieldValueSeq} \tok{RPAREN})?
+  \tok{UPPERID} (\tok{LPAREN} \s{fieldBindingSeq} \tok{RPAREN})?
 }
 
 \produccion{\s{exprConstructorUpdate}}{
-  \tok{UPPERID} \tok{LPAREN} \s{expression} \tok{PIPE} \s{fieldValueSeq} \tok{RPAREN}
+  \tok{UPPERID} \tok{LPAREN} \s{expression} \tok{PIPE} \s{fieldBindingSeq} \tok{RPAREN}
 }
 
-\produccion{\s{fieldValue}}{
+\produccion{\s{fieldBinding}}{
   \tok{LOWERID} \tok{GETS} \s{expression}
 }
 
-\produccion{\s{fieldValueSeq}}{
+\produccion{\s{fieldBindingSeq}}{
   \EMPTY
 \ALT
-  \s{\nonEmpty{fieldValueSeq}}
+  \s{\nonEmpty{fieldBindingSeq}}
 }
 
-\produccion{\s{\nonEmpty{fieldValueSeq}}}{
-  \s{fieldValue} (\tok{COMMA} \s{\nonEmpty{fieldValueSeq}})?
+\produccion{\s{\nonEmpty{fieldBindingSeq}}}{
+  \s{fieldBinding} (\tok{COMMA} \s{\nonEmpty{fieldBindingSeq}})?
 }
 
 \produccion{\s{infixOperator}}{
@@ -676,22 +676,22 @@ y su tag asociado es el s\'imbolo \texttt{N\_StmtIf}.
 \ALT
   \ast{ExprTuple}(elements : [\type{Expression}])
 \ALT
-  \ast{ExprConstructor}(constructorName : \type{ID}, fieldValues : [\type{FieldValue}])
+  \ast{ExprConstructor}(constructorName : \type{ID}, fieldBindings : [\type{FieldBinding}])
 \ALT
-  \ast{ExprConstructorUpdate}(constructorName : \type{ID}, original : \type{Expression}, fieldValues : [\type{FieldValue}])
+  \ast{ExprConstructorUpdate}(constructorName : \type{ID}, original : \type{Expression}, fieldBindings : [\type{FieldBinding}])
 \ALT
   \ast{ExprFunctionCall}(functionName : \type{ID}, args : [\type{Expression}])
 }
 \datadecl{\type{ConstructorDeclaration}}{
   \ast{ConstructorDeclaration}(constructorName : \type{ID}, fieldNames : [\type{ID}])
 }
-\datadecl{\type{FieldValue}}{
-  \ast{FieldValue}(fieldName : \type{ID}, value : \type{Expression})
+\datadecl{\type{FieldBinding}}{
+  \ast{FieldBinding}(fieldName : \type{ID}, value : \type{Expression})
 }
 
 \section{Linter}
 
-La etapa de an\'alisis sem\'antico (o {\em linting}) verifica que el programa cumpla las siguientes condiciones.
+La etapa de an\'alisis sem\'antico (o {\em linting}) verifica de manera est\'atica que el programa cumpla las siguientes condiciones.
 \bigskip
 
 {\bf Programa principal.}
@@ -834,6 +834,26 @@ La etapa de an\'alisis sem\'antico (o {\em linting}) verifica que el programa cu
       pueden ser patrones constructor de tipos que no sean \texttt{\_EVENT},
       patrones tupla,
       o patrones comod\'in.
+\end{itemize}
+
+{\bf Expresiones.}
+\begin{itemize}
+\item Los usos de par\'ametros, \'indices y variables (\ast{ExprVariable}) \PUEDEN no corresponder a par\'ametros, \'indices o variables definidas.
+      La restricci\'on de que las variables se pueden usar solamente despu\'es de que se les haya dado un valor es una restricci\'on din\'amica.
+\item Cuando se construye una instancia de un tipo (registro o variante) con un constructor (\ast{ExprConstructor}),
+      el nombre del constructor \DEBE ser el nombre de un constructor existente.
+\item Cuando se construye o se actualiza una instancia con un constructor (\ast{ExprConstructor}, \ast{ExprConstructorUpdate}),
+      \NOPUEDE haber nombres de campos repetidos en la lista de {\em bindings}.
+\item Cuando se construye o se actualiza una instancia con un constructor (\ast{ExprConstructor}, \ast{ExprConstructorUpdate}),
+      los nombres de los campos que aparecen en la lista de {\em bindings}
+      \DEBEN ser nombres de campos v\'alidos para dicho constructor. (Correctitud).
+\item Cuando se construye una instancia con un constructor (\ast{ExprConstructor}),
+      los nombres de los campos que aparecen en la lista de {\em bindings}
+      \DEBEN cubrir todos los posibles nombres de campos v\'alidos para dicho constructor. (Completitud).
+\item Cuando se construye o se actualiza una instancia con un constructor (\ast{ExprConstructor}, \ast{ExprConstructorUpdate}),
+      el constructor \NOPUEDE ser un constructor del tipo \texttt{\_EVENT} (esto t\'ecnicamente depende
+      del entorno global en el que se eval\'ue el programa, pero t\'ipicamente
+      los eventos son las teclas como \texttt{K\_ENTER}, etc.).
 \end{itemize}
 
 \end{document}
