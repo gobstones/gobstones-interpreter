@@ -653,7 +653,7 @@ y su tag asociado es el s\'imbolo \texttt{N\_StmtIf}.
 \ALT
   \ast{StmtReturn}(result : \type{Expression})
 \ALT
-  \ast{StmtIf}(condition : \type{Expression}, thenBlock : \type{Expression}, elseBlock : \type{Expression}?)
+  \ast{StmtIf}(condition : \type{Expression}, thenBlock : \type{Statement}, elseBlock : \type{Statement}?)
 \ALT
   \ast{StmtRepeat}(times : \type{Expression}, body : \type{Statement})
 \ALT
@@ -667,7 +667,7 @@ y su tag asociado es el s\'imbolo \texttt{N\_StmtIf}.
 \ALT
   \ast{StmtAssignTuple}(variables : [\type{ID}], value : \type{Expression})
 \ALT
-  \ast{StmtProcedureCall}(procedureName : [\type{ID}], args : [\type{Expression}])
+  \ast{StmtProcedureCall}(procedureName : \type{ID}, args : [\type{Expression}])
 }
 \datadecl{\type{SwitchBranch}}{
   \ast{SwitchBranch}(pattern : \type{Pattern}, body : \type{Expression})

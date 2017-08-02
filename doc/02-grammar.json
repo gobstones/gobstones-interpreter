@@ -1,0 +1,195 @@
+[
+  ["start",
+    [["*", "definition"]]
+  ],
+  ["definition",
+    ["defProgram"],
+    ["defInteractiveProgram"],
+    ["defProcedure"],
+    ["defFunction"],
+    ["defType"]
+  ],
+  ["defProgram",
+    ["PROGRAM", "stmtBlock"]
+  ],
+  ["defInteractiveProgram",
+    ["INTERACTIVE", "PROGRAM", ["*", "stmtSwitchBranch"], "RBRACE"]
+  ],
+  ["defProcedure",
+    ["PROCEDURE", "LPAREN", "loweridSeq", "RPAREN", "stmtBlock"]
+  ],
+  ["defFunction",
+    ["FUNCTION", "LPAREN", "loweridSeq", "RPAREN", "stmtBlock"]
+  ],
+  ["defType",
+    ["FUNCTION", "LPAREN", "loweridSeq", "RPAREN", "stmtBlock"],
+    ["TYPE", "UPPERID", "IS", "RECORD", "LBRACE", ["*", "fieldDeclaration"], "RBRACE"],
+    ["TYPE", "UPPERID", "IS", "VARIANT", "LBRACE", ["*", "constructorDeclaration"], "RBRACE"]
+  ],
+  ["constructorDeclaration",
+    ["CASE", "UPPERID", "LBRACE", ["*", "fieldDeclaration"], "RBRACE"]
+  ],
+  ["fieldDeclaration",
+    ["FIELD", "LOWERID"]
+  ],
+  ["loweridSeq",
+    ["EMPTY"],
+    ["nonEmptyLoweridSeq"]
+  ],
+  ["nonEmptyLoweridSeq",
+    ["LOWERID", ["?", ["COMMA", "nonEmptyLoweridSeq"]]]
+  ],
+  ["statement",
+    ["stmtBlock"],
+    ["stmtReturn"],
+    ["stmtIf"],
+    ["stmtRepeat"],
+    ["stmtForeach"],
+    ["stmtWhile"],
+    ["stmtSwitch"],
+    ["stmtLet"],
+    ["stmtVariableAssignment"],
+    ["stmtProcedureCall"]
+  ],
+  ["stmtBlock",
+    ["LBRACE", "(statement", "SEMICOLON?)*", "RBRACE"]
+  ],
+  ["stmtReturn",
+    ["RETURN", "LPAREN", "expressionSeq", "RPAREN"]
+  ],
+  ["stmtIf",
+    ["IF", "LPAREN", "expression", "RPAREN", ["?", "THEN"], "stmtBlock", ["?", ["ELSE", "stmtBlock"]]]
+  ],
+  ["stmtRepeat",
+    ["REPEAT", "LPAREN", "expression", "RPAREN", "stmtBlock"]
+  ],
+  ["stmtForeach",
+    ["FOREACH", "LOWERID", "IN", "expression", "stmtBlock"]
+  ],
+  ["stmtWhile",
+    ["WHILE", "LPAREN", "expression", "RPAREN", "stmtBlock"]
+  ],
+  ["stmtSwitch",
+    ["SWITCH", "LPAREN", "expression", "RPAREN", ["?", "TO"], "LBRACE", ["*", "stmtSwitchBranch"], "RBRACE"]
+  ],
+  ["stmtSwitchBranch",
+    ["pattern", "ARROW", "stmtBlock"]
+  ],
+  ["stmtLet",
+    ["LET", "stmtVariableAssignment"],
+    ["LET", "stmtTupleAssignment"]
+  ],
+  ["stmtVariableAssignment",
+    ["LOWERID", "ASSIGN", "expression"]
+  ],
+  ["stmtTupleAssignment",
+    ["LPAREN", "RPAREN", "ASSIGN", "expression"],
+    ["LPAREN", "LOWERID", "COMMA", "nonEmptyLoweridSeq", "RPAREN", "ASSIGN", "expression"]
+  ],
+  ["stmtProcedureCall",
+    ["UPPERID", "LPAREN", "expressionSeq", "RPAREN"]
+  ],
+  ["pattern",
+    ["patternWildcard"],
+    ["patternConstructor"],
+    ["patternTuple"],
+    ["patternTimeout"]
+  ],
+  ["patternWildcard",
+    ["UNDERSCORE"]
+  ],
+  ["patternConstructor",
+    ["UPPERID", ["?", ["LPAREN", "loweridSeq", "RPAREN"]]]
+  ],
+  ["patternTuple",
+    ["LPAREN", "RPAREN"],
+    ["LPAREN", "LOWERID", "COMMA", "nonEmptyLoweridSeq", "RPAREN"]
+  ],
+  ["patternTimeout",
+    ["TIMEOUT", "LPAREN", "NUM", "RPAREN"]
+  ],
+  ["expression",
+    ["exprAtom"],
+    ["expression", "infixOperator", "expression"],
+    ["prefixOperator", "expression"],
+    ["LPAREN", "expression", "RPAREN"]
+  ],
+  ["exprAtom",
+    ["exprVariable"],
+    ["exprFunctionCall"],
+    ["exprConstantNumber"],
+    ["exprConstantString"],
+    ["exprList"],
+    ["exprRange"],
+    ["exprTuple"],
+    ["exprConstructor"],
+    ["exprConstructorUpdate"]
+  ],
+  ["exprVariable",
+    ["LOWERID"]
+  ],
+  ["exprFunctionCall",
+    ["LOWERID", "LPAREN", "expressionSeq", "RPAREN"]
+  ],
+  ["exprConstantNumber",
+    ["NUM"]
+  ],
+  ["exprConstantString",
+    ["STRING"]
+  ],
+  ["exprList",
+    ["LBRACK", "expressionSeq", "RBRACK"]
+  ],
+  ["exprRange",
+    ["LBRACK", "expression", "RANGE", "expression", "RBRACK"],
+    ["LBRACK", "expression", "COMMA", "expression", "RANGE", "expression", "RBRACK"]
+  ],
+  ["exprTuple",
+    ["LPAREN", "RPAREN"],
+    ["LPAREN", "expression", "COMMA", "nonEmptyExpressionSeq", "RPAREN"]
+  ],
+  ["exprConstructor",
+    ["UPPERID", ["?", ["LPAREN", "fieldBindingSeq", "RPAREN"]]]
+  ],
+  ["exprConstructorUpdate",
+    ["UPPERID", "LPAREN", "expression", "PIPE", "fieldBindingSeq", "RPAREN"]
+  ],
+  ["fieldBinding",
+    ["LOWERID", "GETS", "expression"]
+  ],
+  ["fieldBindingSeq",
+    ["EMPTY"],
+    ["nonEmptyFieldBindingSeq"]
+  ],
+  ["nonEmptyFieldBindingSeq",
+    ["fieldBinding", ["?", ["COMMA", "nonEmptyFieldBindingSeq"]]]
+  ],
+  ["infixOperator",
+    ["OR"],
+    ["AND"],
+    ["EQ"],
+    ["NE"],
+    ["LE"],
+    ["GE"],
+    ["LT"],
+    ["GT"],
+    ["CONCAT"],
+    ["PLUS"],
+    ["MINUS"],
+    ["TIMES"],
+    ["DIV"],
+    ["MOD"],
+    ["POW"]
+  ],
+  ["prefixOperator",
+    ["MINUS"],
+    ["NOT"]
+  ],
+  ["expressionSeq",
+    ["EMPTY"],
+    ["nonEmptyExpressionSeq"]
+  ],
+  ["nonEmptyExpressionSeq",
+    ["expression", ["?", ["COMMA", "nonEmptyExpressionSeq"]]]
+  ]
+]
