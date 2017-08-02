@@ -33,19 +33,19 @@ function isDigit(chr) {
  * This accepts alphabetic Unicode characters but rejects numbers and symbols.
  */
 function isAlpha(chr) {
-  return chr.toUpperCase(chr) != chr.toLowerCase();
+  return chr.toUpperCase(chr) !== chr.toLowerCase();
 }
 
 /* An uppercase character is an alphabetic character that coincides with
  * its uppercase form */
 function isUpper(chr) {
-  return isAlpha(chr) && chr.toUpperCase() == chr;
+  return isAlpha(chr) && chr.toUpperCase() === chr;
 }
 
 /* A lowercase character is an alphabetic character that coincides with
  * its lowercase form */
 function isLower(chr) {
-  return isAlpha(chr) && chr.toLowerCase() == chr;
+  return isAlpha(chr) && chr.toLowerCase() === chr;
 }
 
 function isIdent(chr) {
