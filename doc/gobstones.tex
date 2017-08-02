@@ -75,14 +75,31 @@ Todos los s\'imbolos terminales se acompa\~nan de su nombre \tok{EN\_MAYUSCULAS}
 \noindent{\bf Identificadores y constantes}\medskip\\
 \begin{tabularx}{\textwidth}{llXp{4cm}}
 \symbolentry{\texttt{0|[1-9][0-9]*}}{\tok{NUM}}{\nb{Constante num\'erica (sin ceros a la izquierda).}}
-\symbolentry{\texttt{[a-z][\_a-zA-Z0-9']*}}{\tok{LOWERID}}{\nb{Identificador en min\'uscula: \'indices, par\'ametros, funciones, variables, campos.}}
-\symbolentry{\texttt{[A-Z][\_a-zA-Z0-9']*}}{\tok{UPPERID}}{\nb{Identificador en may\'uscula: constructores, procedimientos, tipos.}}
+\symbolentry{\texttt{[:lower:]([:letter:]|[:digit:]|\_|')*}}{\tok{LOWERID}}{\nb{Identificador en min\'uscula: \'indices, par\'ametros, funciones, variables, campos.}}
+\symbolentry{\texttt{[:upper:]([:letter:]|[:digit:]|\_|')*}}{\tok{UPPERID}}{\nb{Identificador en may\'uscula: constructores, procedimientos, tipos.}}
 \symbolentry{\texttt{"(\textbackslash{a}|\textbackslash{b}|\textbackslash{f}|\textbackslash{n}|\textbackslash{r}|\textbackslash{t}|\textbackslash{v}|\textbackslash\textbackslash|\textbackslash"|[\^{}\textbackslash"])*"}}{\tok{STRING}}{\nb{Constante de cadena.}}
 \end{tabularx}
 \medskip
 
-Clarificaci\'on sobre las constantes de {\em string}:
-las cadenas est\'an delimitadas por comillas dobles (\chr{"}).
+Clarificaciones:
+\begin{itemize}
+\item {\bf Constantes num\'ericas.}
+Son una secuencia de d\'igitos decimales que representan enteros positivos.
+No pueden tener ceros innecesarios a la izquierda.
+\item {\bf Identificadores.}
+Comienzan por un caracter alfab\'etico y
+est\'an seguidos por cero o m\'as caracteres,
+ya sea alfab\'eticos, num\'ericos, gui\'on bajo (\texttt{\_}) o comilla simple (\texttt{'}).
+Se aceptan caracteres Unicode arbitrarios. Decimos que un caracter $c$ es {\bf alfab\'etico}
+cuando tiene dos variantes, una min\'uscula y una may\'uscula, es decir cuando:
+\[
+\texttt{$c$.toUpperCase() != $c$.toLowerCase()}
+\]
+Los identificadores \tok{LOWERID} comienzan por un caracter en min\'usculas y
+los identificadores \tok{UPPERID} comienzan por un caracter en may\'usculas.
+
+\item {\bf Constantes de {\em string}.}
+Las cadenas est\'an delimitadas por comillas dobles (\chr{"}).
 Todos los caracteres desde la comilla que abre hasta la que cierra se
 toman literalmente salvo la contrabarra (\chr{\textbackslash}) que se
 interpreta como un caracter de escape.
@@ -109,6 +126,7 @@ Los escapes admitidos son:
 \end{center}
 con su significado acostumbrado en la tradici\'on de C
 ({\em cf.} la gram\'atica oficial de Gobstones).
+\end{itemize}
 \bigskip
 
 \noindent{\bf Palabras clave}\medskip\\

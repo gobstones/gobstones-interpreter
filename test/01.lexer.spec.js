@@ -346,6 +346,24 @@ it('Lexer - Identifiers', () => {
   ]);
 });
 
+it('Lexer - Unicode identifiers', () => {
+  let lexer = new Lexer(
+                "ñoño Ñoño ácido Ácido über Über άλφα Άλφα"
+              );
+  expectTokens(lexer, [
+    [T_LOWERID, 'ñoño'],
+    [T_UPPERID, 'Ñoño'],
+    [T_LOWERID, 'ácido'],
+    [T_UPPERID, 'Ácido'],
+    [T_LOWERID, 'über'],
+    [T_UPPERID, 'Über'],
+    [T_LOWERID, 'άλφα'],
+    [T_UPPERID, 'Άλφα'],
+    [T_EOF, null]
+  ]);
+});
+
+
 it('Lexer - Reject identifier started with single quote', () => {
   let lexer = new Lexer("'hola");
   expect(() => lexer.nextToken()).throws(

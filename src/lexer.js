@@ -27,16 +27,25 @@ function isDigit(chr) {
   return '0' <= chr && chr <= '9';
 }
 
-function isUpper(chr) {
-  return 'A' <= chr && chr <= 'Z';
-}
-
-function isLower(chr) {
-  return 'a' <= chr && chr <= 'z';
-}
-
+/* We define a character to be alphabetic if it has two distinct forms:
+ * an uppercase form and a lowercase form.
+ *
+ * This accepts alphabetic Unicode characters but rejects numbers and symbols.
+ */
 function isAlpha(chr) {
-  return isUpper(chr) || isLower(chr);
+  return chr.toUpperCase(chr) != chr.toLowerCase();
+}
+
+/* An uppercase character is an alphabetic character that coincides with
+ * its uppercase form */
+function isUpper(chr) {
+  return isAlpha(chr) && chr.toUpperCase() == chr;
+}
+
+/* A lowercase character is an alphabetic character that coincides with
+ * its lowercase form */
+function isLower(chr) {
+  return isAlpha(chr) && chr.toLowerCase() == chr;
 }
 
 function isIdent(chr) {
