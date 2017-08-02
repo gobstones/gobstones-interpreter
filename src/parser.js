@@ -190,7 +190,7 @@ export class Parser {
         return this._parseDefType();
       default:
         throw new GbsSyntaxError(
-                    this._currentToken.startPos,
+                    this._currentToken.startPos, this._currentToken.endPos,
                     i18n('errmsg:expected-but-found')(
                       i18n('definition'),
                       i18n(Symbol.keyFor(this._currentToken.tag))
@@ -264,7 +264,7 @@ export class Parser {
         return this._parseDefTypeVariant(startPos, typeName);
       default:
         throw new GbsSyntaxError(
-          this._currentToken.startPos,
+          this._currentToken.startPos, this._currentToken.endPos,
           i18n('errmsg:expected-but-found')(
             i18n('<alternative>')([
               i18n('T_RECORD'),
@@ -369,12 +369,12 @@ export class Parser {
          *   let (x1, ..., xN) := expression
          */
         throw new GbsSyntaxError(
-                    this._currentToken.startPos,
+                    this._currentToken.startPos, this._currentToken.endPos,
                     i18n('errmsg:obsolete-tuple-assignment')
                   );
       default:
         throw new GbsSyntaxError(
-                    this._currentToken.startPos,
+                    this._currentToken.startPos, this._currentToken.endPos,
                     i18n('errmsg:expected-but-found')(
                       i18n('statement'),
                       i18n(Symbol.keyFor(this._currentToken.tag))
@@ -506,7 +506,7 @@ export class Parser {
       result = this._parseStmtAssignTuple();
     } else {
       throw new GbsSyntaxError(
-        this._currentToken.startPos,
+        this._currentToken.startPos, this._currentToken.endPos,
         i18n('errmsg:expected-but-found')(
           i18n('<alternative>')(
             i18n('T_LOWERID'),
@@ -536,7 +536,7 @@ export class Parser {
     let variables = this._parseLoweridSeq();
     if (variables.length === 1) {
       throw new GbsSyntaxError(
-        this._currentToken.startPos,
+        startPos, this._currentToken.endPos,
         i18n('errmsg:assignment-tuple-cannot-be-singleton')
       );
     }
@@ -578,7 +578,7 @@ export class Parser {
         return this._parsePatternTimeout();
       default:
         throw new GbsSyntaxError(
-          this._currentToken.startPos,
+          this._currentToken.startPos, this._currentToken.endPos,
           i18n('errmsg:expected-but-found')(
             i18n('pattern'),
             i18n(Symbol.keyFor(this._currentToken.tag))
@@ -622,7 +622,7 @@ export class Parser {
     let parameters = this._parseLoweridSeq();
     if (parameters.length === 1) {
       throw new GbsSyntaxError(
-        this._currentToken.startPos,
+        startPos, this._currentToken.endPos,
         i18n('errmsg:pattern-tuple-cannot-be-singleton')
       );
     }
@@ -692,7 +692,7 @@ export class Parser {
       /* Check that it is not used associatively */
       if (OPERATORS[level].isOperator(this._currentToken)) {
         throw new GbsSyntaxError(
-          this._currentToken.startPos,
+          this._currentToken.startPos, this._currentToken.endPos,
           i18n('errmsg:operators-are-not-associative')(
             i18n(Symbol.keyFor(op.tag)),
             i18n(Symbol.keyFor(this._currentToken.tag))
@@ -778,7 +778,7 @@ export class Parser {
         return this._parseExprListOrRange();
       default:
         throw new GbsSyntaxError(
-                    this._currentToken.startPos,
+                    this._currentToken.startPos, this._currentToken.endPos,
                     i18n('errmsg:expected-but-found')(
                       i18n('expression'),
                       i18n(Symbol.keyFor(this._currentToken.tag))
@@ -866,7 +866,7 @@ export class Parser {
       case T_GETS:
         if (subject.tag !== N_ExprVariable) {
           throw new GbsSyntaxError(
-            this._currentToken.startPos,
+            this._currentToken.startPos, this._currentToken.endPos,
             i18n('errmsg:expected-but-found')(
               i18n('T_PIPE'),
               i18n('T_GETS')
@@ -881,7 +881,7 @@ export class Parser {
          * programming error, namely calling a procedure name
          * where an expression is expected. */
         throw new GbsSyntaxError(
-          constructorName.startPos,
+          constructorName.startPos, constructorName.endPos,
           i18n('errmsg:expected-but-found')(
             i18n('expression'),
             i18n('procedure call')
@@ -898,7 +898,7 @@ export class Parser {
           expected = i18n('T_PIPE');
         }
         throw new GbsSyntaxError(
-          constructorName.startPos,
+          constructorName.startPos, constructorName.endPos,
           i18n('errmsg:expected-but-found')(
             expected,
             i18n(Symbol.keyFor(this._currentToken.tag))
@@ -993,7 +993,7 @@ export class Parser {
             return this._parseExprRange(startPos, first, second);
           default:
             throw new GbsSyntaxError(
-              startPos,
+              this._currentToken.startPos, this._currentToken.endPos,
               i18n('errmsg:expected-but-found')(
                 i18n('<alternative>')([
                   i18n('T_COMMA'),
@@ -1006,7 +1006,7 @@ export class Parser {
         }
       default:
         throw new GbsSyntaxError(
-          startPos,
+          this._currentToken.startPos, this._currentToken.endPos,
           i18n('errmsg:expected-but-found')(
             i18n('<alternative>')([
               i18n('T_COMMA'),
@@ -1119,7 +1119,7 @@ export class Parser {
   _match(tokenTag) {
     if (this._currentToken.tag !== tokenTag) {
       throw new GbsSyntaxError(
-                  this._currentToken.startPos,
+                  this._currentToken.startPos, this._currentToken.endPos,
                   i18n('errmsg:expected-but-found')(
                     i18n(Symbol.keyFor(tokenTag)),
                     i18n(Symbol.keyFor(this._currentToken.tag))
@@ -1137,7 +1137,7 @@ export class Parser {
   _matchExpected(tokenTag, tagList) {
     if (this._currentToken.tag !== tokenTag) {
       throw new GbsSyntaxError(
-                  this._currentToken.startPos,
+                  this._currentToken.startPos, this._currentToken.endPos,
                   i18n('errmsg:expected-but-found')(
                     i18n('<alternative>')(
                       tagList.map(tag => i18n(Symbol.keyFor(tag)))
@@ -1176,7 +1176,7 @@ export class Parser {
     }
     if (this._currentToken.tag !== rightDelimiter) {
       throw new GbsSyntaxError(
-                  this._currentToken.startPos,
+                  this._currentToken.startPos, this._currentToken.endPos,
                   i18n('errmsg:expected-but-found')(
                     i18n('<alternative>')([
                       i18n(Symbol.keyFor(separator)),

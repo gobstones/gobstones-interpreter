@@ -212,7 +212,7 @@ export class SymbolTable {
   defProgram(definition) {
     if (this._program !== null) {
       throw new GbsSyntaxError(
-        definition.startPos,
+        definition.startPos, definition.endPos,
         i18n('errmsg:program-already-defined')(
           i18nPosition(this._program.startPos),
           i18nPosition(definition.startPos)
@@ -230,7 +230,7 @@ export class SymbolTable {
     let name = definition.name.value;
     if (name in this._procedures) {
       throw new GbsSyntaxError(
-        definition.startPos,
+        definition.name.startPos, definition.name.endPos,
         i18n('errmsg:procedure-already-defined')(
           name,
           i18nPosition(this._procedures[name].startPos),
@@ -250,7 +250,7 @@ export class SymbolTable {
     let name = definition.name.value;
     if (name in this._functions) {
       throw new GbsSyntaxError(
-        definition.startPos,
+        definition.name.startPos, definition.name.endPos,
         i18n('errmsg:function-already-defined')(
           name,
           i18nPosition(this._functions[name].startPos),
@@ -261,7 +261,7 @@ export class SymbolTable {
       let fieldPos =
         this._constructors[this._fields[name][0].constructorName].startPos;
       throw new GbsSyntaxError(
-        definition.startPos,
+        definition.name.startPos, definition.name.endPos,
         i18n('errmsg:function-and-field-cannot-have-the-same-name')(
           name,
           i18nPosition(definition.startPos),
@@ -281,7 +281,7 @@ export class SymbolTable {
     let typeName = definition.typeName.value;
     if (typeName in this._types) {
       throw new GbsSyntaxError(
-        definition.startPos,
+        definition.typeName.startPos, definition.typeName.endPos,
         i18n('errmsg:type-already-defined')(
           typeName,
           i18nPosition(this._types[typeName].startPos),
@@ -302,7 +302,8 @@ export class SymbolTable {
     let constructorName = constructorDeclaration.constructorName.value;
     if (constructorName in this._constructors) {
       throw new GbsSyntaxError(
-        constructorDeclaration.startPos,
+        constructorDeclaration.constructorName.startPos,
+        constructorDeclaration.constructorName.endPos,
         i18n('errmsg:constructor-already-defined')(
           constructorName,
           i18nPosition(this._constructors[constructorName].startPos),
@@ -319,24 +320,25 @@ export class SymbolTable {
     for (let fieldName of constructorDeclaration.fieldNames) {
       if (fieldName.value in constructorFields) {
         throw new GbsSyntaxError(
-          fieldName.startPos,
+          fieldName.startPos, fieldName.endPos,
           i18n('errmsg:repeated-field-name')(constructorName, fieldName.value)
         );
       }
       constructorFields[fieldName.value] = true;
       fieldNames.push(fieldName.value);
       this._declareField(
-        fieldName.startPos, typeName, constructorName, fieldName.value, index
+        fieldName.startPos, fieldName.endPos,
+        typeName, constructorName, fieldName.value, index
       );
       index++;
     }
     this._constructorFields[constructorName] = fieldNames;
   }
 
-  _declareField(startPos, typeName, constructorName, fieldName, index) {
+  _declareField(startPos, endPos, typeName, constructorName, fieldName, index) {
     if (fieldName in this._functions) {
       throw new GbsSyntaxError(
-        startPos,
+        startPos, endPos,
         i18n('errmsg:function-and-field-cannot-have-the-same-name')(
           fieldName,
           i18nPosition(this._functions[fieldName].startPos),
@@ -356,7 +358,7 @@ export class SymbolTable {
   addNewLocalName(localName, category) {
     if (localName.value in this._localNames) {
       throw new GbsSyntaxError(
-        localName.startPos,
+        localName.startPos, localName.endPos,
         i18n('errmsg:local-name-conflict')(
           localName.value,
           i18n(Symbol.keyFor(this._localNames[localName.value].category)),
@@ -375,7 +377,7 @@ export class SymbolTable {
     if (localName.value in this._localNames &&
         this._localNames[localName.value].category !== category) {
       throw new GbsSyntaxError(
-        localName.startPos,
+        localName.startPos, localName.endPos,
         i18n('errmsg:local-name-conflict')(
           localName.value,
           i18n(Symbol.keyFor(this._localNames[localName.value].category)),

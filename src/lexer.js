@@ -153,7 +153,7 @@ export class Lexer {
       let endPos = this._reader;
       if (leadingZeroes(value) && value.length > 1) {
         throw new GbsSyntaxError(
-          startPos,
+          startPos, endPos,
           i18n('errmsg:numeric-constant-should-not-have-leading-zeroes')
         );
       }
@@ -170,7 +170,7 @@ export class Lexer {
         return new Token(T_LOWERID, value, startPos, endPos);
       } else {
         throw new GbsSyntaxError(
-          startPos,
+          startPos, endPos,
           i18n('errmsg:identifier-must-start-with-alphabetic-character')
         );
       }
@@ -269,7 +269,7 @@ export class Lexer {
       }
     }
     throw new GbsSyntaxError(
-                startPos,
+                startPos, this._reader,
                 i18n('errmsg:unclosed-string-constant')
               );
   }
@@ -285,7 +285,7 @@ export class Lexer {
       }
     }
     throw new GbsSyntaxError(
-                this._reader,
+                this._reader, this._reader,
                 i18n('errmsg:unknown-token')(this._reader.peek())
               );
   }
@@ -363,7 +363,7 @@ export class Lexer {
       }
     }
     throw new GbsSyntaxError(
-                startPos,
+                startPos, this._reader,
                 i18n('errmsg:unclosed-multiline-comment')
               );
   }
@@ -389,7 +389,7 @@ export class Lexer {
       }
     }
     throw new GbsSyntaxError(
-                startPos,
+                startPos, this._reader,
                 i18n('errmsg:unclosed-multiline-comment')
               );
   }
@@ -406,26 +406,30 @@ export class Lexer {
       this._reader = this._reader.consumeInvisibleCharacter();
     }
     throw new GbsSyntaxError(
-                startPos,
+                startPos, this._reader,
                 i18n('errmsg:unclosed-multiline-comment')
               );
   }
 
   _evaluatePragma(startPos, pragma) {
     if (pragma.length === 0) {
-      this._emitWarning(startPos, i18n('warning:empty-pragma'));
+      this._emitWarning(
+        startPos, this._reader, i18n('warning:empty-pragma')
+      );
     } else if (pragma[0] === 'BEGIN_REGION') {
       let region = pragma[1];
       this._reader = this._reader.beginRegion(region);
     } else if (pragma[0] === 'END_REGION') {
       this._reader = this._reader.endRegion();
     } else {
-      this._emitWarning(startPos, i18n('warning:unknown-pragma')(pragma[0]));
+      this._emitWarning(
+        startPos, this._reader, i18n('warning:unknown-pragma')(pragma[0])
+      );
     }
   }
 
-  _emitWarning(position, message) {
-    this._warnings.push(new GbsWarning(position, message));
+  _emitWarning(startPos, endPos, message) {
+    this._warnings.push(new GbsWarning(startPos, endPos, message));
   }
 
 }

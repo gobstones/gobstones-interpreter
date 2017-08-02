@@ -2,10 +2,19 @@
 /* Base class for signalling conditions */
 export class GbsInterpreterException extends Error {
   /* Note: position should typically be an instance of SourceReader */
-  constructor(position, message) {
-    super(message, position.filename, position.row);
-    this._position = position;
+  constructor(startPos, endPos, message) {
+    super(message, startPos.filename, startPos.row);
+    this._startPos = startPos;
+    this._endPos = endPos;
     this._message = message;
+  }
+
+  get startPos() {
+    return this._startPos;
+  }
+
+  get endPos() {
+    return this._endPos;
   }
 
   get message() {
@@ -14,14 +23,14 @@ export class GbsInterpreterException extends Error {
 }
 
 export class GbsWarning extends GbsInterpreterException {
-  constructor(position, message) {
-    super(position, message);
+  constructor(startPos, endPos, message) {
+    super(startPos, endPos, message);
   }
 }
 
 export class GbsSyntaxError extends GbsInterpreterException {
-  constructor(position, message) {
-    super(position, message);
+  constructor(startPos, endPos, message) {
+    super(startPos, endPos, message);
   }
 }
 

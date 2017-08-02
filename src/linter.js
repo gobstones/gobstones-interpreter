@@ -90,7 +90,7 @@ export class Linter {
     /* The source should either be empty or have exactly one program */
     if (ast.definitions.length > 0 && this._symtable.program === null) {
       throw new GbsSyntaxError(
-        ast.startPos,
+        ast.startPos, ast.endPos,
         i18n('errmsg:source-should-have-a-program-definition')
       );
     }
@@ -157,7 +157,7 @@ export class Linter {
     /* Check that it does not have a return statement */
     if (isBlockWithReturn(definition.body)) {
       throw new GbsSyntaxError(
-        definition.startPos,
+        definition.startPos, definition.endPos,
         i18n('errmsg:procedure-should-not-have-return')(definition.name.value)
       );
     }
@@ -178,7 +178,7 @@ export class Linter {
     /* Check that it has a return statement */
     if (!isBlockWithReturn(definition.body)) {
       throw new GbsSyntaxError(
-        definition.startPos,
+        definition.startPos, definition.endPos,
         i18n('errmsg:function-should-have-return')(definition.name.value)
       );
     }
@@ -238,7 +238,7 @@ export class Linter {
       let returnAllowed = allowReturn && i === block.statements.length - 1;
       if (!returnAllowed && statement.tag === N_StmtReturn) {
         throw new GbsSyntaxError(
-          statement.startPos,
+          statement.startPos, statement.endPos,
           i18n('errmsg:return-statement-not-allowed-here')
         );
       }
@@ -309,7 +309,7 @@ export class Linter {
     for (let branch of branches) {
       if (branch.pattern.tag === N_PatternWildcard && i !== n - 1) {
         throw new GbsSyntaxError(
-          branch.pattern.startPos,
+          branch.pattern.startPos, branch.pattern.endPos,
           i18n('errmsg:wildcard-pattern-should-be-last')
         );
       }
@@ -329,7 +329,7 @@ export class Linter {
           let constructorName = branch.pattern.constructorName.value;
           if (constructorName in coveredConstructors) {
             throw new GbsSyntaxError(
-              branch.pattern.startPos,
+              branch.pattern.startPos, branch.pattern.endPos,
               i18n('errmsg:constructor-pattern-repeats-constructor')(
                 constructorName
               )
@@ -341,7 +341,7 @@ export class Linter {
           let arity = branch.pattern.parameters.length;
           if (arity in coveredTuples) {
             throw new GbsSyntaxError(
-              branch.pattern.startPos,
+              branch.pattern.startPos, branch.pattern.endPos,
               i18n('errmsg:constructor-pattern-repeats-tuple-arity')(arity)
             );
           }
@@ -350,7 +350,7 @@ export class Linter {
         case N_PatternTimeout:
           if (coveredTimeout) {
             throw new GbsSyntaxError(
-              branch.pattern.startPos,
+              branch.pattern.startPos, branch.pattern.endPos,
               i18n('errmsg:constructor-pattern-repeats-timeout')
             );
           }
@@ -370,7 +370,7 @@ export class Linter {
         expectedType = patternType;
       } else if (patternType !== null && expectedType !== patternType) {
         throw new GbsSyntaxError(
-          branch.pattern.startPos,
+          branch.pattern.startPos, branch.pattern.endPos,
           i18n('errmsg:pattern-does-not-match-type')(
             i18n('<pattern-type>')(expectedType),
             i18n('<pattern-type>')(patternType)
@@ -386,7 +386,7 @@ export class Linter {
       let patternType = this._patternType(branch.pattern);
       if (patternType !== null && patternType !== '_EVENT') {
         throw new GbsSyntaxError(
-          branch.pattern.startPos,
+          branch.pattern.startPos, branch.pattern.endPos,
           i18n('errmsg:patterns-in-interactive-program-must-be-events')
         );
       }
@@ -399,7 +399,7 @@ export class Linter {
       let patternType = this._patternType(branch.pattern);
       if (patternType === '_EVENT') {
         throw new GbsSyntaxError(
-          branch.pattern.startPos,
+          branch.pattern.startPos, branch.pattern.endPos,
           i18n('errmsg:patterns-in-switch-must-not-be-events')
         );
       }
@@ -448,7 +448,7 @@ export class Linter {
       this._symtable.setLocalName(variable, LocalVariable);
       if (variable.value in variables) {
         throw new GbsSyntaxError(
-          variable.startPos,
+          variable.startPos, variable.endPos,
           i18n('errmsg:repeated-variable-in-tuple-assignment')(variable.value)
         );
       }
@@ -464,7 +464,7 @@ export class Linter {
     if (!this._symtable.isProcedure(name)) {
       if (this._symtable.isConstructor(name)) {
         throw new GbsSyntaxError(
-          statement.startPos,
+          statement.startPos, statement.endPos,
           i18n('errmsg:constructor-used-as-procedure')(
             name,
             this._symtable.constructorType(name)
@@ -472,7 +472,7 @@ export class Linter {
         );
       } else {
         throw new GbsSyntaxError(
-          statement.startPos,
+          statement.startPos, statement.endPos,
           i18n('errmsg:undefined-procedure')(name)
         );
       }
@@ -483,7 +483,7 @@ export class Linter {
     let received = statement.args.length;
     if (expected !== received) {
       throw new GbsSyntaxError(
-        statement.startPos,
+        statement.startPos, statement.endPos,
         i18n('errmsg:procedure-arity-mismatch')(
           name,
           expected,
@@ -528,7 +528,9 @@ export class Linter {
 
     /* Check that the constructor exists */
     if (!this._symtable.isConstructor(name)) {
-      this._failExpectedConstructorButGot(pattern.startPos, name); // throws
+      this._failExpectedConstructorButGot(    // throws
+          pattern.startPos, pattern.endPos, name
+      );
       return;
     }
 
@@ -539,7 +541,7 @@ export class Linter {
     let received = pattern.parameters.length;
     if (received > 0 && expected !== received) {
       throw new GbsSyntaxError(
-        pattern.startPos,
+        pattern.startPos, pattern.endPos,
         i18n('errmsg:constructor-pattern-arity-mismatch')(
           name,
           expected,
@@ -640,7 +642,7 @@ export class Linter {
     let constructorName = expression.constructorName.value;
     if (!this._symtable.isConstructor(constructorName)) {
       this._failExpectedConstructorButGot(    // throws
-        expression.startPos, constructorName
+        expression.startPos, expression.endPos, constructorName
       );
       return;
     }
@@ -673,7 +675,7 @@ export class Linter {
     for (let fieldName of declaredFields) {
       if (fieldName in seen) {
         throw new GbsSyntaxError(
-          expression.startPos,
+          expression.startPos, expression.endPos,
           i18n('errmsg:constructor-instantiation-repeated-field')(
            constructorName,
            fieldName
@@ -692,7 +694,7 @@ export class Linter {
     for (let fieldName of declaredFields) {
       if (constructorFields.indexOf(fieldName) == -1) {
         throw new GbsSyntaxError(
-          expression.startPos,
+          expression.startPos, expression.endPos,
           i18n('errmsg:constructor-instantiation-invalid-field')(
            constructorName,
            fieldName
@@ -710,7 +712,7 @@ export class Linter {
     for (let fieldName of constructorFields) {
       if (declaredFields.indexOf(fieldName) == -1) {
         throw new GbsSyntaxError(
-          expression.startPos,
+          expression.startPos, expression.endPos,
           i18n('errmsg:constructor-instantiation-missing-field')(
            constructorName,
            fieldName
@@ -726,7 +728,7 @@ export class Linter {
   _checkConstructorTypeNotEvent(constructorName, expression) {
     if (this._symtable.constructorType(constructorName) === '_EVENT') {
       throw new GbsSyntaxError(
-        expression.startPos,
+        expression.startPos, expression.endPos,
         i18n('errmsg:constructor-instantiation-cannot-be-an-event')(
          constructorName
         )
@@ -739,7 +741,7 @@ export class Linter {
     let name = expression.functionName.value;
     if (!this._symtable.isFunction(name) && !this._symtable.isField(name)) {
       throw new GbsSyntaxError(
-        expression.startPos,
+        expression.startPos, expression.endPos,
         i18n('errmsg:undefined-function')(name)
       );
     }
@@ -755,7 +757,7 @@ export class Linter {
     let received = expression.args.length;
     if (expected !== received) {
       throw new GbsSyntaxError(
-        expression.startPos,
+        expression.startPos, expression.endPos,
         i18n('errmsg:function-arity-mismatch')(
           name,
           expected,
@@ -776,10 +778,10 @@ export class Linter {
    * If the name is a type or a procedure, provide a more helpful
    * error message. (Coinciding constructor and procedure names are
    * not forbidden, but it is probably a mistake). */
-  _failExpectedConstructorButGot(startPos, name) {
+  _failExpectedConstructorButGot(startPos, endPos, name) {
     if (this._symtable.isType(name)) {
       throw new GbsSyntaxError(
-        startPos,
+        startPos, endPos,
         i18n('errmsg:type-used-as-constructor')(
           name,
           this._symtable.typeConstructors(name)
@@ -787,12 +789,12 @@ export class Linter {
       );
     } else if (this._symtable.isProcedure(name)) {
       throw new GbsSyntaxError(
-        startPos,
+        startPos, endPos,
         i18n('errmsg:procedure-used-as-constructor')(name)
       );
     } else {
       throw new GbsSyntaxError(
-        startPos,
+        startPos, endPos,
         i18n('errmsg:undeclared-constructor')(name)
       );
     }
