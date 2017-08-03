@@ -1,6 +1,6 @@
 [
   ["start",
-    [["*", "definition"]]
+    [["*", ["definition"]]]
   ],
   ["definition",
     ["defProgram"],
@@ -13,7 +13,7 @@
     ["PROGRAM", "stmtBlock"]
   ],
   ["defInteractiveProgram",
-    ["INTERACTIVE", "PROGRAM", ["*", "stmtSwitchBranch"], "RBRACE"]
+    ["INTERACTIVE", "PROGRAM", ["*", ["stmtSwitchBranch"]], "RBRACE"]
   ],
   ["defProcedure",
     ["PROCEDURE", "LPAREN", "loweridSeq", "RPAREN", "stmtBlock"]
@@ -23,11 +23,11 @@
   ],
   ["defType",
     ["FUNCTION", "LPAREN", "loweridSeq", "RPAREN", "stmtBlock"],
-    ["TYPE", "UPPERID", "IS", "RECORD", "LBRACE", ["*", "fieldDeclaration"], "RBRACE"],
-    ["TYPE", "UPPERID", "IS", "VARIANT", "LBRACE", ["*", "constructorDeclaration"], "RBRACE"]
+    ["TYPE", "UPPERID", "IS", "RECORD", "LBRACE", ["*", ["fieldDeclaration"]], "RBRACE"],
+    ["TYPE", "UPPERID", "IS", "VARIANT", "LBRACE", ["*", ["constructorDeclaration"]], "RBRACE"]
   ],
   ["constructorDeclaration",
-    ["CASE", "UPPERID", "LBRACE", ["*", "fieldDeclaration"], "RBRACE"]
+    ["CASE", "UPPERID", "LBRACE", ["*", ["fieldDeclaration"]], "RBRACE"]
   ],
   ["fieldDeclaration",
     ["FIELD", "LOWERID"]
@@ -52,13 +52,13 @@
     ["stmtProcedureCall"]
   ],
   ["stmtBlock",
-    ["LBRACE", "(statement", "SEMICOLON?)*", "RBRACE"]
+    ["LBRACE", ["*", ["statement", ["?", ["SEMICOLON"]]]], "RBRACE"]
   ],
   ["stmtReturn",
     ["RETURN", "LPAREN", "expressionSeq", "RPAREN"]
   ],
   ["stmtIf",
-    ["IF", "LPAREN", "expression", "RPAREN", ["?", "THEN"], "stmtBlock", ["?", ["ELSE", "stmtBlock"]]]
+    ["IF", "LPAREN", "expression", "RPAREN", ["?", ["THEN"]], "stmtBlock", ["?", ["ELSE", "stmtBlock"]]]
   ],
   ["stmtRepeat",
     ["REPEAT", "LPAREN", "expression", "RPAREN", "stmtBlock"]
@@ -70,7 +70,7 @@
     ["WHILE", "LPAREN", "expression", "RPAREN", "stmtBlock"]
   ],
   ["stmtSwitch",
-    ["SWITCH", "LPAREN", "expression", "RPAREN", ["?", "TO"], "LBRACE", ["*", "stmtSwitchBranch"], "RBRACE"]
+    ["SWITCH", "LPAREN", "expression", "RPAREN", ["?", ["TO"]], "LBRACE", ["*", ["stmtSwitchBranch"]], "RBRACE"]
   ],
   ["stmtSwitchBranch",
     ["pattern", "ARROW", "stmtBlock"]

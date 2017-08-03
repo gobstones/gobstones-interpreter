@@ -13,7 +13,7 @@
     ["DefType", ["typeName", "ID"], ["constructorDeclarations", ["*", "ConstructorDeclaration"]]]
   ],
   ["data", "Statement",
-    ["StmtBlock", ["statements", ["[]", "Statement"]]],
+    ["StmtBlock", ["statements", ["*", "Statement"]]],
     ["StmtReturn", ["result", "Expression"]],
     ["StmtIf", ["condition", "Expression"], ["thenBlock", "Statement"], ["elseBlock", ["?", "Statement"]]],
     ["StmtRepeat", ["times", "Expression"], ["body", "Statement"]],
