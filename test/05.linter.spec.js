@@ -24,7 +24,7 @@ describe('Linter', () => {
 
   it('Accept completely empty source', () => {
     let code = '';
-    var symtable = lint(code);
+    let symtable = lint(code);
     expect(symtable.program === null).equals(true);
   });
 
@@ -32,13 +32,13 @@ describe('Linter', () => {
 
     it('Accept empty program', () => {
       let code = 'program {}';
-      var symtable = lint(code);
+      let symtable = lint(code);
       expect(symtable.program !== null).equals(true);
     });
 
     it('Accept empty interactive program', () => {
       let code = 'interactive program {}';
-      var symtable = lint(code);
+      let symtable = lint(code);
       expect(symtable.program !== null).equals(true);
     });
 
@@ -84,7 +84,7 @@ describe('Linter', () => {
         'procedure P() {}',
         'program {}',
       ].join('\n');
-      var symtable = lint(code);
+      let symtable = lint(code);
       expect(symtable.program !== null).equals(true);
       expect(symtable.procedureDefinition('P') !== null).equals(true);
     });
@@ -110,7 +110,7 @@ describe('Linter', () => {
         'procedure Q() {}',
         'program {}',
       ].join('\n');
-      var symtable = lint(code);
+      let symtable = lint(code);
       expect(symtable.program !== null).equals(true);
       expect(symtable.procedureDefinition('P') !== null).equals(true);
       expect(symtable.procedureDefinition('Q') !== null).equals(true);
@@ -125,7 +125,7 @@ describe('Linter', () => {
         'function f() { return (1) }',
         'program {}',
       ].join('\n');
-      var symtable = lint(code);
+      let symtable = lint(code);
       expect(symtable.program !== null).equals(true);
       expect(symtable.functionDefinition('f') !== null).equals(true);
     });
@@ -151,7 +151,7 @@ describe('Linter', () => {
         'function g() { return (2) }',
         'program {}',
       ].join('\n');
-      var symtable = lint(code);
+      let symtable = lint(code);
       expect(symtable.program !== null).equals(true);
       expect(symtable.functionDefinition('f') !== null).equals(true);
       expect(symtable.functionDefinition('g') !== null).equals(true);
@@ -166,7 +166,7 @@ describe('Linter', () => {
         'type A is record {}',
         'program {}',
       ].join('\n');
-      var symtable = lint(code);
+      let symtable = lint(code);
       expect(symtable.program !== null).equals(true);
       expect(symtable.typeDefinition('A') !== null).equals(true);
       expect(symtable.typeConstructors('A')).deep.equals(['A']);
@@ -196,7 +196,7 @@ describe('Linter', () => {
         'type C is variant { case C1 {} case C2 {} case C3 {} }',
         'program {}',
       ].join('\n');
-      var symtable = lint(code);
+      let symtable = lint(code);
       expect(symtable.program !== null).equals(true);
       expect(symtable.typeDefinition('A') !== null).equals(true);
       expect(symtable.typeDefinition('B') !== null).equals(true);
@@ -250,14 +250,14 @@ describe('Linter', () => {
         '}',
         'program {}',
       ].join('\n');
-      var symtable = lint(code);
+      let symtable = lint(code);
       expect(symtable.constructorFields('A')).deep.equals(['x', 'y']);
       expect(symtable.constructorFields('A')).deep.equals(['x', 'y']);
       expect(symtable.constructorFields('B1')).deep.equals(['x', 'z']);
       expect(symtable.constructorFields('B2')).deep.equals(['y', 'z']);
       expect(symtable.constructorFields('C')).deep.equals([]);
 
-      var dx = symtable.fieldDescriptor('x');
+      let dx = symtable.fieldDescriptor('x');
       expect(dx.length).equals(2);
       expect(dx[0].typeName).equals('A');
       expect(dx[0].constructorName).equals('A');
@@ -266,7 +266,7 @@ describe('Linter', () => {
       expect(dx[1].constructorName).equals('B1');
       expect(dx[1].index).equals(0);
 
-      var dy = symtable.fieldDescriptor('y');
+      let dy = symtable.fieldDescriptor('y');
       expect(dy.length).equals(2);
       expect(dy[0].typeName).equals('A');
       expect(dy[0].constructorName).equals('A');
@@ -275,7 +275,7 @@ describe('Linter', () => {
       expect(dy[1].constructorName).equals('B2');
       expect(dy[1].index).equals(0);
 
-      var dz = symtable.fieldDescriptor('z');
+      let dz = symtable.fieldDescriptor('z');
       expect(dz.length).equals(2);
       expect(dz[0].typeName).equals('B');
       expect(dz[0].constructorName).equals('B1');

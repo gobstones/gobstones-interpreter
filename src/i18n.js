@@ -347,6 +347,12 @@ const ES = {
            + 'instancias).';
     },
 
+  /* Virtual machine */
+  'errmsg:undefined-variable':
+    function (variableName) {
+      return 'La variable "' + variableName + '" no está definida.';
+    },
+
   /* Helpers */
   '<alternative>':
     function (strings) {

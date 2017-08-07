@@ -26,7 +26,38 @@ export const O_CheckIsInteger = Symbol.for('O_CheckIsInteger');
 export const O_CheckIsTuple = Symbol.for('O_CheckIsTuple');
 export const O_CheckIsType = Symbol.for('O_CheckIsType');
 
-export class Instruction(opcode, args) {
+export class Code {
+  constructor(instructions) {
+    this._instructions = instructions;
+  }
+
+  produce(instruction) {
+    this._instructions.push(instruction);
+  }
+
+  at(ip) {
+    if (0 <= ip && ip < this._instructions.length) {
+      return this._instructions[ip];
+    } else {
+      throw Error('Code: instruction pointer out of range.');
+    }
+  }
+  
+  /* Return a dictionary mapping label names to their corresponding
+   * instruction pointers. */
+  labelTargets() {
+    let labelTargets = {};
+    for (let i = 0; i < this._instructions.length; i++)  {
+      if (this._instructions[i].opcode == O_Label) {
+        labelTargets[this._instructions[i].label] = i;
+      }
+    }
+    return labelTargets;
+  }
+
+}
+
+export class Instruction {
   constructor(opcode, args) {
     this._opcode = opcode;
     this._args = args;
@@ -192,7 +223,6 @@ export class ICall extends Instruction {
     return this._args[0];
   }
 }
-
 
 /* Return from a routine to the caller.
  * If returning a value (from a function or program),
