@@ -30,6 +30,7 @@
 
 \newcommand{\type}[1]{\textcolor{blue}{\texttt{#1}}}
 \renewcommand{\ast}[1]{\textcolor{darkgreen}{\texttt{\underline{#1}}}}
+\newcommand{\instruction}[1]{\textcolor{darkgreen}{\texttt{\underline{#1}}}}
 \newcommand{\typedecl}[2]{\noindent
   \begin{tabularx}{\textwidth}{lrlr}
   #1 & $=$ & #2
@@ -48,7 +49,9 @@
 \newcommand{\DEBE}{{\bf DEBE}\xspace}
 \newcommand{\DEBEN}{{\bf DEBEN}\xspace}
 
-\section{Gram\'atica de XGobstones}
+\tableofcontents
+
+\section{Gram\'atica}
 
 \subsection{Sintaxis l\'exica}
 
@@ -62,7 +65,6 @@
 \item Se admiten comentarios delimitados por \str{/*} \str{*/} y por \str{\{-} \str{-\}} que pueden anidarse.
 \item El tokenizador reconoce directivas {\em pragma} de la forma \str{/*@parte$_1$@parte$_2$@...@parte$_n$@*/}. La idea es que esto pueda ser un mecanismo extensible de directivas. Ver m\'as abajo las directivas soportadas.
 \end{itemize}
-
 
 \subsection{Lista de s\'imbolos terminales}
 
@@ -152,7 +154,8 @@ procedure P() {
 \end{verbatim}
 El parser idealmente deber\'ia reportar que hay un error de sintaxis en la regi\'on \texttt{B}.
 
-\subsection{Gram\'atica}
+\subsection{Producciones de la gram\'atica}
+
 Los s\'imbolos no terminales se describen con su nombre \nonterminal{enCursiva}.
 Las producciones se escriben siguiendo las convenciones usuales de EBNF.
 La gram\'atica es liberal en algunos sentidos. En particular:
@@ -182,7 +185,7 @@ en t\'erminos, factores, \'atomos, etc., tal como se hace en la gram\'atica ofic
 % El siguiente tex se genera a partir de 02-grammar.json usando gendoc.py.
 \input{02-grammar.tex}
 
-\subsubsection{Precedencia de operadores}
+\subsection{Precedencia de operadores}
 
 Los operadores se organizan seg\'un la siguiente tabla.
 Cada fila corresponde a un nivel de precedencia, ordenados de menor a mayor precedencia.
@@ -277,7 +280,7 @@ y su tag asociado es el s\'imbolo \texttt{N\_StmtIf}.
 % El siguiente tex se genera a partir de 03-ast.json usando gendoc.py.
 \input{03-ast.tex}
 
-\section{Linter}
+\section{An\'alisis sem\'antico}
 
 La etapa de an\'alisis sem\'antico (o {\em linting}) verifica de manera est\'atica que el programa cumpla las siguientes condiciones.
 \bigskip
@@ -450,5 +453,62 @@ La etapa de an\'alisis sem\'antico (o {\em linting}) verifica de manera est\'ati
 \item El n\'umero de argumentos pasados a un campo (usado como funci\'on observadora) \DEBE ser exactamente 1.
 \end{itemize}
 
+\section{M\'aquina virtual}
+
+Un programa en Gobstones/XGobstones se compila a una serie de instrucciones para una m\'aquina
+virtual {\em ad hoc}. La implementaci\'on de un compilador y una m\'aquina virtual,
+en lugar de un mero int\'erprete recursivo, agrega bastante complejidad a la base de c\'odigo,
+y es razonable preguntarse hasta qu\'e punto hacer un compilador no es {\em overkill}.
+
+La principal raz\'on para contar con un compilador en este caso no tiene que ver con cuestiones de
+eficiencia, sino con la posibilidad de tener representado expl\'icitamente el estado de
+ejecuci\'on de un programa.
+Esto permite:
+\begin{enumerate}
+\item Hacer un {\em step} controlado del programa,
+      para poder visualizar el avance paso a paso de la ejecuci\'on.
+\item Potencialmente pausar y continuar la ejecuci\'on de un programa.
+\item Ejecutar programas que potencialmente se cuelgan abort\'andolos por medio de diferentes
+      criterios de {\em timeout}.
+\end{enumerate}
+Esta funcionalidad no se puede implementar de manera directa en un int\'erprete recursivo
+(las posibles implementaciones, por ejemplo usando continuaciones, son
+dif\'iciles de entender y mantener).
+
+El c\'odigo para la m\'aquina virtual es una instancia de la clase \texttt{Code},
+que b\'asicamente consta de una lista de instrucciones. Las instrucciones est\'an
+basadas en una arquitectura sencilla ``orientada a pila''.
+
+El estado de ejecuci\'on de un programa consta de los siguientes datos:
+\begin{itemize}
+\item Un c\'odigo (\texttt{Code}) que, como dijimos, es b\'asicamente una lista de instrucciones.
+\item Un estado global, que en Gobstones/XGobstones corresponde al tablero,
+      pero podr\'ia corresponder a otras entidades mutables en otras variantes
+      concebibles del lenguaje.
+\item Una ``pila de llamadas'' (\texttt{callStack}).
+      La pila de llamadas es una pila no vac\'ia de {\em frames}.
+      Un {\em frame} es el estado local
+      o contexto de ejecuci\'on de la rutina actual (tambi\'en conocido como
+      {\em registro de activaci\'on}). Un {\em frame} es una instancia de la
+      clase \texttt{Frame} y consta de los siguientes datos:
+      \begin{itemize}
+      \item El {\em instruction pointer}, que es un \'indice dentro de la lista de instrucciones.
+      \item Una pila de valores locales.
+      \item Un diccionario de nombres locales, que asocia los nombres de
+            par\'ametros, \'indices y variables a un valor.
+      \end{itemize}
+\end{itemize}
+Cuando decimos ``el {\em instruction pointer}''
+nos referimos al {\em instruction pointer} del {\em frame} que est\'a en el tope de la pila de llamadas.
+De igual modo, cuando decimos ``la pila''
+nos referimos a la pila del {\em frame} que est\'a en el tope de la pila de llamadas.
+\'Idem para el diccionario de nombres locales.
+
+\subsection{Instrucciones}
+
+Las instrucciones de la m\'aquina virtual se describen a continuaci\'on:
+
+% El siguiente tex se genera a partir de 04-instructions.json usando gendoc.py.
+\input{04-instructions.tex}
 
 \end{document}

@@ -16,6 +16,7 @@ import {
   O_UpdateConstructor,
   O_ReadTupleComponent,
   O_ReadConstructorField,
+  O_Add,
   O_Dup,
   O_Pop,
   O_PrimitiveCall,
@@ -186,8 +187,7 @@ export class VirtualMachine {
         // TODO
         break;
       case O_Call:
-        // TODO
-        break;
+        return this._stepCall();
       case O_Return:
         return this._stepReturn();
       case O_MakeTuple:
@@ -205,12 +205,12 @@ export class VirtualMachine {
       case O_ReadConstructorField:
         // TODO
         break;
+      case O_Add:
+        return this._stepAdd();
       case O_Dup:
-        // TODO
-        break;
+        return this._stepDup();
       case O_Pop:
-        // TODO
-        break;
+        return this._stepPop();
       case O_PrimitiveCall:
         // TODO
         break;
@@ -285,6 +285,33 @@ export class VirtualMachine {
     frame.instructionPointer = this._labelTargets[instruction.targetLabel];
   }
 
+  // TODO:
+  //    O_JumpIfFalse
+  //    O_JumpIfConstructor
+  //    O_JumpIfTuple
+
+  _stepCall() {
+    let callerFrame = this._currentFrame();
+    let instruction = this._currentInstruction();
+
+    /* Create a new stack frame for the callee */
+    let newFrame = new Frame(this._labelTargets[instruction.targetLabel]);
+    this._callStack.push(newFrame);
+
+    /* Already increment caller's instruction pointer for after return */
+    callerFrame.instructionPointer++;
+
+    /* Pop arguments from caller's frame and push them into callee's frame */
+    for (let i = 0; i < instruction.nargs; i++) {
+      if (callerFrame.stackEmpty()) {
+        throw new GbsRuntimeError(instruction.startPos, instruction.endPos,
+          i18n('errmsg:too-few-arguments')(instruction.targetLabel)
+        );
+      }
+      newFrame.pushValue(callerFrame.popValue());
+    }
+  }
+
   _stepReturn() {
     let innerFrame = this._currentFrame();
 
@@ -306,10 +333,32 @@ export class VirtualMachine {
     } else {
       /* There are further frames in the call stack, which means
        * that we are returning from a function. */
-      let outerFrame = this._currentActivationRecord();
-      outerFrame.push(returnValue);
-      // TODO: check position of ip
+      let outerFrame = this._currentFrame();
+      outerFrame.pushValue(returnValue);
     }
+  }
+
+  /* Instruction used for testing/debugging */
+  _stepAdd() {
+    let frame = this._currentFrame();
+    let v1 = frame.popValue();
+    let v2 = frame.popValue();
+    frame.pushValue(v1 + v2);
+    frame.instructionPointer++;
+  }
+
+  _stepDup() {
+    let frame = this._currentFrame();
+    let value = frame.popValue();
+    frame.pushValue(value);
+    frame.pushValue(value);
+    frame.instructionPointer++;
+  }
+
+  _stepPop() {
+    let frame = this._currentFrame();
+    frame.popValue();
+    frame.instructionPointer++;
   }
 
 }

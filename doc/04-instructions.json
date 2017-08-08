@@ -1,0 +1,38 @@
+[
+  [
+   ["PushConstant", ["constant", ["+", "STRING", "INT"]]],
+   "Mete la constante dada en la pila."
+  ],
+  [
+   ["PushVariable", ["variableName", "ID"]],
+   "Mete el valor actual de la variable local variableName en la pila. Si variableName no tiene asociado un valor, lanza una excepción GbsRuntimeError."
+  ],
+  [
+   ["SetVariable", ["variableName", "ID"]],
+   "Saca el valor del tope de la pila y modifica la variable local variableName para que tome dicho valor. Si la variable no existe en el diccionario de nombres locales, se crea una entrada."
+  ],
+  [
+   ["UnsetVariable", ["variableName", "ID"]],
+   "Elimina la variable local variableName del diccionario de nombres locales. Si la variable no existe en el diccionario de nombres locales, esta instrucción no causa ningún otro efecto más que incrementar el instruction pointer."
+  ],
+  [
+   ["Label", ["label", "LABEL"]],
+   "Pseudo-instrucción para definir una etiqueta, es decir un punto en el código que puede ser el destino de un salto o una invocación. No puede haber etiquetas repetidas en todo el código."
+  ],
+  [
+   ["Jump", ["targetLabel", "LABEL"]],
+   "Salta incondicionalmente a la etiqueta indicada (debe existir)."
+  ],
+  [
+   ["JumpIfFalse", ["targetLabel", "LABEL"]],
+   "Si el tope de la pila es False, salta a la etiqueta indicada, que debe existir. Esta instrucción saca el elemento del tope de la pila. La pila no puede estar vacía."
+  ],
+  [
+   ["JumpIfConstructor", ["constructorName", "ID"], ["targetLabel", "LABEL"]],
+   "Si el tope de la pila es una instancia del constructor indicado por 'constructorName', salta a la etiqueta indicada, que debe existir. No saca el elemento del tope de la pila. La pila no puede estar vacía."
+  ],
+  [
+   ["JumpIfTuple", ["size", "INT"], ["targetLabel", "LABEL"]],
+   "Si el tope de la pila es una tupla con la cantidad de componentes indicada por 'size', salta a la etiqueta indicada, que debe existir. No saca el elemento del tope de la pila. La pila no puede estar vacía."
+  ]
+]

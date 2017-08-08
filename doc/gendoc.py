@@ -108,12 +108,13 @@ def grammar_to_tex(json_grammar):
 
 def type_to_tex(typ):
     if isinstance(typ, list):
-        assert typ[0] in ['*', '?']
-        subtyp = typ[1]
+        assert typ[0] in ['*', '?', '+']
         if typ[0] == '*':
-            return '[%s]' % (type_to_tex(subtyp),)
+            return '[%s]' % (type_to_tex(typ[1]),)
         elif typ[0] == '?':
-            return '(%s)?' % (type_to_tex(subtyp),)
+            return '(%s)?' % (type_to_tex(typ[1]),)
+        elif typ[0] == '+':
+            return '%s + %s' % (type_to_tex(typ[1]), type_to_tex(typ[2]))
     else:
         return '\\type{%s}' % (typ,)
 
@@ -155,8 +156,37 @@ def ast_to_tex(json_ast):
             )
     return tex
 
+## Instructions
+
+def instruction_signature_to_tex(signature):
+    tex = []
+    tex.append('\\instruction{%s}(' % (signature[0],))
+    fields = []
+    for fieldName, fieldType in signature[1:]:
+        fields.append('%s : %s' % (fieldName, type_to_tex(fieldType)))
+    tex.append(', '.join(fields))
+    tex.append(')')
+    return ''.join(tex)
+
+def instructions_to_tex(json_instructions):
+    tex = []
+    tex.append('\\begin{itemize}')
+    for instruction in json_instructions:
+        signature = instruction[0]
+        description = instruction[1]
+        tex.append(
+            '\\item %s\\\\%s' % (
+                instruction_signature_to_tex(signature),
+                string_to_tex(description)
+            )
+        )
+    tex.append('\\item \\TODO{TODO}')
+    tex.append('\\end{itemize}')
+    return tex
+
 if __name__ == '__main__':
     gendoc('01-tokens.json', tokens_to_tex)
     gendoc('02-grammar.json', grammar_to_tex)
     gendoc('03-ast.json', ast_to_tex)
+    gendoc('04-instructions.json', instructions_to_tex)
 

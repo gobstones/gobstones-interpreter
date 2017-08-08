@@ -353,6 +353,11 @@ const ES = {
       return 'La variable "' + variableName + '" no está definida.';
     },
 
+  'errmsg:too-few-arguments':
+    function (routine) {
+      return 'Faltan argumentos para "' + variableName + '".';
+    },
+
   /* Helpers */
   '<alternative>':
     function (strings) {

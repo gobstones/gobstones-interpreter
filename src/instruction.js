@@ -17,6 +17,7 @@ export const O_MakeConstructor = Symbol.for('O_MakeConstructor');
 export const O_UpdateConstructor = Symbol.for('O_UpdateConstructor');
 export const O_ReadTupleComponent = Symbol.for('O_ReadTupleComponent');
 export const O_ReadConstructorField = Symbol.for('O_ReadConstructorField');
+export const O_Add = Symbol.for('O_Add');
 export const O_Dup = Symbol.for('O_Dup');
 export const O_Pop = Symbol.for('O_Pop');
 export const O_PrimitiveCall = Symbol.for('O_PrimitiveCall');
@@ -49,7 +50,11 @@ export class Code {
     let labelTargets = {};
     for (let i = 0; i < this._instructions.length; i++)  {
       if (this._instructions[i].opcode == O_Label) {
-        labelTargets[this._instructions[i].label] = i;
+        let label = this._instructions[i].label;
+        if (label in labelTargets) {
+          throw Error('Code: label "' + label + '" is repeated.');
+        }
+        labelTargets[label] = i;
       }
     }
     return labelTargets;
@@ -211,16 +216,24 @@ export class IJumpIfTuple extends Instruction {
   }
 }
 
-/* Call a procedure or function.
+/* Call a subroutine (procedure or function).
  * The arguments are expected to be located in the stack
- * with the last one at the top. */
+ * with the last one at the top.
+ *
+ * The arguments are popped from the current frame and pushed
+ * onto the new frame.
+ */
 export class ICall extends Instruction {
-  constructor(nargs) {
-    super(O_Call, [nargs]);
+  constructor(targetLabel, nargs) {
+    super(O_Call, [targetLabel, nargs]);
+  }
+
+  get targetLabel() {
+    return this._args[0];
   }
 
   get nargs() {
-    return this._args[0];
+    return this._args[1];
   }
 }
 
@@ -304,6 +317,14 @@ export class IReadConstructorField extends Instruction {
     return this._args[0];
   }
 }
+
+/* Add the topmost elements of the stack (used mostly for testing/debugging) */
+export class IAdd extends Instruction {
+  constructor() {
+    super(O_Add, []);
+  }
+}
+
 
 /* Duplicate the top of the stack (there should be at least one element) */
 export class IDup extends Instruction {
