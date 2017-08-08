@@ -86,6 +86,13 @@ const ES = {
   'LocalIndex': 'índice',
   'LocalParameter': 'parámetro',
 
+  /* Descriptions of value types */
+  'V_Integer': 'un número',
+  'V_String': 'una cadena',
+  'V_Tuple': 'una tupla',
+  'V_List': 'una lista',
+  'V_Structure': 'una estructura',
+
   /* Lexer */
   'errmsg:unclosed-multiline-comment':
     'El comentario se abre pero nunca se cierra.',
@@ -347,7 +354,7 @@ const ES = {
            + 'instancias).';
     },
 
-  /* Virtual machine */
+  /* Runtime errors (virtual machine) */
   'errmsg:undefined-variable':
     function (variableName) {
       return 'La variable "' + variableName + '" no está definida.';
@@ -356,6 +363,22 @@ const ES = {
   'errmsg:too-few-arguments':
     function (routine) {
       return 'Faltan argumentos para "' + variableName + '".';
+    },
+
+  'errmsg:expected-structure-but-got':
+    function (constructorName, valueTag) {
+      return 'Se esperaba una estructura construida '
+           + 'con el constructor "' + constructorName + '", '
+           + 'pero se recibió ' + valueTag + '.';
+    },
+
+  'errmsg:expected-constructor-but-got':
+    function (constructorNameExpected, constructorNameReceived) {
+      return 'Se esperaba una estructura construida '
+           + 'con el constructor "'
+           + constructorNameExpected + '", '
+           + 'pero el constructor recibido es '
+           + constructorNameReceived + '".';
     },
 
   /* Helpers */

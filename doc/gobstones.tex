@@ -168,7 +168,7 @@ el \texttt{return} \'unicamente aparezca como \'ultima instrucci\'on del bloque,
 es una restricci\'on que se posterga para la etapa de chequeo sem\'antico
 ({\em lint}).
 \item Se admite el gui\'on bajo (\chr{\_}) como un posible patr\'on en el lado
-izquierdo de las ramas de un \texttt{switch} y en el lado izquierdo de las ramas de un.
+izquierdo de las ramas de un \texttt{switch} y en el lado izquierdo de las ramas de un
 \texttt{interactive program}.
 En una lista de ramas deber\'ia haber un \'unico gui\'on bajo, y deber\'ia ser el \'ultimo
 patr\'on de la lista pero esto, de nuevo, se relega a la etapa de lint.
@@ -250,7 +250,7 @@ recursivamente de la siguiente manera:
             el primero es una expresi\'on que representa la condici\'on
             del if,
             el segundo es un comando que representa la rama \texttt{then},
-            y el tercero puede ser \texttt{null} (si la rama \texttt{else})
+            y el tercero puede ser \texttt{null} (si la rama \texttt{else}
             se encuentra ausente), o un comando que representa la rama \texttt{else}.
       \end{itemize}
 \item Como se mencion\'o arriba, en algunos (pocos) casos
@@ -489,7 +489,8 @@ El estado de ejecuci\'on de un programa consta de los siguientes datos:
       La pila de llamadas es una pila no vac\'ia de {\em frames}.
       Un {\em frame} es el estado local
       o contexto de ejecuci\'on de la rutina actual (tambi\'en conocido como
-      {\em registro de activaci\'on}). Un {\em frame} es una instancia de la
+      {\em stack frame} o {\em registro de activaci\'on} en la literatura).
+      Un {\em frame} es una instancia de la
       clase \texttt{Frame} y consta de los siguientes datos:
       \begin{itemize}
       \item El {\em instruction pointer}, que es un \'indice dentro de la lista de instrucciones.

@@ -1,34 +1,44 @@
 
 import {
-  O_PushConstant,
-  O_PushVariable,
-  O_SetVariable,
-  O_UnsetVariable,
-  O_Label,
-  O_Jump,
-  O_JumpIfFalse,
-  O_JumpIfConstructor,
-  O_JumpIfTuple,
-  O_Call,
-  O_Return,
-  O_MakeTuple,
-  O_MakeConstructor,
-  O_UpdateConstructor,
-  O_ReadTupleComponent,
-  O_ReadConstructorField,
-  O_Add,
-  O_Dup,
-  O_Pop,
-  O_PrimitiveCall,
-  O_SaveState,
-  O_RestoreState,
-  O_CheckIsInteger,
-  O_CheckIsTuple,
-  O_CheckIsType,
+  I_PushInteger,
+  I_PushString,
+  I_PushVariable,
+  I_SetVariable,
+  I_UnsetVariable,
+  I_Label,
+  I_Jump,
+  I_JumpIfFalse,
+  I_JumpIfStructure,
+  I_JumpIfTuple,
+  I_Call,
+  I_Return,
+  I_MakeTuple,
+  I_MakeList,
+  I_MakeStructure,
+  I_UpdateStructure,
+  I_ReadTupleComponent,
+  I_ReadStructureField,
+  I_Add,
+  I_Dup,
+  I_Pop,
+  I_PrimitiveCall,
+  I_SaveState,
+  I_RestoreState,
+  I_CheckIsInteger,
+  I_CheckIsTuple,
+  I_CheckIsList,
+  I_CheckIsType,
 } from './instruction';
+import {
+  V_Structure,
+  ValueInteger,
+  ValueString,
+  ValueTuple,
+  ValueList,
+  ValueStructure,
+} from './value';
 import { GbsRuntimeError } from './exceptions';
 import { i18n } from './i18n';
-
 /* Conditions that may occur on runtime */
 const RT_ExitProgram = Symbol.for('RT_ExitProgram');
 
@@ -89,7 +99,7 @@ class Frame {
   }
 
   stackEmpty() {
-    return this._stack.length == 0;
+    return this._stack.length === 0;
   }
 
   pushValue(value) {
@@ -97,6 +107,9 @@ class Frame {
   }
 
   popValue() {
+    if (this._stack.length === 0) {
+      throw Error('VM: no value to pop.');
+    }
     return this._stack.pop();
   }
 }
@@ -116,8 +129,11 @@ export class VirtualMachine {
   constructor(code) {
     this._code = code;
 
-    /* this._labelTargets is a dictionary mapping label names to
-     * the corresponding instruction pointers. */
+    /* "this._labelTargets" is a dictionary mapping label names to
+     * the corresponding instruction pointers.
+     *
+     * It is calculated automatically from code.
+     */
     this._labelTargets = this._code.labelTargets();
 
     /* A "call stack" is a stack of frames.
@@ -127,10 +143,11 @@ export class VirtualMachine {
      *
      * The previous element is the execution context of the caller, and so on.
      *
-     * During the execution of a program the call stack is never empty.
+     * During the execution of a program the call stack should never
+     * become empty.
      */
     this._callStack = [];
-    this._callStack.push(new Frame(0));
+    this._callStack.push(new Frame(0/*instructionPointer*/));
   }
 
   run() {
@@ -165,68 +182,72 @@ export class VirtualMachine {
    */
   _step() {
     switch (this._currentInstruction().opcode) {
-      case O_PushConstant:
-        return this._stepPushConstant();
-      case O_PushVariable:
+      case I_PushInteger:
+        return this._stepPushInteger();
+      case I_PushString:
+        return this._stepPushString();
+      case I_PushVariable:
         return this._stepPushVariable();
-      case O_SetVariable:
+      case I_SetVariable:
         return this._stepSetVariable();
-      case O_UnsetVariable:
+      case I_UnsetVariable:
         return this._stepUnsetVariable();
-      case O_Label:
+      case I_Label:
         return this._stepLabel();
-      case O_Jump:
+      case I_Jump:
         return this._stepJump();
-      case O_JumpIfFalse:
+      case I_JumpIfFalse:
         // TODO
         break;
-      case O_JumpIfConstructor:
+      case I_JumpIfStructure:
         // TODO
         break;
-      case O_JumpIfTuple:
+      case I_JumpIfTuple:
         // TODO
         break;
-      case O_Call:
+      case I_Call:
         return this._stepCall();
-      case O_Return:
+      case I_Return:
         return this._stepReturn();
-      case O_MakeTuple:
+      case I_MakeTuple:
+        return this._stepMakeTuple();
+      case I_MakeList:
+        return this._stepMakeList();
+      case I_MakeStructure:
+        return this._stepMakeStructure();
+      case I_UpdateStructure:
+        return this._stepUpdateStructure();
+      case I_ReadTupleComponent:
         // TODO
         break;
-      case O_MakeConstructor:
+      case I_ReadStructureField:
         // TODO
         break;
-      case O_UpdateConstructor:
-        // TODO
-        break;
-      case O_ReadTupleComponent:
-        // TODO
-        break;
-      case O_ReadConstructorField:
-        // TODO
-        break;
-      case O_Add:
+      case I_Add:
         return this._stepAdd();
-      case O_Dup:
+      case I_Dup:
         return this._stepDup();
-      case O_Pop:
+      case I_Pop:
         return this._stepPop();
-      case O_PrimitiveCall:
+      case I_PrimitiveCall:
         // TODO
         break;
-      case O_SaveState:
+      case I_SaveState:
         // TODO
         break;
-      case O_RestoreState:
+      case I_RestoreState:
         // TODO
         break;
-      case O_CheckIsInteger:
+      case I_CheckIsInteger:
         // TODO
         break;
-      case O_CheckIsTuple:
+      case I_CheckIsTuple:
         // TODO
         break;
-      case O_CheckIsType:
+      case I_CheckIsList:
+        // TODO
+        break;
+      case I_CheckIsType:
         // TODO
         break;
       default:
@@ -238,10 +259,17 @@ export class VirtualMachine {
     }
   }
 
-  _stepPushConstant() {
+  _stepPushInteger() {
     let frame = this._currentFrame();
     let instruction = this._currentInstruction();
-    frame.pushValue(instruction.constant);
+    frame.pushValue(new ValueInteger(instruction.number));
+    frame.instructionPointer++;
+  }
+
+  _stepPushString() {
+    let frame = this._currentFrame();
+    let instruction = this._currentInstruction();
+    frame.pushValue(new ValueString(instruction.string));
     frame.instructionPointer++;
   }
 
@@ -286,9 +314,9 @@ export class VirtualMachine {
   }
 
   // TODO:
-  //    O_JumpIfFalse
-  //    O_JumpIfConstructor
-  //    O_JumpIfTuple
+  //    I_JumpIfFalse
+  //    I_JumpIfStructure
+  //    I_JumpIfTuple
 
   _stepCall() {
     let callerFrame = this._currentFrame();
@@ -297,9 +325,6 @@ export class VirtualMachine {
     /* Create a new stack frame for the callee */
     let newFrame = new Frame(this._labelTargets[instruction.targetLabel]);
     this._callStack.push(newFrame);
-
-    /* Already increment caller's instruction pointer for after return */
-    callerFrame.instructionPointer++;
 
     /* Pop arguments from caller's frame and push them into callee's frame */
     for (let i = 0; i < instruction.nargs; i++) {
@@ -335,15 +360,87 @@ export class VirtualMachine {
        * that we are returning from a function. */
       let outerFrame = this._currentFrame();
       outerFrame.pushValue(returnValue);
+      outerFrame.instructionPointer++;
     }
+  }
+
+  _stepMakeTuple() {
+    let frame = this._currentFrame();
+    let instruction = this._currentInstruction();
+
+    let elements = [];
+    for (let i = 0; i < instruction.size; i++) {
+      elements.unshift(frame.popValue());
+    }
+    frame.pushValue(new ValueTuple(elements));
+    frame.instructionPointer++;
+  }
+
+  _stepMakeList() {
+    let frame = this._currentFrame();
+    let instruction = this._currentInstruction();
+
+    let elements = [];
+    for (let i = 0; i < instruction.size; i++) {
+      elements.unshift(frame.popValue());
+    }
+    frame.pushValue(new ValueList(elements));
+    frame.instructionPointer++;
+  }
+
+  _stepMakeStructure() {
+    let frame = this._currentFrame();
+    let instruction = this._currentInstruction();
+
+    let fields = {};
+    let n = instruction.fieldNames.length;
+    for (let i = 0; i < n; i++) {
+      let fieldName = instruction.fieldNames[n - i - 1];
+      fields[fieldName] = frame.popValue();
+    }
+    frame.pushValue(
+      new ValueStructure(instruction.constructorName, fields)
+    );
+    frame.instructionPointer++;
+  }
+
+  _stepUpdateStructure() {
+    let frame = this._currentFrame();
+    let instruction = this._currentInstruction();
+
+    let fields = {};
+    let n = instruction.fieldNames.length;
+    for (let i = 0; i < n; i++) {
+      let fieldName = instruction.fieldNames[n - i - 1];
+      fields[fieldName] = frame.popValue();
+    }
+    let structure = frame.popValue();
+    if (structure.tag !== V_Structure) {
+      throw new GbsRuntimeError(instruction.startPos, instruction.endPos,
+        i18n('errmsg:expected-structure-but-got')(
+          instruction.constructorName,
+          i18n(Symbol.keyFor(structure.tag)),
+        )
+      );
+    }
+    if (structure.constructorName !== instruction.constructorName) {
+      throw new GbsRuntimeError(instruction.startPos, instruction.endPos,
+        i18n('errmsg:expected-constructor-but-got')(
+          instruction.constructorName,
+          structure.constructorName,
+        )
+      );
+    }
+    frame.pushValue(structure.updateFields(fields));
+    frame.instructionPointer++;
   }
 
   /* Instruction used for testing/debugging */
   _stepAdd() {
     let frame = this._currentFrame();
-    let v1 = frame.popValue();
-    let v2 = frame.popValue();
-    frame.pushValue(v1 + v2);
+    let v1 = frame.popValue().number;
+    let v2 = frame.popValue().number;
+    frame.pushValue(new ValueInteger(v1 + v2));
     frame.instructionPointer++;
   }
 

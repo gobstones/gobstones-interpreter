@@ -1,7 +1,11 @@
 [
   [
-   ["PushConstant", ["constant", ["+", "STRING", "INT"]]],
-   "Mete la constante dada en la pila."
+   ["PushInteger", ["number", "INT"]],
+   "Mete la constante numérica dada en la pila."
+  ],
+  [
+   ["PushString", ["string", "STRING"]],
+   "Mete la constante de cadena dada en la pila."
   ],
   [
    ["PushVariable", ["variableName", "ID"]],
@@ -28,11 +32,42 @@
    "Si el tope de la pila es False, salta a la etiqueta indicada, que debe existir. Esta instrucción saca el elemento del tope de la pila. La pila no puede estar vacía."
   ],
   [
-   ["JumpIfConstructor", ["constructorName", "ID"], ["targetLabel", "LABEL"]],
+   ["JumpIfStructure", ["constructorName", "ID"], ["targetLabel", "LABEL"]],
    "Si el tope de la pila es una instancia del constructor indicado por 'constructorName', salta a la etiqueta indicada, que debe existir. No saca el elemento del tope de la pila. La pila no puede estar vacía."
   ],
   [
    ["JumpIfTuple", ["size", "INT"], ["targetLabel", "LABEL"]],
    "Si el tope de la pila es una tupla con la cantidad de componentes indicada por 'size', salta a la etiqueta indicada, que debe existir. No saca el elemento del tope de la pila. La pila no puede estar vacía."
+  ],
+
+  [
+   ["Call", ["targetLabel", "LABEL"], ["nargs", "INT"]],
+   "Hace una invocación a una subrutina. Más precisamente, mete un nuevo stack frame en la pila de llamadas, con el instruction pointer apuntando a la posición del código designada por la etiqueta 'targetLabel'. Saca 'nargs' valores del tope de la pila del stack frame llamador y los apila en la pila del nuevo stack frame. Notar que al desapilarlos y reapilarlos el orden se invierte, de tal manera que el primer parámetro queda en el tope de la pila."
+  ],
+
+  [
+   ["Return"],
+   "Retorna de una invocación a una subrutina. Más precisamente, saca el stack frame del tope de la pila de llamadas. Si la pila de llamadas queda vacía, es el return del programa principal y el programa finaliza. Cuando se ejecuta la instrucción Return, debe haber 0 o 1 valores en la pila. En caso de que haya un valor, se saca de la pila del stack frame actual y se apila en el stack frame del llamador."
+  ],
+
+  [
+   ["MakeTuple", ["size", "INT"]],
+   "Crea una tupla del tamaño indicado. Los elementos se sacan de la pila (el último elemento de la tupla debe encontrarse en el tope de la pila)."
+  ],
+
+  [
+   ["MakeList", ["size", "INT"]],
+   "Crea una lista del tamaño indicado. Los elementos se sacan de la pila (el último elemento de la lista debe encontrarse en el tope de la pila)."
+  ],
+
+  [
+   ["MakeStructure", ["constructorName", "ID"], ["fieldNames", ["*", "ID"]]],
+   "Crea una estructura usando el constructor indicado, con los campos indicados por la lista de nombres 'fieldNames'. Los valores de cada campo se sacan de la pila (el valor del último campo de la lista debe encontrarse en el tope de la pila)."
+  ],
+
+  [
+   ["UpdateStructure", ["constructorName", "ID"], ["fieldNames", ["*", "ID"]]],
+   "Actualiza una estructura usando el constructor indicado, con los campos indicados por la lista de nombres 'fieldNames'. Los valores de cada campo se sacan de la pila (el valor del último campo de la lista debe encontrarse en el tope de la pila). A continuación se saca de la pila el valor, que debe ser una estructura para actualizar. Si el valor no es una estructura, o si es una estructura pero no está construida con el constructor esperado, se lanza una excepción GbsRuntimeError."
   ]
+
 ]

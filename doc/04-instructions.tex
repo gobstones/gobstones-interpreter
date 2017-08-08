@@ -3,15 +3,22 @@
 % Do not edit by hand.
 %
 \begin{itemize}
-\item \instruction{PushConstant}(constant : \type{STRING} + \type{INT})\\Mete la constante dada en la pila.
+\item \instruction{PushInteger}(number : \type{INT})\\Mete la constante num\'erica dada en la pila.
+\item \instruction{PushString}(string : \type{STRING})\\Mete la constante de cadena dada en la pila.
 \item \instruction{PushVariable}(variableName : \type{ID})\\Mete el valor actual de la variable local variableName en la pila. Si variableName no tiene asociado un valor, lanza una excepci\'on GbsRuntimeError.
 \item \instruction{SetVariable}(variableName : \type{ID})\\Saca el valor del tope de la pila y modifica la variable local variableName para que tome dicho valor. Si la variable no existe en el diccionario de nombres locales, se crea una entrada.
 \item \instruction{UnsetVariable}(variableName : \type{ID})\\Elimina la variable local variableName del diccionario de nombres locales. Si la variable no existe en el diccionario de nombres locales, esta instrucci\'on no causa ning\'un otro efecto m\'as que incrementar el instruction pointer.
 \item \instruction{Label}(label : \type{LABEL})\\Pseudo-instrucci\'on para definir una etiqueta, es decir un punto en el c\'odigo que puede ser el destino de un salto o una invocaci\'on. No puede haber etiquetas repetidas en todo el c\'odigo.
 \item \instruction{Jump}(targetLabel : \type{LABEL})\\Salta incondicionalmente a la etiqueta indicada (debe existir).
 \item \instruction{JumpIfFalse}(targetLabel : \type{LABEL})\\Si el tope de la pila es False, salta a la etiqueta indicada, que debe existir. Esta instrucci\'on saca el elemento del tope de la pila. La pila no puede estar vac\'ia.
-\item \instruction{JumpIfConstructor}(constructorName : \type{ID}, targetLabel : \type{LABEL})\\Si el tope de la pila es una instancia del constructor indicado por 'constructorName', salta a la etiqueta indicada, que debe existir. No saca el elemento del tope de la pila. La pila no puede estar vac\'ia.
+\item \instruction{JumpIfStructure}(constructorName : \type{ID}, targetLabel : \type{LABEL})\\Si el tope de la pila es una instancia del constructor indicado por 'constructorName', salta a la etiqueta indicada, que debe existir. No saca el elemento del tope de la pila. La pila no puede estar vac\'ia.
 \item \instruction{JumpIfTuple}(size : \type{INT}, targetLabel : \type{LABEL})\\Si el tope de la pila es una tupla con la cantidad de componentes indicada por 'size', salta a la etiqueta indicada, que debe existir. No saca el elemento del tope de la pila. La pila no puede estar vac\'ia.
+\item \instruction{Call}(targetLabel : \type{LABEL}, nargs : \type{INT})\\Hace una invocaci\'on a una subrutina. M\'as precisamente, mete un nuevo stack frame en la pila de llamadas, con el instruction pointer apuntando a la posici\'on del c\'odigo designada por la etiqueta 'targetLabel'. Saca 'nargs' valores del tope de la pila del stack frame llamador y los apila en la pila del nuevo stack frame. Notar que al desapilarlos y reapilarlos el orden se invierte, de tal manera que el primer par\'ametro queda en el tope de la pila.
+\item \instruction{Return}()\\Retorna de una invocaci\'on a una subrutina. M\'as precisamente, saca el stack frame del tope de la pila de llamadas. Si la pila de llamadas queda vac\'ia, es el return del programa principal y el programa finaliza. Cuando se ejecuta la instrucci\'on Return, debe haber 0 o 1 valores en la pila. En caso de que haya un valor, se saca de la pila del stack frame actual y se apila en el stack frame del llamador.
+\item \instruction{MakeTuple}(size : \type{INT})\\Crea una tupla del tama\~no indicado. Los elementos se sacan de la pila (el \'ultimo elemento de la tupla debe encontrarse en el tope de la pila).
+\item \instruction{MakeList}(size : \type{INT})\\Crea una lista del tama\~no indicado. Los elementos se sacan de la pila (el \'ultimo elemento de la lista debe encontrarse en el tope de la pila).
+\item \instruction{MakeStructure}(constructorName : \type{ID}, fieldNames : [\type{ID}])\\Crea una estructura usando el constructor indicado, con los campos indicados por la lista de nombres 'fieldNames'. Los valores de cada campo se sacan de la pila (el valor del \'ultimo campo de la lista debe encontrarse en el tope de la pila).
+\item \instruction{UpdateStructure}(constructorName : \type{ID}, fieldNames : [\type{ID}])\\Actualiza una estructura usando el constructor indicado, con los campos indicados por la lista de nombres 'fieldNames'. Los valores de cada campo se sacan de la pila (el valor del \'ultimo campo de la lista debe encontrarse en el tope de la pila). A continuaci\'on se saca de la pila el valor, que debe ser una estructura para actualizar. Si el valor no es una estructura, o si es una estructura pero no est\'a construida con el constructor esperado, se lanza una excepci\'on GbsRuntimeError.
 \item \TODO{TODO}
 \end{itemize}
 %

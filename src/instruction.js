@@ -1,31 +1,34 @@
 import { UnknownPosition } from './reader';
 
 /* Opcodes are constant symbols */
-export const O_PushConstant = Symbol.for('O_PushConstant');
-export const O_PushVariable = Symbol.for('O_PushVariable');
-export const O_SetVariable = Symbol.for('O_SetVariable');
-export const O_UnsetVariable = Symbol.for('O_UnsetVariable');
-export const O_Label = Symbol.for('O_Label');
-export const O_Jump = Symbol.for('O_Jump');
-export const O_JumpIfFalse = Symbol.for('O_JumpIfFalse');
-export const O_JumpIfConstructor = Symbol.for('O_JumpIfConstructor');
-export const O_JumpIfTuple = Symbol.for('O_JumpIfTuple');
-export const O_Call = Symbol.for('O_Call');
-export const O_Return = Symbol.for('O_Return');
-export const O_MakeTuple = Symbol.for('O_MakeTuple');
-export const O_MakeConstructor = Symbol.for('O_MakeConstructor');
-export const O_UpdateConstructor = Symbol.for('O_UpdateConstructor');
-export const O_ReadTupleComponent = Symbol.for('O_ReadTupleComponent');
-export const O_ReadConstructorField = Symbol.for('O_ReadConstructorField');
-export const O_Add = Symbol.for('O_Add');
-export const O_Dup = Symbol.for('O_Dup');
-export const O_Pop = Symbol.for('O_Pop');
-export const O_PrimitiveCall = Symbol.for('O_PrimitiveCall');
-export const O_SaveState = Symbol.for('O_SaveState');
-export const O_RestoreState = Symbol.for('O_RestoreState');
-export const O_CheckIsInteger = Symbol.for('O_CheckIsInteger');
-export const O_CheckIsTuple = Symbol.for('O_CheckIsTuple');
-export const O_CheckIsType = Symbol.for('O_CheckIsType');
+export const I_PushInteger = Symbol.for('I_PushInteger');
+export const I_PushString = Symbol.for('I_PushString');
+export const I_PushVariable = Symbol.for('I_PushVariable');
+export const I_SetVariable = Symbol.for('I_SetVariable');
+export const I_UnsetVariable = Symbol.for('I_UnsetVariable');
+export const I_Label = Symbol.for('I_Label');
+export const I_Jump = Symbol.for('I_Jump');
+export const I_JumpIfFalse = Symbol.for('I_JumpIfFalse');
+export const I_JumpIfStructure = Symbol.for('I_JumpIfStructure');
+export const I_JumpIfTuple = Symbol.for('I_JumpIfTuple');
+export const I_Call = Symbol.for('I_Call');
+export const I_Return = Symbol.for('I_Return');
+export const I_MakeTuple = Symbol.for('I_MakeTuple');
+export const I_MakeList = Symbol.for('I_MakeList');
+export const I_MakeStructure = Symbol.for('I_MakeStructure');
+export const I_UpdateStructure = Symbol.for('I_UpdateStructure');
+export const I_ReadTupleComponent = Symbol.for('I_ReadTupleComponent');
+export const I_ReadStructureField = Symbol.for('I_ReadStructureField');
+export const I_Add = Symbol.for('I_Add');
+export const I_Dup = Symbol.for('I_Dup');
+export const I_Pop = Symbol.for('I_Pop');
+export const I_PrimitiveCall = Symbol.for('I_PrimitiveCall');
+export const I_SaveState = Symbol.for('I_SaveState');
+export const I_RestoreState = Symbol.for('I_RestoreState');
+export const I_CheckIsInteger = Symbol.for('I_CheckIsInteger');
+export const I_CheckIsTuple = Symbol.for('I_CheckIsTuple');
+export const I_CheckIsList = Symbol.for('I_CheckIsList');
+export const I_CheckIsType = Symbol.for('I_CheckIsType');
 
 export class Code {
   constructor(instructions) {
@@ -49,7 +52,7 @@ export class Code {
   labelTargets() {
     let labelTargets = {};
     for (let i = 0; i < this._instructions.length; i++)  {
-      if (this._instructions[i].opcode == O_Label) {
+      if (this._instructions[i].opcode == I_Label) {
         let label = this._instructions[i].label;
         if (label in labelTargets) {
           throw Error('Code: label "' + label + '" is repeated.');
@@ -97,12 +100,23 @@ export class Instruction {
 }
 
 /* Push a constant on the stack. */
-export class IPushConstant extends Instruction {
-  constructor(constant) {
-    super(O_PushConstant, [constant]);
+
+export class IPushInteger extends Instruction {
+  constructor(number) {
+    super(I_PushInteger, [number]);
   }
 
-  get constant() {
+  get number() {
+    return this._args[0];
+  }
+}
+
+export class IPushString extends Instruction {
+  constructor(string) {
+    super(I_PushString, [string]);
+  }
+
+  get string() {
     return this._args[0];
   }
 }
@@ -110,7 +124,7 @@ export class IPushConstant extends Instruction {
 /* Push a local index/variable/parameter on the stack. */
 export class IPushVariable extends Instruction {
   constructor(variableName) {
-    super(O_PushVariable, [variableName]);
+    super(I_PushVariable, [variableName]);
   }
 
   get variableName() {
@@ -121,7 +135,7 @@ export class IPushVariable extends Instruction {
 /* Set a local index/variable/parameter to the value on the top of the stack. */
 export class ISetVariable extends Instruction {
   constructor(variableName) {
-    super(O_SetVariable, [variableName]);
+    super(I_SetVariable, [variableName]);
   }
 
   get variableName() {
@@ -141,7 +155,7 @@ export class ISetVariable extends Instruction {
  */
 export class IUnsetVariable extends Instruction {
   constructor(variableName) {
-    super(O_UnsetVariable, [variableName]);
+    super(I_UnsetVariable, [variableName]);
   }
 
   get variableName() {
@@ -153,7 +167,7 @@ export class IUnsetVariable extends Instruction {
 /* Pseudo-instruction to mark the target of a jump. */
 export class ILabel extends Instruction {
   constructor(label) {
-    super(O_Label, [label]);
+    super(I_Label, [label]);
   }
 
   get label() {
@@ -164,7 +178,7 @@ export class ILabel extends Instruction {
 /* Unconditional jump. */
 export class IJump extends Instruction {
   constructor(targetLabel) {
-    super(O_Jump, [targetLabel]);
+    super(I_Jump, [targetLabel]);
   }
 
   get targetLabel() {
@@ -176,7 +190,7 @@ export class IJump extends Instruction {
  * Pops the top of the stack. */
 export class IJumpIfFalse extends Instruction {
   constructor(targetLabel) {
-    super(O_JumpIfFalse, [targetLabel]);
+    super(I_JumpIfFalse, [targetLabel]);
   }
 
   get targetLabel() {
@@ -184,11 +198,11 @@ export class IJumpIfFalse extends Instruction {
   }
 }
 
-/* Jump if the top of the stack is built using the given constructor.
- * Does NOT pop the top of the stack. */
-export class IJumpIfConstructor extends Instruction {
+/* Jump if the top of the stack is a structure built using the given
+ * constructor. Does NOT pop the top of the stack. */
+export class IJumpIfStructure extends Instruction {
   constructor(constructorName, targetLabel) {
-    super(O_JumpIfConstructor, [constructorName, targetLabel]);
+    super(I_JumpIfStructure, [constructorName, targetLabel]);
   }
 
   get constructorName() {
@@ -204,7 +218,7 @@ export class IJumpIfConstructor extends Instruction {
  * Does NOT pop the top of the stack. */
 export class IJumpIfTuple extends Instruction {
   constructor(size, targetLabel) {
-    super(O_JumpIfTuple, [size, targetLabel]);
+    super(I_JumpIfTuple, [size, targetLabel]);
   }
 
   get size() {
@@ -225,7 +239,7 @@ export class IJumpIfTuple extends Instruction {
  */
 export class ICall extends Instruction {
   constructor(targetLabel, nargs) {
-    super(O_Call, [targetLabel, nargs]);
+    super(I_Call, [targetLabel, nargs]);
   }
 
   get targetLabel() {
@@ -242,7 +256,7 @@ export class ICall extends Instruction {
  * it must be on the top of the stack. */
 export class IReturn extends Instruction {
   constructor() {
-    super(O_Return, []);
+    super(I_Return, []);
   }
 }
 
@@ -251,7 +265,7 @@ export class IReturn extends Instruction {
  * with the last one at the top. */
 export class IMakeTuple extends Instruction {
   constructor(size) {
-    super(O_MakeTuple, [size]);
+    super(I_MakeTuple, [size]);
   }
 
   get size() {
@@ -259,12 +273,25 @@ export class IMakeTuple extends Instruction {
   }
 }
 
-/* Make an instance of a constructor with the given fields.
+/* Make a list of the given size.
+ * The elements are expected to be located in the stack
+ * with the last one at the top. */
+export class IMakeList extends Instruction {
+  constructor(size) {
+    super(I_MakeList, [size]);
+  }
+
+  get size() {
+    return this._args[0];
+  }
+}
+
+/* Make a structure using the given constructor and the given fields.
  * The values of the fields are expected to be located in the stack
  * with the last one at the top. */
-export class IMakeConstructor extends Instruction {
+export class IMakeStructure extends Instruction {
   constructor(constructorName, fieldNames) {
-    super(O_MakeConstructor, [constructorName, fieldNames]);
+    super(I_MakeStructure, [constructorName, fieldNames]);
   }
 
   get constructorName() {
@@ -276,13 +303,14 @@ export class IMakeConstructor extends Instruction {
   }
 }
 
-/* Update an instance of a constructor with the given fields.
- * The stack should have an instance of the given constructor,
- * followed by the values of the fields are expected.
+/* Update a structure built using the given constructor with the given
+ * fields.
+ * The stack should have a structure built using the given constructor,
+ * followed by the values of the fields that are expected.
  * The last field should be at the top. */
-export class IUpdateConstructor extends Instruction {
+export class IUpdateStructure extends Instruction {
   constructor(constructorName, fieldNames) {
-    super(O_UpdateConstructor, [constructorName, fieldNames]);
+    super(I_UpdateStructure, [constructorName, fieldNames]);
   }
 
   get constructorName() {
@@ -298,7 +326,7 @@ export class IUpdateConstructor extends Instruction {
  * Does not pop the tuple. */
 export class IReadTupleComponent extends Instruction {
   constructor(index) {
-    super(O_ReadTupleComponent, [index]);
+    super(I_ReadTupleComponent, [index]);
   }
 
   get index() {
@@ -306,11 +334,11 @@ export class IReadTupleComponent extends Instruction {
   }
 }
 
-/* Read the given field from the record at the top of the stack.
+/* Read the given field from the structure at the top of the stack.
  * Does not pop the record. */
-export class IReadConstructorField extends Instruction {
+export class IReadStructureField extends Instruction {
   constructor(fieldName) {
-    super(O_ReadConstructorField, [fieldName]);
+    super(I_ReadStructureField, [fieldName]);
   }
 
   get fieldName() {
@@ -321,7 +349,7 @@ export class IReadConstructorField extends Instruction {
 /* Add the topmost elements of the stack (used mostly for testing/debugging) */
 export class IAdd extends Instruction {
   constructor() {
-    super(O_Add, []);
+    super(I_Add, []);
   }
 }
 
@@ -329,14 +357,14 @@ export class IAdd extends Instruction {
 /* Duplicate the top of the stack (there should be at least one element) */
 export class IDup extends Instruction {
   constructor() {
-    super(O_Dup, []);
+    super(I_Dup, []);
   }
 }
 
 /* Pop the top of the stack (there should be at least one element) */
 export class IPop extends Instruction {
   constructor() {
-    super(O_Pop, []);
+    super(I_Pop, []);
   }
 }
 
@@ -356,7 +384,7 @@ export class IPop extends Instruction {
  */
 export class IPrimitiveCall extends Instruction {
   constructor(nargs) {
-    super(O_PrimitiveCall, [nargs]);
+    super(I_PrimitiveCall, [nargs]);
   }
 
   get nargs() {
@@ -367,14 +395,14 @@ export class IPrimitiveCall extends Instruction {
 /* Save the global state (when entering a function) */
 export class ISaveState extends Instruction {
   constructor() {
-    super(O_SaveState, []);
+    super(I_SaveState, []);
   }
 }
 
 /* Restore the global state (when leaving a function) */
 export class IRestoreState extends Instruction {
   constructor() {
-    super(O_RestoreState, []);
+    super(I_RestoreState, []);
   }
 }
 
@@ -382,7 +410,7 @@ export class IRestoreState extends Instruction {
  * Does not pop the top of the stack. */
 export class ICheckIsInteger extends Instruction {
   constructor() {
-    super(O_CheckIsInteger, []);
+    super(I_CheckIsInteger, []);
   }
 }
 
@@ -390,7 +418,7 @@ export class ICheckIsInteger extends Instruction {
  * Does not pop the top of the stack. */
 export class ICheckIsTuple extends Instruction {
   constructor(size) {
-    super(O_CheckIsTuple, [size]);
+    super(I_CheckIsTuple, [size]);
   }
 
   get size() {
@@ -398,11 +426,19 @@ export class ICheckIsTuple extends Instruction {
   }
 }
 
+/* Check that the top of the stack is a list.
+ * Does not pop the top of the stack. */
+export class ICheckIsList extends Instruction {
+  constructor() {
+    super(I_CheckIsList, []);
+  }
+}
+
 /* Check that the top of the stack is an instance of the given type.
  * Does not pop the top of the stack. */
 export class ICheckIsType extends Instruction {
   constructor(typeName) {
-    super(O_CheckIsType, [typeName]);
+    super(I_CheckIsType, [typeName]);
   }
 
   get typeName() {
