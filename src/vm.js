@@ -36,6 +36,8 @@ import {
   ValueTuple,
   ValueList,
   ValueStructure,
+  joinTypes,
+  TypeAny,
 } from './value';
 import { GbsRuntimeError } from './exceptions';
 import { i18n } from './i18n';
@@ -289,8 +291,26 @@ export class VirtualMachine {
   _stepSetVariable() {
     let frame = this._currentFrame();
     let instruction = this._currentInstruction();
-    let value = frame.popValue();
-    frame.setVariable(instruction.variableName, value);
+    let newValue = frame.popValue();
+
+    /* Check that types are compatible */
+    let oldValue = frame.getVariable(instruction.variableName);
+    if (oldValue !== null) {
+      let oldType = oldValue.type();
+      let newType = newValue.type();
+      if (joinTypes(oldType, newType) === null) {
+        throw new GbsRuntimeError(instruction.startPos, instruction.endPos,
+          i18n('errmsg:incompatible-types-on-assignment')(
+            instruction.variableName,
+            oldType.toString(),
+            newType.toString(),
+          )
+        );
+      }
+    }
+
+    /* Proceed with assignment */
+    frame.setVariable(instruction.variableName, newValue);
     frame.instructionPointer++;
   }
 
@@ -384,6 +404,25 @@ export class VirtualMachine {
     for (let i = 0; i < instruction.size; i++) {
       elements.unshift(frame.popValue());
     }
+
+    /* Check that the types of the elements are compatible */
+    let contentType = new TypeAny();
+    let index = 0;
+    for (let element of elements) {
+      let oldType = contentType;
+      let newType = element.type();
+      contentType = joinTypes(oldType, newType);
+      if (contentType === null) {
+        throw new GbsRuntimeError(instruction.startPos, instruction.endPos,
+          i18n('errmsg:incompatible-types-on-list-creation')(
+            index,
+            oldType.toString(),
+            newType.toString(),
+          )
+        );
+      }
+      index++;
+    }
     frame.pushValue(new ValueList(elements));
     frame.instructionPointer++;
   }
@@ -399,7 +438,9 @@ export class VirtualMachine {
       fields[fieldName] = frame.popValue();
     }
     frame.pushValue(
-      new ValueStructure(instruction.constructorName, fields)
+      new ValueStructure(
+        instruction.typeName, instruction.constructorName, fields
+      )
     );
     frame.instructionPointer++;
   }

@@ -92,6 +92,191 @@ describe('Virtual Machine', () => {
       expect(vm.run()).deep.equals(new ValueInteger(20));
     });
 
+    it('Reject assignment of different type (int vs. string)', () => {
+      let vm = new VirtualMachine(new Code([
+        new IPushInteger(10),
+        new ISetVariable('x'),
+        new IPushString('foo'),
+        new ISetVariable('x'),
+        new IReturn(),
+      ]));
+      expect(() => vm.run()).throws(
+        i18n('errmsg:incompatible-types-on-assignment')(
+          'x',
+          'Integer',
+          'String'
+        )
+      );
+    });
+
+    it('Reject assignment of different type (int vs. empty list)', () => {
+      let vm = new VirtualMachine(new Code([
+        new IPushInteger(10),
+        new ISetVariable('x'),
+        new IMakeList(0),
+        new ISetVariable('x'),
+        new IReturn(),
+      ]));
+      expect(() => vm.run()).throws(
+        i18n('errmsg:incompatible-types-on-assignment')(
+          'x',
+          'Integer',
+          'List(?)'
+        )
+      );
+    });
+
+    it('Reject assignment of different type (int vs. non-empty list)', () => {
+      let vm = new VirtualMachine(new Code([
+        new IPushInteger(10),
+        new ISetVariable('x'),
+        new IPushInteger(1),
+        new IMakeList(1),
+        new ISetVariable('x'),
+        new IReturn(),
+      ]));
+      expect(() => vm.run()).throws(
+        i18n('errmsg:incompatible-types-on-assignment')(
+          'x',
+          'Integer',
+          'List(Integer)'
+        )
+      );
+    });
+
+    it('Reject assignment of different type (tuple vs. tuple length)', () => {
+      let vm = new VirtualMachine(new Code([
+        new IPushInteger(1),
+        new IPushInteger(2),
+        new IMakeTuple(2),
+        new ISetVariable('x'),
+        new IPushInteger(1),
+        new IPushInteger(2),
+        new IPushInteger(3),
+        new IMakeTuple(3),
+        new ISetVariable('x'),
+        new IReturn(),
+      ]));
+      expect(() => vm.run()).throws(
+        i18n('errmsg:incompatible-types-on-assignment')(
+          'x',
+          'Tuple(Integer, Integer)',
+          'Tuple(Integer, Integer, Integer)'
+        )
+      );
+    });
+
+    it('Reject assignment of different type (tuple vs. tuple contents)', () => {
+      let vm = new VirtualMachine(new Code([
+        new IPushInteger(1),
+        new IPushString('foo'),
+        new IMakeTuple(2),
+        new ISetVariable('x'),
+        new IPushInteger(1),
+        new IPushInteger(2),
+        new IMakeTuple(2),
+        new ISetVariable('x'),
+        new IReturn(),
+      ]));
+      expect(() => vm.run()).throws(
+        i18n('errmsg:incompatible-types-on-assignment')(
+          'x',
+          'Tuple(Integer, String)',
+          'Tuple(Integer, Integer)'
+        )
+      );
+    });
+
+    it('Reject assignment of different type (list vs. list contents)', () => {
+      let vm = new VirtualMachine(new Code([
+        new IPushString('foo'),
+        new IPushString('bar'),
+        new IMakeList(2),
+        new ISetVariable('x'),
+        new IPushInteger(1),
+        new IPushInteger(2),
+        new IMakeList(2),
+        new ISetVariable('x'),
+        new IReturn(),
+      ]));
+      expect(() => vm.run()).throws(
+        i18n('errmsg:incompatible-types-on-assignment')(
+          'x',
+          'List(String)',
+          'List(Integer)'
+        )
+      );
+    });
+
+    it('Reject assignment of different type (constructors)', () => {
+      let vm = new VirtualMachine(new Code([
+        new IMakeStructure('T1', 'A', []),
+        new ISetVariable('x'),
+        new IMakeStructure('T2', 'B', []),
+        new ISetVariable('x'),
+        new IReturn(),
+      ]));
+      expect(() => vm.run()).throws(
+        i18n('errmsg:incompatible-types-on-assignment')(
+          'x',
+          'T1:A',
+          'T2:B'
+        )
+      );
+    });
+
+    it('Reject assignment of different type (constructor fields)', () => {
+      let vm = new VirtualMachine(new Code([
+        new IPushInteger(1),
+        new IMakeStructure('T', 'A', ['f']),
+        new ISetVariable('x'),
+        new IPushString('foo'),
+        new IMakeStructure('T', 'A', ['f']),
+        new ISetVariable('x'),
+        new IReturn(),
+      ]));
+      expect(() => vm.run()).throws(
+        i18n('errmsg:incompatible-types-on-assignment')(
+          'x',
+          'T:A(f <- Integer)',
+          'T:A(f <- String)'
+        )
+      );
+    });
+
+    it('Accept assignment of compatible type (empty list vs. list)', () => {
+      let vm = new VirtualMachine(new Code([
+        new IMakeList(0),
+        new ISetVariable('x'),
+        new IPushInteger(1),
+        new IPushInteger(2),
+        new IMakeList(2),
+        new ISetVariable('x'),
+        new IPushVariable('x'),
+        new IReturn(),
+      ]));
+      expect(vm.run()).deep.equals(
+        new ValueList([
+          new ValueInteger(1),
+          new ValueInteger(2),
+        ])
+      );
+    });
+
+    it('Accept assignment of compatible type (different constructors)', () => {
+      let vm = new VirtualMachine(new Code([
+        new IMakeStructure('T1', 'A', []),
+        new ISetVariable('x'),
+        new IMakeStructure('T1', 'B', []),
+        new ISetVariable('x'),
+        new IPushVariable('x'),
+        new IReturn(),
+      ]));
+      expect(vm.run()).deep.equals(
+        new ValueStructure('T1', 'B', {})
+      );
+    });
+
     it('Fail when reading an undefined variable', () => {
       let vm = new VirtualMachine(new Code([
         new IPushInteger(10),
@@ -247,27 +432,81 @@ describe('Virtual Machine', () => {
       );
     });
 
+    it('Reject list creation for incompatible types (int vs. string)', () => {
+      let vm = new VirtualMachine(new Code([
+        new IPushInteger(1),
+        new IPushInteger(2),
+        new IPushString('foo'),
+        new IMakeList(3),
+        new IReturn(),
+      ]));
+      expect(() => vm.run()).throws(
+        i18n('errmsg:incompatible-types-on-list-creation')(
+          2,
+          'Integer',
+          'String',
+        )
+      );
+    });
+
+    it('Reject list creation for incompatible types (constructors)', () => {
+      let vm = new VirtualMachine(new Code([
+        new IPushInteger(1),
+        new IMakeStructure('T', 'A', ['x']),
+        new IPushString('foo'),
+        new IMakeStructure('T', 'B', ['x']),
+        new IPushString('foo'),
+        new IMakeStructure('T', 'A', ['x']),
+        new IMakeList(3),
+        new IReturn(),
+      ]));
+      expect(() => vm.run()).throws(
+        i18n('errmsg:incompatible-types-on-list-creation')(
+          2,
+          'T:A(x <- Integer) | T:B(x <- String)',
+          'T:A(x <- String)',
+        )
+      );
+    });
+
+    it('Accept list creation for compatible types', () => {
+      let vm = new VirtualMachine(new Code([
+        new IPushInteger(1),
+        new IMakeStructure('T', 'A', ['x']),
+        new IPushString('foo'),
+        new IMakeStructure('T', 'B', ['x']),
+        new IMakeList(2),
+        new IReturn(),
+      ]));
+      expect(vm.run()).deep.equals(
+        new ValueList([
+          new ValueStructure('T', 'A', {'x': new ValueInteger(1)}),
+          new ValueStructure('T', 'B', {'x': new ValueString('foo')}),
+        ])
+      );
+    });
+
   });
 
   describe('Structure instantiation', () => {
 
     it('Make structure without fields', () => {
       let vm = new VirtualMachine(new Code([
-        new IMakeStructure('False', []),
+        new IMakeStructure('Bool', 'False', []),
         new IReturn(),
       ]));
-      expect(vm.run()).deep.equals(new ValueStructure('False', {}));
+      expect(vm.run()).deep.equals(new ValueStructure('Bool', 'False', {}));
     });
 
     it('Make structure with fields', () => {
       let vm = new VirtualMachine(new Code([
         new IPushInteger(1),
         new IPushInteger(2),
-        new IMakeStructure('Coord', ['x', 'y']),
+        new IMakeStructure('Coord', 'Coord', ['x', 'y']),
         new IReturn(),
       ]));
       expect(vm.run()).deep.equals(
-        new ValueStructure('Coord', {
+        new ValueStructure('Coord', 'Coord', {
           'x': new ValueInteger(1),
           'y': new ValueInteger(2),
         })
@@ -281,7 +520,7 @@ describe('Virtual Machine', () => {
     it('Reject structure update if not a structure', () => {
       let vm = new VirtualMachine(new Code([
         new IPushInteger(42),
-        new IUpdateStructure('Coord', []),
+        new IUpdateStructure('Coord', 'Coord', []),
         new IReturn(),
       ]));
       expect(() => vm.run()).throws(
@@ -294,8 +533,8 @@ describe('Virtual Machine', () => {
 
     it('Reject structure update for different constructor', () => {
       let vm = new VirtualMachine(new Code([
-        new IMakeStructure('False', []),
-        new IUpdateStructure('Coord', []),
+        new IMakeStructure('Bool', 'False', []),
+        new IUpdateStructure('Coord', 'Coord', []),
         new IReturn(),
       ]));
       expect(() => vm.run()).throws(
@@ -311,12 +550,12 @@ describe('Virtual Machine', () => {
         new IPushInteger(1),
         new IPushInteger(2),
         new IPushInteger(3),
-        new IMakeStructure('Foo', ['x', 'y', 'z']),
-        new IUpdateStructure('Foo', []),
+        new IMakeStructure('Foo', 'Bar', ['x', 'y', 'z']),
+        new IUpdateStructure('Foo', 'Bar', []),
         new IReturn(),
       ]));
       expect(vm.run()).deep.equals(
-        new ValueStructure('Foo', {
+        new ValueStructure('Foo', 'Bar', {
           'x': new ValueInteger(1),
           'y': new ValueInteger(2),
           'z': new ValueInteger(3),
@@ -329,15 +568,15 @@ describe('Virtual Machine', () => {
         new IPushInteger(1),
         new IPushInteger(2),
         new IPushInteger(3),
-        new IMakeStructure('Foo', ['x', 'y', 'z']),
+        new IMakeStructure('Foo', 'Bar', ['x', 'y', 'z']),
         new IPushInteger(30),
         new IPushInteger(10),
-        new IUpdateStructure('Foo', ['z', 'x']),
-        new IUpdateStructure('Foo', []),
+        new IUpdateStructure('Foo', 'Bar', ['z', 'x']),
+        new IUpdateStructure('Foo', 'Bar', []),
         new IReturn(),
       ]));
       expect(vm.run()).deep.equals(
-        new ValueStructure('Foo', {
+        new ValueStructure('Foo', 'Bar', {
           'x': new ValueInteger(10),
           'y': new ValueInteger(2),
           'z': new ValueInteger(30),

@@ -361,8 +361,8 @@ const ES = {
     },
 
   'errmsg:too-few-arguments':
-    function (routine) {
-      return 'Faltan argumentos para "' + variableName + '".';
+    function (routineName) {
+      return 'Faltan argumentos para "' + routineName + '".';
     },
 
   'errmsg:expected-structure-but-got':
@@ -379,6 +379,21 @@ const ES = {
            + constructorNameExpected + '", '
            + 'pero el constructor recibido es '
            + constructorNameReceived + '".';
+    },
+
+  'errmsg:incompatible-types-on-assignment':
+    function (variableName, oldType, newType) {
+      return 'La variable "' + variableName + '" '
+           + 'contenía un valor de tipo ' + oldType + ', '
+           + 'no se le puede asignar un valor de tipo ' + newType + '".';
+    },
+
+  'errmsg:incompatible-types-on-list-creation':
+    function (index, oldType, newType) {
+      return 'Todos los elementos de una lista deben ser del mismo tipo. '
+           + 'Los elementos son de tipo ' + oldType + ', '
+           + 'pero el elemento en la posición ' + index.toString() + ' '
+           + 'es de tipo ' + newType + '.';
     },
 
   /* Helpers */

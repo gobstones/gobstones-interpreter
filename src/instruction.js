@@ -290,16 +290,20 @@ export class IMakeList extends Instruction {
  * The values of the fields are expected to be located in the stack
  * with the last one at the top. */
 export class IMakeStructure extends Instruction {
-  constructor(constructorName, fieldNames) {
-    super(I_MakeStructure, [constructorName, fieldNames]);
+  constructor(typeName, constructorName, fieldNames) {
+    super(I_MakeStructure, [typeName, constructorName, fieldNames]);
   }
 
-  get constructorName() {
+  get typeName() {
     return this._args[0];
   }
 
-  get fieldNames() {
+  get constructorName() {
     return this._args[1];
+  }
+
+  get fieldNames() {
+    return this._args[2];
   }
 }
 
@@ -309,16 +313,20 @@ export class IMakeStructure extends Instruction {
  * followed by the values of the fields that are expected.
  * The last field should be at the top. */
 export class IUpdateStructure extends Instruction {
-  constructor(constructorName, fieldNames) {
-    super(I_UpdateStructure, [constructorName, fieldNames]);
+  constructor(typeName, constructorName, fieldNames) {
+    super(I_UpdateStructure, [typeName, constructorName, fieldNames]);
   }
 
-  get constructorName() {
+  get typeName() {
     return this._args[0];
   }
 
-  get fieldNames() {
+  get constructorName() {
     return this._args[1];
+  }
+
+  get fieldNames() {
+    return this._args[2];
   }
 }
 

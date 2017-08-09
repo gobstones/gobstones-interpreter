@@ -13,7 +13,7 @@
   ],
   [
    ["SetVariable", ["variableName", "ID"]],
-   "Saca el valor del tope de la pila y modifica la variable local variableName para que tome dicho valor. Si la variable no existe en el diccionario de nombres locales, se crea una entrada."
+   "Saca el valor del tope de la pila y modifica la variable local variableName para que tome dicho valor. Si la variable no existe en el diccionario de nombres locales, se crea una entrada. Si la variable ya existía, se verifica que el tipo del valor que tenía y el tipo del valor actual sean compatibles."
   ],
   [
    ["UnsetVariable", ["variableName", "ID"]],
@@ -61,13 +61,13 @@
   ],
 
   [
-   ["MakeStructure", ["constructorName", "ID"], ["fieldNames", ["*", "ID"]]],
-   "Crea una estructura usando el constructor indicado, con los campos indicados por la lista de nombres 'fieldNames'. Los valores de cada campo se sacan de la pila (el valor del último campo de la lista debe encontrarse en el tope de la pila)."
+   ["MakeStructure", ["typeName", "ID"], ["constructorName", "ID"], ["fieldNames", ["*", "ID"]]],
+   "Crea una estructura usando el constructor indicado ('constructorName') del tipo indicado ('typeName'), con los campos indicados por la lista de nombres 'fieldNames'. Los valores de cada campo se sacan de la pila (el valor del último campo de la lista debe encontrarse en el tope de la pila)."
   ],
 
   [
-   ["UpdateStructure", ["constructorName", "ID"], ["fieldNames", ["*", "ID"]]],
-   "Actualiza una estructura usando el constructor indicado, con los campos indicados por la lista de nombres 'fieldNames'. Los valores de cada campo se sacan de la pila (el valor del último campo de la lista debe encontrarse en el tope de la pila). A continuación se saca de la pila el valor, que debe ser una estructura para actualizar. Si el valor no es una estructura, o si es una estructura pero no está construida con el constructor esperado, se lanza una excepción GbsRuntimeError."
+   ["UpdateStructure", ["typeName", "ID"], ["constructorName", "ID"], ["fieldNames", ["*", "ID"]]],
+   "Actualiza una estructura usando el constructor indicado ('constructorName') del tipo indicado ('typeName'), con los campos indicados por la lista de nombres 'fieldNames'. Los valores de cada campo se sacan de la pila (el valor del último campo de la lista debe encontrarse en el tope de la pila). A continuación se saca de la pila el valor, que debe ser una estructura para actualizar. Si el valor no es una estructura, o si es una estructura pero no está construida con el constructor esperado, se lanza una excepción GbsRuntimeError."
   ]
 
 ]
