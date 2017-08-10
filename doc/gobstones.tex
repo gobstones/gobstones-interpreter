@@ -1,0 +1,884 @@
+\documentclass{article}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{xspace}
+\usepackage{amsmath}
+\usepackage{tabularx}
+\usepackage[spanish]{babel}
+\begin{document}
+\colorlet{darkgreen}{green!60!black}
+\newcommand{\chr}[1]{\texttt{'}\textcolor{blue}{\texttt{#1}}\texttt{'}}
+\newcommand{\str}[1]{\texttt{"}\textcolor{blue}{\texttt{#1}}\texttt{"}}
+\newcommand{\tok}[1]{\textcolor{red}{\texttt{#1}}}
+\newcommand{\symbolentry}[3]{#1 & #2 && #3 \\}
+\newcommand{\nb}[1]{\footnotesize{#1}}
+\newcommand{\NB}[1]{
+  & {\footnotesize {#1}}
+}
+\newcommand{\s}[1]{\textcolor{blue}{{\it$\langle$#1$\rangle$}}}
+\newcommand{\nonEmpty}[1]{#1$_{1}$}
+\newcommand{\produccion}[2]{
+  \noindent
+  \begin{tabularx}{\textwidth}{lrlr}
+  #1 & $\xrightarrow{\hspace{.5cm}}$ & #2
+  \end{tabularx}\\
+}
+\newcommand{\EMPTY}{$\epsilon$}
+\newcommand{\ALT}{
+  \\ & $\mid$ &
+}
+\newcommand{\ALTA}{
+  $\mid$
+}
+\newcommand{\TODO}[1]{\textcolor{red}{****#1****}}
+
+\newcommand{\type}[1]{\textcolor{blue}{\texttt{#1}}}
+\renewcommand{\ast}[1]{\textcolor{darkgreen}{\texttt{\underline{#1}}}}
+\newcommand{\typedecl}[2]{\noindent
+  \begin{tabularx}{\textwidth}{lrlr}
+  #1 & $=$ & #2
+  \end{tabularx}\\
+}
+\newcommand{\datadecl}[2]{\noindent
+  \begin{tabularx}{\textwidth}{lrp{13cm}r}
+  #1 & $::=$ & #2
+  \end{tabularx}\\
+}
+
+\newcommand{\PUEDE}{{\bf PUEDE}\xspace}
+\newcommand{\PUEDEN}{{\bf PUEDEN}\xspace}
+\newcommand{\NOPUEDE}{{\bf NO PUEDE}\xspace}
+\newcommand{\NOPUEDEN}{{\bf NO PUEDEN}\xspace}
+\newcommand{\DEBE}{{\bf DEBE}\xspace}
+\newcommand{\DEBEN}{{\bf DEBEN}\xspace}
+
+\section{Gram\'atica de XGobstones}
+
+\subsection{Sintaxis l\'exica}
+
+\begin{itemize}
+\item Se ignoran:
+\chr{\textbackslash t} (\texttt{TAB}, chr 8),
+\chr{\textbackslash n} (\texttt{LF}, chr 10),
+\chr{\textbackslash r} (\texttt{CR}, chr 13),
+\chr{\,} (\texttt{SPACE}, chr 32).
+\item Se admiten comentarios comenzados por \str{//} (estilo C++), por \str{--} (estilo Haskell) y por \str{\#} (estilo shell) que se extienden hasta el fin de l\'inea (\texttt{LF}).
+\item Se admiten comentarios delimitados por \str{/*} \str{*/} y por \str{\{-} \str{-\}} que pueden anidarse.
+\item El tokenizador reconoce directivas {\em pragma} de la forma \str{/*@parte$_1$@parte$_2$@...@parte$_n$@*/}. La idea es que esto pueda ser un mecanismo extensible de directivas. Ver m\'as abajo las directivas soportadas.
+\end{itemize}
+
+
+\subsection{Lista de s\'imbolos terminales}
+
+Todos los s\'imbolos terminales se acompa\~nan de su nombre \tok{EN\_MAYUSCULAS}.\bigskip
+
+\noindent{\bf Identificadores y constantes}\medskip\\
+\begin{tabularx}{\textwidth}{llXp{4cm}}
+\symbolentry{\texttt{0|[1-9][0-9]*}}{\tok{NUM}}{\nb{Constante num\'erica (sin ceros a la izquierda).}}
+\symbolentry{\texttt{[:lower:]([:letter:]|[:digit:]|\_|')*}}{\tok{LOWERID}}{\nb{Identificador en min\'uscula: \'indices, par\'ametros, funciones, variables, campos.}}
+\symbolentry{\texttt{[:upper:]([:letter:]|[:digit:]|\_|')*}}{\tok{UPPERID}}{\nb{Identificador en may\'uscula: constructores, procedimientos, tipos.}}
+\symbolentry{\texttt{"(\textbackslash{a}|\textbackslash{b}|\textbackslash{f}|\textbackslash{n}|\textbackslash{r}|\textbackslash{t}|\textbackslash{v}|\textbackslash\textbackslash|\textbackslash"|[\^{}\textbackslash"])*"}}{\tok{STRING}}{\nb{Constante de cadena.}}
+\end{tabularx}
+\medskip
+
+Clarificaciones:
+\begin{itemize}
+\item {\bf Constantes num\'ericas.}
+Son una secuencia de d\'igitos decimales que representan enteros positivos.
+No pueden tener ceros innecesarios a la izquierda.
+\item {\bf Identificadores.}
+Comienzan por un caracter alfab\'etico y
+est\'an seguidos por cero o m\'as caracteres,
+ya sea alfab\'eticos, num\'ericos, gui\'on bajo (\texttt{\_}) o comilla simple (\texttt{'}).
+Se aceptan caracteres Unicode arbitrarios. Decimos que un caracter $c$ es {\bf alfab\'etico}
+cuando tiene dos variantes, una min\'uscula y una may\'uscula, es decir cuando:
+\[
+\texttt{$c$.toUpperCase() != $c$.toLowerCase()}
+\]
+Los identificadores \tok{LOWERID} comienzan por un caracter en min\'usculas y
+los identificadores \tok{UPPERID} comienzan por un caracter en may\'usculas.
+
+\item {\bf Constantes de {\em string}.}
+Las cadenas est\'an delimitadas por comillas dobles (\chr{"}).
+Todos los caracteres desde la comilla que abre hasta la que cierra se
+toman literalmente salvo la contrabarra (\chr{\textbackslash}) que se
+interpreta como un caracter de escape.
+Los escapes admitidos son:
+\begin{center}
+\texttt{\textbackslash\textbackslash}
+\hspace{1cm}
+\texttt{\textbackslash"}
+\end{center}
+\begin{center}
+\texttt{\textbackslash{a}}
+\hspace{1cm}
+\texttt{\textbackslash{b}}
+\hspace{1cm}
+\texttt{\textbackslash{f}}
+\hspace{1cm}
+\texttt{\textbackslash{n}}
+\hspace{1cm}
+\texttt{\textbackslash{r}}
+\hspace{1cm}
+\texttt{\textbackslash{t}}
+\hspace{1cm}
+\texttt{\textbackslash{v}}
+\end{center}
+con su significado acostumbrado en la tradici\'on de C
+({\em cf.} la gram\'atica oficial de Gobstones).
+\end{itemize}
+\bigskip
+
+\noindent{\bf Palabras clave}\medskip\\
+\begin{tabularx}{\textwidth}{llXp{10cm}}
+\symbolentry{\texttt{program}}{\tok{PROGRAM}}{\nb{Para declarar la rutina principal.}}
+\symbolentry{\texttt{interactive}}{\tok{INTERACTIVE}}{\nb{Para declarar una rutina principal interactiva con \texttt{interactive program}.}}
+\symbolentry{\texttt{procedure}}{\tok{PROCEDURE}}{\nb{Para declarar procedimientos.}}
+\symbolentry{\texttt{function}}{\tok{FUNCTION}}{\nb{Para declarar funciones.}}
+\symbolentry{\texttt{return}}{\tok{RETURN}}{\nb{Para devolver valores de funciones y de la rutina principal.}}
+\symbolentry{\texttt{if}}{\tok{IF}}{\nb{Para la alternativa condicional.}}
+\symbolentry{\texttt{then}}{\tok{THEN}}{\nb{Palabra clave opcional para la rama ``then''.}}
+\symbolentry{\texttt{else}}{\tok{ELSE}}{\nb{Para la rama ``else''.}}
+\symbolentry{\texttt{repeat}}{\tok{REPEAT}}{\nb{Repetici\'on simple.}}
+\symbolentry{\texttt{foreach}}{\tok{FOREACH}}{\nb{Repetici\'on indexada.}}
+\symbolentry{\texttt{in}}{\tok{IN}}{\nb{Para declarar el rango de la repetici\'on indexada.}}
+\symbolentry{\texttt{while}}{\tok{WHILE}}{\nb{Repetici\'on condicional.}}
+\symbolentry{\texttt{switch}}{\tok{SWITCH}}{\nb{Para hacer {\em pattern matching}.}}
+\symbolentry{\texttt{match}}{\tok{SWITCH}}{\nb{Alternativa para \texttt{switch}.}}
+\symbolentry{\texttt{to}}{\tok{TO}}{\nb{Palabra clave opcional despu\'es del sujeto sobre el que se hace {\em pattern matching}.}}
+\symbolentry{\texttt{let}}{\tok{LET}}{\nb{Palabra clave opcional para la asignaci\'on. Es obligatoria en el caso de las asignaciones que hacen {\em destructuring} de tuplas.}}
+\symbolentry{\texttt{not}}{\tok{NOT}}{\nb{Negaci\'on l\'ogica.}}
+\symbolentry{\texttt{mod}}{\tok{MOD}}{\nb{Resto de la divisi\'on entera.}}
+\symbolentry{\texttt{div}}{\tok{DIV}}{\nb{Cociente de la divisi\'on entera.}}
+\symbolentry{\texttt{type}}{\tok{TYPE}}{\nb{Para la declaraci\'on de nuevos tipos.}}
+\symbolentry{\texttt{is}}{\tok{IS}}{\nb{Palabra clave para acompa\~nar la declaraci\'on de un nuevo tipo.}}
+\symbolentry{\texttt{record}}{\tok{RECORD}}{\nb{Para tipos registro.}}
+\symbolentry{\texttt{variant}}{\tok{VARIANT}}{\nb{Para tipos variantes.}}
+\symbolentry{\texttt{case}}{\tok{CASE}}{\nb{Para las alternativas de tipos variantes.}}
+\symbolentry{\texttt{field}}{\tok{FIELD}}{\nb{Para los campos de tipos registro.}}
+\symbolentry{\texttt{\_}}{\tok{UNDERSCORE}}{\nb{Para marcar el caso ``default'' en un switch/match.}}
+\symbolentry{\texttt{TIMEOUT}}{\tok{TIMEOUT}}{\nb{Para la rama ``timeout'' en un interactive program.}}
+\end{tabularx}\bigskip
+
+\noindent{\bf S\'imbolos}\medskip\\
+\begin{tabularx}{\textwidth}{llXp{10cm}}
+\symbolentry{\texttt{(}}{\tok{LPAREN}}{\nb{Par\'entesis izquierdo.}}
+\symbolentry{\texttt{)}}{\tok{RPAREN}}{\nb{Par\'entesis derecho.}}
+\symbolentry{\texttt{\{}}{\tok{LBRACE}}{\nb{Llave izquierda.}}
+\symbolentry{\texttt{\}}}{\tok{RBRACE}}{\nb{Llave derecha.}}
+\symbolentry{\texttt{[}}{\tok{LBRACK}}{\nb{Corchete izquierdo (para listas y rangos).}}
+\symbolentry{\texttt{]}}{\tok{RBRACK}}{\nb{Corchete derecho.}}
+\symbolentry{\texttt{,}}{\tok{COMMA}}{\nb{Coma.}}
+\symbolentry{\texttt{;}}{\tok{SEMICOLON}}{\nb{Punto y coma (separador de instrucciones opcional).}}
+\symbolentry{\texttt{..}}{\tok{RANGE}}{\nb{Para rangos, p.ej. \texttt{[1..10]}.}}
+\symbolentry{\texttt{:=}}{\tok{ASSIGN}}{\nb{Asignaci\'on.}}
+\symbolentry{\texttt{\&\&}}{\tok{AND}}{\nb{Conjunci\'on.}}
+\symbolentry{\texttt{||}}{\tok{OR}}{\nb{Disyunci\'on.}}
+\symbolentry{\texttt{<-}}{\tok{GETS}}{\nb{Para inicializar campos, p.ej. \texttt{Coord(x <- 1, y <- 2)}.}}
+\symbolentry{\texttt{|}}{\tok{PIPE}}{\nb{Para actualizar campos, p.ej. \texttt{Coord(c | x <- 2)}.}}
+\symbolentry{\texttt{->}}{\tok{ARROW}}{\nb{Usado en las ramas de un \texttt{switch}, p.ej. \texttt{Norte ->\ \{r := 1\}}.}}
+\symbolentry{\texttt{==}}{\tok{EQ}}{\nb{Comparaci\'on por igualdad.}}
+\symbolentry{\texttt{/=}}{\tok{NE}}{\nb{Comparaci\'on por desigualdad.}}
+\symbolentry{\texttt{<=}}{\tok{LE}}{\nb{Comparaci\'on por menor o igual.}}
+\symbolentry{\texttt{>=}}{\tok{GE}}{\nb{Comparaci\'on por mayor o igual.}}
+\symbolentry{\texttt{<}}{\tok{LT}}{\nb{Comparaci\'on por menor estricto.}}
+\symbolentry{\texttt{>}}{\tok{LT}}{\nb{Comparaci\'on por mayor estricto.}}
+\symbolentry{\texttt{++}}{\tok{CONCAT}}{\nb{Operador de concatenaci\'on de listas.}}
+\symbolentry{\texttt{+}}{\tok{PLUS}}{\nb{Suma de n\'umeros.}}
+\symbolentry{\texttt{-}}{\tok{MINUS}}{\nb{Resta de n\'umeros y menos unario.}}
+\symbolentry{\texttt{*}}{\tok{TIMES}}{\nb{Producto de n\'umeros.}}
+\symbolentry{\texttt{\^}}{\tok{POW}}{\nb{Potencia.}}
+\end{tabularx}\bigskip
+
+\subsection{Pragmas}
+
+El tokenizador implementa directivas pragma para
+mantener registro de ``regiones''. Una regi\'on es una cadena de texto que
+sirve para identificar o {\em taggear} un fragmento del programa.
+Las regiones no tienen ning\'un significado
+especial para el int\'erprete de Gobstones, pero todas las excepciones que
+eleva el int\'erprete vienen acompa\~nadas de una posici\'on que incluye
+el nombre de la regi\'on actual. Las regiones pueden anidarse.
+Este comportamiento se implementa por medio de dos directivas.
+\begin{itemize}
+\item \str{/*@BEGIN\_REGION@\textit{nombre\_de\_la\_regi\'on}@*/}:
+       mete el nombre de una regi\'on en la pila de regiones.
+\item \str{/*@END\_REGION@*/}: saca la regi\'on del tope de la pila de regiones.
+\end{itemize}
+Por ejemplo ante el siguiente programa:
+\begin{verbatim}
+/*@BEGIN_REGION@A@*/
+procedure P() {
+  /*@BEGIN_REGION@B@*/
+  x := f(
+  /*@END_REGION@*/
+}
+/*@END_REGION@*/
+\end{verbatim}
+El parser idealmente deber\'ia reportar que hay un error de sintaxis en la regi\'on \texttt{B}.
+
+\subsection{Gram\'atica}
+Los s\'imbolos no terminales se describen con su nombre \s{enCursiva}.
+Las producciones se escriben siguiendo las convenciones usuales de EBNF.
+La gram\'atica es liberal en algunos sentidos. En particular:
+\begin{itemize}
+\item El \texttt{return}
+se considera un {\em statement} que puede aparecer en la posici\'on en la que
+podr\'ia aparecer cualquier otra instrucci\'on. La restricci\'on de que
+el \texttt{return} \'unicamente aparezca como \'ultima instrucci\'on del bloque, y
+\'unicamente al final de las declaraciones de funciones y del programa principal,
+es una restricci\'on que se posterga para la etapa de chequeo sem\'antico
+({\em lint}).
+\item Se admite el gui\'on bajo (\chr{\_}) como un posible patr\'on en el lado
+izquierdo de las ramas de un \texttt{switch} y en el lado izquierdo de las ramas de un.
+\texttt{interactive program}.
+En una lista de ramas deber\'ia haber un \'unico gui\'on bajo, y deber\'ia ser el \'ultimo
+patr\'on de la lista pero esto, de nuevo, se relega a la etapa de lint.
+\item Los patrones del interactive program (\texttt{TIMEOUT}, \texttt{K\_ENTER}, etc.) se
+admiten como patrones en cualquier switch.
+\end{itemize}
+
+Las convenciones de asociatividad y precedencia de operadores no se reflejan
+en las producciones, sino en la tabla de precedencia.
+(Para expresar esto en la gram\'atica ser\'ia necesario estratificar las expresiones
+en t\'erminos, factores, \'atomos, etc., tal como se hace en la gram\'atica oficial).
+\bigskip
+
+\produccion{\s{start}}{\s{definition}*}
+
+\produccion{\s{definition}}{
+\s{defProgram}
+\ALT
+\s{defInteractiveProgram}
+\ALT
+\s{defProcedure}
+\ALT
+\s{defFunction}
+\ALT
+\s{defType}
+}
+
+\produccion{\s{defProgram}}{
+  \tok{PROGRAM} \s{stmtBlock}
+}
+
+\produccion{\s{defInteractiveProgram}}{
+  \tok{INTERACTIVE} \tok{PROGRAM} \tok{LBRACE} \s{stmtSwitchBranch}* \tok{RBRACE}
+}
+
+\produccion{\s{defProcedure}}{
+  \tok{PROCEDURE} \tok{LPAREN} \s{loweridSeq} \tok{RPAREN} \s{stmtBlock}
+}
+
+\produccion{\s{defFunction}}{
+  \tok{FUNCTION} \tok{LPAREN} \s{loweridSeq} \tok{RPAREN} \s{stmtBlock}
+}
+
+\produccion{\s{defType}}{
+  \tok{TYPE} \tok{UPPERID} \tok{IS} \tok{RECORD} \tok{LBRACE} \s{fieldDeclaration}* \tok{RBRACE}
+\ALT
+  \tok{TYPE} \tok{UPPERID} \tok{IS} \tok{VARIANT} \tok{LBRACE} \s{constructorDeclaration}* \tok{RBRACE}
+}
+
+\produccion{\s{constructorDeclaration}}{
+  \tok{CASE} \tok{UPPERID} \tok{LBRACE} \s{fieldDeclaration}* \tok{RBRACE}
+}
+
+\produccion{\s{fieldDeclaration}}{
+  \tok{FIELD} \tok{LOWERID}
+}
+
+\produccion{\s{loweridSeq}}{
+  \EMPTY
+\ALT
+  \s{\nonEmpty{loweridSeq}}
+}
+
+\produccion{\s{\nonEmpty{loweridSeq}}}{
+  \tok{LOWERID} (\tok{COMMA} \s{\nonEmpty{loweridSeq}})?
+}
+
+\noindent {\bf Statements.}
+
+\produccion{\s{statement}}{
+  \s{stmtBlock}
+\ALT
+  \s{stmtReturn}
+\ALT
+  \s{stmtIf}
+\ALT
+  \s{stmtRepeat}
+\ALT
+  \s{stmtForeach}
+\ALT
+  \s{stmtWhile}
+\ALT
+  \s{stmtSwitch}
+\ALT
+  \s{stmtLet}
+\ALT
+  \s{stmtVariableAssignment}
+\ALT
+  \s{stmtProcedureCall}
+}
+
+\produccion{\s{stmtBlock}}{
+  \tok{LBRACE} (\s{statement} \tok{SEMICOLON}?)* \tok{RBRACE}
+}
+
+\produccion{\s{stmtReturn}}{
+  \tok{RETURN} \tok{LPAREN} \s{expressionSeq} \tok{RPAREN}
+}
+
+\produccion{\s{stmtIf}}{
+  \tok{IF} \tok{LPAREN} \s{expression} \tok{RPAREN} 
+           \tok{THEN}? \s{stmtBlock}
+           (\tok{ELSE} \s{stmtBlock})?
+}
+
+\produccion{\s{stmtRepeat}}{
+  \tok{REPEAT} \tok{LPAREN} \s{expression} \tok{RPAREN} \s{stmtBlock}
+}
+
+\produccion{\s{stmtForeach}}{
+  \tok{FOREACH} \tok{LOWERID} \tok{IN} \s{expression} \s{stmtBlock}
+}
+
+\produccion{\s{stmtWhile}}{
+  \tok{WHILE} \tok{LPAREN} \s{expression} \tok{RPAREN} \s{stmtBlock}
+}
+
+\produccion{\s{stmtSwitch}}{
+  \tok{SWITCH} \tok{LPAREN} \s{expression} \tok{RPAREN} \tok{TO}? \tok{LBRACE} \s{stmtSwitchBranch}* \tok{RBRACE}
+}
+
+\produccion{\s{stmtSwitchBranch}}{
+  \s{pattern} \tok{ARROW} \s{stmtBlock}
+}
+
+\produccion{\s{stmtLet}}{
+  \tok{LET} \s{stmtVariableAssignment}
+\ALT
+  \tok{LET} \s{stmtTupleAssignment}
+}
+
+\produccion{\s{stmtVariableAssignment}}{
+  \tok{LOWERID} \tok{ASSIGN} \s{expression}
+}
+
+\produccion{\s{stmtTupleAssignment}}{
+  \tok{LPAREN} \tok{RPAREN} \tok{ASSIGN} \s{expression}
+\ALT
+  \tok{LPAREN} \tok{LOWERID} \tok{COMMA} \s{\nonEmpty{loweridSeq}} \tok{RPAREN} \tok{ASSIGN} \s{expression}
+}
+
+\produccion{\s{stmtProcedureCall}}{
+  \tok{UPPERID} \tok{LPAREN} \s{expressionSeq} \tok{RPAREN}
+}
+
+\noindent {\bf Patterns.}
+
+\produccion{\s{pattern}}{
+  \s{patternWildcard}
+\ALT
+  \s{patternConstructor}
+\ALT
+  \s{patternTuple}
+\ALT
+  \s{patternTimeout}
+}
+
+\produccion{\s{patternWildcard}}{
+  \tok{UNDERSCORE}
+}
+
+\produccion{\s{patternConstructor}}{
+  \tok{UPPERID} (\tok{LPAREN} \s{loweridSeq} \tok{RPAREN})?
+}
+
+\produccion{\s{patternTuple}}{
+  \tok{LPAREN} \tok{RPAREN}
+\ALT
+  \tok{LPAREN} \tok{LOWERID} \tok{COMMA} \s{\nonEmpty{loweridSeq}} \tok{RPAREN}
+}
+
+\produccion{\s{patternTimeout}}{
+  \tok{TIMEOUT} \tok{LPAREN} \tok{NUM} \tok{RPAREN}
+}
+
+
+\noindent {\bf Expressions.}
+
+\produccion{\s{expression}}{
+  \s{exprAtom}
+\ALT
+  \s{expression} \s{infixOperator} \s{expression}
+\ALT
+  \s{prefixOperator} \s{expression}
+\ALT
+  \tok{LPAREN} \s{expression} \tok{RPAREN}
+}
+
+\produccion{\s{exprAtom}}{
+  \s{exprVariable}
+\ALT
+  \s{exprFunctionCall}
+\ALT
+  \s{exprConstantNumber}
+\ALT
+  \s{exprConstantString}
+\ALT
+  \s{exprList}
+\ALT
+  \s{exprRange}
+\ALT
+  \s{exprTuple}
+\ALT
+  \s{exprConstructor}
+\ALT
+  \s{exprConstructorUpdate}
+}
+
+\produccion{\s{exprVariable}}{
+  \tok{LOWERID}
+}
+
+\produccion{\s{exprFunctionCall}}{
+  \tok{LOWERID} \tok{LPAREN} \s{expressionSeq} \tok{RPAREN}
+}
+
+\produccion{\s{exprConstantNumber}}{
+  \tok{NUM}
+}
+
+\produccion{\s{exprConstantString}}{
+  \tok{STRING}
+}
+
+\produccion{\s{exprList}}{
+  \tok{LBRACK} \s{expressionSeq} \tok{RBRACK}
+}
+
+\produccion{\s{exprRange}}{
+  \tok{LBRACK} \s{expression} \tok{RANGE} \s{expression} \tok{RBRACK}
+\ALT
+  \tok{LBRACK} \s{expression} \tok{COMMA} \s{expression} \tok{RANGE} \s{expression} \tok{RBRACK}
+}
+
+\produccion{\s{exprTuple}}{
+  \tok{LPAREN} \tok{RPAREN}
+\ALT
+  \tok{LPAREN} \s{expression} \tok{COMMA} \s{\nonEmpty{expressionSeq}} \tok{RPAREN}
+}
+
+\produccion{\s{exprConstructor}}{
+  \tok{UPPERID} (\tok{LPAREN} \s{fieldBindingSeq} \tok{RPAREN})?
+}
+
+\produccion{\s{exprConstructorUpdate}}{
+  \tok{UPPERID} \tok{LPAREN} \s{expression} \tok{PIPE} \s{fieldBindingSeq} \tok{RPAREN}
+}
+
+\produccion{\s{fieldBinding}}{
+  \tok{LOWERID} \tok{GETS} \s{expression}
+}
+
+\produccion{\s{fieldBindingSeq}}{
+  \EMPTY
+\ALT
+  \s{\nonEmpty{fieldBindingSeq}}
+}
+
+\produccion{\s{\nonEmpty{fieldBindingSeq}}}{
+  \s{fieldBinding} (\tok{COMMA} \s{\nonEmpty{fieldBindingSeq}})?
+}
+
+\produccion{\s{infixOperator}}{
+  \tok{OR}
+\ALTA
+  \tok{AND}
+\ALTA
+  \tok{EQ}
+\ALTA
+  \tok{NE}
+\ALTA
+  \tok{LE}
+\ALTA
+  \tok{GE}
+\ALTA
+  \tok{LT}
+\ALTA
+  \tok{GT}
+\ALTA
+  \tok{CONCAT}
+\ALT
+  \tok{PLUS}
+\ALTA
+  \tok{MINUS}
+\ALTA
+  \tok{TIMES}
+\ALTA
+  \tok{DIV}
+\ALTA
+  \tok{MOD}
+\ALTA
+  \tok{POW}
+}
+
+\produccion{\s{prefixOperator}}{
+  \tok{MINUS}
+\ALT
+  \tok{NOT}
+}
+
+\produccion{\s{expressionSeq}}{
+  \EMPTY
+\ALT
+  \s{\nonEmpty{expressionSeq}}
+}
+
+\produccion{\s{\nonEmpty{expressionSeq}}}{
+  \s{expression} (\tok{COMMA} \s{\nonEmpty{expressionSeq}})?
+}
+
+\subsubsection{Precedencia de operadores}
+
+Los operadores se organizan seg\'un la siguiente tabla.
+Cada fila corresponde a un nivel de precedencia, ordenados de menor a mayor precedencia.
+Las {\em fixities} posibles son:
+operador binario asociativo a derecha ({\bf InfixR}),
+operador binario asociativo a izquierda ({\bf InfixL}),
+operador binario no asociativo ({\bf Infix}),
+operador unario prefijo ({\bf Prefix}).
+
+\begin{itemize}
+\item {\bf InfixR:} \tok{OR} (\texttt{||})
+\item {\bf InfixR:} \tok{AND} (\texttt{\&\&})
+\item {\bf Prefix:} \tok{NOT} (\texttt{not})
+\item {\bf Infix:}
+  \tok{EQ} (\texttt{==})
+  \tok{NE} (\texttt{/=})
+  \tok{LE} (\texttt{<=})
+  \tok{GE} (\texttt{>=})
+  \tok{LT} (\texttt{<})
+  \tok{GT} (\texttt{>})
+\item {\bf InfixL:}
+  \tok{CONCAT} (\texttt{++})
+\item {\bf InfixL:}
+  \tok{PLUS} (\texttt{+})
+  \tok{MINUS} (\texttt{-})
+\item {\bf InfixL:}
+  \tok{TIMES} (\texttt{*})
+\item {\bf InfixL:}
+  \tok{DIV} (\texttt{div})
+  \tok{MOD} (\texttt{mod})
+\item {\bf InfixR:}
+  \tok{POW} (\texttt{\^})
+\item {\bf Prefix:}
+  \tok{MINUS} (\texttt{-}, menos unario)
+\end{itemize}
+
+\subsection{\'Arbol de sintaxis abstracta}
+
+El resultado de analizar sint\'acticamente un programa es un objeto.
+El objeto representa un \'arbol sint\'actico y est\'a construido
+recursivamente de la siguiente manera:
+\begin{itemize}
+\item Las hojas del \'arbol son instancias de la clase \texttt{Token}
+      cuyo atributo 
+      \texttt{tag} representa el tipo de token (por ejemplo,
+      \texttt{T\_UPPERID})
+      y cuyo atributo \texttt{value} representa el valor le\'ido
+      (por ejemplo, ``\texttt{PonerN}'').
+\item Los nodos internos del \'arbol son instancias de la clase
+      \texttt{ASTNode} o, m\'as precisamente, de alguna de sus subclases.
+      Un nodo interno tiene dos atributos:
+      \begin{itemize}
+      \item \texttt{tag}: indica el ``tipo'' de nodo del que se trata.
+            Por ejemplo
+            una instancia de la clase \texttt{ASTStmtIf}
+            representa un comando \texttt{if-then-else},
+            y el tag asociado es el s\'imbolo \texttt{N\_StmtIf}.
+      \item \texttt{children}: es la lista de hijos del nodo.
+            Por ejemplo,
+            las instancias de la clase \texttt{ASTStmtIf}
+            tienen exactamente tres hijos:
+            el primero es una expresi\'on que representa la condici\'on
+            del if,
+            el segundo es un comando que representa la rama \texttt{then},
+            y el tercero puede ser \texttt{null} (si la rama \texttt{else})
+            se encuentra ausente), o un comando que representa la rama \texttt{else}.
+      \end{itemize}
+\item Como se mencion\'o arriba, en algunos (pocos) casos
+      las hojas del \'arbol tambi\'en pueden ser \texttt{null},
+      que se usa para indicar la ausencia de algunas
+      componentes opcionales del \'arbol (tales como la rama \texttt{else}
+      de un \texttt{if}).
+\item Los hijos eventualmente tambi\'en pueden ser listas de ASTs.
+\end{itemize}
+
+Abajo se especifica la forma que tiene un \'arbol usando una sintaxis
+similar a la de la declaraci\'on de un tipo de datos inductivo en
+Haskell.
+Los tipos escritos \type{EN\_MAY\'USCULAS} representan el tipo de los tokens.
+Los tipos escritos \type{EnMin\'usculas} representan categor\'ias
+abstractas de ASTs
+(por ejemplo, \type{Statement} es la categor\'ia abstracta de aquellos
+AST que representan comandos).
+Las palabras escritas \ast{EnVerde} representan categor\'ias concretas
+(en la terminolog\'ia de Haskell, constructores; en el caso de JavaScript
+corresponden a subclases de \texttt{ASTNode}).
+Por ejemplo, \ast{StmtIf} es la categor\'ia concreta de los AST que
+representan un comando if-then-else.
+En JavaScript, su clase asociada se llama \texttt{ASTStmtIf},
+y su tag asociado es el s\'imbolo \texttt{N\_StmtIf}.
+
+\typedecl{\type{ID}}{String}
+\typedecl{\type{NUM}}{Int}
+\typedecl{\type{STRING}}{String}
+\datadecl{\type{Main}}{\ast{Main}(definitions : [\type{Definition}])}
+\datadecl{\type{Definition}}{
+  \ast{DefProgram}(body : \type{Statement})
+\ALT
+  \ast{DefInteractiveProgram}(branches : [\type{SwitchBranch}])
+\ALT
+  \ast{DefProcedure}(name : \type{ID}, parameters : [\type{ID}], body : \type{Statement})
+\ALT
+  \ast{DefFunction}(name : \type{ID}, parameters : [\type{ID}], body : \type{Statement})
+\ALT
+  \ast{DefType}(typeName : \type{ID}, constructorDeclarations : [\type{ConstructorDeclaration}])
+}
+\datadecl{\type{Statement}}{
+  \ast{StmtBlock}(statements : [\type{Statement}])
+\ALT
+  \ast{StmtReturn}(result : \type{Expression})
+\ALT
+  \ast{StmtIf}(condition : \type{Expression}, thenBlock : \type{Expression}, elseBlock : \type{Expression}?)
+\ALT
+  \ast{StmtRepeat}(times : \type{Expression}, body : \type{Statement})
+\ALT
+  \ast{StmtForeach}(index : \type{ID}, range : \type{Expression}, body : \type{Statement})
+\ALT
+  \ast{StmtWhile}(condition : \type{Expression}, body : \type{Statement})
+\ALT
+  \ast{StmtSwitch}(subject : \type{Expression}, branches : [\type{SwitchBranch}])
+\ALT
+  \ast{StmtAssignVariable}(variable : \type{ID}, value : \type{Expression})
+\ALT
+  \ast{StmtAssignTuple}(variables : [\type{ID}], value : \type{Expression})
+\ALT
+  \ast{StmtProcedureCall}(procedureName : [\type{ID}], args : [\type{Expression}])
+}
+\datadecl{\type{SwitchBranch}}{
+  \ast{SwitchBranch}(pattern : \type{Pattern}, body : \type{Expression})
+}
+\datadecl{\type{Pattern}}{
+  \ast{PatternWildcard}()
+\ALT
+  \ast{PatternConstructor}(constructorName : \type{ID}, parameters : [\type{ID}])
+\ALT
+  \ast{PatternTuple}(parameters : [\type{ID}])
+\ALT
+  \ast{PatternTimeout}(timeout : \type{NUM})
+}
+\datadecl{\type{Expression}}{
+  \ast{ExprVariable}(variableName : \type{ID})
+\ALT
+  \ast{ExprConstantNumber}(number : \type{NUM})
+\ALT
+  \ast{ExprConstantString}(string : \type{STRING})
+\ALT
+  \ast{ExprList}(elements : [\type{Expression}])
+\ALT
+  \ast{ExprRange}(first : \type{Expression}, second : \type{Expression}?, last : \type{Expression})
+\ALT
+  \ast{ExprTuple}(elements : [\type{Expression}])
+\ALT
+  \ast{ExprConstructor}(constructorName : \type{ID}, fieldBindings : [\type{FieldBinding}])
+\ALT
+  \ast{ExprConstructorUpdate}(constructorName : \type{ID}, original : \type{Expression}, fieldBindings : [\type{FieldBinding}])
+\ALT
+  \ast{ExprFunctionCall}(functionName : \type{ID}, args : [\type{Expression}])
+}
+\datadecl{\type{ConstructorDeclaration}}{
+  \ast{ConstructorDeclaration}(constructorName : \type{ID}, fieldNames : [\type{ID}])
+}
+\datadecl{\type{FieldBinding}}{
+  \ast{FieldBinding}(fieldName : \type{ID}, value : \type{Expression})
+}
+
+\section{Linter}
+
+La etapa de an\'alisis sem\'antico (o {\em linting}) verifica de manera est\'atica que el programa cumpla las siguientes condiciones.
+\bigskip
+
+{\bf Programa principal.}
+\begin{itemize}
+\item El programa \PUEDE estar completamente vac\'io (sin ninguna definici\'on).
+\item Si el programa no est\'a completamente vac\'io, \DEBE tener exactamente una definici\'on de programa
+      (ya sea un \ast{DefProgram} o \ast{DefInteractiveProgram}).
+\item El programa \NOPUEDE tener dos (o m\'as) definiciones de programa
+      (ya sean \ast{DefProgram} o \ast{DefInteractiveProgram}).
+\end{itemize}
+
+{\bf Nombres globales.}
+\begin{itemize}
+\item Hay cinco tipos de nombres globales:
+  \begin{itemize}
+  \item Nombres de procedimientos, declarados con \texttt{procedure}.
+  \item Nombres de funciones, declaradas con \texttt{function}.
+  \item Nombres de tipos, declarados con \texttt{type}.
+  \item Nombres de constructores.
+        Coinciden con el nombre del tipo en la declaraci\'on de un tipo \texttt{record}.
+        Pueden coincidir o no con el nombre del tipo en la declaraci\'on de un tipo \texttt{variant},
+        en cuyo caso se declaran con \texttt{case}.
+  \item Nombres de campos, declarados con \texttt{field}.
+  \end{itemize}
+\item El programa \NOPUEDE tener dos (o m\'as) funciones con el mismo nombre.
+\item El programa \NOPUEDE tener dos (o m\'as) procedimientos con el mismo nombre.
+\item El programa \NOPUEDE tener dos (o m\'as) tipos con el mismo nombre.
+\item El programa \NOPUEDE tener dos (o m\'as) constructores con el mismo nombre.
+\item El programa \NOPUEDE tener dos (o m\'as) campos con el mismo nombre correspondientes a un mismo constructor.
+      (P.ej. la definici\'on: \texttt{type A is record \{ field x field x \}} se rechaza).
+\item El programa \PUEDE tener dos (o m\'as) campos con el mismo nombre si corresponden a distintos constructores,
+      ya sea del mismo tipo o de distintos tipos.
+      (P.ej. las definiciones: \texttt{type A is record \{ field x \} type B is record \{ field x \}} se aceptan).
+\item El programa \NOPUEDE tener una funci\'on y un campo que tengan el mismo nombre.
+\item El programa \PUEDE tener tipos y constructores con el mismo nombre.
+      P.ej. la definici\'on: \texttt{type A is variant \{ case A {} \}} se acepta.
+      De hecho este es el comportamiento normal cuando se declara un registro:
+      \texttt{type A is record \{ \}} define simult\'aneamente un tipo \texttt{A}
+      y un constructor \texttt{A}.
+\item El programa \PUEDE tener procedimientos con el mismo nombre que un tipo o que un constructor.
+\end{itemize}
+
+{\bf Return.}
+\begin{itemize}
+\item Los procedimientos \NOPUEDEN tener un \texttt{return}.
+\item Los programas declarados con \texttt{interactive program} \NOPUEDEN tener un \texttt{return}.
+\item Las funciones \DEBEN tener un \texttt{return} como \'ultimo comando del bloque.
+\item Los programas declarados con \texttt{program} \PUEDEN tener un \texttt{return} como \'ultimo comando del bloque.
+\item \NOPUEDE haber un \texttt{return} en ninguna otra posici\'on salvo
+      las mencionadas, es decir,
+      como el \'ultimo comando de una funci\'on o como el \'ultimo comando de un \texttt{program}.
+\end{itemize}
+
+{\bf Nombres locales.}
+\begin{itemize}
+\item Hay tres tipos de nombres locales:
+  \begin{itemize}
+  \item Par\'ametros --- est\'an ligados en la lista de par\'ametros de
+        un procedimiento, o en la lista de par\'ametros de una funci\'on, 
+        o en la lista de par\'ametros de un constructor al hacer {\em pattern matching}
+        con \texttt{switch} (por ejemplo los par\'ametros \texttt{x} e \texttt{y} en
+        el comando \texttt{switch (c) \{ Coord(x, y) -> ... \}})
+  \item \'Indices --- est\'an ligados por un \texttt{foreach}.
+  \item Variables --- su valor se declara en una asignaci\'on \texttt{x := e} o en una asignaci\'on
+        a una tupla \texttt{(x1, ..., xN) := e}.
+  \end{itemize}
+\item Alcance de los nombres locales:
+  \begin{itemize}
+  \item Par\'ametros de procedimientos y funciones --- locales a todo el cuerpo del procedimiento o funci\'on.
+  \item Par\'ametros de constructores en un \texttt{switch} --- locales al bloque a la derecha de la correspondiente flecha \texttt{->}.
+  \item \'Indices --- locales al cuerpo del \texttt{foreach}.
+  \item Variables --- locales a todo el cuerpo del procedimiento o funci\'on.
+  \end{itemize}
+\item Los nombres locales \PUEDEN
+      coincidir con los nombres globales (nombres de funciones y campos), sin
+      que unos opaquen a otros.
+\item Los nombres locales \NOPUEDEN coincidir con otros nombres locales que comparten el mismo alcance.
+      En particular:
+  \begin{itemize}
+  \item Las funciones y procedimientos \NOPUEDEN tener nombres de par\'ametros repetidos.
+  \item Los \'indices de dos \texttt{foreach} anidados \NOPUEDEN tener el mismo nombre.
+  \item Los \'indices de dos \texttt{foreach} que no est\'an anidados \PUEDEN tener el mismo nombre.
+  \item Los nombres de variables, \'indices, y par\'ametros \NOPUEDEN coincidir.
+  \end{itemize}
+\item En una asignaci\'on de tuplas \texttt{let (x$_1$, ..., x$_n$) := e}
+      las variables \texttt{x$_1$, ..., x$_n$} \DEBEN ser todas distintas. 
+\end{itemize}
+
+{\bf Pattern matching.}
+\begin{itemize}
+\item Hay cuatro tipos de patrones:
+  \begin{itemize}
+  \item Patr\'on comod\'in (\texttt{\_}).
+  \item Patr\'on constructor (\texttt{C} o alternativamente \texttt{C(x$_1$, ..., x$_n$)}).
+  \item Patr\'on tupla (\texttt{(x$_1$, ..., x$_n$)}).
+  \item Patr\'on timeout (\texttt{TIMEOUT($n$)}).
+  \end{itemize}
+\item En un patr\'on constructor, el nombre del constructor en cuesti\'on \DEBE ser un constructor existente de
+      alg\'un tipo.
+\item En un patr\'on constructor, el constructor \PUEDE tener $0$ par\'ametros, independientemente del n\'umero
+      de campos que tenga el constructor correspondiente.
+\item Si un patr\'on constructor tiene $1$ o m\'as par\'ametros, el n\'umero \DEBE coincidir con el n\'umero
+      de campos del constructor correspondiente.
+\item En una secuencia de ramas los patrones constructor \PUEDEN aparecer en cualquier orden, sin respetar necesariamente el orden en que est\'an declarados.
+\item Una secuencia de ramas \NOPUEDE tener dos patrones constructor asociados al mismo constructor.
+\item Una secuencia de ramas \NOPUEDE tener dos patrones tupla con la misma longitud.
+\item Una secuencia de ramas \NOPUEDE tener dos patrones timeout.
+\item Una secuencia de ramas \PUEDE tener o no tener un patr\'on comod\'in.
+\item Si una secuencia de ramas tiene un patr\'on comod\'in, el patr\'on comod\'in \DEBE estar en la \'ultima rama.
+\item Una secuencia de ramas \NOPUEDE tener un patr\'on comod\'in en ninguna otra rama que no sea la \'ultima.
+\item Un patr\'on comod\'in \PUEDE ser inalcanzable.
+      Es decir, un patr\'on comod\'in puede estar presente incluso si la secuencia de ramas
+      cubre todas las alternativas de constructores posibles.
+\item En una secuencia de ramas todos los patrones \DEBEN ser compatibles.
+      Son patrones compatibles:
+      \begin{itemize}
+      \item Dos patrones constructor cuyos constructores pertenecen al mismo tipo.
+      \item Un patr\'on timeout con cualquier otro constructor del tipo \texttt{\_EVENT}
+            (que corresponde a los eventos que pueden darse en un programa interactivo).
+      \item El patr\'on comod\'in con cualquier otro patr\'on.
+      \end{itemize}
+      Dos tipos son incompatibles en cualquier otro caso. En particular, son patrones incompatibles:
+      \begin{itemize}
+      \item Dos patrones constructor cuyos constructores pertenecen a distintos tipos.
+      \item Dos patrones tupla con distinto n\'umero de componentes.
+      \item Un patr\'on constructor y un patr\'on tupla.
+      \end{itemize}
+\item Los patrones de las ramas del \texttt{interactive program}
+      \DEBEN ser eventos, es decir:
+      patrones timeout,
+      patrones constructor del tipo \texttt{\_EVENT},
+      o patrones comod\'in.
+\item Los de las ramas de los \texttt{switch} \NOPUEDEN ser eventos, es decir:
+      pueden ser patrones constructor de tipos que no sean \texttt{\_EVENT},
+      patrones tupla,
+      o patrones comod\'in.
+\end{itemize}
+
+{\bf Expresiones.}
+\begin{itemize}
+\item Los usos de par\'ametros, \'indices y variables (\ast{ExprVariable}) \PUEDEN no corresponder a par\'ametros, \'indices o variables definidas.
+      La restricci\'on de que las variables se pueden usar solamente despu\'es de que se les haya dado un valor es una restricci\'on din\'amica.
+\item Cuando se construye una instancia de un tipo (registro o variante) con un constructor (\ast{ExprConstructor}),
+      el nombre del constructor \DEBE ser el nombre de un constructor existente.
+\item Cuando se construye o se actualiza una instancia con un constructor (\ast{ExprConstructor}, \ast{ExprConstructorUpdate}),
+      \NOPUEDE haber nombres de campos repetidos en la lista de {\em bindings}.
+\item Cuando se construye o se actualiza una instancia con un constructor (\ast{ExprConstructor}, \ast{ExprConstructorUpdate}),
+      los nombres de los campos que aparecen en la lista de {\em bindings}
+      \DEBEN ser nombres de campos v\'alidos para dicho constructor. (Correctitud).
+\item Cuando se construye una instancia con un constructor (\ast{ExprConstructor}),
+      los nombres de los campos que aparecen en la lista de {\em bindings}
+      \DEBEN cubrir todos los posibles nombres de campos v\'alidos para dicho constructor. (Completitud).
+\item Cuando se construye o se actualiza una instancia con un constructor (\ast{ExprConstructor}, \ast{ExprConstructorUpdate}),
+      el constructor \NOPUEDE ser un constructor del tipo \texttt{\_EVENT} (esto t\'ecnicamente depende
+      del entorno global en el que se eval\'ue el programa, pero t\'ipicamente
+      los eventos son las teclas como \texttt{K\_ENTER}, etc.).
+\end{itemize}
+
+{\bf Invocaciones a funciones y procedimientos.}
+\begin{itemize}
+\item En las invocaciones a procedimientos, el nombre del procedimiento \DEBE corresponder a un procedimiento definido.
+\item En las invocaciones a funciones, el nombre de la funci\'on \DEBE corresponder
+      o bien a una funci\'on definida o bien al nombre de un campo (usado como funci\'on observadora).
+\item El chequeo de coincidencia del n\'umero de argumentos (aridades) se hace est\'aticamente.
+      Todos los chequeos de tipos son din\'amicos.
+\item El n\'umero de argumentos pasados a un procedimiento \DEBE coincidir con el n\'umero de par\'ametros declarados en su definici\'on.
+\item El n\'umero de argumentos pasados a una funci\'on \DEBE coincidir con el n\'umero de par\'ametros declarados en su definici\'on.
+\item El n\'umero de argumentos pasados a un campo (usado como funci\'on observadora) \DEBE ser exactamente 1.
+\end{itemize}
+
+
+\end{document}
