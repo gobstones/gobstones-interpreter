@@ -25,10 +25,7 @@ import {
   IPrimitiveCall,
   ISaveState,
   IRestoreState,
-  ICheckIsInteger,
-  ICheckIsTuple,
-  ICheckIsList,
-  ICheckIsType,
+  ITypeCheck,
   Code,
 } from '../src/instruction';
 import {
@@ -37,6 +34,12 @@ import {
   ValueTuple,
   ValueList,
   ValueStructure,
+  TypeAny,
+  TypeString,
+  TypeInteger,
+  TypeTuple,
+  TypeList,
+  TypeStructure,
 } from '../src/value';
 import { VirtualMachine } from '../src/vm';
 import { i18n } from '../src/i18n';
@@ -92,7 +95,7 @@ describe('Virtual Machine', () => {
       expect(vm.run()).deep.equals(new ValueInteger(20));
     });
 
-    it('Reject assignment of different type (int vs. string)', () => {
+    it('Reject assignment of non-matching type', () => {
       let vm = new VirtualMachine(new Code([
         new IPushInteger(10),
         new ISetVariable('x'),
@@ -106,174 +109,6 @@ describe('Virtual Machine', () => {
           'Integer',
           'String'
         )
-      );
-    });
-
-    it('Reject assignment of different type (int vs. empty list)', () => {
-      let vm = new VirtualMachine(new Code([
-        new IPushInteger(10),
-        new ISetVariable('x'),
-        new IMakeList(0),
-        new ISetVariable('x'),
-        new IReturn(),
-      ]));
-      expect(() => vm.run()).throws(
-        i18n('errmsg:incompatible-types-on-assignment')(
-          'x',
-          'Integer',
-          'List(?)'
-        )
-      );
-    });
-
-    it('Reject assignment of different type (int vs. non-empty list)', () => {
-      let vm = new VirtualMachine(new Code([
-        new IPushInteger(10),
-        new ISetVariable('x'),
-        new IPushInteger(1),
-        new IMakeList(1),
-        new ISetVariable('x'),
-        new IReturn(),
-      ]));
-      expect(() => vm.run()).throws(
-        i18n('errmsg:incompatible-types-on-assignment')(
-          'x',
-          'Integer',
-          'List(Integer)'
-        )
-      );
-    });
-
-    it('Reject assignment of different type (tuple vs. tuple length)', () => {
-      let vm = new VirtualMachine(new Code([
-        new IPushInteger(1),
-        new IPushInteger(2),
-        new IMakeTuple(2),
-        new ISetVariable('x'),
-        new IPushInteger(1),
-        new IPushInteger(2),
-        new IPushInteger(3),
-        new IMakeTuple(3),
-        new ISetVariable('x'),
-        new IReturn(),
-      ]));
-      expect(() => vm.run()).throws(
-        i18n('errmsg:incompatible-types-on-assignment')(
-          'x',
-          'Tuple(Integer, Integer)',
-          'Tuple(Integer, Integer, Integer)'
-        )
-      );
-    });
-
-    it('Reject assignment of different type (tuple vs. tuple contents)', () => {
-      let vm = new VirtualMachine(new Code([
-        new IPushInteger(1),
-        new IPushString('foo'),
-        new IMakeTuple(2),
-        new ISetVariable('x'),
-        new IPushInteger(1),
-        new IPushInteger(2),
-        new IMakeTuple(2),
-        new ISetVariable('x'),
-        new IReturn(),
-      ]));
-      expect(() => vm.run()).throws(
-        i18n('errmsg:incompatible-types-on-assignment')(
-          'x',
-          'Tuple(Integer, String)',
-          'Tuple(Integer, Integer)'
-        )
-      );
-    });
-
-    it('Reject assignment of different type (list vs. list contents)', () => {
-      let vm = new VirtualMachine(new Code([
-        new IPushString('foo'),
-        new IPushString('bar'),
-        new IMakeList(2),
-        new ISetVariable('x'),
-        new IPushInteger(1),
-        new IPushInteger(2),
-        new IMakeList(2),
-        new ISetVariable('x'),
-        new IReturn(),
-      ]));
-      expect(() => vm.run()).throws(
-        i18n('errmsg:incompatible-types-on-assignment')(
-          'x',
-          'List(String)',
-          'List(Integer)'
-        )
-      );
-    });
-
-    it('Reject assignment of different type (constructors)', () => {
-      let vm = new VirtualMachine(new Code([
-        new IMakeStructure('T1', 'A', []),
-        new ISetVariable('x'),
-        new IMakeStructure('T2', 'B', []),
-        new ISetVariable('x'),
-        new IReturn(),
-      ]));
-      expect(() => vm.run()).throws(
-        i18n('errmsg:incompatible-types-on-assignment')(
-          'x',
-          'T1:A',
-          'T2:B'
-        )
-      );
-    });
-
-    it('Reject assignment of different type (constructor fields)', () => {
-      let vm = new VirtualMachine(new Code([
-        new IPushInteger(1),
-        new IMakeStructure('T', 'A', ['f']),
-        new ISetVariable('x'),
-        new IPushString('foo'),
-        new IMakeStructure('T', 'A', ['f']),
-        new ISetVariable('x'),
-        new IReturn(),
-      ]));
-      expect(() => vm.run()).throws(
-        i18n('errmsg:incompatible-types-on-assignment')(
-          'x',
-          'T:A(f <- Integer)',
-          'T:A(f <- String)'
-        )
-      );
-    });
-
-    it('Accept assignment of compatible type (empty list vs. list)', () => {
-      let vm = new VirtualMachine(new Code([
-        new IMakeList(0),
-        new ISetVariable('x'),
-        new IPushInteger(1),
-        new IPushInteger(2),
-        new IMakeList(2),
-        new ISetVariable('x'),
-        new IPushVariable('x'),
-        new IReturn(),
-      ]));
-      expect(vm.run()).deep.equals(
-        new ValueList([
-          new ValueInteger(1),
-          new ValueInteger(2),
-        ])
-      );
-    });
-
-    it('Accept assignment of compatible type (different constructors)', () => {
-      let vm = new VirtualMachine(new Code([
-        new IMakeStructure('T1', 'A', []),
-        new ISetVariable('x'),
-        new IMakeStructure('T1', 'B', []),
-        new ISetVariable('x'),
-        new IPushVariable('x'),
-        new IReturn(),
-      ]));
-      expect(vm.run()).deep.equals(
-        new ValueStructure('T1', 'B', {})
       );
     });
 
@@ -916,6 +751,163 @@ describe('Virtual Machine', () => {
         new ValueInteger(1),
         new ValueInteger(0),
       ]));
+    });
+
+  });
+
+  describe('Type checking', () => {
+
+    it('Accept: List(?) vs. List(Integer)', () => {
+      let vm = new VirtualMachine(new Code([
+        new IMakeList(0),
+        new ITypeCheck(new TypeList(new TypeInteger())),
+        new IReturn(),
+      ]));
+      expect(vm.run()).deep.equals(new ValueList([]));
+    });
+
+    it('Accept: List(Integer) vs. List(?)', () => {
+      let vm = new VirtualMachine(new Code([
+        new IPushInteger(1),
+        new IMakeList(1),
+        new ITypeCheck(new TypeList(new TypeAny())),
+        new IReturn(),
+      ]));
+      expect(vm.run()).deep.equals(new ValueList([new ValueInteger(1)]));
+    });
+
+    it('Accept: T1:A vs. T1:B', () => {
+      let vm = new VirtualMachine(new Code([
+        new IMakeStructure('T1', 'A', []),
+        new ITypeCheck(new TypeStructure('T1', {'B': {}})),
+        new IReturn(),
+      ]));
+      expect(vm.run()).deep.equals(
+        new ValueStructure('T1', 'A', {})
+      );
+    });
+
+    it('Reject: Integer vs. String', () => {
+      let vm = new VirtualMachine(new Code([
+        new IPushInteger(1),
+        new ITypeCheck(new TypeString()),
+        new IReturn(),
+      ]));
+      expect(() => vm.run()).throws(
+        i18n('errmsg:expected-value-of-type-but-got')('String', 'Integer')
+      );
+    });
+
+    it('Reject: Integer vs. List(?)', () => {
+      let vm = new VirtualMachine(new Code([
+        new IPushInteger(10),
+        new ITypeCheck(new TypeList(new TypeAny())),
+        new IReturn(),
+      ]));
+      expect(() => vm.run()).throws(
+        i18n('errmsg:expected-value-of-type-but-got')('List(?)', 'Integer')
+      );
+    });
+
+    it('Reject: Integer vs. List(Integer)', () => {
+      let vm = new VirtualMachine(new Code([
+        new IPushInteger(10),
+        new ITypeCheck(new TypeList(new TypeInteger())),
+        new IReturn(),
+      ]));
+      expect(() => vm.run()).throws(
+        i18n('errmsg:expected-value-of-type-but-got')(
+          'List(Integer)', 'Integer'
+        )
+      );
+    });
+
+    it('Reject: Tuple(*, *) vs. Tuple(*, *, *)', () => {
+      let vm = new VirtualMachine(new Code([
+        new IPushInteger(1),
+        new IPushInteger(2),
+        new IMakeTuple(2),
+        new ITypeCheck(
+          new TypeTuple([
+            new TypeInteger(),
+            new TypeInteger(),
+            new TypeInteger(),
+          ])
+        ),
+        new IReturn(),
+      ]));
+      expect(() => vm.run()).throws(
+        i18n('errmsg:expected-value-of-type-but-got')(
+          'Tuple(Integer, Integer, Integer)',
+          'Tuple(Integer, Integer)'
+        )
+      );
+    });
+
+    it('Reject: Tuple(String, Int) vs. Tuple(Int, Int)', () => {
+      let vm = new VirtualMachine(new Code([
+        new IPushInteger(1),
+        new IPushString('foo'),
+        new IMakeTuple(2),
+        new ITypeCheck(
+          new TypeTuple([
+            new TypeInteger(),
+            new TypeInteger(),
+          ])
+        ),
+        new IReturn(),
+      ]));
+      expect(() => vm.run()).throws(
+        i18n('errmsg:expected-value-of-type-but-got')(
+          'Tuple(Integer, Integer)',
+          'Tuple(Integer, String)'
+        )
+      );
+    });
+
+    it('Reject: List(String) vs. List(Integer)', () => {
+      let vm = new VirtualMachine(new Code([
+        new IPushString('foo'),
+        new IPushString('bar'),
+        new IMakeList(2),
+        new ITypeCheck(new TypeList(new TypeInteger())),
+        new IReturn(),
+      ]));
+      expect(() => vm.run()).throws(
+        i18n('errmsg:expected-value-of-type-but-got')(
+          'List(Integer)',
+          'List(String)'
+        )
+      );
+    });
+
+    it('Reject: T1:A vs. T2:B', () => {
+      let vm = new VirtualMachine(new Code([
+        new IMakeStructure('T1', 'A', []),
+        new ITypeCheck(new TypeStructure('T2', {'B': {}})),
+        new IReturn(),
+      ]));
+      expect(() => vm.run()).throws(
+        i18n('errmsg:expected-value-of-type-but-got')(
+          'T2:B',
+          'T1:A'
+        )
+      );
+    });
+
+    it('Reject: T:A(f <- Integer) vs. T:A(f <- String)', () => {
+      let vm = new VirtualMachine(new Code([
+        new IPushInteger(1),
+        new IMakeStructure('T', 'A', ['f']),
+        new ITypeCheck(new TypeStructure('T', {'A': {'f': new TypeString()}})),
+        new IReturn(),
+      ]));
+      expect(() => vm.run()).throws(
+        i18n('errmsg:expected-value-of-type-but-got')(
+          'T:A(f <- String)',
+          'T:A(f <- Integer)'
+        )
+      );
     });
 
   });

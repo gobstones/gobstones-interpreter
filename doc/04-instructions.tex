@@ -24,6 +24,7 @@
 \item \instruction{PrimitiveCall}(primitiveName : \type{ID}, nargs : \type{INT})\\Invoca a una operaci\'on primitiva. Desapila 'nargs' argumentos de la pila (con el \'ultimo argumento en el tope). A continuaci\'on, invoca a la primitiva pas\'andole como par\'ametros el estado global, seguido de los 'nargs' argumentos desapilados. La funci\'on primitiva puede devolver un valor o 'null'. En caso de que devuelva un valor, se apila dicho resultado en la pila. Si devuelve null, prosigue con la ejecuci\'on.
 \item \instruction{SaveState}()\\Crea una copia el estado global actual y lo mete en la pila de estados globales.
 \item \instruction{RestoreState}()\\Saca un estado de la pila de estados globales.
+\item \instruction{TypeCheck}(type : \type{TYPE})\\Verifica que el tipo del valor del tope de la pila sea compatible con el tipo indicado. La pila no debe estar vac\'ia. Esta operaci\'on no saca el elemento del tope de la pila.
 \item \TODO{TODO}
 \end{itemize}
 %

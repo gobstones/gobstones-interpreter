@@ -449,6 +449,12 @@ const ES = {
            + 'pero el argumento es de tipo ' + receivedType + '.';
     },
 
+  'errmsg:expected-value-of-type-but-got':
+    function (expectedType, receivedType) {
+      return 'Se esperaba un valor de tipo ' + expectedType + ' '
+           + 'pero se recibió un valor de tipo ' + receivedType + '.';
+    },
+
   /* Runtime */
 
   'TYPE:Color': 'Color',

@@ -93,6 +93,11 @@
   [
    ["RestoreState"],
    "Saca un estado de la pila de estados globales."
+  ],
+
+  [
+   ["TypeCheck", ["type", "TYPE"]],
+   "Verifica que el tipo del valor del tope de la pila sea compatible con el tipo indicado. La pila no debe estar vacía. Esta operación no saca el elemento del tope de la pila."
   ]
 
 ]

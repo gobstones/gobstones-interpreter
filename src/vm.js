@@ -24,10 +24,7 @@ import {
   I_PrimitiveCall,
   I_SaveState,
   I_RestoreState,
-  I_CheckIsInteger,
-  I_CheckIsTuple,
-  I_CheckIsList,
-  I_CheckIsType,
+  I_TypeCheck,
 } from './instruction';
 import {
   V_Tuple,
@@ -273,18 +270,8 @@ export class VirtualMachine {
         return this._stepSaveState();
       case I_RestoreState:
         return this._stepRestoreState();
-      case I_CheckIsInteger:
-        // TODO
-        break;
-      case I_CheckIsTuple:
-        // TODO
-        break;
-      case I_CheckIsList:
-        // TODO
-        break;
-      case I_CheckIsType:
-        // TODO
-        break;
+      case I_TypeCheck:
+        return this._stepTypeCheck();
       default:
         throw Error(
                 'VM: opcode '
@@ -694,6 +681,22 @@ export class VirtualMachine {
     this._globalStateStack.pop();
     if (this._globalStateStack.length === 0) {
       throw Error('RestoreState: the stack of global states is empty.');
+    }
+    frame.instructionPointer++;
+  }
+
+  _stepTypeCheck() {
+    let frame = this._currentFrame();
+    let instruction = this._currentInstruction();
+    let expectedType = instruction.type;
+    let receivedType = frame.stackTop().type();
+    if (joinTypes(expectedType, receivedType) === null) {
+      throw new GbsRuntimeError(instruction.startPos, instruction.endPos,
+        i18n('errmsg:expected-value-of-type-but-got')(
+          expectedType.toString(),
+          receivedType.toString(),
+        )
+      );
     }
     frame.instructionPointer++;
   }

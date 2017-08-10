@@ -25,10 +25,7 @@ export const I_Pop = Symbol.for('I_Pop');
 export const I_PrimitiveCall = Symbol.for('I_PrimitiveCall');
 export const I_SaveState = Symbol.for('I_SaveState');
 export const I_RestoreState = Symbol.for('I_RestoreState');
-export const I_CheckIsInteger = Symbol.for('I_CheckIsInteger');
-export const I_CheckIsTuple = Symbol.for('I_CheckIsTuple');
-export const I_CheckIsList = Symbol.for('I_CheckIsList');
-export const I_CheckIsType = Symbol.for('I_CheckIsType');
+export const I_TypeCheck = Symbol.for('I_TypeCheck');
 
 export class Code {
   constructor(instructions) {
@@ -418,42 +415,14 @@ export class IRestoreState extends Instruction {
   }
 }
 
-/* Check that the top of the stack is an integer.
+/* Check that the top of the stack has the given type.
  * Does not pop the top of the stack. */
-export class ICheckIsInteger extends Instruction {
-  constructor() {
-    super(I_CheckIsInteger, []);
-  }
-}
-
-/* Check that the top of the stack is a tuple of the given size.
- * Does not pop the top of the stack. */
-export class ICheckIsTuple extends Instruction {
-  constructor(size) {
-    super(I_CheckIsTuple, [size]);
+export class ITypeCheck extends Instruction {
+  constructor(type) {
+    super(I_TypeCheck, [type]);
   }
 
-  get size() {
-    return this._args[0];
-  }
-}
-
-/* Check that the top of the stack is a list.
- * Does not pop the top of the stack. */
-export class ICheckIsList extends Instruction {
-  constructor() {
-    super(I_CheckIsList, []);
-  }
-}
-
-/* Check that the top of the stack is an instance of the given type.
- * Does not pop the top of the stack. */
-export class ICheckIsType extends Instruction {
-  constructor(typeName) {
-    super(I_CheckIsType, [typeName]);
-  }
-
-  get typeName() {
+  get type() {
     return this._args[0];
   }
 }
