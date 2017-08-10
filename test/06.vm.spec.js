@@ -322,6 +322,96 @@ describe('Virtual Machine', () => {
       expect(vm.run()).deep.equals(new ValueInteger(20));
     });
 
+    it('Jump if false (taken)', () => {
+      let vm = new VirtualMachine(new Code([
+        new IMakeStructure('Bool', 'False', []),
+        new IJumpIfFalse('L'),
+        new IPushString('not taken'),
+        new IReturn(),
+        new ILabel('L'),
+        new IPushString('taken'),
+        new IReturn(),
+      ]));
+      expect(vm.run()).deep.equals(new ValueString('taken'));
+    });
+
+    it('Jump if false (not taken)', () => {
+      let vm = new VirtualMachine(new Code([
+        new IMakeStructure('Bool', 'True', []),
+        new IJumpIfFalse('L'),
+        new IPushString('not taken'),
+        new IReturn(),
+        new ILabel('L'),
+        new IPushString('taken'),
+        new IReturn(),
+      ]));
+      expect(vm.run()).deep.equals(new ValueString('not taken'));
+    });
+
+    it('Jump if structure (taken)', () => {
+      let vm = new VirtualMachine(new Code([
+        new IMakeStructure('Bool', 'True', []),
+        new IJumpIfStructure('True', 'L'),
+        new IPop(),
+        new IPushString('not taken'),
+        new IReturn(),
+        new ILabel('L'),
+        new IReturn(),
+      ]));
+      expect(vm.run()).deep.equals(new ValueStructure('Bool', 'True', {}));
+    });
+
+    it('Jump if structure (not taken)', () => {
+      let vm = new VirtualMachine(new Code([
+        new IMakeStructure('Bool', 'False', []),
+        new IJumpIfStructure('True', 'L'),
+        new IPop(),
+        new IPushString('not taken'),
+        new IReturn(),
+        new ILabel('L'),
+        new IReturn(),
+      ]));
+      expect(vm.run()).deep.equals(new ValueString('not taken'));
+    });
+
+    it('Jump if tuple (taken)', () => {
+      let vm = new VirtualMachine(new Code([
+        new IPushInteger(1),
+        new IPushInteger(2),
+        new IPushInteger(3),
+        new IMakeTuple(3),
+        new IJumpIfTuple(3, 'L'),
+        new IPop(),
+        new IPushString('not taken'),
+        new IReturn(),
+        new ILabel('L'),
+        new IReturn(),
+      ]));
+      expect(vm.run()).deep.equals(
+        new ValueTuple([
+          new ValueInteger(1),
+          new ValueInteger(2),
+          new ValueInteger(3),
+        ])
+      );
+    });
+
+    it('Jump if tuple (not taken)', () => {
+      let vm = new VirtualMachine(new Code([
+        new IPushInteger(1),
+        new IPushInteger(2),
+        new IPushInteger(3),
+        new IMakeTuple(3),
+        new IJumpIfTuple(2, 'L'),
+        new IPop(),
+        new IPushString('not taken'),
+        new IReturn(),
+        new ILabel('L'),
+        new IReturn(),
+      ]));
+      expect(vm.run()).deep.equals(new ValueString('not taken'));
+    });
+
   });
 
   describe('Call/return', () => {
@@ -584,6 +674,251 @@ describe('Virtual Machine', () => {
       );
     });
 
+    it('Reject update for incompatible types (int vs. string)', () => {
+      let vm = new VirtualMachine(new Code([
+        new IPushInteger(1),
+        new IPushInteger(2),
+        new IPushInteger(3),
+        new IMakeStructure('Foo', 'Bar', ['x', 'y', 'z']),
+        new IPushInteger(10),
+        new IPushString('foo'),
+        new IUpdateStructure('Foo', 'Bar', ['x', 'z']),
+        new IUpdateStructure('Foo', 'Bar', []),
+        new IReturn(),
+      ]));
+      expect(() => vm.run()).throws(
+        i18n('errmsg:incompatible-types-on-record-update')(
+          'z',
+          'Integer',
+          'String',
+        )
+      );
+    });
+
   });
+
+  describe('Tuple access', () => {
+
+    it('Read components of a tuple', () => {
+      let vm = new VirtualMachine(new Code([
+        new IPushInteger(1),
+        new IPushInteger(2),
+        new IMakeTuple(2),
+        new IReadTupleComponent(1),
+        new ISetVariable('x'),
+        new IReadTupleComponent(0),
+        new ISetVariable('y'),
+        new IPop(),
+        new IPushVariable('x'),
+        new IPushVariable('x'),
+        new IPushVariable('y'),
+        new IPushVariable('y'),
+        new IMakeTuple(4),
+        new IReturn(),
+      ]));
+      expect(vm.run()).deep.equals(
+        new ValueTuple([
+          new ValueInteger(2),
+          new ValueInteger(2),
+          new ValueInteger(1),
+          new ValueInteger(1),
+        ])
+      );
+    });
+
+    it('Fail if not a tuple', () => {
+      let vm = new VirtualMachine(new Code([
+        new IPushInteger(1),
+        new IReadTupleComponent(1),
+        new IReturn(),
+      ]));
+      expect(() => vm.run()).throws(
+        i18n('errmsg:expected-tuple-but-got')('Integer')
+      );
+    });
+
+    it('Fail if index out of bounds', () => {
+      let vm = new VirtualMachine(new Code([
+        new IPushInteger(1),
+        new IPushInteger(2),
+        new IMakeTuple(2),
+        new IReadTupleComponent(4),
+        new IReturn(),
+      ]));
+      expect(() => vm.run()).throws(
+        i18n('errmsg:tuple-component-out-of-bounds')(2, 4)
+      );
+    });
+
+  });
+
+  describe('Structure access', () => {
+
+    it('Read fields of a structure', () => {
+      let vm = new VirtualMachine(new Code([
+        new IPushInteger(1),
+        new IPushInteger(2),
+        new IMakeStructure('A', 'B', ['f', 'g']),
+        new IReadStructureField('g'),
+        new ISetVariable('x'),
+        new IReadStructureField('f'),
+        new ISetVariable('y'),
+        new IPop(),
+        new IPushVariable('x'),
+        new IPushVariable('x'),
+        new IPushVariable('y'),
+        new IPushVariable('y'),
+        new IMakeTuple(4),
+        new IReturn(),
+      ]));
+      expect(vm.run()).deep.equals(
+        new ValueTuple([
+          new ValueInteger(2),
+          new ValueInteger(2),
+          new ValueInteger(1),
+          new ValueInteger(1),
+        ])
+      );
+    });
+
+    it('Fail if not a structure', () => {
+      let vm = new VirtualMachine(new Code([
+        new IPushInteger(1),
+        new IReadStructureField('f'),
+        new IReturn(),
+      ]));
+      expect(() => vm.run()).throws(
+        i18n('errmsg:expected-structure-but-got')('Integer')
+      );
+    });
+
+    it('Fail if attempting to read a non-existing field', () => {
+      let vm = new VirtualMachine(new Code([
+        new IPushInteger(1),
+        new IPushInteger(2),
+        new IMakeStructure('A', 'B', ['x', 'y']),
+        new IReadStructureField('z'),
+        new IReturn(),
+      ]));
+      expect(() => vm.run()).throws(
+        i18n('errmsg:structure-field-not-present')(['x', 'y'], 'z')
+      );
+    });
+
+  });
+
+  describe('Primitive calls', () => {
+
+    it('Call a primitive procedure', () => {
+      let vm = new VirtualMachine(new Code([
+        new IMakeStructure(i18n('TYPE:Color'), i18n('CONS:Color0'), []),
+        new IPrimitiveCall(i18n('PRIM:PutStone'), 1),
+        new IReturn(),
+      ]));
+      expect(vm.run()).deep.equals(null);
+
+      let finalBoard = vm.globalState();
+      expect(finalBoard.numStones(i18n('CONS:Color0'))).equals(1);
+    });
+
+    it('Call a primitive function', () => {
+      let vm = new VirtualMachine(new Code([
+        new IMakeStructure(i18n('TYPE:Color'), i18n('CONS:Color0'), []),
+        new IPrimitiveCall(i18n('PRIM:PutStone'), 1),
+        new IMakeStructure(i18n('TYPE:Color'), i18n('CONS:Color0'), []),
+        new IPrimitiveCall(i18n('PRIM:numStones'), 1),
+        new IReturn(),
+      ]));
+      expect(vm.run()).deep.equals(new ValueInteger(1));
+    });
+
+    it('Fail when calling a non-existing primitive', () => {
+      let vm = new VirtualMachine(new Code([
+        new IPrimitiveCall('foo42bar', 0),
+        new IReturn(),
+      ]));
+      expect(() => vm.run()).throws(
+        i18n('errmsg:primitive-does-not-exist')('foo42bar')
+      );
+    });
+
+    it('Fail on arity mismatch', () => {
+      let vm = new VirtualMachine(new Code([
+        new IPrimitiveCall(i18n('PRIM:PutStone'), 0),
+        new IReturn(),
+      ]));
+      expect(() => vm.run()).throws(
+        i18n('errmsg:primitive-arity-mismatch')(
+          i18n('PRIM:PutStone'),
+          1,
+          0,
+        )
+      );
+    });
+
+    it('Fail on type mismatch', () => {
+      let vm = new VirtualMachine(new Code([
+        new IPushInteger(1),
+        new IPrimitiveCall(i18n('PRIM:PutStone'), 1),
+        new IReturn(),
+      ]));
+      expect(() => vm.run()).throws(
+        i18n('errmsg:primitive-argument-type-mismatch')(
+          i18n('PRIM:PutStone'),
+          1,
+          i18n('TYPE:Color'),
+          'Integer',
+        )
+      );
+    });
+
+  });
+
+  describe('Save/restore state', () => {
+
+    it('Save/restore the global state', () => {
+      let vm = new VirtualMachine(new Code([
+        new IMakeStructure(i18n('TYPE:Color'), i18n('CONS:Color0'), []),
+        new IPrimitiveCall(i18n('PRIM:numStones'), 1),
+        new ISetVariable('a'),
+        new ISaveState(),
+        new IMakeStructure(i18n('TYPE:Color'), i18n('CONS:Color0'), []),
+        new IPrimitiveCall(i18n('PRIM:PutStone'), 1),
+        new IMakeStructure(i18n('TYPE:Color'), i18n('CONS:Color0'), []),
+        new IPrimitiveCall(i18n('PRIM:numStones'), 1),
+        new ISetVariable('b'),
+        new ISaveState(),
+        new IMakeStructure(i18n('TYPE:Color'), i18n('CONS:Color0'), []),
+        new IPrimitiveCall(i18n('PRIM:PutStone'), 1),
+        new IMakeStructure(i18n('TYPE:Color'), i18n('CONS:Color0'), []),
+        new IPrimitiveCall(i18n('PRIM:numStones'), 1),
+        new ISetVariable('c'),
+        new IRestoreState(),
+        new IMakeStructure(i18n('TYPE:Color'), i18n('CONS:Color0'), []),
+        new IPrimitiveCall(i18n('PRIM:numStones'), 1),
+        new ISetVariable('d'),
+        new IRestoreState(),
+        new IMakeStructure(i18n('TYPE:Color'), i18n('CONS:Color0'), []),
+        new IPrimitiveCall(i18n('PRIM:numStones'), 1),
+        new ISetVariable('e'),
+        new IPushVariable('a'),
+        new IPushVariable('b'),
+        new IPushVariable('c'),
+        new IPushVariable('d'),
+        new IPushVariable('e'),
+        new IMakeTuple(5),
+        new IReturn(),
+      ]));
+      expect(vm.run()).deep.equals(new ValueTuple([
+        new ValueInteger(0),
+        new ValueInteger(1),
+        new ValueInteger(2),
+        new ValueInteger(1),
+        new ValueInteger(0),
+      ]));
+    });
+
+  });
+
 
 });

@@ -30,6 +30,7 @@ import {
   I_CheckIsType,
 } from './instruction';
 import {
+  V_Tuple,
   V_Structure,
   ValueInteger,
   ValueString,
@@ -41,6 +42,8 @@ import {
 } from './value';
 import { GbsRuntimeError } from './exceptions';
 import { i18n } from './i18n';
+import { RuntimeState, RuntimePrimitives } from './runtime';
+
 /* Conditions that may occur on runtime */
 const RT_ExitProgram = Symbol.for('RT_ExitProgram');
 
@@ -108,9 +111,16 @@ class Frame {
     this._stack.push(value);
   }
 
+  stackTop() {
+    if (this._stack.length === 0) {
+      throw Error('VM: no value at the top of the stack; the stack is empty.');
+    }
+    return this._stack[this._stack.length - 1];
+  }
+
   popValue() {
     if (this._stack.length === 0) {
-      throw Error('VM: no value to pop.');
+      throw Error('VM: no value to pop; the stack is empty.');
     }
     return this._stack.pop();
   }
@@ -150,6 +160,33 @@ export class VirtualMachine {
      */
     this._callStack = [];
     this._callStack.push(new Frame(0/*instructionPointer*/));
+
+    /* The global state is the data that is available globally.
+     *
+     * In Gobstones, the global state is the board. The VM module
+     * should not be aware of the actual implementation or nature of
+     * the global state.
+     *
+     * We have a stack of global states.
+     *
+     * The instruction 'SaveState' saves the current global state.
+     * It should be called whenever entering a user-defined function
+     * in Gobstones.
+     *
+     * The instruction 'RestoreState' restores the previous global state.
+     * It should be called whenever leaving a user-defined function
+     * in Gobstones.
+     */
+    this._globalStateStack = [new RuntimeState()];
+
+    /* The following dictionary maps names of primitives to their
+     * implementation.
+     *
+     * A primitive always receives 1 + n parameters, the first one being
+     * the board.
+     */
+    this._primitives = new RuntimePrimitives();
+
   }
 
   run() {
@@ -164,6 +201,10 @@ export class VirtualMachine {
         throw condition;
       }
     }
+  }
+
+  globalState() {
+    return this._globalStateStack[this._globalStateStack.length - 1];
   }
 
   /* Return the current frame, which is the top of the call stack */
@@ -199,14 +240,11 @@ export class VirtualMachine {
       case I_Jump:
         return this._stepJump();
       case I_JumpIfFalse:
-        // TODO
-        break;
+        return this._stepJumpIfFalse();
       case I_JumpIfStructure:
-        // TODO
-        break;
+        return this._stepJumpIfStructure();
       case I_JumpIfTuple:
-        // TODO
-        break;
+        return this._stepJumpIfTuple();
       case I_Call:
         return this._stepCall();
       case I_Return:
@@ -220,11 +258,9 @@ export class VirtualMachine {
       case I_UpdateStructure:
         return this._stepUpdateStructure();
       case I_ReadTupleComponent:
-        // TODO
-        break;
+        return this._stepReadTupleComponent();
       case I_ReadStructureField:
-        // TODO
-        break;
+        return this._stepReadStructureField();
       case I_Add:
         return this._stepAdd();
       case I_Dup:
@@ -232,14 +268,11 @@ export class VirtualMachine {
       case I_Pop:
         return this._stepPop();
       case I_PrimitiveCall:
-        // TODO
-        break;
+        return this._stepPrimitiveCall();
       case I_SaveState:
-        // TODO
-        break;
+        return this._stepSaveState();
       case I_RestoreState:
-        // TODO
-        break;
+        return this._stepRestoreState();
       case I_CheckIsInteger:
         // TODO
         break;
@@ -333,10 +366,39 @@ export class VirtualMachine {
     frame.instructionPointer = this._labelTargets[instruction.targetLabel];
   }
 
-  // TODO:
-  //    I_JumpIfFalse
-  //    I_JumpIfStructure
-  //    I_JumpIfTuple
+  _stepJumpIfFalse() {
+    let frame = this._currentFrame();
+    let instruction = this._currentInstruction();
+    let value = frame.popValue(); /* Pop the value */
+    if (value.tag === V_Structure && value.constructorName === 'False') {
+      frame.instructionPointer = this._labelTargets[instruction.targetLabel];
+    } else {
+      frame.instructionPointer++;
+    }
+  }
+
+  _stepJumpIfStructure() {
+    let frame = this._currentFrame();
+    let instruction = this._currentInstruction();
+    let value = frame.stackTop(); /* Do not pop the value */
+    if (value.tag === V_Structure
+        && value.constructorName === instruction.constructorName) {
+      frame.instructionPointer = this._labelTargets[instruction.targetLabel];
+    } else {
+      frame.instructionPointer++;
+    }
+  }
+
+  _stepJumpIfTuple() {
+    let frame = this._currentFrame();
+    let instruction = this._currentInstruction();
+    let value = frame.stackTop(); /* Do not pop the value */
+    if (value.tag === V_Tuple && value.size() === instruction.size) {
+      frame.instructionPointer = this._labelTargets[instruction.targetLabel];
+    } else {
+      frame.instructionPointer++;
+    }
+  }
 
   _stepCall() {
     let callerFrame = this._currentFrame();
@@ -449,12 +511,16 @@ export class VirtualMachine {
     let frame = this._currentFrame();
     let instruction = this._currentInstruction();
 
-    let fields = {};
+    let newFields = {};
+    let newFieldNames = [];
     let n = instruction.fieldNames.length;
     for (let i = 0; i < n; i++) {
       let fieldName = instruction.fieldNames[n - i - 1];
-      fields[fieldName] = frame.popValue();
+      newFields[fieldName] = frame.popValue();
+      newFieldNames.unshift(fieldName);
     }
+
+    /* Check that it is a structure and built with the same constructor */
     let structure = frame.popValue();
     if (structure.tag !== V_Structure) {
       throw new GbsRuntimeError(instruction.startPos, instruction.endPos,
@@ -472,7 +538,67 @@ export class VirtualMachine {
         )
       );
     }
-    frame.pushValue(structure.updateFields(fields));
+    if (structure.typeName !== instruction.typeName) {
+      throw Error('VM: UpdateStructure instruction does not match type.');
+    }
+
+    /* Check that the types of the fields are compatible */
+    for (let fieldName of newFieldNames) {
+      let oldType = structure.fields[fieldName].type();
+      let newType = newFields[fieldName].type();
+      if (joinTypes(oldType, newType) === null) {
+        throw new GbsRuntimeError(instruction.startPos, instruction.endPos,
+          i18n('errmsg:incompatible-types-on-record-update')(
+            fieldName,
+            oldType.toString(),
+            newType.toString(),
+          )
+        );
+      }
+    }
+
+    /* Proceed with record update */
+    frame.pushValue(structure.updateFields(newFields));
+    frame.instructionPointer++;
+  }
+
+  _stepReadTupleComponent() {
+    let frame = this._currentFrame();
+    let instruction = this._currentInstruction();
+    let tuple = frame.stackTop();
+    if (tuple.tag !== V_Tuple) {
+      throw new GbsRuntimeError(instruction.startPos, instruction.endPos,
+        i18n('errmsg:expected-tuple-but-got')(tuple.type().toString())
+      );
+    }
+    if (instruction.index >= tuple.size()) {
+      throw new GbsRuntimeError(instruction.startPos, instruction.endPos,
+        i18n('errmsg:tuple-component-out-of-bounds')(
+          tuple.size(), instruction.index,
+        )
+      );
+    }
+    frame.pushValue(tuple.components[instruction.index]);
+    frame.instructionPointer++;
+  }
+
+  _stepReadStructureField() {
+    let frame = this._currentFrame();
+    let instruction = this._currentInstruction();
+    let structure = frame.stackTop();
+    if (structure.tag !== V_Structure) {
+      throw new GbsRuntimeError(instruction.startPos, instruction.endPos,
+        i18n('errmsg:expected-structure-but-got')(structure.type().toString())
+      );
+    }
+    if (!(instruction.fieldName in structure.fields)) {
+      throw new GbsRuntimeError(instruction.startPos, instruction.endPos,
+        i18n('errmsg:structure-field-not-present')(
+          structure.fieldNames(), instruction.fieldName,
+        )
+      );
+    }
+    frame.pushValue(structure.fields[instruction.fieldName]);
     frame.instructionPointer++;
   }
 
@@ -496,6 +622,77 @@ export class VirtualMachine {
   _stepPop() {
     let frame = this._currentFrame();
     frame.popValue();
+    frame.instructionPointer++;
+  }
+
+  _stepPrimitiveCall() {
+    let frame = this._currentFrame();
+    let instruction = this._currentInstruction();
+
+    /* Pop arguments from stack */
+    let args = [];
+    for (let i = 0; i < instruction.nargs; i++) {
+      args.unshift(frame.popValue());
+    }
+
+    /* Check that the primitive exists */
+    if (!this._primitives.isPrimitive(instruction.primitiveName)) {
+      throw new GbsRuntimeError(instruction.startPos, instruction.endPos,
+        i18n('errmsg:primitive-does-not-exist')(instruction.primitiveName)
+      );
+    }
+
+    let primitive = this._primitives.getPrimitive(instruction.primitiveName);
+
+    /* Check that the number of expected parameters coincides with
+     * the actual arguments provided */
+    if (primitive.argumentTypes.length !== instruction.nargs) {
+      throw new GbsRuntimeError(instruction.startPos, instruction.endPos,
+        i18n('errmsg:primitive-arity-mismatch')(
+          instruction.primitiveName,
+          primitive.argumentTypes.length,
+          instruction.nargs,
+        )
+      );
+    }
+
+    /* Check that the types of all parameters coincide with the types of the
+     * actual arguments */
+    for (let i = 0; i < instruction.nargs; i++) {
+      let expectedType = primitive.argumentTypes[i];
+      let receivedType = args[i].type();
+      if (joinTypes(expectedType, receivedType) === null) {
+        throw new GbsRuntimeError(instruction.startPos, instruction.endPos,
+          i18n('errmsg:primitive-argument-type-mismatch')(
+            instruction.primitiveName,
+            i + 1,
+            expectedType.toString(),
+            receivedType.toString(),
+          )
+        );
+      }
+    }
+
+    /* Proceed to call the primitive operation */
+    let result = primitive.call(this.globalState(), args); /* mutates 'args' */
+    if (result !== null) {
+      frame.pushValue(result);
+    }
+    frame.instructionPointer++;
+  }
+
+  _stepSaveState() {
+    let frame = this._currentFrame();
+    this._globalStateStack.push(this.globalState().clone())
+    frame.instructionPointer++;
+  }
+
+  _stepRestoreState() {
+    let frame = this._currentFrame();
+    this._globalStateStack.pop();
+    if (this._globalStateStack.length === 0) {
+      throw Error('RestoreState: the stack of global states is empty.');
+    }
     frame.instructionPointer++;
   }
 

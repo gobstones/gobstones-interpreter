@@ -391,12 +391,16 @@ export class IPop extends Instruction {
  * etc. (required to compile a "foreach"), and so on.
  */
 export class IPrimitiveCall extends Instruction {
-  constructor(nargs) {
-    super(I_PrimitiveCall, [nargs]);
+  constructor(primitiveName, nargs) {
+    super(I_PrimitiveCall, [primitiveName, nargs]);
+  }
+
+  get primitiveName() {
+    return this._args[0];
   }
 
   get nargs() {
-    return this._args[0];
+    return this._args[1];
   }
 }
 

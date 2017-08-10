@@ -396,6 +396,69 @@ const ES = {
            + 'es de tipo ' + newType + '.';
     },
 
+  'errmsg:incompatible-types-on-record-update':
+    function (fieldName, oldType, newType) {
+      return 'El campo "' + fieldName + '" es de tipo ' + oldType + '. '
+           + 'No se lo puede actualizar con un valor de tipo ' + newType + '.';
+    },
+
+  'errmsg:expected-tuple-but-got':
+    function (receivedType) {
+      return 'Se esperaba una tupla pero se recibió un valor '
+           + 'de tipo ' + receivedType + '.';
+    },
+
+  'errmsg:tuple-component-out-of-bounds':
+    function (size, index) {
+      return 'Índice fuera de rango. '
+           + 'La tupla es de tamaño ' + size.toString() + ' y '
+           + 'el índice es ' + index.toString() + '.';
+    },
+
+  'errmsg:expected-structure-but-got':
+    function (receivedType) {
+      return 'Se esperaba una estructura pero se recibió un valor '
+           + 'de tipo ' + receivedType + '.';
+    },
+
+  'errmsg:structure-field-not-present':
+    function (fieldNames, missingFieldName) {
+      return 'La estructura no tiene un campo "' + missingFieldName + '". '
+           + 'Los campos son: [' + fieldNames.join(', ') + '].';
+    },
+
+  'errmsg:primitive-does-not-exist':
+    function (primitiveName) {
+      return 'La operación primitiva "' + primitiveName + '" '
+           + 'no existe o no está disponible.';
+    },
+
+  'errmsg:primitive-arity-mismatch':
+    function (name, expected, received) {
+      return 'La operación "' + name + '" espera recibir '
+           + ES['<n>-parameters'](expected)
+           + ' pero se la invoca con '
+           + ES['<n>-arguments'](received) + '.';
+    },
+
+  'errmsg:primitive-argument-type-mismatch':
+    function (name, parameterIndex, expectedType, receivedType) {
+      return 'El parámetro #' + parameterIndex.toString() + ' '
+           + 'de la operación "' + name + '" '
+           + 'debería ser de tipo ' + expectedType + ' '
+           + 'pero el argumento es de tipo ' + receivedType + '.';
+    },
+
+  /* Runtime */
+
+  'TYPE:Color': 'Color',
+  'CONS:Color0': 'Azul',
+  'CONS:Color1': 'Negro',
+  'CONS:Color2': 'Rojo',
+  'CONS:Color3': 'Verde',
+  'PRIM:PutStone': 'Poner',
+  'PRIM:numStones': 'nroBolitas',
+
   /* Helpers */
   '<alternative>':
     function (strings) {

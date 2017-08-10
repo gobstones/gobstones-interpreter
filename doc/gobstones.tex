@@ -482,9 +482,20 @@ basadas en una arquitectura sencilla ``orientada a pila''.
 El estado de ejecuci\'on de un programa consta de los siguientes datos:
 \begin{itemize}
 \item Un c\'odigo (\texttt{Code}) que, como dijimos, es b\'asicamente una lista de instrucciones.
-\item Un estado global, que en Gobstones/XGobstones corresponde al tablero,
+\item Una pila no vac\'ia de estados globales.
+      El estado global actual es el estado en el tope de la pila.
+      En Gobstones/XGobstones el estado global corresponde al tablero,
       pero podr\'ia corresponder a otras entidades mutables en otras variantes
       concebibles del lenguaje.
+      Cada vez que se ingresa a una funci\'on definida por el usuario,
+      el estado global actual se copia y se mete en la pila de estados globales
+      (con la instrucci\'on \instruction{SaveState}).
+      Cada vez que finaliza una funci\'on definida por el usuario,
+      se saca el estado global actual del tope de la pila de estados globales
+      (con la instrucci\'on \instruction{RestoreState}).
+      Esto permite implementar la sem\'antica de Gobstones,
+      de acuerdo con la cual las funciones no tienen efectos (todos sus efectos
+      se deshacen).
 \item Una ``pila de llamadas'' (\texttt{callStack}).
       La pila de llamadas es una pila no vac\'ia de {\em frames}.
       Un {\em frame} es el estado local

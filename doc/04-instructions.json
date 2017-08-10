@@ -29,11 +29,11 @@
   ],
   [
    ["JumpIfFalse", ["targetLabel", "LABEL"]],
-   "Si el tope de la pila es False, salta a la etiqueta indicada, que debe existir. Esta instrucción saca el elemento del tope de la pila. La pila no puede estar vacía."
+   "Si el tope de la pila es una estructura cuyo constructor es False, salta a la etiqueta indicada, que debe existir. Esta instrucción saca el elemento del tope de la pila. La pila no puede estar vacía."
   ],
   [
    ["JumpIfStructure", ["constructorName", "ID"], ["targetLabel", "LABEL"]],
-   "Si el tope de la pila es una instancia del constructor indicado por 'constructorName', salta a la etiqueta indicada, que debe existir. No saca el elemento del tope de la pila. La pila no puede estar vacía."
+   "Si el tope de la pila es una estructura cuyo constructor es el indicado por 'constructorName', salta a la etiqueta indicada, que debe existir. No saca el elemento del tope de la pila. La pila no puede estar vacía."
   ],
   [
    ["JumpIfTuple", ["size", "INT"], ["targetLabel", "LABEL"]],
@@ -57,7 +57,7 @@
 
   [
    ["MakeList", ["size", "INT"]],
-   "Crea una lista del tamaño indicado. Los elementos se sacan de la pila (el último elemento de la lista debe encontrarse en el tope de la pila)."
+   "Crea una lista del tamaño indicado. Los elementos se sacan de la pila (el último elemento de la lista debe encontrarse en el tope de la pila). Los elementos de la lista deben tener tipos compatibles; de lo contrario se lanza una excepción GbsRuntimeError."
   ],
 
   [
@@ -67,7 +67,32 @@
 
   [
    ["UpdateStructure", ["typeName", "ID"], ["constructorName", "ID"], ["fieldNames", ["*", "ID"]]],
-   "Actualiza una estructura usando el constructor indicado ('constructorName') del tipo indicado ('typeName'), con los campos indicados por la lista de nombres 'fieldNames'. Los valores de cada campo se sacan de la pila (el valor del último campo de la lista debe encontrarse en el tope de la pila). A continuación se saca de la pila el valor, que debe ser una estructura para actualizar. Si el valor no es una estructura, o si es una estructura pero no está construida con el constructor esperado, se lanza una excepción GbsRuntimeError."
+   "Actualiza una estructura usando el constructor indicado ('constructorName') del tipo indicado ('typeName'), con los campos indicados por la lista de nombres 'fieldNames'. Los valores de cada campo se sacan de la pila (el valor del último campo de la lista debe encontrarse en el tope de la pila). A continuación se saca de la pila el valor, que debe ser una estructura para actualizar. Si el valor no es una estructura, o si es una estructura pero no está construida con el constructor esperado, se lanza una excepción GbsRuntimeError. Los tipos de los valores contenidos en los campos originales deben ser compatibles con los tipos de los nuevos valores de los respectivos campos; de lo contrario se lanza una excepción GbsRuntimeError."
+  ],
+
+  [
+   ["ReadTupleComponent", ["index", "INT"]],
+   "Mete en la pila la 'index'-ésima componente de la tupla que se encuentra actualmente en el tope de la pila. Los índices empiezan desde 0. Debe haber un valor en el tope de la pila. No se saca dicho valor de la pila (queda como segundo elemento). Si el valor en el tope de la pila no es una tupla, se lanza una excepción GbsRuntimeError. Si el índice está fuera de rango, se lanza una excepción GbsRuntimeError."
+  ],
+
+  [
+   ["ReadStructureField", ["fieldName", "ID"]],
+   "Mete en la pila el valor del campo 'fieldName' de la estructura que se encuentra actualmente en el tope de la pila. Debe haber un valor en el tope de la pila. No se saca dicho valor de la pila (queda como segundo elemento). Si el valor en el tope de la pila no es una estructura, se lanza una excepción GbsRuntimeError. Si el campo 'fieldName' no es uno de los campos presentes en la estructura, se lanza una excepción GbsRuntimeError."
+  ],
+
+  [
+   ["PrimitiveCall", ["primitiveName", "ID"], ["nargs", "INT"]],
+   "Invoca a una operación primitiva. Desapila 'nargs' argumentos de la pila (con el último argumento en el tope). A continuación, invoca a la primitiva pasándole como parámetros el estado global, seguido de los 'nargs' argumentos desapilados. La función primitiva puede devolver un valor o 'null'. En caso de que devuelva un valor, se apila dicho resultado en la pila. Si devuelve null, prosigue con la ejecución."
+  ],
+
+  [
+   ["SaveState"],
+   "Crea una copia el estado global actual y lo mete en la pila de estados globales."
+  ],
+
+  [
+   ["RestoreState"],
+   "Saca un estado de la pila de estados globales."
   ]
 
 ]

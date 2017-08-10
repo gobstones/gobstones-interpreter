@@ -1,4 +1,14 @@
 
+/* Helper function */
+
+function sortedKeys(dictionary) {
+  let keys = [];
+  for (let key in dictionary) {
+    keys.push(key);
+  }
+  return keys.sort();
+}
+
 /* Value tags */
 export const V_Integer = Symbol.for('V_Integer');
 export const V_String = Symbol.for('V_String');
@@ -51,14 +61,18 @@ export class ValueString extends Value {
 }
 
 export class ValueTuple extends Value {
-  constructor(elements) {
+  constructor(components) {
     super(V_Tuple);
-    this._elements = elements
+    this._components = components;
     this._type = this._inferType();
   }
 
-  get elements() {
-    return this._elements;
+  get components() {
+    return this._components;
+  }
+
+  size() {
+    return this._components.length;
   }
 
   type() {
@@ -67,8 +81,8 @@ export class ValueTuple extends Value {
 
   _inferType() {
     let componentTypes = [];
-    for (let element of this._elements) {
-      componentTypes.push(element.type());
+    for (let component of this._components) {
+      componentTypes.push(component.type());
     }
     return new TypeTuple(componentTypes);
   }
@@ -126,6 +140,10 @@ export class ValueStructure extends Value {
 
   get fields() {
     return this._fields;
+  }
+
+  fieldNames() {
+    return sortedKeys(this._fields);
   }
 
   _clone() {
@@ -240,7 +258,7 @@ export class TypeAny extends Type {
   }
 }
 
-class TypeInteger extends Type {
+export class TypeInteger extends Type {
   constructor() {
     super(Ty_Integer);
   }
@@ -250,7 +268,7 @@ class TypeInteger extends Type {
   }
 }
 
-class TypeString extends Type {
+export class TypeString extends Type {
   constructor() {
     super(Ty_String);
   }
@@ -260,7 +278,7 @@ class TypeString extends Type {
   }
 }
 
-class TypeTuple extends Type {
+export class TypeTuple extends Type {
   constructor(componentTypes) {
     super(Ty_Tuple);
     this._componentTypes = componentTypes;
@@ -279,7 +297,7 @@ class TypeTuple extends Type {
   }
 }
 
-class TypeList extends Type {
+export class TypeList extends Type {
   constructor(contentType) {
     super(Ty_List);
     this._contentType = contentType;
@@ -294,15 +312,7 @@ class TypeList extends Type {
   }
 }
 
-function sortedKeys(dictionary) {
-  let keys = [];
-  for (let key in dictionary) {
-    keys.push(key);
-  }
-  return keys.sort();
-}
-
-class TypeStructure extends Type {
+export class TypeStructure extends Type {
   constructor(typeName, cases) {
     super(Ty_Structure);
     this._typeName = typeName;
