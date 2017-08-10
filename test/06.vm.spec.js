@@ -733,7 +733,7 @@ describe('Virtual Machine', () => {
         new IReturn(),
       ]));
       expect(() => vm.run()).throws(
-        i18n('errmsg:expected-tuple-but-got')('Integer')
+        i18n('errmsg:expected-tuple-value-but-got')('Integer')
       );
     });
 
@@ -788,7 +788,7 @@ describe('Virtual Machine', () => {
         new IReturn(),
       ]));
       expect(() => vm.run()).throws(
-        i18n('errmsg:expected-structure-but-got')('Integer')
+        i18n('errmsg:expected-structure-value-but-got')('Integer')
       );
     });
 

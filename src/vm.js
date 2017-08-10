@@ -568,7 +568,7 @@ export class VirtualMachine {
     let tuple = frame.stackTop();
     if (tuple.tag !== V_Tuple) {
       throw new GbsRuntimeError(instruction.startPos, instruction.endPos,
-        i18n('errmsg:expected-tuple-but-got')(tuple.type().toString())
+        i18n('errmsg:expected-tuple-value-but-got')(tuple.type().toString())
       );
     }
     if (instruction.index >= tuple.size()) {
@@ -588,7 +588,9 @@ export class VirtualMachine {
     let structure = frame.stackTop();
     if (structure.tag !== V_Structure) {
       throw new GbsRuntimeError(instruction.startPos, instruction.endPos,
-        i18n('errmsg:expected-structure-but-got')(structure.type().toString())
+        i18n('errmsg:expected-structure-value-but-got')(
+          structure.type().toString()
+        )
       );
     }
     if (!(instruction.fieldName in structure.fields)) {

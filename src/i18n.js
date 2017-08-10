@@ -402,7 +402,7 @@ const ES = {
            + 'No se lo puede actualizar con un valor de tipo ' + newType + '.';
     },
 
-  'errmsg:expected-tuple-but-got':
+  'errmsg:expected-tuple-value-but-got':
     function (receivedType) {
       return 'Se esperaba una tupla pero se recibió un valor '
            + 'de tipo ' + receivedType + '.';
@@ -415,7 +415,7 @@ const ES = {
            + 'el índice es ' + index.toString() + '.';
     },
 
-  'errmsg:expected-structure-but-got':
+  'errmsg:expected-structure-value-but-got':
     function (receivedType) {
       return 'Se esperaba una estructura pero se recibió un valor '
            + 'de tipo ' + receivedType + '.';
