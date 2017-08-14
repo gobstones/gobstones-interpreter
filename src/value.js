@@ -1,3 +1,4 @@
+import { i18n } from './i18n';
 
 /* Helper function */
 
@@ -264,7 +265,7 @@ export class TypeInteger extends Type {
   }
 
   toString() {
-    return 'Integer';
+    return i18n('TYPE:Integer');
   }
 }
 
@@ -274,7 +275,7 @@ export class TypeString extends Type {
   }
 
   toString() {
-    return 'String';
+    return i18n('TYPE:String');
   }
 }
 
@@ -293,7 +294,7 @@ export class TypeTuple extends Type {
     for (let t of this._componentTypes) {
       strings.push(t.toString());
     }
-    return 'Tuple(' + strings.join(', ') + ')';
+    return i18n('TYPE:Tuple') + '(' + strings.join(', ') + ')';
   }
 }
 
@@ -308,7 +309,7 @@ export class TypeList extends Type {
   }
 
   toString() {
-    return 'List(' + this._contentType.toString() + ')';
+    return i18n('TYPE:List') + '(' + this._contentType.toString() + ')';
   }
 }
 

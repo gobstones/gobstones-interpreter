@@ -28,6 +28,7 @@ export const I_RestoreState = Symbol.for('I_RestoreState');
 export const I_TypeCheck = Symbol.for('I_TypeCheck');
 
 export class Code {
+
   constructor(instructions) {
     this._instructions = instructions;
   }
@@ -36,6 +37,7 @@ export class Code {
     this._instructions.push(instruction);
   }
 
+  /* Return the instruction at the given location */
   at(ip) {
     if (0 <= ip && ip < this._instructions.length) {
       return this._instructions[ip];

@@ -91,14 +91,14 @@
   ],
   ["pattern",
     ["patternWildcard"],
-    ["patternConstructor"],
+    ["patternStructure"],
     ["patternTuple"],
     ["patternTimeout"]
   ],
   ["patternWildcard",
     ["UNDERSCORE"]
   ],
-  ["patternConstructor",
+  ["patternStructure",
     ["UPPERID", ["?", ["LPAREN", "loweridSeq", "RPAREN"]]]
   ],
   ["patternTuple",
@@ -122,8 +122,8 @@
     ["exprList"],
     ["exprRange"],
     ["exprTuple"],
-    ["exprConstructor"],
-    ["exprConstructorUpdate"]
+    ["exprStructure"],
+    ["exprStructureUpdate"]
   ],
   ["exprVariable",
     ["LOWERID"]
@@ -148,10 +148,10 @@
     ["LPAREN", "RPAREN"],
     ["LPAREN", "expression", "COMMA", "nonEmptyExpressionSeq", "RPAREN"]
   ],
-  ["exprConstructor",
+  ["exprStructure",
     ["UPPERID", ["?", ["LPAREN", "fieldBindingSeq", "RPAREN"]]]
   ],
-  ["exprConstructorUpdate",
+  ["exprStructureUpdate",
     ["UPPERID", "LPAREN", "expression", "PIPE", "fieldBindingSeq", "RPAREN"]
   ],
   ["fieldBinding",

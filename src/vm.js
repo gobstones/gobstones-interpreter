@@ -535,7 +535,7 @@ export class VirtualMachine {
       let newType = newFields[fieldName].type();
       if (joinTypes(oldType, newType) === null) {
         throw new GbsRuntimeError(instruction.startPos, instruction.endPos,
-          i18n('errmsg:incompatible-types-on-record-update')(
+          i18n('errmsg:incompatible-types-on-structure-update')(
             fieldName,
             oldType.toString(),
             newType.toString(),
@@ -544,7 +544,7 @@ export class VirtualMachine {
       }
     }
 
-    /* Proceed with record update */
+    /* Proceed with structure update */
     frame.pushValue(structure.updateFields(newFields));
     frame.instructionPointer++;
   }
@@ -625,13 +625,13 @@ export class VirtualMachine {
     }
 
     /* Check that the primitive exists */
-    if (!this._primitives.isPrimitive(instruction.primitiveName)) {
+    if (!this._primitives.isOperation(instruction.primitiveName)) {
       throw new GbsRuntimeError(instruction.startPos, instruction.endPos,
         i18n('errmsg:primitive-does-not-exist')(instruction.primitiveName)
       );
     }
 
-    let primitive = this._primitives.getPrimitive(instruction.primitiveName);
+    let primitive = this._primitives.getOperation(instruction.primitiveName);
 
     /* Check that the number of expected parameters coincides with
      * the actual arguments provided */

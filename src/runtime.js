@@ -100,7 +100,7 @@ export class RuntimeState {
   }
 }
 
-class Primitive {
+class PrimitiveOperation {
   constructor(argumentTypes, implementation) {
     this._argumentTypes = argumentTypes;
     this._implementation = implementation;
@@ -122,10 +122,26 @@ const TypeColor = new TypeStructure(i18n('TYPE:Color'), {});
 export class RuntimePrimitives {
 
   constructor() {
-    this._primitives = {};
+    this._primitiveOperations = {};
+    this._primitiveTypes = {};
 
-    this._primitives[i18n('PRIM:PutStone')] =
-      new Primitive(
+    /*** Primitive types ***/
+
+    /* Booleans */
+    this._primitiveTypes[i18n('TYPE:Bool')] = {};
+    this._primitiveTypes[i18n('TYPE:Bool')][i18n('CONS:False')] = [];
+    this._primitiveTypes[i18n('TYPE:Bool')][i18n('CONS:True')] = [];
+
+    /* Colors */
+    this._primitiveTypes[i18n('TYPE:Color')] = {};
+    for (let colorName of COLOR_NAMES) {
+      this._primitiveTypes[i18n('TYPE:Color')][colorName] = [];
+    }
+
+    /*** Primitive operations ***/
+
+    this._primitiveOperations[i18n('PRIM:PutStone')] =
+      new PrimitiveOperation(
           [TypeColor],
           function (globalState, color) {
             let colorName = color.constructorName;
@@ -134,22 +150,55 @@ export class RuntimePrimitives {
           }
       );
 
-    this._primitives[i18n('PRIM:numStones')] =
-      new Primitive(
+    this._primitiveOperations[i18n('PRIM:numStones')] =
+      new PrimitiveOperation(
           [TypeColor],
           function (globalState, color) {
             let colorName = color.constructorName;
             return new ValueInteger(globalState.numStones(colorName));
           }
       );
+
   }
 
-  isPrimitive(primitiveName) {
-    return primitiveName in this._primitives;
+  /* Types */
+  types() {
+    let typeNames = [];
+    for (let typeName in this._primitiveTypes) {
+      typeNames.push(typeName);
+    }
+    return typeNames;
   }
 
-  getPrimitive(primitiveName) {
-    return this._primitives[primitiveName];
+  typeConstructors(typeName) {
+    if (!(typeName in this._primitiveTypes)) {
+      throw Error('Not a primitive type: ' + typeName);
+    }
+    let constructorNames = [];
+    for (let constructorName in this._primitiveTypes[typeName]) {
+      constructorNames.push(constructorName);
+    }
+    return constructorNames;
   }
+
+  constructorFields(typeName, constructorName) {
+    if (!(typeName in this._primitiveTypes)) {
+      throw Error('Not a primitive type: ' + typeName);
+    }
+    if (!(constructorName in this._primitiveTypes[typeName])) {
+      throw Error('Not a primitive constructor: ' + constructorName);
+    }
+    return this._primitiveTypes[typeName][constructorName];
+  }
+
+  /* Operations */
+  isOperation(primitiveName) {
+    return primitiveName in this._primitiveOperations;
+  }
+
+  getOperation(primitiveName) {
+    return this._primitiveOperations[primitiveName];
+  }
+
 }
 

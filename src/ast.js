@@ -21,7 +21,7 @@ export const N_StmtAssignTuple = Symbol.for('N_StmtAssignTuple');
 export const N_StmtProcedureCall = Symbol.for('N_StmtProcedureCall');
 /* Patterns */
 export const N_PatternWildcard = Symbol.for('N_PatternWildcard');
-export const N_PatternConstructor = Symbol.for('N_PatternConstructor');
+export const N_PatternStructure = Symbol.for('N_PatternStructure');
 export const N_PatternTuple = Symbol.for('N_PatternTuple');
 export const N_PatternTimeout = Symbol.for('N_PatternTimeout');
 /* Expressions */
@@ -31,8 +31,8 @@ export const N_ExprConstantString = Symbol.for('N_ExprConstantString');
 export const N_ExprList = Symbol.for('N_ExprList');
 export const N_ExprRange = Symbol.for('N_ExprRange');
 export const N_ExprTuple = Symbol.for('N_ExprTuple');
-export const N_ExprConstructor = Symbol.for('N_ExprConstructor');
-export const N_ExprConstructorUpdate = Symbol.for('N_ExprConstructorUpdate');
+export const N_ExprStructure = Symbol.for('N_ExprStructure');
+export const N_ExprStructureUpdate = Symbol.for('N_ExprStructureUpdate');
 export const N_ExprFunctionCall = Symbol.for('N_ExprFunctionCall');
 /* SwitchBranch: pattern -> body */
 export const N_SwitchBranch = Symbol.for('N_SwitchBranch');
@@ -340,9 +340,9 @@ export class ASTPatternWildcard extends ASTNode {
   }
 }
 
-export class ASTPatternConstructor extends ASTNode {
+export class ASTPatternStructure extends ASTNode {
   constructor(constructorName, parameters) {
-    super(N_PatternConstructor, [constructorName, parameters]);
+    super(N_PatternStructure, [constructorName, parameters]);
   }
 
   get constructorName() {
@@ -390,11 +390,19 @@ export class ASTExprConstantNumber extends ASTNode {
   constructor(number) {
     super(N_ExprConstantNumber, [number]);
   }
+
+  get number() {
+    return this._children[0];
+  }
 }
 
 export class ASTExprConstantString extends ASTNode {
   constructor(string) {
     super(N_ExprConstantString, [string]);
+  }
+
+  get string() {
+    return this._children[0];
   }
 }
 
@@ -437,9 +445,9 @@ export class ASTExprTuple extends ASTNode {
   }
 }
 
-export class ASTExprConstructor extends ASTNode {
+export class ASTExprStructure extends ASTNode {
   constructor(constructorName, fieldBindings) {
-    super(N_ExprConstructor, [constructorName, fieldBindings]);
+    super(N_ExprStructure, [constructorName, fieldBindings]);
   }
 
   get constructorName() {
@@ -459,9 +467,9 @@ export class ASTExprConstructor extends ASTNode {
   }
 }
 
-export class ASTExprConstructorUpdate extends ASTNode {
+export class ASTExprStructureUpdate extends ASTNode {
   constructor(constructorName, original, fieldBindings) {
-    super(N_ExprConstructorUpdate, [constructorName, original, fieldBindings]);
+    super(N_ExprStructureUpdate, [constructorName, original, fieldBindings]);
   }
 
   get constructorName() {

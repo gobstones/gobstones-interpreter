@@ -263,7 +263,7 @@ const ES = {
            + ES['<n>-arguments'](received) + '.';
     },
 
-  'errmsg:constructor-pattern-arity-mismatch':
+  'errmsg:structure-pattern-arity-mismatch':
     function (name, expected, received) {
       return 'El constructor "' + name + '" tiene '
            + ES['<n>-fields'](expected)
@@ -301,18 +301,18 @@ const ES = {
   'errmsg:wildcard-pattern-should-be-last':
     'El comodín "_" tiene que ser la última rama del switch.',
 
-  'errmsg:constructor-pattern-repeats-constructor':
+  'errmsg:structure-pattern-repeats-constructor':
     function (name) {
       return 'Hay dos ramas distintas para el constructor "' + name + '".';
     },
 
-  'errmsg:constructor-pattern-repeats-tuple-arity':
+  'errmsg:structure-pattern-repeats-tuple-arity':
     function (arity) {
       return 'Hay dos ramas distintas para las tuplas de ' + arity.toString()
            + ' componentes.';
     },
 
-  'errmsg:constructor-pattern-repeats-timeout':
+  'errmsg:structure-pattern-repeats-timeout':
     'Hay dos ramas distintas para el TIMEOUT.',
 
   'errmsg:pattern-does-not-match-type':
@@ -328,25 +328,25 @@ const ES = {
   'errmsg:patterns-in-switch-must-not-be-events':
     'Los patrones de un "switch" no pueden ser eventos.',
 
-  'errmsg:constructor-instantiation-repeated-field':
+  'errmsg:structure-construction-repeated-field':
     function (constructorName, fieldName) {
       return 'El campo "' + fieldName + '" está repetido en '
            + 'la instanciación del constructor "' + constructorName + '".';
     },
 
-  'errmsg:constructor-instantiation-invalid-field':
+  'errmsg:structure-construction-invalid-field':
     function (constructorName, fieldName) {
       return 'El campo "' + fieldName + '" no es un campo válido '
            + 'para el constructor "' + constructorName + '".';
     },
 
-  'errmsg:constructor-instantiation-missing-field':
+  'errmsg:structure-construction-missing-field':
     function (constructorName, fieldName) {
       return 'Falta darle valor al campo "' + fieldName + '" '
            + 'del constructor "' + constructorName + '".';
     },
 
-  'errmsg:constructor-instantiation-cannot-be-an-event':
+  'errmsg:structure-construction-cannot-be-an-event':
     function (constructorName) {
       return 'El constructor "' + constructorName + '" corresponde a un '
            + 'evento, y solamente se puede manejar implícitamente '
@@ -396,7 +396,7 @@ const ES = {
            + 'es de tipo ' + newType + '.';
     },
 
-  'errmsg:incompatible-types-on-record-update':
+  'errmsg:incompatible-types-on-structure-update':
     function (fieldName, oldType, newType) {
       return 'El campo "' + fieldName + '" es de tipo ' + oldType + '. '
            + 'No se lo puede actualizar con un valor de tipo ' + newType + '.';
@@ -457,11 +457,20 @@ const ES = {
 
   /* Runtime */
 
+  'TYPE:Integer': 'INTEGER',
+  'TYPE:String': 'STRING',
+  'TYPE:Tuple': 'TUPLE',
+  'TYPE:List': 'LIST',
+  'TYPE:Bool': 'Bool',
+  'CONS:False': 'False',
+  'CONS:True': 'True',
+
   'TYPE:Color': 'Color',
   'CONS:Color0': 'Azul',
   'CONS:Color1': 'Negro',
   'CONS:Color2': 'Rojo',
   'CONS:Color3': 'Verde',
+
   'PRIM:PutStone': 'Poner',
   'PRIM:numStones': 'nroBolitas',
 

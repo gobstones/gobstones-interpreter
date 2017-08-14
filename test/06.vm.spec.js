@@ -106,8 +106,8 @@ describe('Virtual Machine', () => {
       expect(() => vm.run()).throws(
         i18n('errmsg:incompatible-types-on-assignment')(
           'x',
-          'Integer',
-          'String'
+          new TypeInteger().toString(),
+          new TypeString().toString(),
         )
       );
     });
@@ -368,8 +368,8 @@ describe('Virtual Machine', () => {
       expect(() => vm.run()).throws(
         i18n('errmsg:incompatible-types-on-list-creation')(
           2,
-          'Integer',
-          'String',
+          new TypeInteger().toString(),
+          new TypeString().toString(),
         )
       );
     });
@@ -388,8 +388,13 @@ describe('Virtual Machine', () => {
       expect(() => vm.run()).throws(
         i18n('errmsg:incompatible-types-on-list-creation')(
           2,
-          'T:A(x <- Integer) | T:B(x <- String)',
-          'T:A(x <- String)',
+          new TypeStructure('T', {
+            'A': {'x': new TypeInteger()},
+            'B': {'x': new TypeString()},
+          }).toString(),
+          new TypeStructure('T', {
+            'A': {'x': new TypeString()},
+          }).toString(),
         )
       );
     });
@@ -522,10 +527,10 @@ describe('Virtual Machine', () => {
         new IReturn(),
       ]));
       expect(() => vm.run()).throws(
-        i18n('errmsg:incompatible-types-on-record-update')(
+        i18n('errmsg:incompatible-types-on-structure-update')(
           'z',
-          'Integer',
-          'String',
+          new TypeInteger().toString(),
+          new TypeString().toString(),
         )
       );
     });
@@ -568,7 +573,9 @@ describe('Virtual Machine', () => {
         new IReturn(),
       ]));
       expect(() => vm.run()).throws(
-        i18n('errmsg:expected-tuple-value-but-got')('Integer')
+        i18n('errmsg:expected-tuple-value-but-got')(
+          new TypeInteger().toString()
+        )
       );
     });
 
@@ -623,7 +630,9 @@ describe('Virtual Machine', () => {
         new IReturn(),
       ]));
       expect(() => vm.run()).throws(
-        i18n('errmsg:expected-structure-value-but-got')('Integer')
+        i18n('errmsg:expected-structure-value-but-got')(
+          new TypeInteger().toString()
+        )
       );
     });
 
@@ -701,8 +710,8 @@ describe('Virtual Machine', () => {
         i18n('errmsg:primitive-argument-type-mismatch')(
           i18n('PRIM:PutStone'),
           1,
-          i18n('TYPE:Color'),
-          'Integer',
+          new TypeStructure(i18n('TYPE:Color'), {}).toString(),
+          new TypeInteger().toString(),
         )
       );
     });
@@ -794,7 +803,10 @@ describe('Virtual Machine', () => {
         new IReturn(),
       ]));
       expect(() => vm.run()).throws(
-        i18n('errmsg:expected-value-of-type-but-got')('String', 'Integer')
+        i18n('errmsg:expected-value-of-type-but-got')(
+          new TypeString().toString(),
+          new TypeInteger().toString(),
+        )
       );
     });
 
@@ -805,7 +817,10 @@ describe('Virtual Machine', () => {
         new IReturn(),
       ]));
       expect(() => vm.run()).throws(
-        i18n('errmsg:expected-value-of-type-but-got')('List(?)', 'Integer')
+        i18n('errmsg:expected-value-of-type-but-got')(
+          new TypeList(new TypeAny()).toString(),
+          new TypeInteger().toString(),
+        )
       );
     });
 
@@ -817,7 +832,8 @@ describe('Virtual Machine', () => {
       ]));
       expect(() => vm.run()).throws(
         i18n('errmsg:expected-value-of-type-but-got')(
-          'List(Integer)', 'Integer'
+          new TypeList(new TypeInteger()).toString(),
+          new TypeInteger().toString(),
         )
       );
     });
@@ -838,8 +854,12 @@ describe('Virtual Machine', () => {
       ]));
       expect(() => vm.run()).throws(
         i18n('errmsg:expected-value-of-type-but-got')(
-          'Tuple(Integer, Integer, Integer)',
-          'Tuple(Integer, Integer)'
+          new TypeTuple([
+            new TypeInteger(),
+            new TypeInteger(),
+            new TypeInteger(),
+          ]).toString(),
+          new TypeTuple([new TypeInteger(), new TypeInteger()]).toString(),
         )
       );
     });
@@ -859,8 +879,8 @@ describe('Virtual Machine', () => {
       ]));
       expect(() => vm.run()).throws(
         i18n('errmsg:expected-value-of-type-but-got')(
-          'Tuple(Integer, Integer)',
-          'Tuple(Integer, String)'
+          new TypeTuple([new TypeInteger(), new TypeInteger()]).toString(),
+          new TypeTuple([new TypeInteger(), new TypeString()]).toString(),
         )
       );
     });
@@ -875,8 +895,8 @@ describe('Virtual Machine', () => {
       ]));
       expect(() => vm.run()).throws(
         i18n('errmsg:expected-value-of-type-but-got')(
-          'List(Integer)',
-          'List(String)'
+          new TypeList(new TypeInteger()).toString(),
+          new TypeList(new TypeString()).toString(),
         )
       );
     });
@@ -889,8 +909,8 @@ describe('Virtual Machine', () => {
       ]));
       expect(() => vm.run()).throws(
         i18n('errmsg:expected-value-of-type-but-got')(
-          'T2:B',
-          'T1:A'
+          new TypeStructure('T2', {'B': {}}).toString(),
+          new TypeStructure('T1', {'A': {}}).toString(),
         )
       );
     });
@@ -904,8 +924,8 @@ describe('Virtual Machine', () => {
       ]));
       expect(() => vm.run()).throws(
         i18n('errmsg:expected-value-of-type-but-got')(
-          'T:A(f <- String)',
-          'T:A(f <- Integer)'
+          new TypeStructure('T', {'A': {'f': new TypeString()}}).toString(),
+          new TypeStructure('T', {'A': {'f': new TypeInteger()}}).toString()
         )
       );
     });

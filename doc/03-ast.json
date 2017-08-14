@@ -29,7 +29,7 @@
   ],
   ["data", "Pattern",
     ["PatternWildcard"],
-    ["PatternConstructor", ["constructorName", "ID"], ["parameters", ["*", "ID"]]],
+    ["PatternStructure", ["constructorName", "ID"], ["parameters", ["*", "ID"]]],
     ["PatternTuple", ["parameters", ["*", "ID"]]],
     ["PatternTimeout", ["timeout", "NUM"]]
   ],
@@ -40,8 +40,8 @@
     ["ExprList", ["elements", ["*", "Expression"]]],
     ["ExprRange", ["first", "Expression"], ["second", ["?", "Expression"]], ["last", "Expression"]],
     ["ExprTuple", ["elements", ["*", "Expression"]]],
-    ["ExprConstructor", ["constructorName", "ID"], ["fieldBindings", ["*", "FieldBinding"]]],
-    ["ExprConstructorUpdate", ["constructorName", "ID"], ["original", "Expression"], ["fieldBindings", ["*", "FieldBinding"]]],
+    ["ExprStructure", ["constructorName", "ID"], ["fieldBindings", ["*", "FieldBinding"]]],
+    ["ExprStructureUpdate", ["constructorName", "ID"], ["original", "Expression"], ["fieldBindings", ["*", "FieldBinding"]]],
     ["ExprFunctionCall", ["functionName", "ID"], ["args", ["*", "Expression"]]]
   ],
   ["data", "ConstructorDeclaration",

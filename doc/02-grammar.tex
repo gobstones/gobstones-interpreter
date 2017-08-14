@@ -113,7 +113,7 @@
 \production{\nonterminal{pattern}}{
 \nonterminal{patternWildcard}
 \ALT
-\nonterminal{patternConstructor}
+\nonterminal{patternStructure}
 \ALT
 \nonterminal{patternTuple}
 \ALT
@@ -122,7 +122,7 @@
 \production{\nonterminal{patternWildcard}}{
 \token{UNDERSCORE}
 }
-\production{\nonterminal{patternConstructor}}{
+\production{\nonterminal{patternStructure}}{
 \token{UPPERID} (\token{LPAREN} \nonterminal{loweridSeq} \token{RPAREN})?
 }
 \production{\nonterminal{patternTuple}}{
@@ -157,9 +157,9 @@
 \ALT
 \nonterminal{exprTuple}
 \ALT
-\nonterminal{exprConstructor}
+\nonterminal{exprStructure}
 \ALT
-\nonterminal{exprConstructorUpdate}
+\nonterminal{exprStructureUpdate}
 }
 \production{\nonterminal{exprVariable}}{
 \token{LOWERID}
@@ -186,10 +186,10 @@
 \ALT
 \token{LPAREN} \nonterminal{expression} \token{COMMA} \nonterminal{\nonEmpty{expressionSeq}} \token{RPAREN}
 }
-\production{\nonterminal{exprConstructor}}{
+\production{\nonterminal{exprStructure}}{
 \token{UPPERID} (\token{LPAREN} \nonterminal{fieldBindingSeq} \token{RPAREN})?
 }
-\production{\nonterminal{exprConstructorUpdate}}{
+\production{\nonterminal{exprStructureUpdate}}{
 \token{UPPERID} \token{LPAREN} \nonterminal{expression} \token{PIPE} \nonterminal{fieldBindingSeq} \token{RPAREN}
 }
 \production{\nonterminal{fieldBinding}}{
