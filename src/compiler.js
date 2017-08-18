@@ -68,8 +68,10 @@ import {
   Code
 } from './instruction';
 import {
+  TypeInteger,
   TypeStructure,
 } from './value';
+import { RuntimePrimitives } from './runtime';
 import { i18n } from './i18n';
 
 /*
@@ -89,6 +91,7 @@ export class Compiler {
     this._symtable = symtable;
     this._code = new Code([]);
     this._nextLabel = 0;
+    this._primitives = new RuntimePrimitives();
   }
 
   compile(ast) {
@@ -159,8 +162,7 @@ export class Compiler {
       case N_StmtIf:
         return this._compileStmtIf(statement);
       case N_StmtRepeat:
-        // TODO
-        break;
+        return this._compileStmtRepeat(statement);
       case N_StmtForeach:
         // TODO
         break;
@@ -207,14 +209,16 @@ export class Compiler {
   /*
    * If without else:
    *
-   *   <expression>
+   *   <condition>
+   *   TypeCheck Bool
    *   JumpIfFalse labelElse
    *   <thenBranch>
    *   labelElse:
    *
    * If with else:
    *
-   *   <expression>
+   *   <condition>
+   *   TypeCheck Bool
    *   JumpIfFalse labelElse
    *   <thenBranch>
    *   Jump labelEnd
@@ -249,6 +253,44 @@ export class Compiler {
     }
   }
 
+  /* <times>
+   * TypeCheck Integer
+   * labelStart:
+   *   Dup                     ;\
+   *   PushInteger 0           ;| if not positive, end
+   *   PrimitiveCall ">", 2    ;|
+   *   JumpIfFalse labelEnd    ;/
+   *   <body>
+   *   PushInteger 1           ;\ subtract 1
+   *   PrimitiveCall "-", 2    ;/
+   * Jump labelStart
+   * labelEnd:
+   * Pop                       ; pop the remaining number
+   */
+  _compileStmtRepeat(statement) {
+    this._compileExpression(statement.times);
+    this._produce(statement.times.startPos, statement.times.endPos,
+      new ITypeCheck(new TypeInteger())
+    );
+    let labelStart = this._freshLabel();
+    let labelEnd = this._freshLabel();
+    this._produceList(statement.startPos, statement.endPos, [
+      new ILabel(labelStart),
+      new IDup(),
+      new IPushInteger(0),
+      new IPrimitiveCall('>', 2),
+      new IJumpIfFalse(labelEnd),
+    ]);
+    this._compileStatement(statement.body);
+    this._produceList(statement.startPos, statement.endPos, [
+      new IPushInteger(1),
+      new IPrimitiveCall('-', 2),
+      new IJump(labelStart),
+      new ILabel(labelEnd),
+      new IPop(),
+    ]);
+  }
+
   _compileStmtAssignVariable(statement) {
     this._compileExpression(statement.value);
     this._produce(statement.startPos, statement.endPos,
@@ -279,16 +321,14 @@ export class Compiler {
         // TODO
         break;
       case N_ExprTuple:
-        // TODO
-        break;
+        return this._compileExprTuple(expression);
       case N_ExprStructure:
         return this._compileExprStructure(expression);
       case N_ExprStructureUpdate:
         // TODO
         break;
       case N_ExprFunctionCall:
-        // TODO
-        break;
+        return this._compileExprFunctionCall(expression);
       default:
         throw Error(
                 'Compiler: Expression not implemented: '
@@ -305,13 +345,22 @@ export class Compiler {
 
   _compileExprConstantNumber(expression) {
     this._produce(expression.startPos, expression.endPos,
-      new IPushInteger(parseInt(expression.number.value))
+      new IPushInteger(expression.number.value)
     );
   }
 
   _compileExprConstantString(expression) {
     this._produce(expression.startPos, expression.endPos,
       new IPushString(expression.string.value)
+    );
+  }
+
+  _compileExprTuple(expression) {
+    for (let element of expression.elements) {
+      this._compileExpression(element);
+    }
+    this._produce(expression.startPos, expression.endPos,
+      new IMakeTuple(expression.elements.length)
     );
   }
 
@@ -325,6 +374,44 @@ export class Compiler {
     let typeName = this._symtable.constructorType(constructorName);
     this._produce(expression.startPos, expression.endPos,
       new IMakeStructure(typeName, constructorName, fieldNames)
+    );
+  }
+
+  /* There are four cases:
+   * (1) The function is '&&' or '||' which must be considered separately
+   *     to account for short-circuting.
+   * (2) The function is a built-in primitive.
+   * (3) The function is a user-defined function.
+   * (4) The function is an observer / field accessor.
+   */
+  _compileExprFunctionCall(expression) {
+    let functionName = expression.functionName.value;
+    if (functionName === '&&' || functionName === '||') {
+      // TODO
+      throw Error('short-circuiting not implemented');
+    } else {
+      for (let argument of expression.args) {
+        this._compileExpression(argument);
+      }
+      if (this._primitives.isFunction(functionName)) {
+        this._compileExprFunctionCallPrimitive(expression);
+      } else if (this._symtable.isFunction(functionName)) {
+        // TODO
+        throw Error('calling a user-defined function not implemented');
+      } else if (this._symtable.isField(functionName)) {
+        // TODO
+        throw Error('accessing a field not implemented');
+      } else {
+        throw Error(
+          'Compiler: ' + expression.functionName + ' is an undefined function.'
+        );
+      }
+    }
+  }
+
+  _compileExprFunctionCallPrimitive(expression) {
+    this._produce(expression.startPos, expression.endPos,
+      new IPrimitiveCall(expression.functionName.value, expression.args.length)
     );
   }
   

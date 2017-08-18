@@ -1,4 +1,5 @@
 import { i18n } from './i18n';
+import { Integer } from './bigint';
 
 /* Helper function */
 
@@ -34,7 +35,15 @@ export class Value {
 export class ValueInteger extends Value {
   constructor(number) {
     super(V_Integer);
-    this._number = number
+    if (typeof number === 'number') {
+      this._number = number.toString();
+    } else if (typeof number === 'string') {
+      this._number = number;
+    } else {
+      throw Error(
+        'Integer value must be constructed with an integer or a string'
+      );
+    }
   }
 
   get number() {
@@ -43,6 +52,47 @@ export class ValueInteger extends Value {
 
   type() {
     return new TypeInteger();
+  }
+
+  add(other) {
+    let a = Integer(this._number);
+    let b = Integer(other._number);
+    return new ValueInteger(a.add(b).toString());
+  }
+
+  sub(other) {
+    let a = Integer(this._number);
+    let b = Integer(other._number);
+    return new ValueInteger(a.subtract(b).toString());
+  }
+
+  le(other) {
+    let a = Integer(this._number);
+    let b = Integer(other._number);
+    return a.leq(b);
+  }
+
+  lt(other) {
+    let a = Integer(this._number);
+    let b = Integer(other._number);
+    return a.lt(b);
+  }
+
+  ge(other) {
+    let a = Integer(this._number);
+    let b = Integer(other._number);
+    return a.geq(b);
+  }
+
+  gt(other) {
+    let a = Integer(this._number);
+    let b = Integer(other._number);
+    return a.gt(b);
+  }
+
+  negate() {
+    let a = Integer(this._number);
+    return new ValueInteger(a.negate().toString());
   }
 }
 
@@ -350,7 +400,7 @@ export class TypeStructure extends Type {
     if (caseStrings.length === 0) {
       return this._typeName;
     } else {
-      return caseStrings.join(' | ');
+      return caseStrings.join(' + ');
     }
   }
 }

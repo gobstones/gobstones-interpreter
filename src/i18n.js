@@ -455,12 +455,19 @@ const ES = {
            + 'pero se recibió un valor de tipo ' + receivedType + '.';
     },
 
+  'errmsg:expected-value-of-some-type-but-got':
+    function (expectedTypes, receivedType) {
+      return 'Se esperaba un valor de alguno de los siguientes tipos: '
+           + expectedTypes.join(', ')
+           + '; pero se recibió un valor de tipo ' + receivedType + '.';
+    },
+
   /* Runtime */
 
-  'TYPE:Integer': 'INTEGER',
-  'TYPE:String': 'STRING',
-  'TYPE:Tuple': 'TUPLE',
-  'TYPE:List': 'LIST',
+  'TYPE:Integer': 'Integer',
+  'TYPE:String': 'String',
+  'TYPE:Tuple': 'Tuple',
+  'TYPE:List': 'List',
   'TYPE:Bool': 'Bool',
   'CONS:False': 'False',
   'CONS:True': 'True',
@@ -470,6 +477,12 @@ const ES = {
   'CONS:Color1': 'Negro',
   'CONS:Color2': 'Rojo',
   'CONS:Color3': 'Verde',
+
+  'TYPE:Dir': 'Dir',
+  'CONS:Dir0': 'Norte',
+  'CONS:Dir1': 'Este',
+  'CONS:Dir2': 'Sur',
+  'CONS:Dir3': 'Oeste',
 
   'PRIM:PutStone': 'Poner',
   'PRIM:numStones': 'nroBolitas',

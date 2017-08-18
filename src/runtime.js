@@ -10,7 +10,11 @@ import {
   TypeTuple,
   TypeList,
   TypeStructure,
+  joinTypes,
 } from './value';
+import {
+  GbsRuntimeError,
+} from './exceptions';
 
 /*
  * This module provides the runtime support for the execution of a program.
@@ -37,6 +41,25 @@ let COLOR_NAMES = [
   i18n('CONS:Color2'),
   i18n('CONS:Color3'),
 ];
+
+let DIR_NAMES = [
+  i18n('CONS:Dir0'),
+  i18n('CONS:Dir1'),
+  i18n('CONS:Dir2'),
+  i18n('CONS:Dir3'),
+];
+
+function dirOpposite(dirName) {
+  if (dirName == i18n('CONS:Dir0')) {
+    return i18n('CONS:Dir2');
+  } else if (dirName == i18n('CONS:Dir1')) {
+    return i18n('CONS:Dir3');
+  } else if (dirName == i18n('CONS:Dir2')) {
+    return i18n('CONS:Dir0');
+  } else if (dirName == i18n('CONS:Dir3')) {
+    return i18n('CONS:Dir1');
+  }
+}
 
 /*
  * An instance of RuntimeState represents the current global state of
@@ -84,7 +107,9 @@ export class RuntimeState {
   /* Gobstones specific methods */
 
   putStone(colorName) {
-    this._board[this._head.x][this._head.y][colorName]++;
+    let n = this._board[this._head.x][this._head.y][colorName];
+    n = n.add(new ValueInteger(1));
+    this._board[this._head.x][this._head.y][colorName] = n;
   }
 
   numStones(colorName) {
@@ -94,15 +119,17 @@ export class RuntimeState {
   _emptyCell() {
     let cell = {};
     for (let colorName of COLOR_NAMES) {
-      cell[colorName] = 0;
+      cell[colorName] = new ValueInteger(0);
     }
     return cell;
   }
 }
 
 class PrimitiveOperation {
-  constructor(argumentTypes, implementation) {
+
+  constructor(argumentTypes, argumentValidator, implementation) {
     this._argumentTypes = argumentTypes;
+    this._argumentValidator = argumentValidator;
     this._implementation = implementation;
   }
 
@@ -110,20 +137,130 @@ class PrimitiveOperation {
     return this._argumentTypes;
   }
 
+  nargs() {
+    return this._argumentTypes.length;
+  }
+
   /* Warning: mutates 'args' destructively */
   call(globalState, args) {
-    args.unshift(globalState);
-    return this._implementation.apply(null, args);
+    return this._implementation.apply(null, [globalState].concat(args));
+  }
+
+  /* Check that the arguments are valid according to the validator.
+   * The validator should be a function receiving a start and end
+   * positions, and a list of arguments.
+   * It should throw a GbsRuntimeError if the arguments are invalid.
+   */
+  validateArguments(startPos, endPos, args) {
+    this._argumentValidator(startPos, endPos, args);
+  }
+
+}
+
+/* Casting Gobstones values to JavaScript values and vice-versa */
+
+let typeAny = new TypeAny();
+
+let typeInteger = new TypeInteger();
+
+let typeBool = new TypeStructure(i18n('TYPE:Bool'), {});
+
+function valueFromBool(bool) {
+  if (bool) {
+    return new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {});
+  } else {
+    return new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {});
   }
 }
 
-const TypeColor = new TypeStructure(i18n('TYPE:Color'), {});
+function boolFromValue(value) {
+  return value.constructorName === i18n('CONS:True');
+}
+
+let typeColor = new TypeStructure(i18n('TYPE:Color'), {});
+
+function valueFromColor(colorName) {
+  return new ValueStructure(i18n('TYPE:Color'), colorName, {})
+}
+
+function colorFromValue(value) {
+  return value.constructorName;
+}
+
+let typeDir = new TypeStructure(i18n('TYPE:Dir'), {});
+
+function valueFromDir(dirName) {
+  return new ValueStructure(i18n('TYPE:Dir'), dirName, {})
+}
+
+function dirFromValue(value) {
+  return value.constructorName;
+}
+
+/* Argument validators */
+
+function noValidation(startPos, endPos, args) {
+}
+
+function isInteger(x) {
+  return joinTypes(x.type(), typeInteger) !== null;
+}
+
+function isBool(x) {
+  return joinTypes(x.type(), typeBool) !== null;
+}
+
+function isColor(x) {
+  return joinTypes(x.type(), typeColor) !== null;
+}
+
+function isDir(x) {
+  return joinTypes(x.type(), typeDir) !== null;
+}
+
+function validateTypeAmong(startPos, endPos, x, types) {
+  /* Check that x is of some of the types in the list 'types' */
+  for (let type of types) {
+    if (joinTypes(x.type(), type)) {
+      return;
+    }
+  }
+  /* Build a list of type names for error reporting */
+  let typeStrings = [];
+  for (let type of types) {
+    typeStrings.push(type.toString());
+  }
+  /* Report error */
+  throw new GbsRuntimeError(startPos, endPos,
+    i18n('errmsg:expected-value-of-some-type-but-got')(
+      typeStrings,
+      x.type().toString()
+    )
+  );
+}
+
+/* Runtime primitives */
 
 export class RuntimePrimitives {
 
   constructor() {
-    this._primitiveOperations = {};
+    /* this._primitiveTypes is a dictionary indexed by type names.
+     *
+     * this._primitiveTypes[typeName] is a dictionary indexed by
+     * the constructor names of the given type.
+     *
+     * this._primitiveTypes[typeName][constructorName]
+     * is a list of field names.
+     */
     this._primitiveTypes = {};
+
+    /* this._primitiveProcedures and this._primitiveFunctions
+     * are dictionaries indexed by the name of the primitive operation
+     * (procedure or function). Their value is an instance of
+     * PrimitiveOperation.
+     */
+    this._primitiveProcedures = {};
+    this._primitiveFunctions = {};
 
     /*** Primitive types ***/
 
@@ -138,30 +275,94 @@ export class RuntimePrimitives {
       this._primitiveTypes[i18n('TYPE:Color')][colorName] = [];
     }
 
-    /*** Primitive operations ***/
+    /* Directions */
+    this._primitiveTypes[i18n('TYPE:Dir')] = {};
+    for (let dirName of DIR_NAMES) {
+      this._primitiveTypes[i18n('TYPE:Dir')][dirName] = [];
+    }
 
-    this._primitiveOperations[i18n('PRIM:PutStone')] =
+    /*** Primitive procedures ***/
+
+    this._primitiveProcedures[i18n('PRIM:PutStone')] =
       new PrimitiveOperation(
-          [TypeColor],
+          [typeColor], noValidation,
           function (globalState, color) {
-            let colorName = color.constructorName;
-            globalState.putStone(colorName);
+            globalState.putStone(colorFromValue(color));
             return null;
           }
       );
 
-    this._primitiveOperations[i18n('PRIM:numStones')] =
+    /*** Primitive functions ***/
+
+    this._primitiveFunctions[i18n('PRIM:numStones')] =
       new PrimitiveOperation(
-          [TypeColor],
+          [typeColor], noValidation,
           function (globalState, color) {
-            let colorName = color.constructorName;
-            return new ValueInteger(globalState.numStones(colorName));
+            return globalState.numStones(colorFromValue(color));
+          }
+      );
+
+    this._primitiveFunctions['+'] =
+      new PrimitiveOperation(
+          [typeInteger, typeInteger], noValidation,
+          function (globalState, a, b) {
+            return a.add(b);
+          }
+      );
+
+    this._primitiveFunctions['-'] =
+      new PrimitiveOperation(
+          [typeInteger, typeInteger], noValidation,
+          function (globalState, a, b) {
+            return a.sub(b);
+          }
+      );
+
+    this._primitiveFunctions['-(unary)'] =
+      new PrimitiveOperation(
+          [typeAny],
+          function (startPos, endPos, args) {
+            let a = args[0];
+            validateTypeAmong(startPos, endPos, a, [
+              typeInteger,
+              typeBool,
+              typeDir,
+            ]);
+          },
+          function (globalState, a) {
+            if (isInteger(a)) {
+              return a.negate();
+            } else if (isBool(a)) {
+              return valueFromBool(!boolFromValue(a));
+            } else if (isDir(a)) {
+              return valueFromDir(dirOpposite(dirFromValue(a)));
+            } else {
+              throw Error('Value has no opposite.');
+            }
+          }
+      );
+
+    this._primitiveFunctions['>'] =
+      new PrimitiveOperation(
+          [typeInteger, typeInteger], noValidation,
+          function (globalState, a, b) {
+            // TODO:
+            //
+            // allow any enumerative type rather than Integer
+            //
+            // check that the types of "a" and "b"
+            // are enumerative (int, bool, color, dir)
+            //
+            // and that they coincide
+            //
+            return valueFromBool(a.gt(b));
           }
       );
 
   }
 
   /* Types */
+
   types() {
     let typeNames = [];
     for (let typeName in this._primitiveTypes) {
@@ -192,12 +393,48 @@ export class RuntimePrimitives {
   }
 
   /* Operations */
+
   isOperation(primitiveName) {
-    return primitiveName in this._primitiveOperations;
+    return primitiveName in this._primitiveProcedures
+        || primitiveName in this._primitiveFunctions;
   }
 
   getOperation(primitiveName) {
-    return this._primitiveOperations[primitiveName];
+    if (primitiveName in this._primitiveProcedures) {
+      return this._primitiveProcedures[primitiveName];
+    } else if (primitiveName in this._primitiveFunctions) {
+      return this._primitiveFunctions[primitiveName];
+    } else {
+      throw Error(primitiveName + ' is not a primitive.');
+    }
+  }
+
+  /* Procedures */
+
+  procedures() {
+    let procedureNames = [];
+    for (let procedureName in this._primitiveProcedures) {
+      procedureNames.push(procedureName);
+    }
+    return procedureNames;
+  }
+
+  isProcedure(primitiveName) {
+    return primitiveName in this._primitiveProcedures;
+  }
+
+  /* Functions */
+
+  functions() {
+    let functionNames = [];
+    for (let functionName in this._primitiveFunctions) {
+      functionNames.push(functionName);
+    }
+    return functionNames;
+  }
+
+  isFunction(primitiveName) {
+    return primitiveName in this._primitiveFunctions;
   }
 
 }

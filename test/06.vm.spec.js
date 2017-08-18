@@ -662,7 +662,9 @@ describe('Virtual Machine', () => {
       expect(vm.run()).deep.equals(null);
 
       let finalBoard = vm.globalState();
-      expect(finalBoard.numStones(i18n('CONS:Color0'))).equals(1);
+      expect(finalBoard.numStones(i18n('CONS:Color0'))).deep.equals(
+        new ValueInteger(1)
+      );
     });
 
     it('Call a primitive function', () => {

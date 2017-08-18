@@ -594,9 +594,9 @@ export class VirtualMachine {
   /* Instruction used for testing/debugging */
   _stepAdd() {
     let frame = this._currentFrame();
-    let v1 = frame.popValue().number;
-    let v2 = frame.popValue().number;
-    frame.pushValue(new ValueInteger(v1 + v2));
+    let v1 = frame.popValue();
+    let v2 = frame.popValue();
+    frame.pushValue(v1.add(v2));
     frame.instructionPointer++;
   }
 
@@ -661,6 +661,9 @@ export class VirtualMachine {
         );
       }
     }
+
+    /* Validate the arguments using the primitive-specific validator */
+    primitive.validateArguments(instruction.startPos, instruction.endPos, args);
 
     /* Proceed to call the primitive operation */
     let result = primitive.call(this.globalState(), args); /* mutates 'args' */
