@@ -35,29 +35,50 @@ import {
  * global state, and different available primitives.
  */
 
-let COLOR_NAMES = [
+let BOOL_ENUM = [
+  i18n('CONS:False'),
+  i18n('CONS:True'),
+];
+
+let COLOR_ENUM = [
   i18n('CONS:Color0'),
   i18n('CONS:Color1'),
   i18n('CONS:Color2'),
   i18n('CONS:Color3'),
 ];
 
-let DIR_NAMES = [
+let DIR_ENUM = [
   i18n('CONS:Dir0'),
   i18n('CONS:Dir1'),
   i18n('CONS:Dir2'),
   i18n('CONS:Dir3'),
 ];
 
+function toEnum(enumeration, name) {
+  return enumeration.indexOf(name);
+}
+
+function fromEnum(enumeration, index) {
+  return enumeration[index];
+}
+
 function dirOpposite(dirName) {
-  if (dirName == i18n('CONS:Dir0')) {
-    return i18n('CONS:Dir2');
-  } else if (dirName == i18n('CONS:Dir1')) {
-    return i18n('CONS:Dir3');
-  } else if (dirName == i18n('CONS:Dir2')) {
-    return i18n('CONS:Dir0');
-  } else if (dirName == i18n('CONS:Dir3')) {
-    return i18n('CONS:Dir1');
+  return fromEnum(DIR_ENUM, (toEnum(DIR_ENUM, dirName) + 2) % 4);
+}
+
+function enumIndex(value) {
+  if (isBool(value)) {
+    if (boolFromValue(value)) {
+      return 1;
+    } else {
+      return 0;
+    }
+  } else if (isColor(value)) {
+    return toEnum(COLOR_ENUM, colorFromValue(value));
+  } else if (isDir(value)) {
+    return toEnum(DIR_ENUM, dirFromValue(value));
+  } else {
+    throw Error('Value should be Bool, Color or Dir.');
   }
 }
 
@@ -93,7 +114,7 @@ export class RuntimeState {
       let column = [];
       for (let y = 0; y < this._height; y++) {
         let cell = {};
-        for (let colorName of COLOR_NAMES) {
+        for (let colorName of COLOR_ENUM) {
           cell[colorName] = this._board[x][y][colorName];
         }
         column.push(cell);
@@ -118,7 +139,7 @@ export class RuntimeState {
 
   _emptyCell() {
     let cell = {};
-    for (let colorName of COLOR_NAMES) {
+    for (let colorName of COLOR_ENUM) {
       cell[colorName] = new ValueInteger(0);
     }
     return cell;
@@ -164,6 +185,8 @@ let typeAny = new TypeAny();
 let typeInteger = new TypeInteger();
 
 let typeBool = new TypeStructure(i18n('TYPE:Bool'), {});
+
+let typeListAny = new TypeList(new TypeAny());
 
 function valueFromBool(bool) {
   if (bool) {
@@ -218,10 +241,14 @@ function isDir(x) {
   return joinTypes(x.type(), typeDir) !== null;
 }
 
+export const TYPES_WITH_OPPOSITE = [typeInteger, typeBool, typeDir];
+export const TYPES_WITH_ORDER = [typeInteger, typeBool, typeColor, typeDir];
+
+/* Validate that the type of 'x' is among the given list of types */
 function validateTypeAmong(startPos, endPos, x, types) {
-  /* Check that x is of some of the types in the list 'types' */
+  /* Succeed if the type of x is in the list 'types' */
   for (let type of types) {
-    if (joinTypes(x.type(), type)) {
+    if (joinTypes(x.type(), type) !== null) {
       return;
     }
   }
@@ -237,6 +264,18 @@ function validateTypeAmong(startPos, endPos, x, types) {
       x.type().toString()
     )
   );
+}
+
+/* Validate that the types of 'x' and 'y' are compatible */
+function validateCompatibleTypes(startPos, endPos, x, y) {
+  if (joinTypes(x.type(), y.type()) === null) {
+    throw new GbsRuntimeError(startPos, endPos,
+      i18n('errmsg:expected-values-to-have-compatible-types')(
+        x.type().toString(),
+        y.type().toString(),
+      )
+    );
+  }
 }
 
 /* Runtime primitives */
@@ -266,18 +305,19 @@ export class RuntimePrimitives {
 
     /* Booleans */
     this._primitiveTypes[i18n('TYPE:Bool')] = {};
-    this._primitiveTypes[i18n('TYPE:Bool')][i18n('CONS:False')] = [];
-    this._primitiveTypes[i18n('TYPE:Bool')][i18n('CONS:True')] = [];
+    for (let boolName of BOOL_ENUM) {
+      this._primitiveTypes[i18n('TYPE:Bool')][boolName] = [];
+    }
 
     /* Colors */
     this._primitiveTypes[i18n('TYPE:Color')] = {};
-    for (let colorName of COLOR_NAMES) {
+    for (let colorName of COLOR_ENUM) {
       this._primitiveTypes[i18n('TYPE:Color')][colorName] = [];
     }
 
     /* Directions */
     this._primitiveTypes[i18n('TYPE:Dir')] = {};
-    for (let dirName of DIR_NAMES) {
+    for (let dirName of DIR_ENUM) {
       this._primitiveTypes[i18n('TYPE:Dir')][dirName] = [];
     }
 
@@ -293,6 +333,24 @@ export class RuntimePrimitives {
       );
 
     /*** Primitive functions ***/
+
+
+    this._primitiveFunctions['_unsafeListLength'] =
+      new PrimitiveOperation(
+          [typeAny], noValidation,
+          function (globalState, list) {
+            return new ValueInteger(list.length());
+          }
+      );
+
+    this._primitiveFunctions['_unsafeListNth'] =
+      new PrimitiveOperation(
+          [typeAny, typeAny], noValidation,
+          function (globalState, list, index) {
+            let i = index.asNumber();
+            return list.elements[index.asNumber()];
+          }
+      );
 
     this._primitiveFunctions[i18n('PRIM:numStones')] =
       new PrimitiveOperation(
@@ -323,11 +381,7 @@ export class RuntimePrimitives {
           [typeAny],
           function (startPos, endPos, args) {
             let a = args[0];
-            validateTypeAmong(startPos, endPos, a, [
-              typeInteger,
-              typeBool,
-              typeDir,
-            ]);
+            validateTypeAmong(startPos, endPos, a, TYPES_WITH_OPPOSITE);
           },
           function (globalState, a) {
             if (isInteger(a)) {
@@ -342,20 +396,87 @@ export class RuntimePrimitives {
           }
       );
 
+    this._primitiveFunctions['<='] =
+      new PrimitiveOperation(
+          [typeAny, typeAny],
+          function (startPos, endPos, args) {
+            let a = args[0];
+            let b = args[1];
+            validateCompatibleTypes(startPos, endPos, a, b);
+            validateTypeAmong(startPos, endPos, a, TYPES_WITH_ORDER);
+            validateTypeAmong(startPos, endPos, b, TYPES_WITH_ORDER);
+          },
+          function (globalState, a, b) {
+            if (isInteger(a)) {
+              return valueFromBool(a.le(b));
+            } else {
+              let indexA = enumIndex(a);
+              let indexB = enumIndex(b);
+              return valueFromBool(indexA <= indexB);
+            }
+          }
+      );
+
+    this._primitiveFunctions['>='] =
+      new PrimitiveOperation(
+          [typeAny, typeAny],
+          function (startPos, endPos, args) {
+            let a = args[0];
+            let b = args[1];
+            validateCompatibleTypes(startPos, endPos, a, b);
+            validateTypeAmong(startPos, endPos, a, TYPES_WITH_ORDER);
+            validateTypeAmong(startPos, endPos, b, TYPES_WITH_ORDER);
+          },
+          function (globalState, a, b) {
+            if (isInteger(a)) {
+              return valueFromBool(a.ge(b));
+            } else {
+              let indexA = enumIndex(a);
+              let indexB = enumIndex(b);
+              return valueFromBool(indexA >= indexB);
+            }
+          }
+      );
+
+    this._primitiveFunctions['<'] =
+      new PrimitiveOperation(
+          [typeAny, typeAny],
+          function (startPos, endPos, args) {
+            let a = args[0];
+            let b = args[1];
+            validateCompatibleTypes(startPos, endPos, a, b);
+            validateTypeAmong(startPos, endPos, a, TYPES_WITH_ORDER);
+            validateTypeAmong(startPos, endPos, b, TYPES_WITH_ORDER);
+          },
+          function (globalState, a, b) {
+            if (isInteger(a)) {
+              return valueFromBool(a.lt(b));
+            } else {
+              let indexA = enumIndex(a);
+              let indexB = enumIndex(b);
+              return valueFromBool(indexA < indexB);
+            }
+          }
+      );
+
     this._primitiveFunctions['>'] =
       new PrimitiveOperation(
-          [typeInteger, typeInteger], noValidation,
+          [typeAny, typeAny],
+          function (startPos, endPos, args) {
+            let a = args[0];
+            let b = args[1];
+            validateCompatibleTypes(startPos, endPos, a, b);
+            validateTypeAmong(startPos, endPos, a, TYPES_WITH_ORDER);
+            validateTypeAmong(startPos, endPos, b, TYPES_WITH_ORDER);
+          },
           function (globalState, a, b) {
-            // TODO:
-            //
-            // allow any enumerative type rather than Integer
-            //
-            // check that the types of "a" and "b"
-            // are enumerative (int, bool, color, dir)
-            //
-            // and that they coincide
-            //
-            return valueFromBool(a.gt(b));
+            if (isInteger(a)) {
+              return valueFromBool(a.gt(b));
+            } else {
+              let indexA = enumIndex(a);
+              let indexB = enumIndex(b);
+              return valueFromBool(indexA > indexB);
+            }
           }
       );
 

@@ -462,6 +462,13 @@ const ES = {
            + '; pero se recibió un valor de tipo ' + receivedType + '.';
     },
 
+  'errmsg:expected-values-to-have-compatible-types':
+    function (type1, type2) {
+      return 'Los tipos de los valores deben ser compatibles, '
+           + 'pero uno es de tipo ' + type1 + ' '
+           + 'y el otro es de tipo ' + type2 + '.';
+    },
+
   /* Runtime */
 
   'TYPE:Integer': 'Integer',

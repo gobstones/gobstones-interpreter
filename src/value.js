@@ -94,6 +94,10 @@ export class ValueInteger extends Value {
     let a = Integer(this._number);
     return new ValueInteger(a.negate().toString());
   }
+
+  asNumber() {
+    return parseInt(this._number);
+  }
 }
 
 export class ValueString extends Value {
@@ -152,6 +156,10 @@ export class ValueList extends Value {
 
   type() {
     return this._type;
+  }
+
+  length() {
+    return this._elements.length;
   }
 
   _inferType() {

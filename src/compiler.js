@@ -68,8 +68,10 @@ import {
   Code
 } from './instruction';
 import {
+  TypeAny,
   TypeInteger,
   TypeStructure,
+  TypeList,
 } from './value';
 import { RuntimePrimitives } from './runtime';
 import { i18n } from './i18n';
@@ -91,6 +93,7 @@ export class Compiler {
     this._symtable = symtable;
     this._code = new Code([]);
     this._nextLabel = 0;
+    this._nextVariable = 0;
     this._primitives = new RuntimePrimitives();
   }
 
@@ -164,8 +167,7 @@ export class Compiler {
       case N_StmtRepeat:
         return this._compileStmtRepeat(statement);
       case N_StmtForeach:
-        // TODO
-        break;
+        return this._compileStmtForeach(statement);
       case N_StmtWhile:
         // TODO
         break;
@@ -291,6 +293,90 @@ export class Compiler {
     ]);
   }
 
+  /* <range>                   ;\ _list = temporary variable
+   * TypeCheck List(Any)       ;| holding the list we are ranging over
+   * SetVariable _list         ;/
+   *
+   * PushVariable _list                    ;\ _n = temporary variable
+   * PrimitiveCall "_unsafeListLength", 1  ;| holding the total length
+   * SetVariable _n                        ;/ of the list
+   *
+   * PushInteger 0             ;\ _pos = temporary variable holding the
+   * SetVariable _pos          ;/ current index inside the list
+   *
+   * labelStart:
+   *   PushVariable _pos       ;\
+   *   PushVariable _n         ;| if out of the bounds of the list, end
+   *   PrimitiveCall "<", 2    ;|
+   *   JumpIfFalse labelEnd    ;/
+   *
+   *   PushVariable _list                 ;\  get the `pos`-th element of the
+   *   PushVariable _pos                  ;|  list and store it in the local
+   *   PrimitiveCall "_unsafeListNth", 2  ;|  variable "<index>"
+   *   SetVariable <index>                ;/
+   *
+   *   <body>
+   *
+   *   PushVariable _pos       ;\
+   *   PushInteger 1           ;| add 1 to the current index
+   *   PrimitiveCall "+", 2    ;|
+   *   SetVariable _pos        ;/
+   *
+   * Jump labelStart
+   * labelEnd:
+   * UnsetVariable _list
+   * UnsetVariable _n
+   * UnsetVariable _pos
+   * UnsetVariable <index>
+   */
+  _compileStmtForeach(statement) {
+    let labelStart = this._freshLabel();
+    let labelEnd = this._freshLabel();
+    let list = this._freshVariable();
+    let pos = this._freshVariable();
+    let n = this._freshVariable();
+
+    this._compileExpression(statement.range);
+    this._produceList(statement.range.startPos, statement.range.endPos, [
+      new ITypeCheck(new TypeList(new TypeAny())),
+      new ISetVariable(list),
+
+      new IPushVariable(list),
+      new IPrimitiveCall('_unsafeListLength', 1),
+      new ISetVariable(n),
+    ]);
+    this._produceList(statement.startPos, statement.endPos, [
+      new IPushInteger(0),
+      new ISetVariable(pos),
+
+      new ILabel(labelStart),
+      new IPushVariable(pos),
+      new IPushVariable(n),
+      new IPrimitiveCall('<', 2),
+      new IJumpIfFalse(labelEnd),
+
+      new IPushVariable(list),
+      new IPushVariable(pos),
+      new IPrimitiveCall('_unsafeListNth', 2),
+      new ISetVariable(statement.index.value),
+    ]);
+    this._compileStatement(statement.body);
+    this._produceList(statement.startPos, statement.endPos, [
+      new IPushVariable(pos),
+      new IPushInteger(1),
+      new IPrimitiveCall('+', 2),
+      new ISetVariable(pos),
+
+      new IJump(labelStart),
+
+      new ILabel(labelEnd),
+      new IUnsetVariable(list),
+      new IUnsetVariable(n),
+      new IUnsetVariable(pos),
+      new IUnsetVariable(statement.index.value),
+    ]);
+  }
+
   _compileStmtAssignVariable(statement) {
     this._compileExpression(statement.value);
     this._produce(statement.startPos, statement.endPos,
@@ -315,8 +401,7 @@ export class Compiler {
       case N_ExprConstantString:
         return this._compileExprConstantString(expression);
       case N_ExprList:
-        // TODO
-        break;
+        return this._compileExprList(expression);
       case N_ExprRange:
         // TODO
         break;
@@ -352,6 +437,15 @@ export class Compiler {
   _compileExprConstantString(expression) {
     this._produce(expression.startPos, expression.endPos,
       new IPushString(expression.string.value)
+    );
+  }
+
+  _compileExprList(expression) {
+    for (let element of expression.elements) {
+      this._compileExpression(element);
+    }
+    this._produce(expression.startPos, expression.endPos,
+      new IMakeList(expression.elements.length)
     );
   }
 
@@ -436,6 +530,13 @@ export class Compiler {
     let label = '_l' + this._nextLabel.toString();
     this._nextLabel++;
     return label;
+  }
+
+  /* Create a fresh local variable name */
+  _freshVariable() {
+    let v = '_v' + this._nextVariable.toString();
+    this._nextVariable++;
+    return v;
   }
 
 }

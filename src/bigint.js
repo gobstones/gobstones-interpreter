@@ -1238,4 +1238,3 @@ Integer.fromArray = function (digits, base, isNegative) {
     return parseBaseFromArray(digits.map(parseValue), parseValue(base || 10), isNegative);
 };
 
-
