@@ -321,6 +321,41 @@ describe('Compiler', () => {
 
   });
 
+  describe('Statements: while', () => {
+
+    it('While: factorial', () => {
+      let result = new Runner().run([
+        'program {',
+        '  x := 5',
+        '  y := 0',
+        '  while (x > 1) {',
+        '    y := y + x',
+        '    x := x - 1',
+        '  }',
+        '  return (y)',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(new ValueInteger(14));
+    });
+
+    it('While: check that the condition is boolean', () => {
+      let result = () => new Runner().run([
+        'program {',
+        '  x := 5',
+        '  while (x) {',
+        '  }',
+        '}',
+      ].join('\n'));
+      expect(result).throws(
+        i18n('errmsg:expected-value-of-type-but-got')(
+          new TypeStructure(i18n('TYPE:Bool'), {}),
+          new TypeInteger(),
+        )
+      );
+    });
+
+  });
+
   describe('Expressions: constants', () => {
 
     it('Numbers', () => {

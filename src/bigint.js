@@ -8,13 +8,11 @@ var BASE = 1e7,
     MAX_INT_ARR = smallToArray(MAX_INT),
     LOG_MAX_INT = Math.log(MAX_INT);
 
-function Integer(v, radix) {
+export function Integer(v, radix) {
     if (typeof v === "undefined") return Integer[0];
     if (typeof radix !== "undefined") return +radix === 10 ? parseValue(v) : parseBase(v, radix);
     return parseValue(v);
 }
-
-module.exports.Integer = Integer;
 
 function BigInteger(value, sign) {
     this.value = value;

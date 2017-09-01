@@ -169,11 +169,9 @@ export class Compiler {
       case N_StmtForeach:
         return this._compileStmtForeach(statement);
       case N_StmtWhile:
-        // TODO
-        break;
+        return this._compileStmtWhile(statement);
       case N_StmtSwitch:
-        // TODO
-        break;
+        return this._compileStmtSwitch(statement);
       case N_StmtAssignVariable:
         return this._compileStmtAssignVariable(statement);
       case N_StmtAssignTuple:
@@ -375,6 +373,62 @@ export class Compiler {
       new IUnsetVariable(pos),
       new IUnsetVariable(statement.index.value),
     ]);
+  }
+
+  /* labelStart:
+   * <condition>
+   * TypeCheck Bool
+   * JumpIfFalse labelEnd
+   * <body>
+   * Jump labelStart
+   * labelEnd:
+   */
+  _compileStmtWhile(statement) {
+    let labelStart = this._freshLabel();
+    let labelEnd = this._freshLabel();
+    this._produce(statement.startPos, statement.endPos,
+      new ILabel(labelStart)
+    );
+    this._compileExpression(statement.condition);
+    this._produceList(statement.startPos, statement.endPos, [
+      new ITypeCheck(new TypeStructure(i18n('TYPE:Bool'), {})),
+      new IJumpIfFalse(labelEnd),
+    ]);
+    this._compileStatement(statement.body);
+    this._produceList(statement.startPos, statement.endPos, [
+      new IJump(labelStart),
+      new ILabel(labelEnd),
+    ]);
+  }
+
+  /* If the branches of the switch are:
+   *    pattern1 -> body1
+   *    ...      -> ...
+   *    patternN -> bodyN
+   * the switch construction is compiled as follows:
+   *
+   * <subject>
+   *   [if matches pattern1, jump to label1]
+   *   Pop
+   *   ...
+   *   [if matches patternN, jump to labelN]
+   *   [error message: no match]
+   *
+   * label1:
+   *   [bind parameters in pattern1]
+   *   [pop subject]
+   *   <body1>
+   *   Jump labelEnd
+   * ...
+   * labelN:
+   *   [bind parameters in patternN]
+   *   Pop
+   *   <bodyN>
+   *   Jump labelEnd
+   * labelEnd:
+   */
+  _compileStmtSwitch(statement) {
+    // TODO
   }
 
   _compileStmtAssignVariable(statement) {
