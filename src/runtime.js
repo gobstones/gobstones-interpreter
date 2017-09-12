@@ -7,6 +7,7 @@ import {
   ValueStructure,
   TypeAny,
   TypeInteger,
+  TypeString,
   TypeTuple,
   TypeList,
   TypeStructure,
@@ -184,6 +185,8 @@ let typeAny = new TypeAny();
 
 let typeInteger = new TypeInteger();
 
+let typeString = new TypeString();
+
 let typeBool = new TypeStructure(i18n('TYPE:Bool'), {});
 
 let typeListAny = new TypeList(new TypeAny());
@@ -328,6 +331,19 @@ export class RuntimePrimitives {
           [typeColor], noValidation,
           function (globalState, color) {
             globalState.putStone(colorFromValue(color));
+            return null;
+          }
+      );
+
+    this._primitiveProcedures['_FAIL'] =
+      /* Procedure that always fails */
+      new PrimitiveOperation(
+          [typeString],
+          function (startPos, endPos, args) {
+            throw new GbsRuntimeError(startPos, endPos, args[0].string);
+          },
+          function (globalState, errMsg) {
+            /* Unreachable */
             return null;
           }
       );

@@ -409,7 +409,6 @@ export class Compiler {
    *
    * <subject>
    *   [if matches pattern1, jump to label1]
-   *   Pop
    *   ...
    *   [if matches patternN, jump to labelN]
    *   [error message: no match]
@@ -418,17 +417,52 @@ export class Compiler {
    *   [bind parameters in pattern1]
    *   [pop subject]
    *   <body1>
+   *   [unbind parameters in pattern1]
    *   Jump labelEnd
    * ...
    * labelN:
    *   [bind parameters in patternN]
-   *   Pop
+   *   [pop subject]
    *   <bodyN>
+   *   [unbind parameters in patternN]
    *   Jump labelEnd
    * labelEnd:
    */
   _compileStmtSwitch(statement) {
-    // TODO
+    let branchLabels = [];
+
+    /* Compile the subject */
+    this._compileExpression(statement.subject);
+
+    /* Attempt to match each pattern */
+    for (let branch of statement.branches) {
+      let label = this._freshLabel();
+      branchLabels.push(label);
+      this._compilePatternCheck(branch.pattern, label);
+    }
+
+    /* Issue an error message if there is no match */
+    this._produceList(statement.startPos, statement.endPos, [
+      new IPushString(i18n('errmsg:switch-does-not-match')),
+      new IPrimitiveCall('_FAIL', 1),
+    ]);
+
+    /* Compile each branch */
+    let labelEnd = this._freshLabel();
+    for (let i = 0; i < branchLabels.length; i++) {
+      let branch = statement.branches[i];
+      let label = branchLabels[i];
+      this._produce(branch.startPos, branch.endPos, new ILabel(label));
+      this._compilePatternBind(branch.pattern);
+      this._produce(branch.startPos, branch.endPos, new IPop());
+      this._compileStatement(branch.body);
+      this._compilePatternUnbind(branch.pattern);
+      this._produce(branch.startPos, branch.endPos, new IJump(labelEnd));
+    }
+    this._produce(
+      statement.startPos, statement.endPos,
+      new ILabel(labelEnd)
+    );
   }
 
   _compileStmtAssignVariable(statement) {
@@ -436,6 +470,145 @@ export class Compiler {
     this._produce(statement.startPos, statement.endPos,
       new ISetVariable(statement.variable.value)
     );
+  }
+
+  /* Pattern checks are instructions that check whether the
+   * top of the stack has the expected form (matching a given pattern)
+   * and, in that case, branching to the given label.
+   * The top of the stack is never popped.
+   * The arguments of a pattern are not bound by this instruction.
+   */
+  _compilePatternCheck(pattern, targetLabel) {
+    switch (pattern.tag) {
+      case N_PatternWildcard:
+        return this._compilePatternCheckWildcard(pattern, targetLabel);
+      case N_PatternStructure:
+        return this._compilePatternCheckStructure(pattern, targetLabel);
+      case N_PatternTuple:
+        return this._compilePatternCheckTuple(pattern, targetLabel);
+      case N_PatternTimeout:
+        return this._compilePatternCheckTimeout(pattern, targetLabel);
+      default:
+        throw Error(
+                'Compiler: Pattern check not implemented: '
+              + Symbol.keyFor(pattern.tag)
+              );
+    }
+  }
+  
+  _compilePatternCheckWildcard(pattern, targetLabel) {
+    this._produce(
+      pattern.startPos, pattern.endPos,
+      new IJump(targetLabel)
+    );
+  }
+
+  _compilePatternCheckStructure(pattern, targetLabel) {
+    this._produce(
+      pattern.startPos, pattern.endPos,
+      new IJumpIfStructure(pattern.constructorName.value, targetLabel)
+    );
+  }
+
+  _compilePatternCheckTuple(pattern, targetLabel) {
+    this._produce(
+      pattern.startPos, pattern.endPos,
+      new IJumpIfTuple(pattern.parameters.length, targetLabel)
+    );
+  }
+
+  _compilePatternCheckTimeout(pattern, targetLabel) {
+    this._produce(
+      pattern.startPos, pattern.endPos,
+      new IJumpIfStructure(i18n('CONS:TIMEOUT'), targetLabel)
+    );
+  }
+
+  /* Pattern binding are instructions that bind the parameters
+   * of a pattern to the corresponding parts of the value currently
+   * at the top of the stack.
+   */
+  _compilePatternBind(pattern) {
+    switch (pattern.tag) {
+      case N_PatternWildcard:
+        return; /* No parameters to bind */
+      case N_PatternStructure:
+        return this._compilePatternBindStructure(pattern);
+      case N_PatternTuple:
+        return this._compilePatternBindTuple(pattern);
+      case N_PatternTimeout:
+        return; /* No parameters to bind */
+      default:
+        throw Error(
+                'Compiler: Pattern binding not implemented: '
+              + Symbol.keyFor(pattern.tag)
+              );
+    }
+  }
+
+  _compilePatternBindStructure(pattern) {
+    /* Allow pattern with no parameters, even if the constructor
+     * has parameters */
+    if (pattern.parameters.length == 0) {
+      return;
+    }
+
+    let constructorName = pattern.constructorName.value;
+    let fieldNames = this._symtable.constructorFields(constructorName);
+    for (let i = 0; i < fieldNames.length; i++) {
+      let parameter = pattern.parameters[i];
+      let fieldName = fieldNames[i];
+      this._produceList(pattern.startPos, pattern.endPos, [
+        new IReadStructureField(fieldName),
+        new ISetVariable(parameter.value),
+      ]);
+    }
+  }
+
+  _compilePatternBindTuple(pattern) {
+    for (let index = 0; index < pattern.parameters.length; index++) {
+      let parameter = pattern.parameters[index];
+      this._produceList(pattern.startPos, pattern.endPos, [
+        new IReadTupleComponent(index),
+        new ISetVariable(parameter.value),
+      ]);
+    }
+  }
+
+  /* Pattern unbinding are instructions that unbind the parameters
+   * of a pattern. */
+  _compilePatternUnbind(pattern) {
+    switch (pattern.tag) {
+      case N_PatternWildcard:
+        return; /* No parameters to unbind */
+      case N_PatternStructure:
+        return this._compilePatternUnbindStructure(pattern);
+      case N_PatternTuple:
+        return this._compilePatternUnbindTuple(pattern);
+      case N_PatternTimeout:
+        return; /* No parameters to unbind */
+      default:
+        throw Error(
+                'Compiler: Pattern unbinding not implemented: '
+              + Symbol.keyFor(pattern.tag)
+              );
+    }
+  }
+
+  _compilePatternUnbindStructure(pattern) {
+    for (let parameter of pattern.parameters) {
+      this._produceList(pattern.startPos, pattern.endPos, [
+        new IUnsetVariable(parameter.value),
+      ]);
+    }
+  }
+
+  _compilePatternUnbindTuple(pattern) {
+    for (let parameter of pattern.parameters) {
+      this._produceList(pattern.startPos, pattern.endPos, [
+        new IUnsetVariable(parameter.value),
+      ]);
+    }
   }
 
   /* Expressions are compiled to instructions that make the size

@@ -52,7 +52,7 @@ function isIdent(chr) {
   return isAlpha(chr) || isDigit(chr) || chr === '_' || chr === "'";
 }
 
-const KEYWORDS = {
+let KEYWORDS = {
   'program': T_PROGRAM,
   'interactive': T_INTERACTIVE,
   'procedure': T_PROCEDURE,
@@ -84,9 +84,10 @@ const KEYWORDS = {
   'field': T_FIELD,
   /* Default case in a switch/match */
   '_': T_UNDERSCORE,
-  /* Pattern for timeouts in an interactive program */
-  'TIMEOUT': T_TIMEOUT,
 };
+
+/* Pattern for timeouts in an interactive program */
+KEYWORDS[i18n('CONS:TIMEOUT')] = T_TIMEOUT;
 
 /* Note: the order is relevant so that the 'maximal munch' rule applies. */
 const SYMBOLS = [

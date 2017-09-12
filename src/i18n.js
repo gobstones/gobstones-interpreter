@@ -469,7 +469,11 @@ const ES = {
            + 'y el otro es de tipo ' + type2 + '.';
     },
 
+  'errmsg:switch-does-not-match':
+    'El valor analizado no coincide con ninguna de las ramas del switch.',
+
   /* Runtime */
+  'CONS:TIMEOUT': 'TIMEOUT',
 
   'TYPE:Integer': 'Integer',
   'TYPE:String': 'String',

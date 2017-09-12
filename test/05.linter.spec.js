@@ -859,8 +859,8 @@ describe('Linter', () => {
     it('Reject repeated TIMEOUT patterns', () => {
       let code = [
         'interactive program {',
-        '  TIMEOUT(1) -> {}',
-        '  TIMEOUT(2) -> {}',
+        '  ' + i18n('CONS:TIMEOUT') + '(1) -> {}',
+        '  ' + i18n('CONS:TIMEOUT') + '(2) -> {}',
         '}',
       ].join('\n');
       expect(() => lint(code)).throws(
@@ -929,7 +929,7 @@ describe('Linter', () => {
       let code = [
         'program {',
         '  switch (1) {',
-        '    TIMEOUT(100) -> {}',
+        '    ' + i18n('CONS:TIMEOUT') + '(100) -> {}',
         '  }',
         '}',
       ].join('\n');
@@ -941,7 +941,7 @@ describe('Linter', () => {
     it('Accept event patterns and wildcards in interactive program', () => {
       let code = [
         'interactive program {',
-        '  TIMEOUT(100) -> {}',
+        '  ' + i18n('CONS:TIMEOUT') + '(100) -> {}',
         '  _            -> {}',
         '}',
       ].join('\n');

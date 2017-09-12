@@ -25,7 +25,7 @@
     ["StmtProcedureCall", ["procedureName", "ID"], ["args", ["*", "Expression"]]]
   ],
   ["data", "SwitchBranch",
-    ["SwitchBranch", ["pattern", "Pattern"], ["body", "Expression"]]
+    ["SwitchBranch", ["pattern", "Pattern"], ["body", "Statement"]]
   ],
   ["data", "Pattern",
     ["PatternWildcard"],

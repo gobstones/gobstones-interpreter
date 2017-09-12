@@ -189,7 +189,7 @@ describe('Parser: definitions', () => {
       let parser = new Parser(
                      'interactive program {\n'
                    + '  INIT -> {}\n'
-                   + '  TIMEOUT(500) -> {}\n'
+                   + '  ' + i18n('CONS:TIMEOUT') + '(500) -> {}\n'
                    + '  PRESS(x, y) -> {}\n'
                    + '  _ -> {}\n'
                    + '}\n'

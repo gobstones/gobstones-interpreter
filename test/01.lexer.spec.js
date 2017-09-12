@@ -134,7 +134,7 @@ describe('Lexer', () => {
         'case',
         'field',
         '_',
-        'TIMEOUT',
+        i18n('CONS:TIMEOUT'),
       ];
       let lexer = new Lexer(words.join(' '));
       expectTokenTypes(lexer, [

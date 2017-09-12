@@ -356,6 +356,278 @@ describe('Compiler', () => {
 
   });
 
+  describe('Statements: switch', () => {
+
+    it('Switch: match with default case', () => {
+      let result = new Runner().run([
+        'program {',
+        '  switch ((1,2,3)) {',
+        '    _ -> { x := 42 }',
+        '  }',
+        '  y := x',
+        '  return (y)',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(new ValueInteger(42));
+    });
+
+    it('Switch: empty switch (no match)', () => {
+      let result = () => new Runner().run([
+        'program {',
+        '  switch ((1,2,3)) {',
+        '  }',
+        '  y := x',
+        '  return (y)',
+        '}',
+      ].join('\n'));
+      expect(result).throws(i18n('errmsg:switch-does-not-match'));
+    });
+
+    it('Switch: match empty tuple', () => {
+      let result = new Runner().run([
+        'program {',
+        '  switch (()) {',
+        '    () -> { x := 42 }',
+        '    _  -> { x := z }',
+        '  }',
+        '  y := x',
+        '  return (y)',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(new ValueInteger(42));
+    });
+
+    it('Switch: match non-empty tuple', () => {
+      let result = new Runner().run([
+        'program {',
+        '  switch ((1, 2, 3)) {',
+        '    (a, b, c) -> { x := (c, b, a) }',
+        '    _  -> { x := z }',
+        '  }',
+        '  y := x',
+        '  return (y)',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(
+        new ValueTuple([
+          new ValueInteger(3),
+          new ValueInteger(2),
+          new ValueInteger(1),
+        ])
+      );
+    });
+
+    it('Switch: check that parameters of tuples are unbound', () => {
+      let result = () => new Runner().run([
+        'program {',
+        '  switch ((1, 2, 3)) {',
+        '    (a, b, c) -> { x := (b, c) }',
+        '    _  -> { x := z }',
+        '  }',
+        '  y := a',
+        '}',
+      ].join('\n'));
+      expect(result).throws(i18n('errmsg:undefined-variable')('a'));
+    });
+
+    it('Switch: match record with no parameters', () => {
+      let result = new Runner().run([
+        'type A is record {',
+        '  field aa',
+        '  field bb',
+        '  field cc',
+        '}',
+        'program {',
+        '  switch (A(cc <- 3, bb <- 2, aa <- 1)) {',
+        '    A -> { x := 42 }',
+        '    _ -> { x := z }',
+        '  }',
+        '  y := x',
+        '  return (y)',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(new ValueInteger(42));
+    });
+
+    it('Switch: match record with parameters', () => {
+      let result = new Runner().run([
+        'type A is record {',
+        '  field aa',
+        '  field bb',
+        '  field cc',
+        '}',
+        'program {',
+        '  switch (A(cc <- 3, bb <- 2, aa <- 1)) {',
+        '    A(a, b, c) -> { x := (b, a, c) }',
+        '    _ -> { x := z }',
+        '  }',
+        '  y := x',
+        '  return (y)',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(
+        new ValueTuple([
+          new ValueInteger(2),
+          new ValueInteger(1),
+          new ValueInteger(3),
+        ])
+      );
+    });
+
+    it('Switch: match variant with no parameters', () => {
+      let result = new Runner().run([
+        'type V is variant {',
+        '  case A {',
+        '    field aa',
+        '    field bb',
+        '    field cc',
+        '  }',
+        '  case B {',
+        '    field aa',
+        '    field bb',
+        '    field cc',
+        '  }',
+        '  case C {',
+        '    field aa',
+        '    field bb',
+        '    field cc',
+        '  }',
+        '}',
+        'program {',
+        '  switch (B(cc <- 3, bb <- 2, aa <- 1)) {',
+        '    A -> { x := z }',
+        '    B -> { x := 42 }',
+        '    _ -> { x := z }',
+        '  }',
+        '  y := x',
+        '  return (y)',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(new ValueInteger(42));
+    });
+
+    it('Switch: match variant with parameters', () => {
+      let result = new Runner().run([
+        'type V is variant {',
+        '  case A {',
+        '    field aa',
+        '    field bb',
+        '    field cc',
+        '  }',
+        '  case B {',
+        '    field aa',
+        '    field bb',
+        '    field cc',
+        '  }',
+        '  case C {',
+        '    field aa',
+        '    field bb',
+        '    field cc',
+        '  }',
+        '}',
+        'program {',
+        '  switch (B(cc <- 3, bb <- 2, aa <- 1)) {',
+        '    A(a, b, c) -> { x := z }',
+        '    B(a, b, c) -> { x := (b, c, a) }',
+        '    _ -> { x := z }',
+        '  }',
+        '  y := x',
+        '  return (y)',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(
+        new ValueTuple([
+          new ValueInteger(2),
+          new ValueInteger(3),
+          new ValueInteger(1),
+        ])
+      );
+    });
+
+    it('Switch: match with default case in variant', () => {
+      let result = new Runner().run([
+        'type V is variant {',
+        '  case A {',
+        '    field aa',
+        '    field bb',
+        '    field cc',
+        '  }',
+        '  case B {',
+        '    field aa',
+        '    field bb',
+        '    field cc',
+        '  }',
+        '  case C {',
+        '    field aa',
+        '    field bb',
+        '    field cc',
+        '  }',
+        '}',
+        'program {',
+        '  switch (C(cc <- 3, bb <- 2, aa <- 1)) {',
+        '    A(a, b, c) -> { x := z }',
+        '    B(a, b, c) -> { x := z }',
+        '    _ -> { x := 42 }',
+        '  }',
+        '  y := x',
+        '  return (y)',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(new ValueInteger(42));
+    });
+
+
+    it('Switch: fail when variant does not match', () => {
+      let result = () => new Runner().run([
+        'type V is variant {',
+        '  case A {',
+        '    field aa',
+        '    field bb',
+        '    field cc',
+        '  }',
+        '  case B {',
+        '    field aa',
+        '    field bb',
+        '    field cc',
+        '  }',
+        '  case C {',
+        '    field aa',
+        '    field bb',
+        '    field cc',
+        '  }',
+        '}',
+        'program {',
+        '  switch (C(cc <- 3, bb <- 2, aa <- 1)) {',
+        '    A(a, b, c) -> { x := z }',
+        '    B(a, b, c) -> { x := z }',
+        '  }',
+        '  y := x',
+        '  return (y)',
+        '}',
+      ].join('\n'));
+      expect(result).throws(i18n('errmsg:switch-does-not-match'));
+    });
+
+    it('Switch: check that parameters of structures are unbound', () => {
+      let result = () => new Runner().run([
+        'type A is record {',
+        '  field a',
+        '  field b',
+        '  field c',
+        '}',
+        'program {',
+        '  switch (A(a <- 1, b <- 2, c <- 3)) {',
+        '    A(a, b, c) -> { x := (b, c) }',
+        '    _  -> { x := z }',
+        '  }',
+        '  y := a',
+        '}',
+      ].join('\n'));
+      expect(result).throws(i18n('errmsg:undefined-variable')('a'));
+    });
+
+  });
+
   describe('Expressions: constants', () => {
 
     it('Numbers', () => {
