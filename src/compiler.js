@@ -178,8 +178,7 @@ export class Compiler {
       case N_StmtAssignTuple:
         return this._compileStmtAssignTuple(statement);
       case N_StmtProcedureCall:
-        // TODO
-        break;
+        return this._compileStmtProcedureCall(statement);
       default:
         throw Error(
                 'Compiler: Statement not implemented: '
@@ -502,6 +501,33 @@ export class Compiler {
 
   }
 
+  /* There are two cases:
+   * (1) The procedure is a built-in primitive.
+   * (2) The procedure is a user-defined procedure.
+   */
+  _compileStmtProcedureCall(statement) {
+    let procedureName = statement.procedureName.value;
+    for (let argument of statement.args) {
+      this._compileExpression(argument);
+    }
+    if (this._primitives.isProcedure(procedureName)) {
+      this._compileStmtProcedureCallPrimitive(statement);
+    } else if (this._symtable.isFunction(functionName)) {
+      // TODO
+      throw Error('calling a user-defined procedure not implemented');
+    } else {
+      throw Error(
+        'Compiler: ' + procedureName + ' is an undefined procedure.'
+      );
+    }
+  }
+
+  _compileStmtProcedureCallPrimitive(statement) {
+    this._produce(statement.startPos, statement.endPos,
+      new IPrimitiveCall(statement.procedureName.value, statement.args.length)
+    );
+  }
+
   /* Pattern checks are instructions that check whether the
    * top of the stack has the expected form (matching a given pattern)
    * and, in that case, branching to the given label.
@@ -778,7 +804,7 @@ export class Compiler {
         throw Error('accessing a field not implemented');
       } else {
         throw Error(
-          'Compiler: ' + expression.functionName + ' is an undefined function.'
+          'Compiler: ' + functionName + ' is an undefined function.'
         );
       }
     }

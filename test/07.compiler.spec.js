@@ -727,6 +727,40 @@ describe('Compiler', () => {
 
   });
 
+  describe('Statements: procedure call', () => {
+
+    it('Calling primitive procedures', () => {
+      let result = new Runner().run([
+        'program {',
+        '  ' + i18n('PRIM:PutStone') + '(' + i18n('CONS:Color0') + ')',
+        '  ' + i18n('PRIM:PutStone') + '(' + i18n('CONS:Color0') + ')',
+        '  ' + i18n('PRIM:PutStone') + '(' + i18n('CONS:Color0') + ')',
+        '  return (',
+        '    ' + i18n('PRIM:numStones') + '(' + i18n('CONS:Color0') + ')',
+        '  )',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(new ValueInteger(3));
+    });
+
+    it('Calling primitive procedures: check argument types', () => {
+      let result = () => new Runner().run([
+        'program {',
+        '  ' + i18n('PRIM:PutStone') + '(1)',
+        '}',
+      ].join('\n'));
+      expect(result).throws(
+        i18n('errmsg:primitive-argument-type-mismatch')(
+          i18n('PRIM:PutStone'),
+          1,
+          new TypeStructure(i18n('TYPE:Color'), {}),
+          new TypeInteger(),
+        )
+      );
+    });
+
+  });
+
   describe('Expressions: constants', () => {
 
     it('Numbers', () => {
