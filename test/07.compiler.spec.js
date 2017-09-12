@@ -430,6 +430,29 @@ describe('Compiler', () => {
       expect(result).throws(i18n('errmsg:undefined-variable')('a'));
     });
 
+    it('Switch: fail if type does not match type of tuple pattern', () => {
+      let result = () => new Runner().run([
+        'program {',
+        '  switch ((1, 2)) {',
+        '    (x, y, z) -> { }',
+        '  }',
+        '}',
+      ].join('\n'));
+      expect(result).throws(
+        i18n('errmsg:expected-value-of-type-but-got')(
+          new TypeTuple([
+            new TypeAny(),
+            new TypeAny(),
+            new TypeAny(),
+          ]),
+          new TypeTuple([
+            new TypeInteger(),
+            new TypeInteger(),
+          ])
+        )
+      );
+    });
+
     it('Switch: match record with no parameters', () => {
       let result = new Runner().run([
         'type A is record {',
@@ -624,6 +647,82 @@ describe('Compiler', () => {
         '}',
       ].join('\n'));
       expect(result).throws(i18n('errmsg:undefined-variable')('a'));
+    });
+
+    it('Switch: fail if type does not match type of structure pattern', () => {
+      let result = () => new Runner().run([
+        'type A is record {',
+        '  field aa',
+        '}',
+        'type B is record {',
+        '  field aa',
+        '}',
+        'program {',
+        '  switch (A(aa <- 1)) {',
+        '    B -> { }',
+        '  }',
+        '}',
+      ].join('\n'));
+      expect(result).throws(
+        i18n('errmsg:expected-value-of-type-but-got')(
+          new TypeStructure('B', {}),
+          new TypeStructure('A', {'A': {'aa': new TypeInteger()}}),
+        )
+      );
+    });
+
+  });
+
+  describe('Statements: tuple assignment', () => {
+
+    it('Tuple assignment: empty tuple', () => {
+      let result = new Runner().run([
+        'program {',
+        '  t := ()',
+        '  let () := t',
+        '  return (42)',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(new ValueInteger(42));
+    });
+
+    it('Tuple assignment: typical tuple assignment', () => {
+      let result = new Runner().run([
+        'program {',
+        '  t := (1, 2, 3)',
+        '  let (x, y, z) := t',
+        '  return ((z, y, x))',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(
+        new ValueTuple([
+          new ValueInteger(3),
+          new ValueInteger(2),
+          new ValueInteger(1),
+        ])
+      );
+    });
+
+    it('Tuple assignment: fail if types do not match', () => {
+      let result = () => new Runner().run([
+        'program {',
+        '  t := (1, 2, 3)',
+        '  let (x, y) := t',
+        '}',
+      ].join('\n'));
+      expect(result).throws(
+        i18n('errmsg:expected-value-of-type-but-got')(
+          new TypeTuple([
+            new TypeAny(),
+            new TypeAny(),
+          ]),
+          new TypeTuple([
+            new TypeInteger(),
+            new TypeInteger(),
+            new TypeInteger(),
+          ]),
+        )
+      );
     });
 
   });

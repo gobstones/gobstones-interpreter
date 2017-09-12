@@ -70,6 +70,7 @@ import {
 import {
   TypeAny,
   TypeInteger,
+  TypeTuple,
   TypeStructure,
   TypeList,
 } from './value';
@@ -175,8 +176,7 @@ export class Compiler {
       case N_StmtAssignVariable:
         return this._compileStmtAssignVariable(statement);
       case N_StmtAssignTuple:
-        // TODO
-        break;
+        return this._compileStmtAssignTuple(statement);
       case N_StmtProcedureCall:
         // TODO
         break;
@@ -472,6 +472,36 @@ export class Compiler {
     );
   }
 
+  _compileStmtAssignTuple(statement) {
+    this._compileExpression(statement.value);
+
+    /* Check that the value is indeed a tuple of the expected length */
+    let anys = [];
+    for (let index = 0; index < statement.variables.length; index++) {
+      anys.push(new TypeAny());
+    }
+    let expectedType = new TypeTuple(anys);
+    this._produce(
+      statement.startPos, statement.endPos,
+      new ITypeCheck(expectedType)
+    );
+
+    /* Assign each variable */
+    for (let index = 0; index < statement.variables.length; index++) {
+      this._produceList(statement.startPos, statement.endPos, [
+        new IReadTupleComponent(index),
+        new ISetVariable(statement.variables[index].value)
+      ]);
+    }
+
+    /* Pop the tuple */
+    this._produce(
+      statement.startPos, statement.endPos,
+      new IPop()
+    );
+
+  }
+
   /* Pattern checks are instructions that check whether the
    * top of the stack has the expected form (matching a given pattern)
    * and, in that case, branching to the given label.
@@ -504,13 +534,37 @@ export class Compiler {
   }
 
   _compilePatternCheckStructure(pattern, targetLabel) {
+    /* Check that the type of the value coincides with the type
+     * of the constructor */
+    let constructorName = pattern.constructorName.value;
+    let typeName = this._symtable.constructorType(constructorName);
+    let expectedType = new TypeStructure(typeName, {});
     this._produce(
       pattern.startPos, pattern.endPos,
-      new IJumpIfStructure(pattern.constructorName.value, targetLabel)
+      new ITypeCheck(expectedType)
+    );
+
+    /* Jump if the value matches */
+    this._produce(
+      pattern.startPos, pattern.endPos,
+      new IJumpIfStructure(constructorName, targetLabel)
     );
   }
 
   _compilePatternCheckTuple(pattern, targetLabel) {
+    /* Check that the type of the value coincides with the type
+     * of the tuple */
+    let anys = [];
+    for (let i = 0; i < pattern.parameters.length; i++) {
+      anys.push(new TypeAny());
+    }
+    let expectedType = new TypeTuple(anys);
+    this._produce(
+      pattern.startPos, pattern.endPos,
+      new ITypeCheck(expectedType)
+    );
+
+    /* Jump if the value matches */
     this._produce(
       pattern.startPos, pattern.endPos,
       new IJumpIfTuple(pattern.parameters.length, targetLabel)
