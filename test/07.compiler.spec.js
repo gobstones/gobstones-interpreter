@@ -1508,11 +1508,62 @@ describe('Compiler', () => {
       ]));
     });
 
-    // TODO:
-    // - field accessors
-    // - && and ||
-    // TODO:
-    //   probar todos los operadores y funciones built-in
+    it('Field accessors', () => {
+      let result = new Runner().run([
+        'type A is variant {',
+        '  case A {',
+        '    field a',
+        '  }',
+        '  case B {',
+        '    field a',
+        '    field b',
+        '  }',
+        '}',
+        'type C is record {',
+        '  field a',
+        '  field c',
+        '}',
+        'program {',
+        '  x := A(a <- 1)',
+        '  y := B(a <- 2, b <- 3)',
+        '  z := C(a <- 4, c <- 5)',
+        '  return (',
+        '    a(x),',
+        '    a(y),',
+        '    b(y),',
+        '    a(z),',
+        '    c(z)',
+        '  )',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(new ValueTuple([
+        new ValueInteger(1),
+        new ValueInteger(2),
+        new ValueInteger(3),
+        new ValueInteger(4),
+        new ValueInteger(5),
+      ]));
+    });
+
+    it('Field accessors: fail for invalid accessors', () => {
+      let result = () => new Runner().run([
+        'type A is variant {',
+        '  case A {',
+        '    field a',
+        '  }',
+        '  case B {',
+        '    field b',
+        '  }',
+        '}',
+        'program {',
+        '  x := A(a <- 1)',
+        '  return (b(x))',
+        '}',
+      ].join('\n'));
+      expect(result).throws(
+        i18n('errmsg:structure-field-not-present')(['a'], 'b')
+      );
+    });
   });
 
   describe('Expressions: logical operators (&&, ||)', () => {
@@ -1647,6 +1698,8 @@ describe('Compiler', () => {
 
   });
 
+  // TODO:
+  //   probar todos los operadores y funciones built-in
   describe('Primitive functions and operators', () => {
 
     function compareInteger(op) {

@@ -19,6 +19,7 @@ import {
   IUpdateStructure,
   IReadTupleComponent,
   IReadStructureField,
+  IReadStructureFieldPop,
   IAdd,
   IDup,
   IPop,
@@ -622,6 +623,33 @@ describe('Virtual Machine', () => {
         ])
       );
     });
+
+    it('Read fields of a structure and pop', () => {
+      let vm = new VirtualMachine(new Code([
+        new IPushInteger(1),
+        new IPushInteger(2),
+        new IMakeStructure('A', 'B', ['f', 'g']),
+        new IReadStructureField('g'),
+        new ISetVariable('x'),
+        new IReadStructureFieldPop('f'),
+        new ISetVariable('y'),
+        new IPushVariable('x'),
+        new IPushVariable('x'),
+        new IPushVariable('y'),
+        new IPushVariable('y'),
+        new IMakeTuple(4),
+        new IReturn(),
+      ]));
+      expect(vm.run()).deep.equals(
+        new ValueTuple([
+          new ValueInteger(2),
+          new ValueInteger(2),
+          new ValueInteger(1),
+          new ValueInteger(1),
+        ])
+      );
+    });
+
 
     it('Fail if not a structure', () => {
       let vm = new VirtualMachine(new Code([

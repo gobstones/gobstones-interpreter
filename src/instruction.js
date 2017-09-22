@@ -19,6 +19,7 @@ export const I_MakeStructure = Symbol.for('I_MakeStructure');
 export const I_UpdateStructure = Symbol.for('I_UpdateStructure');
 export const I_ReadTupleComponent = Symbol.for('I_ReadTupleComponent');
 export const I_ReadStructureField = Symbol.for('I_ReadStructureField');
+export const I_ReadStructureFieldPop = Symbol.for('I_ReadStructureFieldPop');
 export const I_Add = Symbol.for('I_Add');
 export const I_Dup = Symbol.for('I_Dup');
 export const I_Pop = Symbol.for('I_Pop');
@@ -342,10 +343,22 @@ export class IReadTupleComponent extends Instruction {
 }
 
 /* Read the given field from the structure at the top of the stack.
- * Does not pop the record. */
+ * Does not pop the structure. */
 export class IReadStructureField extends Instruction {
   constructor(fieldName) {
     super(I_ReadStructureField, [fieldName]);
+  }
+
+  get fieldName() {
+    return this._args[0];
+  }
+}
+
+/* Read the given field from the structure at the top of the stack.
+ * Pop the structure. */
+export class IReadStructureFieldPop extends Instruction {
+  constructor(fieldName) {
+    super(I_ReadStructureFieldPop, [fieldName]);
   }
 
   get fieldName() {
@@ -359,7 +372,6 @@ export class IAdd extends Instruction {
     super(I_Add, []);
   }
 }
-
 
 /* Duplicate the top of the stack (there should be at least one element) */
 export class IDup extends Instruction {

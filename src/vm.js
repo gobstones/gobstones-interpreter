@@ -18,6 +18,7 @@ import {
   I_UpdateStructure,
   I_ReadTupleComponent,
   I_ReadStructureField,
+  I_ReadStructureFieldPop,
   I_Add,
   I_Dup,
   I_Pop,
@@ -258,6 +259,8 @@ export class VirtualMachine {
         return this._stepReadTupleComponent();
       case I_ReadStructureField:
         return this._stepReadStructureField();
+      case I_ReadStructureFieldPop:
+        return this._stepReadStructureFieldPop();
       case I_Add:
         return this._stepAdd();
       case I_Dup:
@@ -571,10 +574,15 @@ export class VirtualMachine {
     frame.instructionPointer++;
   }
 
-  _stepReadStructureField() {
+  _stepReadStructureFieldGeneric(shouldPopStructure) {
     let frame = this._currentFrame();
     let instruction = this._currentInstruction();
-    let structure = frame.stackTop();
+    let structure;
+    if (shouldPopStructure) {
+      structure = frame.popValue();
+    } else {
+      structure = frame.stackTop();
+    }
     if (structure.tag !== V_Structure) {
       throw new GbsRuntimeError(instruction.startPos, instruction.endPos,
         i18n('errmsg:expected-structure-value-but-got')(
@@ -591,6 +599,15 @@ export class VirtualMachine {
     }
     frame.pushValue(structure.fields[instruction.fieldName]);
     frame.instructionPointer++;
+  }
+
+  _stepReadStructureField() {
+    this._stepReadStructureFieldGeneric(false); /* Do not pop the structure */
+  }
+
+  _stepReadStructureFieldPop() {
+    console.log(this._currentFrame());
+    this._stepReadStructureFieldGeneric(true);  /* Pop the structure */
   }
 
   /* Instruction used for testing/debugging */

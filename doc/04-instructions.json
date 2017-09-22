@@ -81,6 +81,11 @@
   ],
 
   [
+   ["ReadStructureFieldPop", ["fieldName", "ID"]],
+   "Mete en la pila el valor del campo 'fieldName' de la estructura que se encuentra actualmente en el tope de la pila. Debe haber un valor en el tope de la pila. El valor original se saca de la pila. Si el valor en el tope de la pila no es una estructura, se lanza una excepción GbsRuntimeError. Si el campo 'fieldName' no es uno de los campos presentes en la estructura, se lanza una excepción GbsRuntimeError."
+  ],
+
+  [
    ["PrimitiveCall", ["primitiveName", "ID"], ["nargs", "INT"]],
    "Invoca a una operación primitiva. Desapila 'nargs' argumentos de la pila (con el último argumento en el tope). A continuación, invoca a la primitiva pasándole como parámetros el estado global, seguido de los 'nargs' argumentos desapilados. La función primitiva puede devolver un valor o 'null'. En caso de que devuelva un valor, se apila dicho resultado en la pila. Si devuelve null, prosigue con la ejecución."
   ],

@@ -58,6 +58,7 @@ import {
   IUpdateStructure,
   IReadTupleComponent,
   IReadStructureField,
+  IReadStructureFieldPop,
   IAdd,
   IDup,
   IPop,
@@ -902,26 +903,13 @@ export class Compiler {
       } else if (this._symtable.isFunction(functionName)) {
         this._compileExprFunctionCallUserDefined(expression);
       } else if (this._symtable.isField(functionName)) {
-        // TODO
-        throw Error('accessing a field not implemented');
+        this._compileExprFunctionCallFieldAccessor(expression);
       } else {
         throw Error(
           'Compiler: ' + functionName + ' is an undefined function.'
         );
       }
     }
-  }
-
-  _compileExprFunctionCallPrimitive(expression) {
-    this._produce(expression.startPos, expression.endPos,
-      new IPrimitiveCall(expression.functionName.value, expression.args.length)
-    );
-  }
-
-  _compileExprFunctionCallUserDefined(expression) {
-    this._produce(expression.startPos, expression.endPos,
-      new ICall(expression.functionName.value, expression.args.length)
-    );
   }
 
   /* <expr1>
@@ -971,6 +959,24 @@ export class Compiler {
     this._produceList(expression.startPos, expression.endPos, [
       new ITypeCheck(new TypeStructure(i18n('TYPE:Bool'), {})),
       new ILabel(labelEnd),
+    ]);
+  }
+
+  _compileExprFunctionCallPrimitive(expression) {
+    this._produce(expression.startPos, expression.endPos,
+      new IPrimitiveCall(expression.functionName.value, expression.args.length)
+    );
+  }
+
+  _compileExprFunctionCallUserDefined(expression) {
+    this._produce(expression.startPos, expression.endPos,
+      new ICall(expression.functionName.value, expression.args.length)
+    );
+  }
+
+  _compileExprFunctionCallFieldAccessor(expression) {
+    this._produceList(expression.startPos, expression.endPos, [
+      new IReadStructureFieldPop(expression.functionName.value),
     ]);
   }
 
