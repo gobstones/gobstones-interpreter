@@ -428,7 +428,9 @@ export class VirtualMachine {
       /* There are further frames in the call stack, which means
        * that we are returning from a function. */
       let outerFrame = this._currentFrame();
-      outerFrame.pushValue(returnValue);
+      if (returnValue !== null) {
+        outerFrame.pushValue(returnValue);
+      }
       outerFrame.instructionPointer++;
     }
   }

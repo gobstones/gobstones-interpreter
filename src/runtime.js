@@ -67,6 +67,22 @@ function dirOpposite(dirName) {
   return fromEnum(DIR_ENUM, (toEnum(DIR_ENUM, dirName) + 2) % 4);
 }
 
+function dirNext(dirName) {
+  return fromEnum(DIR_ENUM, (toEnum(DIR_ENUM, dirName) + 1) % 4);
+}
+
+function dirPrev(dirName) {
+  return fromEnum(DIR_ENUM, (toEnum(DIR_ENUM, dirName) + 3) % 4);
+}
+
+function colorNext(colorName) {
+  return fromEnum(COLOR_ENUM, (toEnum(COLOR_ENUM, colorName) + 1) % 4);
+}
+
+function colorPrev(colorName) {
+  return fromEnum(COLOR_ENUM, (toEnum(COLOR_ENUM, colorName) + 3) % 4);
+}
+
 function enumIndex(value) {
   if (isBool(value)) {
     if (boolFromValue(value)) {
@@ -163,7 +179,6 @@ class PrimitiveOperation {
     return this._argumentTypes.length;
   }
 
-  /* Warning: mutates 'args' destructively */
   call(globalState, args) {
     return this._implementation.apply(null, [globalState].concat(args));
   }
@@ -247,6 +262,83 @@ function isDir(x) {
 export const TYPES_WITH_OPPOSITE = [typeInteger, typeBool, typeDir];
 export const TYPES_WITH_ORDER = [typeInteger, typeBool, typeColor, typeDir];
 
+function genericLE(a, b) {
+  if (isInteger(a)) {
+    return valueFromBool(a.le(b));
+  } else {
+    let indexA = enumIndex(a);
+    let indexB = enumIndex(b);
+    return valueFromBool(indexA <= indexB);
+  }
+}
+
+function genericGE(a, b) {
+  if (isInteger(a)) {
+    return valueFromBool(a.ge(b));
+  } else {
+    let indexA = enumIndex(a);
+    let indexB = enumIndex(b);
+    return valueFromBool(indexA >= indexB);
+  }
+}
+
+function genericLT(a, b) {
+  if (isInteger(a)) {
+    return valueFromBool(a.lt(b));
+  } else {
+    let indexA = enumIndex(a);
+    let indexB = enumIndex(b);
+    return valueFromBool(indexA < indexB);
+  }
+}
+
+function genericGT(a, b) {
+  if (isInteger(a)) {
+    return valueFromBool(a.gt(b));
+  } else {
+    let indexA = enumIndex(a);
+    let indexB = enumIndex(b);
+    return valueFromBool(indexA > indexB);
+  }
+}
+
+function genericNext(a) {
+  if (isInteger(a)) {
+    return a.add(new ValueInteger(1));
+  } else if (isBool(a)) {
+    if (boolFromValue(a)) {
+      return valueFromBool(false);
+    } else {
+      return valueFromBool(true);
+    }
+  } else if (isColor(a)) {
+    return valueFromColor(colorNext(colorFromValue(a)));
+  } else if (isDir(a)) {
+    return valueFromDir(dirNext(dirFromValue(a)));
+  } else {
+    throw Error('genericNext: unknown value.');
+  }
+}
+
+function genericPrev(a) {
+  if (isInteger(a)) {
+    return a.sub(new ValueInteger(1));
+  } else if (isBool(a)) {
+    if (boolFromValue(a)) {
+      return valueFromBool(false);
+    } else {
+      return valueFromBool(true);
+    }
+  } else if (isColor(a)) {
+    return valueFromColor(colorPrev(colorFromValue(a)));
+  } else if (isDir(a)) {
+    return valueFromDir(dirPrev(dirFromValue(a)));
+  } else {
+    throw Error('genericNext: unknown value.');
+  }
+}
+
+
 /* Validate that the type of 'x' is among the given list of types */
 function validateTypeAmong(startPos, endPos, x, types) {
   /* Succeed if the type of x is in the list 'types' */
@@ -328,172 +420,252 @@ export class RuntimePrimitives {
 
     this._primitiveProcedures[i18n('PRIM:PutStone')] =
       new PrimitiveOperation(
-          [typeColor], noValidation,
-          function (globalState, color) {
-            globalState.putStone(colorFromValue(color));
-            return null;
-          }
+        [typeColor], noValidation,
+        function (globalState, color) {
+          globalState.putStone(colorFromValue(color));
+          return null;
+        }
       );
 
     this._primitiveProcedures['_FAIL'] =
       /* Procedure that always fails */
       new PrimitiveOperation(
-          [typeString],
-          function (startPos, endPos, args) {
-            throw new GbsRuntimeError(startPos, endPos, args[0].string);
-          },
-          function (globalState, errMsg) {
-            /* Unreachable */
-            return null;
-          }
+        [typeString],
+        function (startPos, endPos, args) {
+          throw new GbsRuntimeError(startPos, endPos, args[0].string);
+        },
+        function (globalState, errMsg) {
+          /* Unreachable */
+          return null;
+        }
       );
 
     /*** Primitive functions ***/
 
+    this._primitiveFunctions['_makeRange'] =
+      new PrimitiveOperation(
+        [typeAny, typeAny],
+        function (startPos, endPos, args) {
+          let first = args[0];
+          let last = args[1];
+          validateCompatibleTypes(startPos, endPos, first, last);
+          validateTypeAmong(startPos, endPos, first, TYPES_WITH_ORDER);
+          validateTypeAmong(startPos, endPos, last, TYPES_WITH_ORDER);
+        },
+        function (globalState, first, last) {
+          let current = first;
+          if (boolFromValue(genericGT(current, last))) {
+            return new ValueList([]);
+          }
+          let result = [];
+          while (boolFromValue(genericLT(current, last))) {
+            result.push(current);
+            current = genericNext(current);
+          }
+          result.push(current);
+          return new ValueList(result);
+        }
+      );
+
+    this._primitiveFunctions['&&'] =
+      new PrimitiveOperation(
+        [typeAny, typeAny], noValidation,
+        /*
+         * This function is a stub so the linter recognizes '&&'
+         * as a defined primitive function of arity 2.
+         *
+         * The implementation of '&&' is treated specially by the
+         * compiler to account for short-circuiting.
+         */
+        function (globalState, x, y) {
+          throw Error('The function "&&" should never be called');
+        }
+      );
+
+    this._primitiveFunctions['||'] =
+      new PrimitiveOperation(
+        [typeAny, typeAny], noValidation,
+        /*
+         * This function is a stub so the linter recognizes '||'
+         * as a defined primitive function of arity 2.
+         *
+         * The implementation of '||' is treated specially by the
+         * compiler to account for short-circuiting.
+         */
+        function (globalState, x, y) {
+          throw Error('The function "||" should never be called');
+        }
+      );
+
+    this._primitiveFunctions['_makeRangeWithSecond'] =
+      new PrimitiveOperation(
+        [typeAny, typeAny, typeAny],
+        function (startPos, endPos, args) {
+          let first = args[0];
+          let last = args[1];
+          let second = args[2];
+          validateTypeAmong(startPos, endPos, first, [typeInteger]);
+          validateTypeAmong(startPos, endPos, last, [typeInteger]);
+          validateTypeAmong(startPos, endPos, second, [typeInteger]);
+        },
+        function (globalState, first, last, second) {
+          let delta = second.sub(first);
+          if (delta.lt(new ValueInteger(1))) {
+            return new ValueList([]);
+          }
+          let current = first;
+          let result = [];
+          while (current.le(last)) {
+            result.push(current);
+            current = current.add(delta);
+          }
+          return new ValueList(result);
+        }
+      );
 
     this._primitiveFunctions['_unsafeListLength'] =
       new PrimitiveOperation(
-          [typeAny], noValidation,
-          function (globalState, list) {
-            return new ValueInteger(list.length());
-          }
+        [typeAny], noValidation,
+        function (globalState, list) {
+          return new ValueInteger(list.length());
+        }
       );
 
     this._primitiveFunctions['_unsafeListNth'] =
       new PrimitiveOperation(
-          [typeAny, typeAny], noValidation,
-          function (globalState, list, index) {
-            let i = index.asNumber();
-            return list.elements[index.asNumber()];
-          }
+        [typeAny, typeAny], noValidation,
+        function (globalState, list, index) {
+          let i = index.asNumber();
+          return list.elements[index.asNumber()];
+        }
       );
 
     this._primitiveFunctions[i18n('PRIM:numStones')] =
       new PrimitiveOperation(
-          [typeColor], noValidation,
-          function (globalState, color) {
-            return globalState.numStones(colorFromValue(color));
-          }
+        [typeColor], noValidation,
+        function (globalState, color) {
+          return globalState.numStones(colorFromValue(color));
+        }
+      );
+
+    this._primitiveFunctions[i18n('PRIM:next')] =
+      new PrimitiveOperation(
+        [typeAny],
+        function (startPos, endPos, args) {
+          let value = args[0];
+          validateTypeAmong(startPos, endPos, value, TYPES_WITH_ORDER);
+        },
+        function (globalState, value) {
+          return genericNext(value);
+        }
+      );
+
+    this._primitiveFunctions[i18n('PRIM:prev')] =
+      new PrimitiveOperation(
+        [typeAny],
+        function (startPos, endPos, args) {
+          let value = args[0];
+          validateTypeAmong(startPos, endPos, value, TYPES_WITH_ORDER);
+        },
+        function (globalState, value) {
+          return genericPrev(value);
+        }
       );
 
     this._primitiveFunctions['+'] =
       new PrimitiveOperation(
-          [typeInteger, typeInteger], noValidation,
-          function (globalState, a, b) {
-            return a.add(b);
-          }
+        [typeInteger, typeInteger], noValidation,
+        function (globalState, a, b) {
+          return a.add(b);
+        }
       );
 
     this._primitiveFunctions['-'] =
       new PrimitiveOperation(
-          [typeInteger, typeInteger], noValidation,
-          function (globalState, a, b) {
-            return a.sub(b);
-          }
+        [typeInteger, typeInteger], noValidation,
+        function (globalState, a, b) {
+          return a.sub(b);
+        }
       );
 
     this._primitiveFunctions['-(unary)'] =
       new PrimitiveOperation(
-          [typeAny],
-          function (startPos, endPos, args) {
-            let a = args[0];
-            validateTypeAmong(startPos, endPos, a, TYPES_WITH_OPPOSITE);
-          },
-          function (globalState, a) {
-            if (isInteger(a)) {
-              return a.negate();
-            } else if (isBool(a)) {
-              return valueFromBool(!boolFromValue(a));
-            } else if (isDir(a)) {
-              return valueFromDir(dirOpposite(dirFromValue(a)));
-            } else {
-              throw Error('Value has no opposite.');
-            }
+        [typeAny],
+        function (startPos, endPos, args) {
+          let a = args[0];
+          validateTypeAmong(startPos, endPos, a, TYPES_WITH_OPPOSITE);
+        },
+        function (globalState, a) {
+          if (isInteger(a)) {
+            return a.negate();
+          } else if (isBool(a)) {
+            return valueFromBool(!boolFromValue(a));
+          } else if (isDir(a)) {
+            return valueFromDir(dirOpposite(dirFromValue(a)));
+          } else {
+            throw Error('Value has no opposite.');
           }
+        }
       );
 
     this._primitiveFunctions['<='] =
       new PrimitiveOperation(
-          [typeAny, typeAny],
-          function (startPos, endPos, args) {
-            let a = args[0];
-            let b = args[1];
-            validateCompatibleTypes(startPos, endPos, a, b);
-            validateTypeAmong(startPos, endPos, a, TYPES_WITH_ORDER);
-            validateTypeAmong(startPos, endPos, b, TYPES_WITH_ORDER);
-          },
-          function (globalState, a, b) {
-            if (isInteger(a)) {
-              return valueFromBool(a.le(b));
-            } else {
-              let indexA = enumIndex(a);
-              let indexB = enumIndex(b);
-              return valueFromBool(indexA <= indexB);
-            }
-          }
+        [typeAny, typeAny],
+        function (startPos, endPos, args) {
+          let a = args[0];
+          let b = args[1];
+          validateCompatibleTypes(startPos, endPos, a, b);
+          validateTypeAmong(startPos, endPos, a, TYPES_WITH_ORDER);
+          validateTypeAmong(startPos, endPos, b, TYPES_WITH_ORDER);
+        },
+        function (globalState, a, b) {
+          return genericLE(a, b);
+        }
       );
 
     this._primitiveFunctions['>='] =
       new PrimitiveOperation(
-          [typeAny, typeAny],
-          function (startPos, endPos, args) {
-            let a = args[0];
-            let b = args[1];
-            validateCompatibleTypes(startPos, endPos, a, b);
-            validateTypeAmong(startPos, endPos, a, TYPES_WITH_ORDER);
-            validateTypeAmong(startPos, endPos, b, TYPES_WITH_ORDER);
-          },
-          function (globalState, a, b) {
-            if (isInteger(a)) {
-              return valueFromBool(a.ge(b));
-            } else {
-              let indexA = enumIndex(a);
-              let indexB = enumIndex(b);
-              return valueFromBool(indexA >= indexB);
-            }
-          }
+        [typeAny, typeAny],
+        function (startPos, endPos, args) {
+          let a = args[0];
+          let b = args[1];
+          validateCompatibleTypes(startPos, endPos, a, b);
+          validateTypeAmong(startPos, endPos, a, TYPES_WITH_ORDER);
+          validateTypeAmong(startPos, endPos, b, TYPES_WITH_ORDER);
+        },
+        function (globalState, a, b) {
+          return genericGE(a, b);
+        }
       );
 
     this._primitiveFunctions['<'] =
       new PrimitiveOperation(
-          [typeAny, typeAny],
-          function (startPos, endPos, args) {
-            let a = args[0];
-            let b = args[1];
-            validateCompatibleTypes(startPos, endPos, a, b);
-            validateTypeAmong(startPos, endPos, a, TYPES_WITH_ORDER);
-            validateTypeAmong(startPos, endPos, b, TYPES_WITH_ORDER);
-          },
-          function (globalState, a, b) {
-            if (isInteger(a)) {
-              return valueFromBool(a.lt(b));
-            } else {
-              let indexA = enumIndex(a);
-              let indexB = enumIndex(b);
-              return valueFromBool(indexA < indexB);
-            }
-          }
+        [typeAny, typeAny],
+        function (startPos, endPos, args) {
+          let a = args[0];
+          let b = args[1];
+          validateCompatibleTypes(startPos, endPos, a, b);
+          validateTypeAmong(startPos, endPos, a, TYPES_WITH_ORDER);
+          validateTypeAmong(startPos, endPos, b, TYPES_WITH_ORDER);
+        },
+        function (globalState, a, b) {
+          return genericLT(a, b);
+        }
       );
 
     this._primitiveFunctions['>'] =
       new PrimitiveOperation(
-          [typeAny, typeAny],
-          function (startPos, endPos, args) {
-            let a = args[0];
-            let b = args[1];
-            validateCompatibleTypes(startPos, endPos, a, b);
-            validateTypeAmong(startPos, endPos, a, TYPES_WITH_ORDER);
-            validateTypeAmong(startPos, endPos, b, TYPES_WITH_ORDER);
-          },
-          function (globalState, a, b) {
-            if (isInteger(a)) {
-              return valueFromBool(a.gt(b));
-            } else {
-              let indexA = enumIndex(a);
-              let indexB = enumIndex(b);
-              return valueFromBool(indexA > indexB);
-            }
-          }
+        [typeAny, typeAny],
+        function (startPos, endPos, args) {
+          let a = args[0];
+          let b = args[1];
+          validateCompatibleTypes(startPos, endPos, a, b);
+          validateTypeAmong(startPos, endPos, a, TYPES_WITH_ORDER);
+          validateTypeAmong(startPos, endPos, b, TYPES_WITH_ORDER);
+        },
+        function (globalState, a, b) {
+          return genericGT(a, b);
+        }
       );
 
   }

@@ -759,6 +759,24 @@ describe('Compiler', () => {
       );
     });
 
+    it('Calling user-defined procedures', () => {
+      let result = new Runner().run([
+        'procedure Q() {',
+        '  ' + i18n('PRIM:PutStone') + '(' + i18n('CONS:Color0') + ')',
+        '}',
+        'procedure P() {',
+        '  Q() Q()',
+        '}',
+        'program {',
+        '  P() P() P() P() P()',
+        '  return (',
+        '    ' + i18n('PRIM:numStones') + '(' + i18n('CONS:Color0') + ')',
+        '  )',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(new ValueInteger(10));
+    });
+
   });
 
   describe('Expressions: constants', () => {
@@ -844,7 +862,261 @@ describe('Compiler', () => {
 
   });
 
-  // TODO: rangos!
+  describe('Expressions: range (without second element)', () => {
+
+    it('Integer range', () => {
+      let result = new Runner().run([
+        'program {',
+        '  return (',
+        '    [1..0],',
+        '    [1..1],',
+        '    [-2..2]',
+        '  )',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(
+        new ValueTuple([
+          new ValueList([]),
+          new ValueList([new ValueInteger(1)]),
+          new ValueList([
+            new ValueInteger(-2),
+            new ValueInteger(-1),
+            new ValueInteger(0),
+            new ValueInteger(1),
+            new ValueInteger(2),
+          ])
+        ])
+      );
+    });
+
+    it('Boolean range', () => {
+      let result = new Runner().run([
+        'program {',
+        '  return (',
+        '      [' + i18n('CONS:False') + '..' + i18n('CONS:False') + '],',
+        '      [' + i18n('CONS:False') + '..' + i18n('CONS:True') + '],',
+        '      [' + i18n('CONS:True') + '..' + i18n('CONS:False') + '],',
+        '      [' + i18n('CONS:True') + '..' + i18n('CONS:True') + ']',
+        '  )',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(
+        new ValueTuple([
+          new ValueList([
+            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {})
+          ]),
+          new ValueList([
+            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+          ]),
+          new ValueList([
+          ]),
+          new ValueList([
+            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {})
+          ]),
+        ])
+      );
+    });
+
+    it('Color range', () => {
+      let result = new Runner().run([
+        'program {',
+        '  return (',
+        '      [' + i18n('CONS:Color0') + '..' + i18n('CONS:Color3') + '],',
+        '      [' + i18n('CONS:Color1') + '..' + i18n('CONS:Color2') + '],',
+        '      [' + i18n('CONS:Color2') + '..' + i18n('CONS:Color2') + '],',
+        '      [' + i18n('CONS:Color3') + '..' + i18n('CONS:Color0') + ']',
+        '  )',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(
+        new ValueTuple([
+          new ValueList([
+            new ValueStructure(i18n('TYPE:Color'), i18n('CONS:Color0'), {}),
+            new ValueStructure(i18n('TYPE:Color'), i18n('CONS:Color1'), {}),
+            new ValueStructure(i18n('TYPE:Color'), i18n('CONS:Color2'), {}),
+            new ValueStructure(i18n('TYPE:Color'), i18n('CONS:Color3'), {}),
+          ]),
+          new ValueList([
+            new ValueStructure(i18n('TYPE:Color'), i18n('CONS:Color1'), {}),
+            new ValueStructure(i18n('TYPE:Color'), i18n('CONS:Color2'), {}),
+          ]),
+          new ValueList([
+            new ValueStructure(i18n('TYPE:Color'), i18n('CONS:Color2'), {}),
+          ]),
+          new ValueList([
+          ]),
+        ])
+      );
+    });
+
+    it('Dir range', () => {
+      let result = new Runner().run([
+        'program {',
+        '  return (',
+        '      [' + i18n('CONS:Dir0') + '..' + i18n('CONS:Dir2') + '],',
+        '      [' + i18n('CONS:Dir1') + '..' + i18n('CONS:Dir3') + '],',
+        '      [' + i18n('CONS:Dir3') + '..' + i18n('CONS:Dir3') + '],',
+        '      [' + i18n('CONS:Dir2') + '..' + i18n('CONS:Dir1') + ']',
+        '  )',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(
+        new ValueTuple([
+          new ValueList([
+            new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir0'), {}),
+            new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir1'), {}),
+            new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir2'), {}),
+          ]),
+          new ValueList([
+            new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir1'), {}),
+            new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir2'), {}),
+            new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir3'), {}),
+          ]),
+          new ValueList([
+            new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir3'), {}),
+          ]),
+          new ValueList([
+          ]),
+        ])
+      );
+    });
+
+    it('Fail if types do not match', () => {
+      let result = () => new Runner().run([
+        'program {',
+        '  return ([1..' + i18n('CONS:Color2') + '])',
+        '}',
+      ].join('\n'));
+      expect(result).throws(
+        i18n('errmsg:expected-values-to-have-compatible-types')(
+          new TypeInteger(),
+          new ValueStructure(i18n('TYPE:Color'), i18n('CONS:Color2'), {}).type()
+        )
+      );
+    });
+
+    it('Fail for other types', () => {
+      let result = () => new Runner().run([
+        'program {',
+        '  return (["a".."b"])',
+        '}',
+      ].join('\n'));
+      expect(result).throws(
+        i18n('errmsg:expected-value-of-some-type-but-got')(
+          TYPES_WITH_ORDER,
+          new TypeString()
+        )
+      );
+    });
+
+  });
+
+  describe('Expressions: range (with second element)', () => {
+
+    it('Integer range', () => {
+      let result = new Runner().run([
+        'program {',
+        '  return (',
+        '    [1,1..10],',
+        '    [1,0..10],',
+        '    [1,2..10],',
+        '    [1,3..10],',
+        '    [1,4..10],',
+        '    [1,7..10],',
+        '    [1,3..0],',
+        '    [1,3..1],',
+        '    [1,3..2],',
+        '    [1,3..3],',
+        '    [2,2..5],',
+        '    [2,3..5],',
+        '    [-1,0..1],',
+        '    [-1,1..5]',
+        '  )',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(
+        new ValueTuple([
+          new ValueList([]), /* [1,1..10] */
+          new ValueList([]), /* [1,0..10] */
+          new ValueList([    /* [1,2..10] */
+            new ValueInteger(1),
+            new ValueInteger(2),
+            new ValueInteger(3),
+            new ValueInteger(4),
+            new ValueInteger(5),
+            new ValueInteger(6),
+            new ValueInteger(7),
+            new ValueInteger(8),
+            new ValueInteger(9),
+            new ValueInteger(10),
+          ]),
+          new ValueList([    /* [1,3..10] */
+            new ValueInteger(1),
+            new ValueInteger(3),
+            new ValueInteger(5),
+            new ValueInteger(7),
+            new ValueInteger(9),
+          ]),
+          new ValueList([    /* [1,4..10] */
+            new ValueInteger(1),
+            new ValueInteger(4),
+            new ValueInteger(7),
+            new ValueInteger(10),
+          ]),
+          new ValueList([    /* [1,7..10] */
+            new ValueInteger(1), new ValueInteger(7),
+          ]),
+          new ValueList([    /* [1,3..0] */
+          ]),
+          new ValueList([    /* [1,3..1] */
+            new ValueInteger(1),
+          ]),
+          new ValueList([    /* [1,3..2] */
+            new ValueInteger(1),
+          ]),
+          new ValueList([    /* [1,3..3] */
+            new ValueInteger(1),
+            new ValueInteger(3),
+          ]),
+          new ValueList([    /* [2,2..5] */
+          ]),
+          new ValueList([    /* [2,3..5] */
+            new ValueInteger(2),
+            new ValueInteger(3),
+            new ValueInteger(4),
+            new ValueInteger(5),
+          ]),
+          new ValueList([    /* [-1,0..1] */
+            new ValueInteger(-1),
+            new ValueInteger(0),
+            new ValueInteger(1),
+          ]),
+          new ValueList([    /* [-1,1..5] */
+            new ValueInteger(-1),
+            new ValueInteger(1),
+            new ValueInteger(3),
+            new ValueInteger(5),
+          ]),
+        ])
+      );
+    });
+
+    it('Fail for other types', () => {
+      let result = () => new Runner().run([
+        'program {',
+        '  return (["a","b".."c"])',
+        '}',
+      ].join('\n'));
+      expect(result).throws(
+        i18n('errmsg:expected-value-of-some-type-but-got')(
+          [new TypeInteger()],
+          new TypeString()
+        )
+      );
+    });
+
+  });
 
   describe('Expressions: tuples', () => {
 
@@ -914,7 +1186,7 @@ describe('Compiler', () => {
 
   });
 
-  describe('Expressions: structures', () => {
+  describe('Expressions: structure construction', () => {
 
     it('Structure construction (no arguments)', () => {
       let result = new Runner().run([
@@ -985,6 +1257,177 @@ describe('Compiler', () => {
 
   });
 
+  describe('Expressions: structure update', () => {
+
+    it('Record update: no field changes', () => {
+      let result = new Runner().run([
+        'type A is record {',
+        '  field a',
+        '  field b',
+        '  field c',
+        '}',
+        'program {',
+        '  x := A(a <- 1, b <- 2, c <- 3)',
+        '  return (A(x |))',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(
+        new ValueStructure('A', 'A', {
+          'a': new ValueInteger(1),
+          'b': new ValueInteger(2),
+          'c': new ValueInteger(3),
+        })
+      );
+    });
+
+    it('Record update: single field', () => {
+      let result = new Runner().run([
+        'type A is record {',
+        '  field a',
+        '  field b',
+        '  field c',
+        '}',
+        'program {',
+        '  x := A(a <- 1, b <- 2, c <- 3)',
+        '  return (A(x | b <- 20))',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(
+        new ValueStructure('A', 'A', {
+          'a': new ValueInteger(1),
+          'b': new ValueInteger(20),
+          'c': new ValueInteger(3),
+        })
+      );
+    });
+
+    it('Record update: many fields', () => {
+      let result = new Runner().run([
+        'type A is record {',
+        '  field a',
+        '  field b',
+        '  field c',
+        '}',
+        'program {',
+        '  x := A(a <- 1, b <- 2, c <- 3)',
+        '  return (A(x | c <- 30, b <- 20))',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(
+        new ValueStructure('A', 'A', {
+          'a': new ValueInteger(1),
+          'b': new ValueInteger(20),
+          'c': new ValueInteger(30),
+        })
+      );
+    });
+
+    it('Variant update', () => {
+      let result = new Runner().run([
+        'type A is variant {',
+        '  case B {',
+        '    field a',
+        '    field b',
+        '  }',
+        '  case C {',
+        '    field c',
+        '  }',
+        '}',
+        'program {',
+        '  x := B(a <- 1, b <- 2)',
+        '  return (B(x | a <- 10, b <- 20))',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(
+        new ValueStructure('A', 'B', {
+          'a': new ValueInteger(10),
+          'b': new ValueInteger(20),
+        })
+      );
+    });
+
+    it('Reject update of invalid field', () => {
+      let result = () => new Runner().run([
+        'type A is record {',
+        '  field a',
+        '  field b',
+        '}',
+        'type C is record {',
+        '  field c',
+        '}',
+        'program {',
+        '  x := A(a <- 1, b <- 2)',
+        '  return (A(x | c <- 30))',
+        '}',
+      ].join('\n'));
+      expect(result).throws(
+        i18n('errmsg:structure-construction-invalid-field')('A', 'c')
+      );
+    });
+
+    it('Reject update of field if types are incompatible', () => {
+      let result = () => new Runner().run([
+        'type A is record {',
+        '  field a',
+        '  field b',
+        '}',
+        'program {',
+        '  x := A(a <- 1, b <- 2)',
+        '  return (A(x | a <- "a"))',
+        '}',
+      ].join('\n'));
+      expect(result).throws(
+        i18n('errmsg:incompatible-types-on-structure-update')(
+          'a',
+          new TypeInteger(),
+          new TypeString(),
+        )
+      );
+    });
+
+    it('Reject update of different constructor', () => {
+      let result = () => new Runner().run([
+        'type A is variant {',
+        '  case B {',
+        '    field a',
+        '    field b',
+        '  }',
+        '  case C {',
+        '    field c',
+        '  }',
+        '}',
+        'program {',
+        '  x := B(a <- 1, b <- 2)',
+        '  return (C(x |))',
+        '}',
+      ].join('\n'));
+      expect(result).throws(
+        i18n('errmsg:expected-constructor-but-got')('C', 'B')
+      );
+    });
+
+    it('Reject update of non-structure', () => {
+      let result = () => new Runner().run([
+        'type A is variant {',
+        '  case B {',
+        '    field a',
+        '    field b',
+        '  }',
+        '}',
+        'program {',
+        '  return (B(18 |))',
+        '}',
+      ].join('\n'));
+      expect(result).throws(
+        i18n('errmsg:expected-structure-but-got')(
+          'B',
+          i18n('V_Integer')
+        )
+      );
+    });
+
+  });
+
   describe('Expressions: function calls', () => {
 
     it('Calling primitive functions', () => {
@@ -1012,12 +1455,196 @@ describe('Compiler', () => {
       );
     });
 
+    it('Calling user-defined functions', () => {
+      let result = new Runner().run([
+        'function g(x, y) {',
+        '  return (x + x + y)',
+        '}',
+        'function f(x) {',
+        '  return (g(x, x), g(x, 1), g(1, x), g(1, 1), g(x + 1, x + 1))',
+        '}',
+        'program {',
+        '  return (f(11 + 2))',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(new ValueTuple([
+        new ValueInteger(39),
+        new ValueInteger(27),
+        new ValueInteger(15),
+        new ValueInteger(3),
+        new ValueInteger(42),
+      ]));
+    });
+
+    it('Calling user-defined functions: restore state after call', () => {
+      let result = new Runner().run([
+        'function g() {',
+        '  ' + i18n('PRIM:PutStone') + '(' + i18n('CONS:Color0') + ')',
+        '  return (',
+        '    ' + i18n('PRIM:numStones') + '(' + i18n('CONS:Color0') + ')',
+        '  )',
+        '}',
+        'function f() {',
+        '  ' + i18n('PRIM:PutStone') + '(' + i18n('CONS:Color0') + ')',
+        '  return (' +
+        '    ' + i18n('PRIM:numStones') + '(' + i18n('CONS:Color0') + '), ',
+        '    g(),',
+        '    ' + i18n('PRIM:numStones') + '(' + i18n('CONS:Color0') + ') ',
+        '  )',
+        '}',
+        'program {',
+        '  a := ' + i18n('PRIM:numStones') + '(' + i18n('CONS:Color0') + ')',
+        '  let (b, c, d) := f()',
+        '  e := ' + i18n('PRIM:numStones') + '(' + i18n('CONS:Color0') + ')',
+        '  return (a, b, c, d, e)',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(new ValueTuple([
+        new ValueInteger(0),
+        new ValueInteger(1),
+        new ValueInteger(2),
+        new ValueInteger(1),
+        new ValueInteger(0),
+      ]));
+    });
+
     // TODO:
-    // - user defined functions
     // - field accessors
     // - && and ||
     // TODO:
     //   probar todos los operadores y funciones built-in
+  });
+
+  describe('Expressions: logical operators (&&, ||)', () => {
+
+    it('Conjunction', () => {
+      let result = new Runner().run([
+        'program {',
+        '  return (',
+        '    ' + i18n('CONS:False') + ' && ' + i18n('CONS:False') + ',',
+        '    ' + i18n('CONS:False') + ' && ' + i18n('CONS:True') + ',',
+        '    ' + i18n('CONS:True') + ' && ' + i18n('CONS:False') + ',',
+        '    ' + i18n('CONS:True') + ' && ' + i18n('CONS:True'),
+        '  )',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(new ValueTuple([
+        new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+        new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+        new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+        new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+      ]));
+    });
+
+    it('Conjunction: check type of first argument', () => {
+      let result = () => new Runner().run([
+        'program {',
+        '  return (',
+        '    0 && ' + i18n('CONS:False'),
+        '  )',
+        '}',
+      ].join('\n'));
+      expect(result).throws(
+        i18n('errmsg:expected-value-of-type-but-got')(
+          new TypeStructure(i18n('TYPE:Bool'), {}),
+          new TypeInteger()
+        )
+      );
+    });
+
+    it('Conjunction: check type of second argument', () => {
+      let result = () => new Runner().run([
+        'program {',
+        '  return (',
+        '    ' + i18n('CONS:True') + ' && 0',
+        '  )',
+        '}',
+      ].join('\n'));
+      expect(result).throws(
+        i18n('errmsg:expected-value-of-type-but-got')(
+          new TypeStructure(i18n('TYPE:Bool'), {}),
+          new TypeInteger()
+        )
+      );
+    });
+
+    it('Conjunction: check that short circuiting works', () => {
+      let result = new Runner().run([
+        'program {',
+        '  return (',
+        '    ' + i18n('CONS:False') + ' && 0',
+        '  )',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(
+        new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+      );
+    });
+
+    it('Disjunction', () => {
+      let result = new Runner().run([
+        'program {',
+        '  return (',
+        '    ' + i18n('CONS:False') + ' || ' + i18n('CONS:False') + ',',
+        '    ' + i18n('CONS:False') + ' || ' + i18n('CONS:True') + ',',
+        '    ' + i18n('CONS:True') + ' || ' + i18n('CONS:False') + ',',
+        '    ' + i18n('CONS:True') + ' || ' + i18n('CONS:True'),
+        '  )',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(new ValueTuple([
+        new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+        new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+        new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+        new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+      ]));
+    });
+
+    it('Disjunction: check type of first argument', () => {
+      let result = () => new Runner().run([
+        'program {',
+        '  return (',
+        '    0 || ' + i18n('CONS:False'),
+        '  )',
+        '}',
+      ].join('\n'));
+      expect(result).throws(
+        i18n('errmsg:expected-value-of-type-but-got')(
+          new TypeStructure(i18n('TYPE:Bool'), {}),
+          new TypeInteger()
+        )
+      );
+    });
+
+    it('Disjunction: check type of second argument', () => {
+      let result = () => new Runner().run([
+        'program {',
+        '  return (',
+        '    ' + i18n('CONS:False') + ' || 0',
+        '  )',
+        '}',
+      ].join('\n'));
+      expect(result).throws(
+        i18n('errmsg:expected-value-of-type-but-got')(
+          new TypeStructure(i18n('TYPE:Bool'), {}),
+          new TypeInteger()
+        )
+      );
+    });
+
+    it('Disjunction: check that short circuiting works', () => {
+      let result = new Runner().run([
+        'program {',
+        '  return (',
+        '    ' + i18n('CONS:True') + ' || 0',
+        '  )',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(
+        new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+      );
+    });
+
   });
 
   describe('Primitive functions and operators', () => {
@@ -1308,6 +1935,214 @@ describe('Compiler', () => {
           i18n('errmsg:expected-values-to-have-compatible-types')(
             new TypeInteger(),
             new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True')).type()
+          )
+        );
+      });
+
+    });
+
+    describe('Next', () => {
+
+      it('Integer', () => {
+        let result = new Runner().run([
+          'program {',
+          '  return (',
+          '    ' + i18n('PRIM:next') + '(-3),',
+          '    ' + i18n('PRIM:next') + '(-2),',
+          '    ' + i18n('PRIM:next') + '(-1),',
+          '    ' + i18n('PRIM:next') + '(0),',
+          '    ' + i18n('PRIM:next') + '(1),',
+          '    ' + i18n('PRIM:next') + '(2),',
+          '    ' + i18n('PRIM:next') + '(3)',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).deep.equals(
+          new ValueTuple([
+            new ValueInteger(-2),
+            new ValueInteger(-1),
+            new ValueInteger(0),
+            new ValueInteger(1),
+            new ValueInteger(2),
+            new ValueInteger(3),
+            new ValueInteger(4),
+          ])
+        );
+      });
+
+      it('Bool', () => {
+        let result = new Runner().run([
+          'program {',
+          '  return (',
+          '    ' + i18n('PRIM:next') + '(' + i18n('CONS:False') + '),',
+          '    ' + i18n('PRIM:next') + '(' + i18n('CONS:True') + ')',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).deep.equals(
+          new ValueTuple([
+            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          ])
+        );
+      });
+
+      it('Color', () => {
+        let result = new Runner().run([
+          'program {',
+          '  return (',
+          '    ' + i18n('PRIM:next') + '(' + i18n('CONS:Color0') + '),',
+          '    ' + i18n('PRIM:next') + '(' + i18n('CONS:Color1') + '),',
+          '    ' + i18n('PRIM:next') + '(' + i18n('CONS:Color2') + '),',
+          '    ' + i18n('PRIM:next') + '(' + i18n('CONS:Color3') + ')',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).deep.equals(
+          new ValueTuple([
+            new ValueStructure(i18n('TYPE:Color'), i18n('CONS:Color1'), {}),
+            new ValueStructure(i18n('TYPE:Color'), i18n('CONS:Color2'), {}),
+            new ValueStructure(i18n('TYPE:Color'), i18n('CONS:Color3'), {}),
+            new ValueStructure(i18n('TYPE:Color'), i18n('CONS:Color0'), {}),
+          ])
+        );
+      });
+
+      it('Dir', () => {
+        let result = new Runner().run([
+          'program {',
+          '  return (',
+          '    ' + i18n('PRIM:next') + '(' + i18n('CONS:Dir0') + '),',
+          '    ' + i18n('PRIM:next') + '(' + i18n('CONS:Dir1') + '),',
+          '    ' + i18n('PRIM:next') + '(' + i18n('CONS:Dir2') + '),',
+          '    ' + i18n('PRIM:next') + '(' + i18n('CONS:Dir3') + ')',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).deep.equals(
+          new ValueTuple([
+            new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir1'), {}),
+            new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir2'), {}),
+            new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir3'), {}),
+            new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir0'), {}),
+          ])
+        );
+      });
+
+      it('Fail for other types', () => {
+        let result = () => new Runner().run([
+          'program {',
+          '  return (' + i18n('PRIM:next') + '([]))',
+          '}',
+        ].join('\n'));
+        expect(result).throws(
+          i18n('errmsg:expected-value-of-some-type-but-got')(
+            TYPES_WITH_ORDER,
+            new TypeList(new TypeAny())
+          )
+        );
+      });
+
+    });
+
+    describe('Prev', () => {
+
+      it('Integer', () => {
+        let result = new Runner().run([
+          'program {',
+          '  return (',
+          '    ' + i18n('PRIM:prev') + '(-3),',
+          '    ' + i18n('PRIM:prev') + '(-2),',
+          '    ' + i18n('PRIM:prev') + '(-1),',
+          '    ' + i18n('PRIM:prev') + '(0),',
+          '    ' + i18n('PRIM:prev') + '(1),',
+          '    ' + i18n('PRIM:prev') + '(2),',
+          '    ' + i18n('PRIM:prev') + '(3)',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).deep.equals(
+          new ValueTuple([
+            new ValueInteger(-4),
+            new ValueInteger(-3),
+            new ValueInteger(-2),
+            new ValueInteger(-1),
+            new ValueInteger(0),
+            new ValueInteger(1),
+            new ValueInteger(2),
+          ])
+        );
+      });
+
+      it('Bool', () => {
+        let result = new Runner().run([
+          'program {',
+          '  return (',
+          '    ' + i18n('PRIM:prev') + '(' + i18n('CONS:False') + '),',
+          '    ' + i18n('PRIM:prev') + '(' + i18n('CONS:True') + ')',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).deep.equals(
+          new ValueTuple([
+            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          ])
+        );
+      });
+
+      it('Color', () => {
+        let result = new Runner().run([
+          'program {',
+          '  return (',
+          '    ' + i18n('PRIM:prev') + '(' + i18n('CONS:Color0') + '),',
+          '    ' + i18n('PRIM:prev') + '(' + i18n('CONS:Color1') + '),',
+          '    ' + i18n('PRIM:prev') + '(' + i18n('CONS:Color2') + '),',
+          '    ' + i18n('PRIM:prev') + '(' + i18n('CONS:Color3') + ')',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).deep.equals(
+          new ValueTuple([
+            new ValueStructure(i18n('TYPE:Color'), i18n('CONS:Color3'), {}),
+            new ValueStructure(i18n('TYPE:Color'), i18n('CONS:Color0'), {}),
+            new ValueStructure(i18n('TYPE:Color'), i18n('CONS:Color1'), {}),
+            new ValueStructure(i18n('TYPE:Color'), i18n('CONS:Color2'), {}),
+          ])
+        );
+      });
+
+      it('Dir', () => {
+        let result = new Runner().run([
+          'program {',
+          '  return (',
+          '    ' + i18n('PRIM:prev') + '(' + i18n('CONS:Dir0') + '),',
+          '    ' + i18n('PRIM:prev') + '(' + i18n('CONS:Dir1') + '),',
+          '    ' + i18n('PRIM:prev') + '(' + i18n('CONS:Dir2') + '),',
+          '    ' + i18n('PRIM:prev') + '(' + i18n('CONS:Dir3') + ')',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).deep.equals(
+          new ValueTuple([
+            new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir3'), {}),
+            new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir0'), {}),
+            new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir1'), {}),
+            new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir2'), {}),
+          ])
+        );
+      });
+
+      it('Fail for other types', () => {
+        let result = () => new Runner().run([
+          'program {',
+          '  return (' + i18n('PRIM:prev') + '([]))',
+          '}',
+        ].join('\n'));
+        expect(result).throws(
+          i18n('errmsg:expected-value-of-some-type-but-got')(
+            TYPES_WITH_ORDER,
+            new TypeList(new TypeAny())
           )
         );
       });

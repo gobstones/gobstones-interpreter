@@ -115,39 +115,101 @@ export class Compiler {
     /* Compile the program (or interactive program) */
     for (let definition of ast.definitions) {
       if (definition.tag === N_DefProgram) {
-        this._compileProgram(definition);
+        this._compileDefProgram(definition);
       } else if (definition.tag === N_DefInteractiveProgram) {
-        this._compileInteractiveProgram(definition);
+        this._compileDefInteractiveProgram(definition);
       }
     }
 
     /* Compile procedures and functions */
     for (let definition of ast.definitions) {
       if (definition.tag === N_DefProcedure) {
-        this._compileProcedure(definition);
+        this._compileDefProcedure(definition);
       } else if (definition.tag === N_DefFunction) {
-        this._compileFunction(definition);
+        this._compileDefFunction(definition);
       }
     }
   }
 
-  _compileProgram(definition) {
+  _compileDefProgram(definition) {
     this._compileStatement(definition.body);
     this._produce(definition.startPos, definition.endPos,
       new IReturn()
     );
   }
 
-  _compileInteractiveProgram(definition) {
+  _compileDefInteractiveProgram(definition) {
     // TODO
   }
 
-  _compileProcedure(definition) {
-    // TODO
+  /* A procedure definition:
+   *
+   *   procedure P(x1, ..., xN) {
+   *     <body>
+   *   }
+   *
+   * is compiled as follows:
+   *
+   *   P:
+   *     SetVariable x1
+   *     ...
+   *     SetVariable xN
+   *     <body>
+   *     Return
+   */
+  _compileDefProcedure(definition) {
+    this._produce(
+      definition.startPos, definition.endPos,
+      new ILabel(definition.name.value)
+    );
+    for (let i = 0; i < definition.parameters.length; i++) {
+      let parameterName = definition.parameters[i].value;
+      this._produce(
+        definition.startPos, definition.endPos,
+        new ISetVariable(parameterName)
+      );
+    }
+    this._compileStatement(definition.body);
+    this._produce(
+      definition.startPos, definition.endPos,
+      new IReturn()
+    );
   }
 
-  _compileFunction(definition) {
-    // TODO
+  /* A function definition:
+   *
+   *   function f(x1, ..., xN) {
+   *     <body>
+   *   }
+   *
+   * is compiled as follows:
+   *
+   *   f:
+   *     SaveState
+   *     SetVariable x1
+   *     ...
+   *     SetVariable xN
+   *     <body>
+   *     RestoreState
+   *     Return
+   */
+  _compileDefFunction(definition) {
+    this._produceList(definition.startPos, definition.endPos, [
+      new ILabel(definition.name.value),
+      new ISaveState(),
+    ]);
+    for (let i = 0; i < definition.parameters.length; i++) {
+      let parameterName = definition.parameters[i].value;
+      this._produce(
+        definition.startPos, definition.endPos,
+        new ISetVariable(parameterName)
+      );
+    }
+    this._compileStatement(definition.body);
+    this._produceList(definition.startPos, definition.endPos, [
+      new IRestoreState(),
+      new IReturn(),
+    ]);
   }
 
   /* Statements are compiled to VM instructions that start and end
@@ -196,10 +258,10 @@ export class Compiler {
   /* Merely push the return value in the stack.
    * The "new IReturn()" instruction itself is produced by the
    * methods:
-   *   _compileProgram
-   *   _compileInteractiveProgram
-   *   _compileProcedure
-   *   _compileFunction
+   *   _compileDefProgram
+   *   _compileDefInteractiveProgram
+   *   _compileDefProcedure
+   *   _compileDefFunction
    * */
   _compileStmtReturn(statement) {
     return this._compileExpression(statement.result);
@@ -512,9 +574,8 @@ export class Compiler {
     }
     if (this._primitives.isProcedure(procedureName)) {
       this._compileStmtProcedureCallPrimitive(statement);
-    } else if (this._symtable.isFunction(functionName)) {
-      // TODO
-      throw Error('calling a user-defined procedure not implemented');
+    } else if (this._symtable.isProcedure(procedureName)) {
+      this._compileStmtProcedureCallUserDefined(statement);
     } else {
       throw Error(
         'Compiler: ' + procedureName + ' is an undefined procedure.'
@@ -525,6 +586,12 @@ export class Compiler {
   _compileStmtProcedureCallPrimitive(statement) {
     this._produce(statement.startPos, statement.endPos,
       new IPrimitiveCall(statement.procedureName.value, statement.args.length)
+    );
+  }
+
+  _compileStmtProcedureCallUserDefined(statement) {
+    this._produce(statement.startPos, statement.endPos,
+      new ICall(statement.procedureName.value, statement.args.length)
     );
   }
 
@@ -710,15 +777,13 @@ export class Compiler {
       case N_ExprList:
         return this._compileExprList(expression);
       case N_ExprRange:
-        // TODO
-        break;
+        return this._compileExprRange(expression);
       case N_ExprTuple:
         return this._compileExprTuple(expression);
       case N_ExprStructure:
         return this._compileExprStructure(expression);
       case N_ExprStructureUpdate:
-        // TODO
-        break;
+        return this._compileExprStructureUpdate(expression);
       case N_ExprFunctionCall:
         return this._compileExprFunctionCall(expression);
       default:
@@ -756,6 +821,29 @@ export class Compiler {
     );
   }
 
+  /*
+   * Range expresions [first..last] and [first,second..last]
+   * are compiled by calling the primitive functions
+   *   _makeRange
+   *   _makeRangeWithSecond
+   */
+  _compileExprRange(expression) {
+    this._compileExpression(expression.first);
+    this._compileExpression(expression.last);
+    if (expression.second === null) {
+      this._produce(
+        expression.startPos, expression.endPos,
+        new IPrimitiveCall('_makeRange', 2)
+      );
+    } else {
+      this._compileExpression(expression.second);
+      this._produce(
+        expression.startPos, expression.endPos,
+        new IPrimitiveCall('_makeRangeWithSecond', 3)
+      );
+    }
+  }
+
   _compileExprTuple(expression) {
     for (let element of expression.elements) {
       this._compileExpression(element);
@@ -778,6 +866,20 @@ export class Compiler {
     );
   }
 
+  _compileExprStructureUpdate(expression) {
+    this._compileExpression(expression.original);
+    let fieldNames = [];
+    for (let fieldBinding of expression.fieldBindings) {
+      this._compileExpression(fieldBinding.value);
+      fieldNames.push(fieldBinding.fieldName.value);
+    }
+    let constructorName = expression.constructorName.value;
+    let typeName = this._symtable.constructorType(constructorName);
+    this._produce(expression.startPos, expression.endPos,
+      new IUpdateStructure(typeName, constructorName, fieldNames)
+    );
+  }
+
   /* There are four cases:
    * (1) The function is '&&' or '||' which must be considered separately
    *     to account for short-circuting.
@@ -787,9 +889,10 @@ export class Compiler {
    */
   _compileExprFunctionCall(expression) {
     let functionName = expression.functionName.value;
-    if (functionName === '&&' || functionName === '||') {
-      // TODO
-      throw Error('short-circuiting not implemented');
+    if (functionName === '&&') {
+      this._compileExprFunctionCallAnd(expression);
+    } else if (functionName === '||') {
+      this._compileExprFunctionCallOr(expression);
     } else {
       for (let argument of expression.args) {
         this._compileExpression(argument);
@@ -797,8 +900,7 @@ export class Compiler {
       if (this._primitives.isFunction(functionName)) {
         this._compileExprFunctionCallPrimitive(expression);
       } else if (this._symtable.isFunction(functionName)) {
-        // TODO
-        throw Error('calling a user-defined function not implemented');
+        this._compileExprFunctionCallUserDefined(expression);
       } else if (this._symtable.isField(functionName)) {
         // TODO
         throw Error('accessing a field not implemented');
@@ -815,7 +917,63 @@ export class Compiler {
       new IPrimitiveCall(expression.functionName.value, expression.args.length)
     );
   }
-  
+
+  _compileExprFunctionCallUserDefined(expression) {
+    this._produce(expression.startPos, expression.endPos,
+      new ICall(expression.functionName.value, expression.args.length)
+    );
+  }
+
+  /* <expr1>
+   * TypeCheck Bool
+   * JumpIfStructure 'False' labelEnd
+   * Pop
+   * <expr2>
+   * TypeCheck Bool
+   * labelEnd:
+   */
+  _compileExprFunctionCallAnd(expression) {
+    let expr1 = expression.args[0];
+    let expr2 = expression.args[1];
+    let labelEnd = this._freshLabel();
+    this._compileExpression(expr1);
+    this._produceList(expression.startPos, expression.endPos, [
+      new ITypeCheck(new TypeStructure(i18n('TYPE:Bool'), {})),
+      new IJumpIfStructure(i18n('CONS:False'), labelEnd),
+      new IPop(),
+    ]);
+    this._compileExpression(expr2);
+    this._produceList(expression.startPos, expression.endPos, [
+      new ITypeCheck(new TypeStructure(i18n('TYPE:Bool'), {})),
+      new ILabel(labelEnd),
+    ]);
+  }
+
+  /* <expr1>
+   * TypeCheck Bool
+   * JumpIfStructure 'True' labelEnd
+   * Pop
+   * <expr2>
+   * TypeCheck Bool
+   * labelEnd:
+   */
+  _compileExprFunctionCallOr(expression) {
+    let expr1 = expression.args[0];
+    let expr2 = expression.args[1];
+    let labelEnd = this._freshLabel();
+    this._compileExpression(expr1);
+    this._produceList(expression.startPos, expression.endPos, [
+      new ITypeCheck(new TypeStructure(i18n('TYPE:Bool'), {})),
+      new IJumpIfStructure(i18n('CONS:True'), labelEnd),
+      new IPop(),
+    ]);
+    this._compileExpression(expr2);
+    this._produceList(expression.startPos, expression.endPos, [
+      new ITypeCheck(new TypeStructure(i18n('TYPE:Bool'), {})),
+      new ILabel(labelEnd),
+    ]);
+  }
+
   /* Helpers */
 
   /* Produce the given instruction, setting its starting and ending

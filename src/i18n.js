@@ -497,6 +497,8 @@ const ES = {
 
   'PRIM:PutStone': 'Poner',
   'PRIM:numStones': 'nroBolitas',
+  'PRIM:next': 'siguiente',
+  'PRIM:prev': 'anterior',
 
   /* Helpers */
   '<alternative>':
