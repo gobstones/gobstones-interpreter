@@ -545,7 +545,7 @@ describe('Lexer', () => {
           [T_COMMA, ','],
           [T_STRING, '\\'],
           [T_COMMA, ','],
-          [T_STRING, '\a'],
+          [T_STRING, '\u0007'], /* "\a" is not an escape sequence in JS */
           [T_COMMA, ','],
           [T_STRING, '\b'],
           [T_COMMA, ','],

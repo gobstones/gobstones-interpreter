@@ -46,6 +46,10 @@ export class ValueInteger extends Value {
     }
   }
 
+  show() {
+    return this._number;
+  }
+
   get number() {
     return this._number;
   }
@@ -106,6 +110,56 @@ export class ValueString extends Value {
     this._string = string
   }
 
+  show() {
+    let res = ['"'];
+    for (let i = 0; i < this._string.length; i++) {
+      let chr = this._string[i];
+      switch (chr) {
+        case '"':
+          res.push('\\');
+          res.push('"');
+          break;
+        case '\\':
+          res.push('\\');
+          res.push('\\');
+          break;
+        case '\u0007':
+          res.push('\\');
+          res.push('a');
+          break;
+        case '\b':
+          res.push('\\');
+          res.push('b');
+          break;
+        case '\f':
+          res.push('\\');
+          res.push('f');
+          break;
+        case '\n':
+          res.push('\\');
+          res.push('n');
+          break;
+        case '\r':
+          res.push('\\');
+          res.push('r');
+          break;
+        case '\t':
+          res.push('\\');
+          res.push('t');
+          break;
+        case '\v':
+          res.push('\\');
+          res.push('v');
+          break;
+        default:
+          res.push(chr);
+          break;
+      }
+    }
+    res.push('"');
+    return res.join('');
+  }
+
   get string() {
     return this._string;
   }
@@ -120,6 +174,14 @@ export class ValueTuple extends Value {
     super(V_Tuple);
     this._components = components;
     this._type = this._inferType();
+  }
+
+  show() {
+    let res = [];
+    for (let component of this._components) {
+      res.push(component.show());
+    }
+    return '(' + res.join(', ') + ')';
   }
 
   get components() {
@@ -148,6 +210,14 @@ export class ValueList extends Value {
     super(V_List);
     this._elements = elements
     this._type = this._inferType();
+  }
+
+  show() {
+    let res = [];
+    for (let element of this._elements) {
+      res.push(element.show());
+    }
+    return '[' + res.join(', ') + ']';
   }
 
   get elements() {
@@ -187,6 +257,18 @@ export class ValueStructure extends Value {
     this._typeName = typeName;
     this._constructorName = constructorName;
     this._fields = fields;
+  }
+
+  show() {
+    let res = [];
+    let fieldNames = this.fieldNames();
+    if (fieldNames.length === 0) {
+      return this._constructorName;
+    }
+    for (let fieldName of fieldNames) {
+      res.push(fieldName + ' <- ' + this.fields[fieldName].show());
+    }
+    return this._constructorName + '(' + res.join(', ') + ')';
   }
 
   get typeName() {

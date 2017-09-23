@@ -136,7 +136,7 @@ class Frame {
  */
 export class VirtualMachine {
 
-  constructor(code) {
+  constructor(code, initialState) {
     this._code = code;
 
     /* "this._labelTargets" is a dictionary mapping label names to
@@ -175,7 +175,7 @@ export class VirtualMachine {
      * It should be called whenever leaving a user-defined function
      * in Gobstones.
      */
-    this._globalStateStack = [new RuntimeState()];
+    this._globalStateStack = [initialState];
 
     /* The following dictionary maps names of primitives to their
      * implementation.
@@ -203,6 +203,10 @@ export class VirtualMachine {
 
   globalState() {
     return this._globalStateStack[this._globalStateStack.length - 1];
+  }
+
+  setGlobalState(globalState) {
+    this._globalStateStack[this._globalStateStack.length - 1] = globalState;
   }
 
   /* Return the current frame, which is the top of the call stack */
@@ -606,7 +610,6 @@ export class VirtualMachine {
   }
 
   _stepReadStructureFieldPop() {
-    console.log(this._currentFrame());
     this._stepReadStructureFieldGeneric(true);  /* Pop the structure */
   }
 

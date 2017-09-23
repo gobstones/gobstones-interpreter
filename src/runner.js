@@ -3,7 +3,7 @@ import { Parser } from './parser';
 import { Linter } from './linter';
 import { SymbolTable } from './symtable';
 import { Compiler } from './compiler';
-import { RuntimePrimitives } from './runtime';
+import { RuntimePrimitives, RuntimeState } from './runtime';
 import { VirtualMachine } from './vm';
 
 import { UnknownPosition } from './reader';
@@ -33,13 +33,28 @@ export class Runner {
   constructor() {
   }
 
-  /* Parse, compile, and run a program */
+  /* Parse, compile, and run a program in the default global state
+   * (typically an empty 9x9 board in Gobstones).
+   * Return the return value of the program, ignoring the final state.
+   * A GbsInterpreterException may be thrown.
+   */
   run(input) {
+    return this.runState(input, new RuntimeState()).result;
+  }
+
+  /* Parse, compile, and run a program in the given initial state.
+   * Return a mapping
+   *   {'result': r, 'state': s]
+   * where r is the result of the program and s is the final state.
+   * A GbsInterpreterException may be thrown.
+   */
+  runState(input, initialState) {
     let ast = new Parser(input).parse();
     let symtable = new Linter(this._newSymtableWithPrimitives()).lint(ast);
     let code = new Compiler(symtable).compile(ast);
-    let vm = new VirtualMachine(code);
-    return vm.run();
+    let vm = new VirtualMachine(code, initialState);
+    let result = vm.run();
+    return {'result': result, 'state': vm.globalState()};
   }
 
   /* Create a new symbol table, including definitions for all the primitive

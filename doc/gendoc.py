@@ -180,6 +180,55 @@ def instructions_to_tex(json_instructions):
                 string_to_tex(description)
             )
         )
+    tex.append('\\end{itemize}')
+    return tex
+
+## Builtins
+
+def builtin_type_to_tex(builtin):
+    tex = []
+    tex.append('\\item \\texttt{type} \\typename{%s}' % (builtin[1],))
+    constructors = builtin[2:]
+    if len(constructors) == 0:
+        return tex
+    tex.append(' --- constructores: \\begin{itemize}')
+    for constructor in constructors:
+        tex.append('\\item \\constructorname{%s}' % (constructor[0],))
+        fields = constructor[1:]
+        if len(fields) == 0:
+            continue
+        tex.append(' --- campos: \\begin{itemize}')
+        for field in fields:
+            tex.append('\\item \\fieldname{%s}' % (field,))
+        tex.append('\\end{itemize}')
+    tex.append('\\end{itemize}')
+    return tex
+
+def builtin_routine_to_tex(builtin):
+    tex = []
+    parameters = builtin[2]
+    tex.append(
+      '\\item \\texttt{%s} \\typename{%s}(%s)' % (
+        builtin[0], builtin[1], ', '.join(parameters)
+      )
+    )
+    tex.append('\\begin{itemize}')
+    if builtin[3] != '':
+        tex.append('\\item {\\bf Precondici\\\'on:} %s' % (string_to_tex(builtin[3]),))
+    tex.append('\\item {\\bf Prop\\\'osito:} %s' % (string_to_tex(builtin[4]),))
+    tex.append('\\end{itemize}')
+    return tex
+
+def builtins_to_tex(json_builtins):
+    tex = []
+    tex.append('\\begin{itemize}')
+    for builtin in json_builtins:
+        if builtin[0] == 'type':
+            tex.extend(builtin_type_to_tex(builtin))
+        elif builtin[0] in ['procedure', 'function']:
+            tex.extend(builtin_routine_to_tex(builtin))
+        else:
+            raise Error('Unknown type of builtin: %s' % (builtin[0]))
     tex.append('\\item \\TODO{TODO}')
     tex.append('\\end{itemize}')
     return tex
@@ -189,4 +238,5 @@ if __name__ == '__main__':
     gendoc('02-grammar.json', grammar_to_tex)
     gendoc('03-ast.json', ast_to_tex)
     gendoc('04-instructions.json', instructions_to_tex)
+    gendoc('05-builtins.json', builtins_to_tex)
 

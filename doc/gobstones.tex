@@ -49,6 +49,10 @@
 \newcommand{\DEBE}{{\bf DEBE}\xspace}
 \newcommand{\DEBEN}{{\bf DEBEN}\xspace}
 
+\newcommand{\typename}[1]{\textcolor{blue}{\texttt{#1}}}
+\newcommand{\constructorname}[1]{\textcolor{red}{\texttt{#1}}}
+\newcommand{\fieldname}[1]{\textcolor{darkgreen}{\textit{#1}}}
+
 \tableofcontents
 
 \section{Gram\'atica}
@@ -522,5 +526,12 @@ Las instrucciones de la m\'aquina virtual se describen a continuaci\'on:
 
 % El siguiente tex se genera a partir de 04-instructions.json usando gendoc.py.
 \input{04-instructions.tex}
+
+\subsection{Primitivas}
+
+Los tipos, procedimientos y funciones disponibles en el lenguaje de manera primitiva se listan a continuaci\'on:
+
+% El siguiente tex se genera a partir de 04-instructions.json usando gendoc.py.
+\input{05-builtins.tex}
 
 \end{document}

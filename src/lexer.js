@@ -249,25 +249,25 @@ export class Lexer {
         this._reader = this._reader.consumeCharacter();
         switch (c2) {
           case 'a':
-            result.push('\a');
+            result.push('\u0007');
             break;
           case 'b':
-            result.push('\b');
+            result.push('\u0008');
             break;
           case 'f':
-            result.push('\f');
+            result.push('\u000c');
             break;
           case 'n':
-            result.push('\n');
+            result.push('\u000a');
             break;
           case 'r':
-            result.push('\r');
+            result.push('\u000d');
             break;
           case 't':
-            result.push('\t');
+            result.push('\u0009');
             break;
           case 'v':
-            result.push('\v');
+            result.push('\u000b');
             break;
           default:
             result.push(c2);

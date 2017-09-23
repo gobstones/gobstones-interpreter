@@ -1,0 +1,34 @@
+[
+  ["type", "Bool",
+    ["True"],
+    ["False"]
+  ],
+  ["type", "Color",
+    ["Azul"],
+    ["Negro"],
+    ["Rojo"],
+    ["Verde"]
+  ],
+  ["type", "Dir",
+    ["Norte"],
+    ["Este"],
+    ["Sur"],
+    ["Oeste"]
+  ],
+  ["function", "siguiente", ["x"],
+    "El parámetro x debe ser un entero, booleano, color o dirección.",
+    "Denota el siguiente de x en el orden correspondiente al tipo de x."
+  ],
+  ["function", "previo", ["x"],
+    "El parámetro x debe ser un entero, booleano, color o dirección.",
+    "Denota el anterior de x en el orden correspondiente al tipo de x."
+  ],
+  ["procedure", "Poner", ["color"],
+   "",
+   "Pone una bolita del color indicado en la posición del tablero donde se encuentra el cabezal."
+  ],
+  ["function", "nroBolitas", ["color"],
+    "",
+    "Denota el número de bolitas del color indicado en la posición donde se encuentra el cabezal."
+  ]
+]
