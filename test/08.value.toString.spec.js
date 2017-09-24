@@ -12,29 +12,29 @@ import {
 chai.expect();
 const expect = chai.expect;
 
-describe('Showing values', () => {
+describe('Value toString', () => {
 
     describe('Integers', () => {
 
       it('Zero', () => {
-        expect(new ValueInteger('0').show()).equals('0');
+        expect(new ValueInteger('0').toString()).equals('0');
       });
 
       it('Minus zero', () => {
         expect(
-          new ValueInteger('0').sub(new ValueInteger('0')).show()
+          new ValueInteger('0').sub(new ValueInteger('0')).toString()
         ).equals('0');
       });
 
       it('Positive', () => {
         expect(
-          new ValueInteger('123456789112233445566778899').show()
+          new ValueInteger('123456789112233445566778899').toString()
         ).equals('123456789112233445566778899');
       });
 
       it('Negative', () => {
         expect(
-          new ValueInteger('-123456789112233445566778899').show()
+          new ValueInteger('-123456789112233445566778899').toString()
         ).equals('-123456789112233445566778899');
       });
 
@@ -43,27 +43,27 @@ describe('Showing values', () => {
     describe('Strings', () => {
 
       it('Empty', () => {
-        expect(new ValueString('').show()).equals('""');
+        expect(new ValueString('').toString()).equals('""');
       });
 
       it('Non-empty', () => {
         expect(
           new ValueString(
             'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
-          ).show()).equals(
+          ).toString()).equals(
             '"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"'
           );
       });
 
       it('Unicode', () => {
         expect(
-          new ValueString('áéíóúÁÉÍÓÚñÑ').show()
+          new ValueString('áéíóúÁÉÍÓÚñÑ').toString()
         ).equals('"áéíóúÁÉÍÓÚñÑ"');
       });
 
       it('Escapes', () => {
         expect(
-          new ValueString('\\,\",\u0007,\b,\f,\n,\r,\t,\v').show()
+          new ValueString('\\,\",\u0007,\b,\f,\n,\r,\t,\v').toString()
         ).equals(
           '"\\\\,\\\",\\a,\\b,\\f,\\n,\\r,\\t,\\v"'
         );
@@ -73,7 +73,7 @@ describe('Showing values', () => {
 
     describe('Tuples', () => {
       it('Empty', () => {
-        expect(new ValueTuple([]).show()).equals('()');
+        expect(new ValueTuple([]).toString()).equals('()');
       });
 
       it('Non-empty', () => {
@@ -82,21 +82,21 @@ describe('Showing values', () => {
             new ValueInteger(1),
             new ValueInteger(2),
             new ValueInteger(3),
-          ]).show()
+          ]).toString()
         ).equals('(1, 2, 3)');
       });
     });
 
     describe('Lists', () => {
       it('Empty', () => {
-        expect(new ValueList([]).show()).equals('[]');
+        expect(new ValueList([]).toString()).equals('[]');
       });
 
       it('Singleton', () => {
         expect(
           new ValueList([
             new ValueInteger(1),
-          ]).show()
+          ]).toString()
         ).equals('[1]');
       });
 
@@ -106,7 +106,7 @@ describe('Showing values', () => {
             new ValueInteger(1),
             new ValueInteger(2),
             new ValueInteger(3),
-          ]).show()
+          ]).toString()
         ).equals('[1, 2, 3]');
       });
     });
@@ -115,13 +115,13 @@ describe('Showing values', () => {
 
       it('No fields', () => {
         expect(
-          new ValueStructure('A', 'B', {}).show()
+          new ValueStructure('A', 'B', {}).toString()
         ).equals('B');
       });
 
       it('One field', () => {
         expect(
-          new ValueStructure('A', 'B', {'a': new ValueInteger(1)}).show()
+          new ValueStructure('A', 'B', {'a': new ValueInteger(1)}).toString()
         ).equals('B(a <- 1)');
       });
 
@@ -131,7 +131,7 @@ describe('Showing values', () => {
             'b': new ValueInteger(2),
             'a': new ValueInteger(1),
             'c': new ValueInteger(3),
-          }).show()
+          }).toString()
         ).equals('B(a <- 1, b <- 2, c <- 3)');
       });
 

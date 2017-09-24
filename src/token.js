@@ -75,6 +75,16 @@ export class Token {
     this._endPos = endPos;
   }
 
+  toString() {
+    let tag = Symbol.keyFor(this._tag).substring(2);
+    switch (tag) {
+      case 'NUM': case 'STRING': case 'UPPERID': case 'LOWERID':
+        return tag + '("' + this._value + '")';
+      default:
+        return tag;
+    }
+  }
+
   get tag() {
     return this._tag;
   }

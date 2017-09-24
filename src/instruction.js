@@ -34,6 +34,14 @@ export class Code {
     this._instructions = instructions;
   }
 
+  toString() {
+    let res = [];
+    for (let instruction of this._instructions) {
+      res.push(instruction.toString());
+    }
+    return res.join('\n');
+  }
+
   produce(instruction) {
     this._instructions.push(instruction);
   }
@@ -46,13 +54,13 @@ export class Code {
       throw Error('Code: instruction pointer out of range.');
     }
   }
-  
+
   /* Return a dictionary mapping label names to their corresponding
    * instruction pointers. */
   labelTargets() {
     let labelTargets = {};
-    for (let i = 0; i < this._instructions.length; i++)  {
-      if (this._instructions[i].opcode == I_Label) {
+    for (let i = 0; i < this._instructions.length; i++) {
+      if (this._instructions[i].opcode === I_Label) {
         let label = this._instructions[i].label;
         if (label in labelTargets) {
           throw Error('Code: label "' + label + '" is repeated.');
@@ -65,12 +73,33 @@ export class Code {
 
 }
 
+function argToString(arg) {
+  if (arg instanceof Array) {
+    let res = [];
+    for (let elem of arg) {
+      res.push(argToString(elem));
+    }
+    return '[' + res.join(', ') + ']';
+  } else {
+    return arg.toString();
+  }
+}
+
 export class Instruction {
   constructor(opcode, args) {
     this._opcode = opcode;
     this._args = args;
     this._startPos = UnknownPosition;
     this._endPos = UnknownPosition;
+  }
+
+  toString() {
+    let opcode = Symbol.keyFor(this._opcode).substring(2);
+    let sargs = [];
+    for (let arg of this._args) {
+      sargs.push(argToString(arg));
+    }
+    return '  ' + opcode + ' ' + sargs.join(', ');
   }
 
   get opcode() {
@@ -163,11 +192,14 @@ export class IUnsetVariable extends Instruction {
   }
 }
 
-
 /* Pseudo-instruction to mark the target of a jump. */
 export class ILabel extends Instruction {
   constructor(label) {
     super(I_Label, [label]);
+  }
+
+  toString() {
+    return this.label + ':';
   }
 
   get label() {

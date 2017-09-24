@@ -1,326 +1,11 @@
 import { i18n } from './i18n';
 import { Integer } from './bigint';
 
-/* Helper function */
-
-function sortedKeys(dictionary) {
-  let keys = [];
-  for (let key in dictionary) {
-    keys.push(key);
-  }
-  return keys.sort();
-}
-
-/* Value tags */
-export const V_Integer = Symbol.for('V_Integer');
-export const V_String = Symbol.for('V_String');
-export const V_Tuple = Symbol.for('V_Tuple');
-export const V_List = Symbol.for('V_List');
-export const V_Structure = Symbol.for('V_Structure');
-
-export class Value {
-  constructor(tag) {
-    this._tag = tag;
-  }
-
-  get tag() {
-    return this._tag;
-  }
-
-  type() {
-    return new Type('?', []);
-  }
-}
-
-export class ValueInteger extends Value {
-  constructor(number) {
-    super(V_Integer);
-    if (typeof number === 'number') {
-      this._number = number.toString();
-    } else if (typeof number === 'string') {
-      this._number = number;
-    } else {
-      throw Error(
-        'Integer value must be constructed with an integer or a string'
-      );
-    }
-  }
-
-  show() {
-    return this._number;
-  }
-
-  get number() {
-    return this._number;
-  }
-
-  type() {
-    return new TypeInteger();
-  }
-
-  add(other) {
-    let a = Integer(this._number);
-    let b = Integer(other._number);
-    return new ValueInteger(a.add(b).toString());
-  }
-
-  sub(other) {
-    let a = Integer(this._number);
-    let b = Integer(other._number);
-    return new ValueInteger(a.subtract(b).toString());
-  }
-
-  le(other) {
-    let a = Integer(this._number);
-    let b = Integer(other._number);
-    return a.leq(b);
-  }
-
-  lt(other) {
-    let a = Integer(this._number);
-    let b = Integer(other._number);
-    return a.lt(b);
-  }
-
-  ge(other) {
-    let a = Integer(this._number);
-    let b = Integer(other._number);
-    return a.geq(b);
-  }
-
-  gt(other) {
-    let a = Integer(this._number);
-    let b = Integer(other._number);
-    return a.gt(b);
-  }
-
-  negate() {
-    let a = Integer(this._number);
-    return new ValueInteger(a.negate().toString());
-  }
-
-  asNumber() {
-    return parseInt(this._number);
-  }
-}
-
-export class ValueString extends Value {
-  constructor(string) {
-    super(V_String);
-    this._string = string
-  }
-
-  show() {
-    let res = ['"'];
-    for (let i = 0; i < this._string.length; i++) {
-      let chr = this._string[i];
-      switch (chr) {
-        case '"':
-          res.push('\\');
-          res.push('"');
-          break;
-        case '\\':
-          res.push('\\');
-          res.push('\\');
-          break;
-        case '\u0007':
-          res.push('\\');
-          res.push('a');
-          break;
-        case '\b':
-          res.push('\\');
-          res.push('b');
-          break;
-        case '\f':
-          res.push('\\');
-          res.push('f');
-          break;
-        case '\n':
-          res.push('\\');
-          res.push('n');
-          break;
-        case '\r':
-          res.push('\\');
-          res.push('r');
-          break;
-        case '\t':
-          res.push('\\');
-          res.push('t');
-          break;
-        case '\v':
-          res.push('\\');
-          res.push('v');
-          break;
-        default:
-          res.push(chr);
-          break;
-      }
-    }
-    res.push('"');
-    return res.join('');
-  }
-
-  get string() {
-    return this._string;
-  }
-
-  type() {
-    return new TypeString();
-  }
-}
-
-export class ValueTuple extends Value {
-  constructor(components) {
-    super(V_Tuple);
-    this._components = components;
-    this._type = this._inferType();
-  }
-
-  show() {
-    let res = [];
-    for (let component of this._components) {
-      res.push(component.show());
-    }
-    return '(' + res.join(', ') + ')';
-  }
-
-  get components() {
-    return this._components;
-  }
-
-  size() {
-    return this._components.length;
-  }
-
-  type() {
-    return this._type;
-  }
-
-  _inferType() {
-    let componentTypes = [];
-    for (let component of this._components) {
-      componentTypes.push(component.type());
-    }
-    return new TypeTuple(componentTypes);
-  }
-}
-
-export class ValueList extends Value {
-  constructor(elements) {
-    super(V_List);
-    this._elements = elements
-    this._type = this._inferType();
-  }
-
-  show() {
-    let res = [];
-    for (let element of this._elements) {
-      res.push(element.show());
-    }
-    return '[' + res.join(', ') + ']';
-  }
-
-  get elements() {
-    return this._elements;
-  }
-
-  type() {
-    return this._type;
-  }
-
-  length() {
-    return this._elements.length;
-  }
-
-  _inferType() {
-    let contentType = new TypeAny();
-    for (let element of this._elements) {
-      contentType = joinTypes(contentType, element.type());
-    }
-    return new TypeList(contentType);
-  }
-}
-
-/* An instance of ValueStructure represents a 'structure' i.e.  a value
- * inhabiting an 'inductive' datatype.
- *
- * This includes built-in enumerations (e.g. booleans), the "event" type
- * received by an interactive program, and user-defined records and variants.
- *
- * The second parameter "fields" should be a dictionary mapping field names to
- * values
- */
-export class ValueStructure extends Value {
-
-  constructor(typeName, constructorName, fields) {
-    super(V_Structure);
-    this._typeName = typeName;
-    this._constructorName = constructorName;
-    this._fields = fields;
-  }
-
-  show() {
-    let res = [];
-    let fieldNames = this.fieldNames();
-    if (fieldNames.length === 0) {
-      return this._constructorName;
-    }
-    for (let fieldName of fieldNames) {
-      res.push(fieldName + ' <- ' + this.fields[fieldName].show());
-    }
-    return this._constructorName + '(' + res.join(', ') + ')';
-  }
-
-  get typeName() {
-    return this._typeName;
-  }
-
-  get constructorName() {
-    return this._constructorName;
-  }
-
-  get fields() {
-    return this._fields;
-  }
-
-  fieldNames() {
-    return sortedKeys(this._fields);
-  }
-
-  _clone() {
-    let newFields = {};
-    for (let fieldName in this._fields) {
-      newFields[fieldName] = this._fields[fieldName];
-    }
-    return new ValueStructure(
-      this._typeName, this._constructorName, newFields
-    );
-  }
-
-  updateFields(fields) {
-    let newStructure = this._clone();
-    for (let fieldName in fields) {
-      newStructure.fields[fieldName] = fields[fieldName];
-    }
-    return newStructure;
-  }
-
-  type() {
-    let fieldTypes = {};
-    for (let fieldName in this._fields) {
-      fieldTypes[fieldName] = this._fields[fieldName].type();
-    }
-    let cases = {};
-    cases[this._constructorName] = fieldTypes;
-    return new TypeStructure(this._typeName, cases);
-  }
-}
-
-/* Each value has a *type*.
+/* Each value has a type.
  *
  * A type is a tree, represented with instances of Type (or its subclasses).
  * We write:
- *   r(c1, ..., cN) 
+ *   r(c1, ..., cN)
  * for a tree whose root is r and whose children are c1, ..., cN.
  *
  * The type of a value may be one of the following:
@@ -443,7 +128,7 @@ export class TypeList extends Type {
     super(Ty_List);
     this._contentType = contentType;
   }
-  
+
   get contentType() {
     return this._contentType;
   }
@@ -476,7 +161,7 @@ export class TypeStructure extends Type {
       for (let fieldName of sortedKeys(fieldTypes)) {
         fieldStrings.push(
           fieldName + ' <- ' + fieldTypes[fieldName].toString()
-        )
+        );
       }
       let qualifiedConstructor = this._typeName + ':' + constructorName;
       if (fieldStrings.length === 0) {
@@ -507,6 +192,13 @@ export class TypeStructure extends Type {
  * If the types are joinable, return their join.
  * If the types are not joinable, return null.
  */
+
+/* Forward definition of mutually recursive functions (for ESLint) */
+let joinTupleTypes;
+let joinListTypes;
+let joinStructureTypes;
+let joinFields;
+
 export function joinTypes(type1, type2) {
   if (type1 === null || type2 === null) {
     return null;
@@ -530,7 +222,7 @@ export function joinTypes(type1, type2) {
   }
 }
 
-function joinTupleTypes(type1, type2) {
+joinTupleTypes = function (type1, type2) {
   if (type1.componentTypes.length !== type2.componentTypes.length) {
     /* Tuples are of different length */
     return null;
@@ -547,16 +239,16 @@ function joinTupleTypes(type1, type2) {
     joinedComponents.push(tj);
   }
   return new TypeTuple(joinedComponents);
-}
+};
 
-function joinListTypes(type1, type2) {
+joinListTypes = function (type1, type2) {
   let joinedContent = joinTypes(type1.contentType, type2.contentType);
   if (joinedContent === null) {
     /* Cannot join the contents of the lists */
     return null;
   }
   return new TypeList(joinedContent);
-}
+};
 
 /*
  * The join of two structures is quite like a least common multiple.
@@ -568,7 +260,7 @@ function joinListTypes(type1, type2) {
  * - For all common constructors, we must recursively join
  *   the types of their respective fields.
  */
-function joinStructureTypes(type1, type2) {
+joinStructureTypes = function (type1, type2) {
   if (type1.typeName !== type2.typeName) {
     return null;
   }
@@ -599,11 +291,11 @@ function joinStructureTypes(type1, type2) {
       joinedCases[constructorName] = joinedFields;
     }
   }
-  
-  return new TypeStructure(type1.typeName, joinedCases);
-}
 
-function joinFields(fields1, fields2) {
+  return new TypeStructure(type1.typeName, joinedCases);
+};
+
+joinFields = function (fields1, fields2) {
   /* Ensure that they have the same set of fields */
   function checkIncluded(fieldsA, fieldsB) {
     for (let fieldName in fieldsA) {
@@ -630,5 +322,320 @@ function joinFields(fields1, fields2) {
     joinedFields[fieldName] = joinedTypes;
   }
   return joinedFields;
+};
+
+/* Helper function */
+
+function sortedKeys(dictionary) {
+  let keys = [];
+  for (let key in dictionary) {
+    keys.push(key);
+  }
+  return keys.sort();
+}
+
+/* Value tags */
+export const V_Integer = Symbol.for('V_Integer');
+export const V_String = Symbol.for('V_String');
+export const V_Tuple = Symbol.for('V_Tuple');
+export const V_List = Symbol.for('V_List');
+export const V_Structure = Symbol.for('V_Structure');
+
+export class Value {
+  constructor(tag) {
+    this._tag = tag;
+  }
+
+  get tag() {
+    return this._tag;
+  }
+
+  type() {
+    return new Type('?', []);
+  }
+}
+
+export class ValueInteger extends Value {
+  constructor(number) {
+    super(V_Integer);
+    if (typeof number === 'number') {
+      this._number = number.toString();
+    } else if (typeof number === 'string') {
+      this._number = number;
+    } else {
+      throw Error(
+        'Integer value must be constructed with an integer or a string'
+      );
+    }
+  }
+
+  toString() {
+    return this._number;
+  }
+
+  get number() {
+    return this._number;
+  }
+
+  type() {
+    return new TypeInteger();
+  }
+
+  add(other) {
+    let a = Integer(this._number);
+    let b = Integer(other._number);
+    return new ValueInteger(a.add(b).toString());
+  }
+
+  sub(other) {
+    let a = Integer(this._number);
+    let b = Integer(other._number);
+    return new ValueInteger(a.subtract(b).toString());
+  }
+
+  le(other) {
+    let a = Integer(this._number);
+    let b = Integer(other._number);
+    return a.leq(b);
+  }
+
+  lt(other) {
+    let a = Integer(this._number);
+    let b = Integer(other._number);
+    return a.lt(b);
+  }
+
+  ge(other) {
+    let a = Integer(this._number);
+    let b = Integer(other._number);
+    return a.geq(b);
+  }
+
+  gt(other) {
+    let a = Integer(this._number);
+    let b = Integer(other._number);
+    return a.gt(b);
+  }
+
+  negate() {
+    let a = Integer(this._number);
+    return new ValueInteger(a.negate().toString());
+  }
+
+  asNumber() {
+    return parseInt(this._number, 10);
+  }
+}
+
+export class ValueString extends Value {
+  constructor(string) {
+    super(V_String);
+    this._string = string;
+  }
+
+  toString() {
+    let res = ['"'];
+    for (let i = 0; i < this._string.length; i++) {
+      let chr = this._string[i];
+      switch (chr) {
+        case '"':
+          res.push('\\');
+          res.push('"');
+          break;
+        case '\\':
+          res.push('\\');
+          res.push('\\');
+          break;
+        case '\u0007':
+          res.push('\\');
+          res.push('a');
+          break;
+        case '\b':
+          res.push('\\');
+          res.push('b');
+          break;
+        case '\f':
+          res.push('\\');
+          res.push('f');
+          break;
+        case '\n':
+          res.push('\\');
+          res.push('n');
+          break;
+        case '\r':
+          res.push('\\');
+          res.push('r');
+          break;
+        case '\t':
+          res.push('\\');
+          res.push('t');
+          break;
+        case '\v':
+          res.push('\\');
+          res.push('v');
+          break;
+        default:
+          res.push(chr);
+          break;
+      }
+    }
+    res.push('"');
+    return res.join('');
+  }
+
+  get string() {
+    return this._string;
+  }
+
+  type() {
+    return new TypeString();
+  }
+}
+
+export class ValueTuple extends Value {
+  constructor(components) {
+    super(V_Tuple);
+    this._components = components;
+    this._type = this._inferType();
+  }
+
+  toString() {
+    let res = [];
+    for (let component of this._components) {
+      res.push(component.toString());
+    }
+    return '(' + res.join(', ') + ')';
+  }
+
+  get components() {
+    return this._components;
+  }
+
+  size() {
+    return this._components.length;
+  }
+
+  type() {
+    return this._type;
+  }
+
+  _inferType() {
+    let componentTypes = [];
+    for (let component of this._components) {
+      componentTypes.push(component.type());
+    }
+    return new TypeTuple(componentTypes);
+  }
+}
+
+export class ValueList extends Value {
+  constructor(elements) {
+    super(V_List);
+    this._elements = elements;
+    this._type = this._inferType();
+  }
+
+  toString() {
+    let res = [];
+    for (let element of this._elements) {
+      res.push(element.toString());
+    }
+    return '[' + res.join(', ') + ']';
+  }
+
+  get elements() {
+    return this._elements;
+  }
+
+  type() {
+    return this._type;
+  }
+
+  length() {
+    return this._elements.length;
+  }
+
+  _inferType() {
+    let contentType = new TypeAny();
+    for (let element of this._elements) {
+      contentType = joinTypes(contentType, element.type());
+    }
+    return new TypeList(contentType);
+  }
+}
+
+/* An instance of ValueStructure represents a 'structure' i.e.  a value
+ * inhabiting an 'inductive' datatype.
+ *
+ * This includes built-in enumerations (e.g. booleans), the "event" type
+ * received by an interactive program, and user-defined records and variants.
+ *
+ * The second parameter "fields" should be a dictionary mapping field names to
+ * values
+ */
+export class ValueStructure extends Value {
+
+  constructor(typeName, constructorName, fields) {
+    super(V_Structure);
+    this._typeName = typeName;
+    this._constructorName = constructorName;
+    this._fields = fields;
+  }
+
+  toString() {
+    let res = [];
+    let fieldNames = this.fieldNames();
+    if (fieldNames.length === 0) {
+      return this._constructorName;
+    }
+    for (let fieldName of fieldNames) {
+      res.push(fieldName + ' <- ' + this.fields[fieldName].toString());
+    }
+    return this._constructorName + '(' + res.join(', ') + ')';
+  }
+
+  get typeName() {
+    return this._typeName;
+  }
+
+  get constructorName() {
+    return this._constructorName;
+  }
+
+  get fields() {
+    return this._fields;
+  }
+
+  fieldNames() {
+    return sortedKeys(this._fields);
+  }
+
+  _clone() {
+    let newFields = {};
+    for (let fieldName in this._fields) {
+      newFields[fieldName] = this._fields[fieldName];
+    }
+    return new ValueStructure(
+      this._typeName, this._constructorName, newFields
+    );
+  }
+
+  updateFields(fields) {
+    let newStructure = this._clone();
+    for (let fieldName in fields) {
+      newStructure.fields[fieldName] = fields[fieldName];
+    }
+    return newStructure;
+  }
+
+  type() {
+    let fieldTypes = {};
+    for (let fieldName in this._fields) {
+      fieldTypes[fieldName] = this._fields[fieldName].type();
+    }
+    let cases = {};
+    cases[this._constructorName] = fieldTypes;
+    return new TypeStructure(this._typeName, cases);
+  }
 }
 

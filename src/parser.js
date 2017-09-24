@@ -1,4 +1,4 @@
-import { GbsWarning, GbsSyntaxError } from './exceptions';
+import { GbsSyntaxError } from './exceptions';
 import { Lexer } from './lexer';
 import { i18n } from './i18n';
 import {
@@ -16,7 +16,6 @@ import {
   T_MINUS, T_TIMES, T_POW
 } from './token';
 import {
-  ASTNode,
   /* Main */
   ASTMain,
   /* Definitions */
@@ -320,7 +319,7 @@ export class Parser {
   }
 
   _parseFieldNames() {
-    let fieldNames = []
+    let fieldNames = [];
     while (this._currentToken.tag === T_FIELD) {
       this._match(T_FIELD);
       fieldNames.push(this._parseLowerid());
@@ -393,7 +392,7 @@ export class Parser {
         this._match(T_SEMICOLON);
       }
     }
-    let endPos = this._currentToken.startPos; 
+    let endPos = this._currentToken.startPos;
     this._match(T_RBRACE);
     let result = new ASTStmtBlock(statements);
     result.startPos = startPos;
@@ -427,7 +426,7 @@ export class Parser {
     if (this._currentToken.tag === T_ELSE) {
       this._match(T_ELSE);
       elseBlock = this._parseStmtBlock();
-      endPos = elseBlock.endPos
+      endPos = elseBlock.endPos;
     } else {
       elseBlock = null;
       endPos = thenBlock.endPos;
@@ -447,7 +446,7 @@ export class Parser {
     let body = this._parseStmtBlock();
     let result = new ASTStmtRepeat(times, body);
     result.startPos = startPos;
-    result.endPos = body.endPos
+    result.endPos = body.endPos;
     return result;
   }
 
@@ -460,7 +459,7 @@ export class Parser {
     let body = this._parseStmtBlock();
     let result = new ASTStmtForeach(index, range, body);
     result.startPos = startPos;
-    result.endPos = body.endPos
+    result.endPos = body.endPos;
     return result;
   }
 
@@ -473,7 +472,7 @@ export class Parser {
     let body = this._parseStmtBlock();
     let result = new ASTStmtWhile(condition, body);
     result.startPos = startPos;
-    result.endPos = body.endPos
+    result.endPos = body.endPos;
     return result;
   }
 
@@ -500,9 +499,9 @@ export class Parser {
     let startPos = this._currentToken.startPos;
     this._match(T_LET);
     let result;
-    if (this._currentToken.tag == T_LOWERID) {
+    if (this._currentToken.tag === T_LOWERID) {
       result = this._parseStmtAssignVariable();
-    } else if (this._currentToken.tag == T_LPAREN) {
+    } else if (this._currentToken.tag === T_LPAREN) {
       result = this._parseStmtAssignTuple();
     } else {
       throw new GbsSyntaxError(
@@ -653,7 +652,7 @@ export class Parser {
   _parseExpression() {
     return this._parseExprOperator(0);
   }
-  
+
   /* Read an expression of the given level.
    *
    * If the list OPERATORS of precedence levels has N elements, then:
@@ -710,7 +709,7 @@ export class Parser {
       return left;
     }
   }
-  
+
   _parseExprOperatorInfixL(level) {
     let result = this._parseExprOperator(level + 1);
     while (OPERATORS[level].isOperator(this._currentToken)) {
@@ -791,7 +790,7 @@ export class Parser {
     let id = this._parseLowerid();
     let result;
     let endPos;
-    if (this._currentToken.tag == T_LPAREN) {
+    if (this._currentToken.tag === T_LPAREN) {
       this._match(T_LPAREN);
       let args = this._parseExpressionSeq(T_RPAREN);
       result = new ASTExprFunctionCall(id, args);
@@ -1065,7 +1064,7 @@ export class Parser {
     this._match(T_RPAREN);
 
     let result;
-    if (expressionList.length == 1) {
+    if (expressionList.length === 1) {
       result = expressionList[0];
     } else {
       result = new ASTExprTuple(expressionList);
@@ -1078,7 +1077,7 @@ export class Parser {
   /** SwitchBranch **/
 
   _parseSwitchBranches() {
-    let branches = []
+    let branches = [];
     while (this._currentToken.tag !== T_RBRACE) {
       branches.push(this._parseSwitchBranch());
     }

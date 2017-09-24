@@ -59,7 +59,6 @@ import {
   IReadTupleComponent,
   IReadStructureField,
   IReadStructureFieldPop,
-  IAdd,
   IDup,
   IPop,
   IPrimitiveCall,
@@ -619,7 +618,7 @@ export class Compiler {
               );
     }
   }
-  
+
   _compilePatternCheckWildcard(pattern, targetLabel) {
     this._produce(
       pattern.startPos, pattern.endPos,
@@ -681,9 +680,11 @@ export class Compiler {
       case N_PatternWildcard:
         return; /* No parameters to bind */
       case N_PatternStructure:
-        return this._compilePatternBindStructure(pattern);
+        this._compilePatternBindStructure(pattern);
+        return;
       case N_PatternTuple:
-        return this._compilePatternBindTuple(pattern);
+        this._compilePatternBindTuple(pattern);
+        return;
       case N_PatternTimeout:
         return; /* No parameters to bind */
       default:
@@ -697,7 +698,7 @@ export class Compiler {
   _compilePatternBindStructure(pattern) {
     /* Allow pattern with no parameters, even if the constructor
      * has parameters */
-    if (pattern.parameters.length == 0) {
+    if (pattern.parameters.length === 0) {
       return;
     }
 
@@ -730,9 +731,11 @@ export class Compiler {
       case N_PatternWildcard:
         return; /* No parameters to unbind */
       case N_PatternStructure:
-        return this._compilePatternUnbindStructure(pattern);
+        this._compilePatternUnbindStructure(pattern);
+        return;
       case N_PatternTuple:
-        return this._compilePatternUnbindTuple(pattern);
+        this._compilePatternUnbindTuple(pattern);
+        return;
       case N_PatternTimeout:
         return; /* No parameters to unbind */
       default:

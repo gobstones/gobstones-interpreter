@@ -1,6 +1,7 @@
+/* eslint-disable */
+
 /* This file is taken and slightly adapted from
- * http://peterolson.github.io/BigInteger.js/BigInteger.js
- */
+ * http://peterolson.github.io/BigInteger.js/BigInteger.js */
 
 var BASE = 1e7,
     LOG_BASE = 7,

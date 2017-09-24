@@ -31,6 +31,12 @@ function tok(tag, value) {
 export class Runner {
 
   constructor() {
+    /* These are set after running a program once */
+    this._ast = null;
+    this._symtable = null;
+    this._code = null;
+    this._vm = null;
+    this._result = null;
   }
 
   /* Parse, compile, and run a program in the default global state
@@ -43,18 +49,47 @@ export class Runner {
   }
 
   /* Parse, compile, and run a program in the given initial state.
-   * Return a mapping
+   * Return an object of the form
    *   {'result': r, 'state': s]
    * where r is the result of the program and s is the final state.
    * A GbsInterpreterException may be thrown.
    */
   runState(input, initialState) {
-    let ast = new Parser(input).parse();
-    let symtable = new Linter(this._newSymtableWithPrimitives()).lint(ast);
-    let code = new Compiler(symtable).compile(ast);
-    let vm = new VirtualMachine(code, initialState);
-    let result = vm.run();
-    return {'result': result, 'state': vm.globalState()};
+    this.parse(input);
+    this.lint();
+    this.compile();
+    this.execute(initialState);
+    return {'result': this._result, 'state': this._vm.globalState()};
+  }
+
+  parse(input) {
+    this._ast = new Parser(input).parse();
+  }
+
+  lint() {
+    let initialSymtable = this._newSymtableWithPrimitives();
+    this._symtable = new Linter(initialSymtable).lint(this._ast);
+  }
+
+  compile() {
+    this._code = new Compiler(this._symtable).compile(this._ast);
+  }
+
+  execute(initialState) {
+    this._vm = new VirtualMachine(this._code, initialState);
+    this._result = this._vm.run();
+  }
+
+  get abstractSyntaxTree() {
+    return this._ast;
+  }
+
+  get symbolTable() {
+    return this._symtable;
+  }
+
+  get virtualMachineCode() {
+    return this._code;
   }
 
   /* Create a new symbol table, including definitions for all the primitive
@@ -63,7 +98,7 @@ export class Runner {
     let symtable = new SymbolTable();
 
     let primitives = new RuntimePrimitives();
-    
+
     /* Populate symbol table with primitive types */
     for (let type of primitives.types()) {
       symtable.defType(this._astDefType(primitives, type));
@@ -87,7 +122,7 @@ export class Runner {
     for (let constructor of primitives.typeConstructors(type)) {
       constructorDeclarations.push(
         this._astConstructorDeclaration(primitives, type, constructor)
-      )
+      );
     }
     return new ASTDefType(tok(T_UPPERID, type), constructorDeclarations);
   }
@@ -96,26 +131,26 @@ export class Runner {
     let nargs = primitives.getOperation(procedureName).nargs();
     let parameters = [];
     for (let i = 1; i <= nargs; i++) {
-      parameters.push(tok(T_LOWERID, 'x' + i.toString()))
+      parameters.push(tok(T_LOWERID, 'x' + i.toString()));
     }
     return new ASTDefProcedure(
         tok(T_LOWERID, procedureName),
         parameters,
         new ASTStmtBlock([])
-    )
+    );
   }
 
   _astDefFunction(primitives, functionName) {
     let nargs = primitives.getOperation(functionName).nargs();
     let parameters = [];
     for (let i = 1; i <= nargs; i++) {
-      parameters.push(tok(T_LOWERID, 'x' + i.toString()))
+      parameters.push(tok(T_LOWERID, 'x' + i.toString()));
     }
     return new ASTDefFunction(
         tok(T_LOWERID, functionName),
         parameters,
         new ASTStmtBlock([])
-    )
+    );
   }
 
   _astConstructorDeclaration(primitives, type, constructor) {

@@ -1,15 +1,11 @@
 import { i18n } from './i18n';
 import {
   ValueInteger,
-  ValueString,
-  ValueTuple,
   ValueList,
   ValueStructure,
   TypeAny,
   TypeInteger,
   TypeString,
-  TypeTuple,
-  TypeList,
   TypeStructure,
   joinTypes,
 } from './value';
@@ -83,22 +79,6 @@ function colorPrev(colorName) {
   return fromEnum(COLOR_ENUM, (toEnum(COLOR_ENUM, colorName) + 3) % 4);
 }
 
-function enumIndex(value) {
-  if (isBool(value)) {
-    if (boolFromValue(value)) {
-      return 1;
-    } else {
-      return 0;
-    }
-  } else if (isColor(value)) {
-    return toEnum(COLOR_ENUM, colorFromValue(value));
-  } else if (isDir(value)) {
-    return toEnum(DIR_ENUM, dirFromValue(value));
-  } else {
-    throw Error('Value should be Bool, Color or Dir.');
-  }
-}
-
 /*
  * An instance of RuntimeState represents the current global state of
  * a program. In the case of Gobstones, it is a Gobstones board.
@@ -114,11 +94,18 @@ export class RuntimeState {
      * The board is represented as a list of columns, so that board[x] is the
      * x-th column and board[x][y] is the cell at (x, y).
      *
-     * By default, create an empty 1x1 board.
+     * By default, create an empty 9x9 board.
      */
-    this._width = 1;
-    this._height = 1;
-    this._board = [[this._emptyCell()]];
+    this._width = 9;
+    this._height = 9;
+    this._board = [];
+    for (let x = 0; x < this._width; x++) {
+      let column = [];
+      for (let y = 0; y < this._height; y++) {
+        column.push(this._emptyCell());
+      }
+      this._board.push(column);
+    }
     this._head = {'x': 0, 'y': 0};
   }
 
@@ -140,6 +127,45 @@ export class RuntimeState {
     }
     newState._head = {'x': this._head.x, 'y': this._head.y};
     return newState;
+  }
+
+  /* Dump the state to a Jboard data structure */
+  dump() {
+    let jboard = {};
+    jboard.width = this._width;
+    jboard.height = this._height;
+    jboard.head = [this._head.x, this._head.y];
+    jboard.board = [];
+    for (let x = 0; x < this._width; x++) {
+      let column = [];
+      for (let y = 0; y < this._width; y++) {
+        let cell = {};
+        cell['a'] = this._board[x][y][i18n('CONS:Color0')].asNumber();
+        cell['n'] = this._board[x][y][i18n('CONS:Color1')].asNumber();
+        cell['r'] = this._board[x][y][i18n('CONS:Color2')].asNumber();
+        cell['v'] = this._board[x][y][i18n('CONS:Color3')].asNumber();
+        column.push(cell);
+      }
+      jboard.board.push(column);
+    }
+    return jboard;
+  }
+
+  /* Load the state from a Jboard data structure */
+  load(jboard) {
+    this._width = jboard.width;
+    this._height = jboard.height;
+    this._head.x = jboard.head[0];
+    this._head.y = jboard.head[1];
+    for (let x = 0; x < this._width; x++) {
+      for (let y = 0; y < this._width; y++) {
+        let cell = jboard.board[x][y];
+        this._board[x][y][i18n('CONS:Color0')] = new ValueInteger(cell['a']);
+        this._board[x][y][i18n('CONS:Color1')] = new ValueInteger(cell['n']);
+        this._board[x][y][i18n('CONS:Color2')] = new ValueInteger(cell['r']);
+        this._board[x][y][i18n('CONS:Color3')] = new ValueInteger(cell['v']);
+      }
+    }
   }
 
   /* Gobstones specific methods */
@@ -204,7 +230,7 @@ let typeString = new TypeString();
 
 let typeBool = new TypeStructure(i18n('TYPE:Bool'), {});
 
-let typeListAny = new TypeList(new TypeAny());
+// let typeListAny = new TypeList(new TypeAny()); // Not used yet
 
 function valueFromBool(bool) {
   if (bool) {
@@ -221,7 +247,7 @@ function boolFromValue(value) {
 let typeColor = new TypeStructure(i18n('TYPE:Color'), {});
 
 function valueFromColor(colorName) {
-  return new ValueStructure(i18n('TYPE:Color'), colorName, {})
+  return new ValueStructure(i18n('TYPE:Color'), colorName, {});
 }
 
 function colorFromValue(value) {
@@ -231,7 +257,7 @@ function colorFromValue(value) {
 let typeDir = new TypeStructure(i18n('TYPE:Dir'), {});
 
 function valueFromDir(dirName) {
-  return new ValueStructure(i18n('TYPE:Dir'), dirName, {})
+  return new ValueStructure(i18n('TYPE:Dir'), dirName, {});
 }
 
 function dirFromValue(value) {
@@ -261,6 +287,24 @@ function isDir(x) {
 
 export const TYPES_WITH_OPPOSITE = [typeInteger, typeBool, typeDir];
 export const TYPES_WITH_ORDER = [typeInteger, typeBool, typeColor, typeDir];
+
+/* Generic operations */
+
+function enumIndex(value) {
+  if (isBool(value)) {
+    if (boolFromValue(value)) {
+      return 1;
+    } else {
+      return 0;
+    }
+  } else if (isColor(value)) {
+    return toEnum(COLOR_ENUM, colorFromValue(value));
+  } else if (isDir(value)) {
+    return toEnum(DIR_ENUM, dirFromValue(value));
+  } else {
+    throw Error('Value should be Bool, Color or Dir.');
+  }
+}
 
 function genericLE(a, b) {
   if (isInteger(a)) {
@@ -338,7 +382,6 @@ function genericPrev(a) {
   }
 }
 
-
 /* Validate that the type of 'x' is among the given list of types */
 function validateTypeAmong(startPos, endPos, x, types) {
   /* Succeed if the type of x is in the list 'types' */
@@ -396,7 +439,7 @@ export class RuntimePrimitives {
     this._primitiveProcedures = {};
     this._primitiveFunctions = {};
 
-    /*** Primitive types ***/
+    /* --Primitive types-- */
 
     /* Booleans */
     this._primitiveTypes[i18n('TYPE:Bool')] = {};
@@ -416,7 +459,7 @@ export class RuntimePrimitives {
       this._primitiveTypes[i18n('TYPE:Dir')][dirName] = [];
     }
 
-    /*** Primitive procedures ***/
+    /* --Primitive procedures-- */
 
     this._primitiveProcedures[i18n('PRIM:PutStone')] =
       new PrimitiveOperation(
@@ -440,7 +483,7 @@ export class RuntimePrimitives {
         }
       );
 
-    /*** Primitive functions ***/
+    /* --Primitive functions-- */
 
     this._primitiveFunctions['_makeRange'] =
       new PrimitiveOperation(
@@ -535,7 +578,6 @@ export class RuntimePrimitives {
       new PrimitiveOperation(
         [typeAny, typeAny], noValidation,
         function (globalState, list, index) {
-          let i = index.asNumber();
           return list.elements[index.asNumber()];
         }
       );

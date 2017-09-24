@@ -40,7 +40,7 @@ import {
 } from './value';
 import { GbsRuntimeError } from './exceptions';
 import { i18n } from './i18n';
-import { RuntimeState, RuntimePrimitives } from './runtime';
+import { RuntimePrimitives } from './runtime';
 
 /* Conditions that may occur on runtime */
 const RT_ExitProgram = Symbol.for('RT_ExitProgram');
@@ -49,7 +49,7 @@ const RT_ExitProgram = Symbol.for('RT_ExitProgram');
  * during runtime (e.g. program termination or timeout). */
 class RuntimeCondition extends Error {
   constructor(tag) {
-    super(Symbol.keyFor(tag))
+    super(Symbol.keyFor(tag));
     this.tag = tag;
   }
 }
@@ -157,7 +157,7 @@ export class VirtualMachine {
      * become empty.
      */
     this._callStack = [];
-    this._callStack.push(new Frame(0/*instructionPointer*/));
+    this._callStack.push(new Frame(0 /* instructionPointer */));
 
     /* The global state is the data that is available globally.
      *
@@ -282,7 +282,7 @@ export class VirtualMachine {
       default:
         throw Error(
                 'VM: opcode '
-              + Symbol.keyFor(instruction.opcode)
+              + Symbol.keyFor(this._currentInstruction().opcode)
               + ' not implemented'
               );
     }
@@ -697,7 +697,7 @@ export class VirtualMachine {
 
   _stepSaveState() {
     let frame = this._currentFrame();
-    this._globalStateStack.push(this.globalState().clone())
+    this._globalStateStack.push(this.globalState().clone());
     frame.instructionPointer++;
   }
 

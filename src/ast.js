@@ -41,6 +41,39 @@ export const N_FieldBinding = Symbol.for('N_FieldBinding');
 /* ConstructorDeclaration */
 export const N_ConstructorDeclaration = Symbol.for('N_ConstructorDeclaration');
 
+/* Helper functions for the ASTNode toString method */
+
+function indent(string) {
+  let lines = [];
+  for (let line of string.split('\n')) {
+    lines.push('  ' + line);
+  }
+  return lines.join('\n');
+}
+
+let showASTs; /* Forward declaration (for ESLint) */
+
+function showAST(node) {
+  if (node === null) {
+    return 'null';
+  } else if (node instanceof Array) {
+    return '[\n' + showASTs(node).join(',\n') + '\n]';
+  } else if (node instanceof Token) {
+    return node.toString();
+  } else {
+    let tag = Symbol.keyFor(node.tag).substring(2);
+    return tag + '(\n' + showASTs(node.children).join(',\n') + '\n)';
+  }
+}
+
+showASTs = function (nodes) {
+  let res = [];
+  for (let node of nodes) {
+    res.push(indent(showAST(node)));
+  }
+  return res;
+};
+
 /* An instance of ASTNode represents a node of the abstract syntax tree.
  * - tag should be a node tag symbol.
  * - children should be (recursively) a possibly empty array of ASTNode's.
@@ -59,6 +92,10 @@ export class ASTNode {
     if (!(children instanceof Array)) {
       throw Error('The children of an ASTNode should be an array.');
     }
+  }
+
+  toString() {
+    return showAST(this);
   }
 
   get tag() {
@@ -534,5 +571,4 @@ export class ASTConstructorDeclaration extends ASTNode {
     return this._children[1];
   }
 }
-
 

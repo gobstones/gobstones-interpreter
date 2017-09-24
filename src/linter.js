@@ -142,7 +142,7 @@ export class Linter {
 
   _lintDefProgram(definition) {
     /* Lint body */
-    this._lintStmtBlock(definition.body, true/*allowReturn*/);
+    this._lintStmtBlock(definition.body, true /* allowReturn */);
 
     /* Remove all local names */
     this._symtable.exitScope();
@@ -150,9 +150,11 @@ export class Linter {
 
   _lintDefInteractiveProgram(definition) {
     /* Lint all branches */
-    this._lintSwitchBranches(definition.branches, true/*isInteractiveProgram*/);
+    this._lintSwitchBranches(
+      definition.branches, true /* isInteractiveProgram */
+    );
   }
-  
+
   _lintDefProcedure(definition) {
     /* Check that it does not have a return statement */
     if (isBlockWithReturn(definition.body)) {
@@ -168,7 +170,7 @@ export class Linter {
     }
 
     /* Lint body */
-    this._lintStmtBlock(definition.body, false/*!allowReturn*/);
+    this._lintStmtBlock(definition.body, false /* !allowReturn */);
 
     /* Remove all local names */
     this._symtable.exitScope();
@@ -189,7 +191,7 @@ export class Linter {
     }
 
     /* Lint body */
-    this._lintStmtBlock(definition.body, true/*allowReturn*/);
+    this._lintStmtBlock(definition.body, true /* allowReturn */);
 
     /* Remove all local names */
     this._symtable.exitScope();
@@ -205,7 +207,7 @@ export class Linter {
     switch (statement.tag) {
       case N_StmtBlock:
         /* Do not allow return in nested blocks */
-        return this._lintStmtBlock(statement, false/*!allowReturn*/);
+        return this._lintStmtBlock(statement, false /* !allowReturn */);
       case N_StmtReturn:
         return this._lintStmtReturn(statement);
       case N_StmtIf:
@@ -278,9 +280,11 @@ export class Linter {
 
   _lintStmtSwitch(statement) {
     this._lintExpression(statement.subject);
-    this._lintSwitchBranches(statement.branches, false/*isInteractiveProgram*/);
+    this._lintSwitchBranches(
+      statement.branches, false /* !isInteractiveProgram */
+    );
   }
-  
+
   _lintSwitchBranches(branches, isInteractiveProgram) {
     /* Check that each pattern is well-formed */
     for (let branch of branches) {
@@ -304,7 +308,7 @@ export class Linter {
 
   /* Check that there is at most one wildcard at the end */
   _switchBranchesCheckWildcard(branches) {
-    let i = 0; 
+    let i = 0;
     const n = branches.length;
     for (let branch of branches) {
       if (branch.pattern.tag === N_PatternWildcard && i !== n - 1) {
@@ -408,11 +412,11 @@ export class Linter {
 
   /* Recursively lint the body of each branch. Locally bind parameters. */
   _lintSwitchBranchBody(branch) {
-    for (var parameter of branch.pattern.parameters) {
+    for (let parameter of branch.pattern.parameters) {
       this._symtable.addNewLocalName(parameter, LocalParameter);
     }
     this._lintStatement(branch.body);
-    for (var parameter of branch.pattern.parameters) {
+    for (let parameter of branch.pattern.parameters) {
       this._symtable.removeLocalName(parameter);
     }
   }
@@ -431,7 +435,7 @@ export class Linter {
       default:
         throw Error(
                 'Linter: pattern "'
-              + Symbol.keyFor(branch.tag)
+              + Symbol.keyFor(pattern.tag)
               + '" not implemented.'
               );
     }
@@ -513,7 +517,7 @@ export class Linter {
       default:
         throw Error(
                 'Linter: pattern "'
-               + Symbol.keyFor(branch.tag)
+               + Symbol.keyFor(pattern.tag)
                + '" not implemented.'
               );
     }
@@ -692,7 +696,7 @@ export class Linter {
     let declaredFields = expression.fieldNames();
     let constructorFields = this._symtable.constructorFields(constructorName);
     for (let fieldName of declaredFields) {
-      if (constructorFields.indexOf(fieldName) == -1) {
+      if (constructorFields.indexOf(fieldName) === -1) {
         throw new GbsSyntaxError(
           expression.startPos, expression.endPos,
           i18n('errmsg:structure-construction-invalid-field')(
@@ -710,7 +714,7 @@ export class Linter {
     let declaredFields = expression.fieldNames();
     let constructorFields = this._symtable.constructorFields(constructorName);
     for (let fieldName of constructorFields) {
-      if (declaredFields.indexOf(fieldName) == -1) {
+      if (declaredFields.indexOf(fieldName) === -1) {
         throw new GbsSyntaxError(
           expression.startPos, expression.endPos,
           i18n('errmsg:structure-construction-missing-field')(

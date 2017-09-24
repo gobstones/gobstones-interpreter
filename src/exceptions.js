@@ -4,6 +4,7 @@ export class GbsInterpreterException extends Error {
   /* Note: position should typically be an instance of SourceReader */
   constructor(startPos, endPos, message) {
     super(message, startPos.filename, startPos.row);
+    this.isGobstonesException = true;
     this.startPos = startPos;
     this.endPos = endPos;
     this.message = message;
