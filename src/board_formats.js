@@ -5,7 +5,7 @@
  *   fromJboard : jboard -> string
  *   toJboard   : string -> jboard
  *
- * where "string" is a string in the given format, and 
+ * where "string" is a string in the given format, and
  * "jboard" is the internal format produced/consumed by
  * the RuntimeState class in src/runtime.js.
  *
@@ -135,7 +135,7 @@ function fileExtension(filename) {
 function fileBoardFormat(filename) {
   let extension = fileExtension(filename);
   for (let fmt of BOARD_FORMAT_LIST) {
-    if (extension == fmt.extension) {
+    if (extension === fmt.extension) {
       return fmt;
     }
   }

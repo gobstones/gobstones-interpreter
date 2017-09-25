@@ -199,13 +199,13 @@ export class RuntimeState {
   }
 
   goToEdge(dirName) {
-    if (dirName == i18n('CONS:Dir0')) {
+    if (dirName === i18n('CONS:Dir0')) {
       this._head.y = this._height - 1;
-    } else if (dirName == i18n('CONS:Dir1')) {
+    } else if (dirName === i18n('CONS:Dir1')) {
       this._head.x = this._width - 1;
-    } else if (dirName == i18n('CONS:Dir2')) {
+    } else if (dirName === i18n('CONS:Dir2')) {
       this._head.y = 0;
-    } else if (dirName == i18n('CONS:Dir3')) {
+    } else if (dirName === i18n('CONS:Dir3')) {
       this._head.x = 0;
     } else {
       throw Error('Invalid direction: ' + dirName);
@@ -229,13 +229,13 @@ export class RuntimeState {
 
   _deltaForDirection(dirName) {
     let delta;
-    if (dirName == i18n('CONS:Dir0')) {
+    if (dirName === i18n('CONS:Dir0')) {
       delta = [0, 1];
-    } else if (dirName == i18n('CONS:Dir1')) {
+    } else if (dirName === i18n('CONS:Dir1')) {
       delta = [1, 0];
-    } else if (dirName == i18n('CONS:Dir2')) {
+    } else if (dirName === i18n('CONS:Dir2')) {
       delta = [0, -1];
-    } else if (dirName == i18n('CONS:Dir3')) {
+    } else if (dirName === i18n('CONS:Dir3')) {
       delta = [-1, 0];
     } else {
       throw Error('Invalid direction: ' + dirName);
