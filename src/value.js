@@ -393,6 +393,12 @@ export class ValueInteger extends Value {
     return new ValueInteger(a.subtract(b).toString());
   }
 
+  mul(other) {
+    let a = Integer(this._number);
+    let b = Integer(other._number);
+    return new ValueInteger(a.multiply(b).toString());
+  }
+
   le(other) {
     let a = Integer(this._number);
     let b = Integer(other._number);

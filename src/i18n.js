@@ -519,6 +519,12 @@ const ES = {
   'PRIM:next': 'siguiente',
   'PRIM:prev': 'previo',
   'PRIM:opposite': 'opuesto',
+  'PRIM:minBool': 'minBool',
+  'PRIM:maxBool': 'maxBool',
+  'PRIM:minColor': 'minColor',
+  'PRIM:maxColor': 'maxColor',
+  'PRIM:minDir': 'minDir',
+  'PRIM:maxDir': 'maxDir',
 
   /* Helpers */
   '<alternative>':

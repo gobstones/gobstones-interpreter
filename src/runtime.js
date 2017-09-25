@@ -293,7 +293,7 @@ let typeString = new TypeString();
 
 let typeBool = new TypeStructure(i18n('TYPE:Bool'), {});
 
-// let typeListAny = new TypeList(new TypeAny()); // Not used yet
+/* let typeListAny = new TypeList(new TypeAny()); */ // Not used yet
 
 function valueFromBool(bool) {
   if (bool) {
@@ -330,6 +330,7 @@ function dirFromValue(value) {
 /* Argument validators */
 
 function noValidation(startPos, endPos, globalState, args) {
+  /* No validation */
 }
 
 function isInteger(x) {
@@ -769,6 +770,54 @@ export class RuntimePrimitives {
         }
       );
 
+    this._primitiveFunctions[i18n('PRIM:minBool')] =
+      new PrimitiveOperation(
+        [], noValidation,
+        function (globalState) {
+          return valueFromBool(false);
+        }
+      );
+
+    this._primitiveFunctions[i18n('PRIM:maxBool')] =
+      new PrimitiveOperation(
+        [], noValidation,
+        function (globalState) {
+          return valueFromBool(true);
+        }
+      );
+
+    this._primitiveFunctions[i18n('PRIM:minColor')] =
+      new PrimitiveOperation(
+        [], noValidation,
+        function (globalState) {
+          return valueFromColor(COLOR_ENUM[0]);
+        }
+      );
+
+    this._primitiveFunctions[i18n('PRIM:maxColor')] =
+      new PrimitiveOperation(
+        [], noValidation,
+        function (globalState) {
+          return valueFromColor(COLOR_ENUM[COLOR_ENUM.length - 1]);
+        }
+      );
+
+    this._primitiveFunctions[i18n('PRIM:minDir')] =
+      new PrimitiveOperation(
+        [], noValidation,
+        function (globalState) {
+          return valueFromDir(DIR_ENUM[0]);
+        }
+      );
+
+    this._primitiveFunctions[i18n('PRIM:maxDir')] =
+      new PrimitiveOperation(
+        [], noValidation,
+        function (globalState) {
+          return valueFromDir(DIR_ENUM[DIR_ENUM.length - 1]);
+        }
+      );
+
     this._primitiveFunctions['+'] =
       new PrimitiveOperation(
         [typeInteger, typeInteger], noValidation,
@@ -782,6 +831,14 @@ export class RuntimePrimitives {
         [typeInteger, typeInteger], noValidation,
         function (globalState, a, b) {
           return a.sub(b);
+        }
+      );
+
+    this._primitiveFunctions['*'] =
+      new PrimitiveOperation(
+        [typeInteger, typeInteger], noValidation,
+        function (globalState, a, b) {
+          return a.mul(b);
         }
       );
 

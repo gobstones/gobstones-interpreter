@@ -141,539 +141,628 @@ describe('Primitive functions, procedures and operators', () => {
       new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
     ]);
 
-  describe('Lesser or equal than (<=)', () => {
+  describe('Relational operators', () => {
 
-    it('Integer', () => {
-      let result = new Runner().run(compareInteger('<='));
-      expect(result).deep.equals(comparisonResultLE);
+    describe('Lesser or equal than (<=)', () => {
+
+      it('Integer', () => {
+        let result = new Runner().run(compareInteger('<='));
+        expect(result).deep.equals(comparisonResultLE);
+      });
+
+      it('Bool', () => {
+        let result = new Runner().run(compareBool('<='));
+        expect(result).deep.equals(comparisonResultLE);
+      });
+
+      it('Color', () => {
+        let result = new Runner().run(compareColor('<='));
+        expect(result).deep.equals(comparisonResultLE);
+      });
+
+      it('Dir', () => {
+        let result = new Runner().run(compareDir('<='));
+        expect(result).deep.equals(comparisonResultLE);
+      });
+
+      it('Fail for other types', () => {
+        let result = () => new Runner().run(compareFail('<='));
+        expect(result).throws(
+          i18n('errmsg:expected-value-of-some-type-but-got')(
+            TYPES_WITH_ORDER,
+            new TypeString()
+          )
+        );
+      });
+
+      it('Fail if types do not match', () => {
+        let result = () => new Runner().run(compareMismatch('<='));
+        expect(result).throws(
+          i18n('errmsg:expected-values-to-have-compatible-types')(
+            new TypeInteger(),
+            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True')).type()
+          )
+        );
+      });
+
     });
 
-    it('Bool', () => {
-      let result = new Runner().run(compareBool('<='));
-      expect(result).deep.equals(comparisonResultLE);
+    describe('Greater or equal than (>=)', () => {
+
+      it('Integer', () => {
+        let result = new Runner().run(compareInteger('>='));
+        expect(result).deep.equals(comparisonResultGE);
+      });
+
+      it('Bool', () => {
+        let result = new Runner().run(compareBool('>='));
+        expect(result).deep.equals(comparisonResultGE);
+      });
+
+      it('Color', () => {
+        let result = new Runner().run(compareColor('>='));
+        expect(result).deep.equals(comparisonResultGE);
+      });
+
+      it('Dir', () => {
+        let result = new Runner().run(compareDir('>='));
+        expect(result).deep.equals(comparisonResultGE);
+      });
+
+      it('Fail for other types', () => {
+        let result = () => new Runner().run(compareFail('>='));
+        expect(result).throws(
+          i18n('errmsg:expected-value-of-some-type-but-got')(
+            TYPES_WITH_ORDER,
+            new TypeString()
+          )
+        );
+      });
+
+      it('Fail if types do not match', () => {
+        let result = () => new Runner().run(compareMismatch('>='));
+        expect(result).throws(
+          i18n('errmsg:expected-values-to-have-compatible-types')(
+            new TypeInteger(),
+            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True')).type()
+          )
+        );
+      });
+
     });
 
-    it('Color', () => {
-      let result = new Runner().run(compareColor('<='));
-      expect(result).deep.equals(comparisonResultLE);
+    describe('Lesser than (<)', () => {
+
+      it('Integer', () => {
+        let result = new Runner().run(compareInteger('<'));
+        expect(result).deep.equals(comparisonResultLT);
+      });
+
+      it('Bool', () => {
+        let result = new Runner().run(compareBool('<'));
+        expect(result).deep.equals(comparisonResultLT);
+      });
+
+      it('Color', () => {
+        let result = new Runner().run(compareColor('<'));
+        expect(result).deep.equals(comparisonResultLT);
+      });
+
+      it('Dir', () => {
+        let result = new Runner().run(compareDir('<'));
+        expect(result).deep.equals(comparisonResultLT);
+      });
+
+      it('Fail for other types', () => {
+        let result = () => new Runner().run(compareFail('<'));
+        expect(result).throws(
+          i18n('errmsg:expected-value-of-some-type-but-got')(
+            TYPES_WITH_ORDER,
+            new TypeString()
+          )
+        );
+      });
+
+      it('Fail if types do not match', () => {
+        let result = () => new Runner().run(compareMismatch('<'));
+        expect(result).throws(
+          i18n('errmsg:expected-values-to-have-compatible-types')(
+            new TypeInteger(),
+            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True')).type()
+          )
+        );
+      });
+
     });
 
-    it('Dir', () => {
-      let result = new Runner().run(compareDir('<='));
-      expect(result).deep.equals(comparisonResultLE);
-    });
+    describe('Greater than (>)', () => {
 
-    it('Fail for other types', () => {
-      let result = () => new Runner().run(compareFail('<='));
-      expect(result).throws(
-        i18n('errmsg:expected-value-of-some-type-but-got')(
-          TYPES_WITH_ORDER,
-          new TypeString()
-        )
-      );
-    });
+      it('Integer', () => {
+        let result = new Runner().run(compareInteger('>'));
+        expect(result).deep.equals(comparisonResultGT);
+      });
 
-    it('Fail if types do not match', () => {
-      let result = () => new Runner().run(compareMismatch('<='));
-      expect(result).throws(
-        i18n('errmsg:expected-values-to-have-compatible-types')(
-          new TypeInteger(),
-          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True')).type()
-        )
-      );
+      it('Bool', () => {
+        let result = new Runner().run(compareBool('>'));
+        expect(result).deep.equals(comparisonResultGT);
+      });
+
+      it('Color', () => {
+        let result = new Runner().run(compareColor('>'));
+        expect(result).deep.equals(comparisonResultGT);
+      });
+
+      it('Dir', () => {
+        let result = new Runner().run(compareDir('>'));
+        expect(result).deep.equals(comparisonResultGT);
+      });
+
+      it('Fail for other types', () => {
+        let result = () => new Runner().run(compareFail('>'));
+        expect(result).throws(
+          i18n('errmsg:expected-value-of-some-type-but-got')(
+            TYPES_WITH_ORDER,
+            new TypeString()
+          )
+        );
+      });
+
+      it('Fail if types do not match', () => {
+        let result = () => new Runner().run(compareMismatch('>'));
+        expect(result).throws(
+          i18n('errmsg:expected-values-to-have-compatible-types')(
+            new TypeInteger(),
+            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True')).type()
+          )
+        );
+      });
+
     });
 
   });
 
-  describe('Greater or equal than (>=)', () => {
+  describe('Built-in polymorphic functions', () => {
 
-    it('Integer', () => {
-      let result = new Runner().run(compareInteger('>='));
-      expect(result).deep.equals(comparisonResultGE);
+    describe('Next', () => {
+
+      it('Integer', () => {
+        let result = new Runner().run([
+          'program {',
+          '  return (',
+          '    ' + i18n('PRIM:next') + '(-3),',
+          '    ' + i18n('PRIM:next') + '(-2),',
+          '    ' + i18n('PRIM:next') + '(-1),',
+          '    ' + i18n('PRIM:next') + '(0),',
+          '    ' + i18n('PRIM:next') + '(1),',
+          '    ' + i18n('PRIM:next') + '(2),',
+          '    ' + i18n('PRIM:next') + '(3)',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).deep.equals(
+          new ValueTuple([
+            new ValueInteger(-2),
+            new ValueInteger(-1),
+            new ValueInteger(0),
+            new ValueInteger(1),
+            new ValueInteger(2),
+            new ValueInteger(3),
+            new ValueInteger(4),
+          ])
+        );
+      });
+
+      it('Bool', () => {
+        let result = new Runner().run([
+          'program {',
+          '  return (',
+          '    ' + i18n('PRIM:next') + '(' + i18n('CONS:False') + '),',
+          '    ' + i18n('PRIM:next') + '(' + i18n('CONS:True') + ')',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).deep.equals(
+          new ValueTuple([
+            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          ])
+        );
+      });
+
+      it('Color', () => {
+        let result = new Runner().run([
+          'program {',
+          '  return (',
+          '    ' + i18n('PRIM:next') + '(' + i18n('CONS:Color0') + '),',
+          '    ' + i18n('PRIM:next') + '(' + i18n('CONS:Color1') + '),',
+          '    ' + i18n('PRIM:next') + '(' + i18n('CONS:Color2') + '),',
+          '    ' + i18n('PRIM:next') + '(' + i18n('CONS:Color3') + ')',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).deep.equals(
+          new ValueTuple([
+            new ValueStructure(i18n('TYPE:Color'), i18n('CONS:Color1'), {}),
+            new ValueStructure(i18n('TYPE:Color'), i18n('CONS:Color2'), {}),
+            new ValueStructure(i18n('TYPE:Color'), i18n('CONS:Color3'), {}),
+            new ValueStructure(i18n('TYPE:Color'), i18n('CONS:Color0'), {}),
+          ])
+        );
+      });
+
+      it('Dir', () => {
+        let result = new Runner().run([
+          'program {',
+          '  return (',
+          '    ' + i18n('PRIM:next') + '(' + i18n('CONS:Dir0') + '),',
+          '    ' + i18n('PRIM:next') + '(' + i18n('CONS:Dir1') + '),',
+          '    ' + i18n('PRIM:next') + '(' + i18n('CONS:Dir2') + '),',
+          '    ' + i18n('PRIM:next') + '(' + i18n('CONS:Dir3') + ')',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).deep.equals(
+          new ValueTuple([
+            new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir1'), {}),
+            new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir2'), {}),
+            new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir3'), {}),
+            new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir0'), {}),
+          ])
+        );
+      });
+
+      it('Fail for other types', () => {
+        let result = () => new Runner().run([
+          'program {',
+          '  return (' + i18n('PRIM:next') + '([]))',
+          '}',
+        ].join('\n'));
+        expect(result).throws(
+          i18n('errmsg:expected-value-of-some-type-but-got')(
+            TYPES_WITH_ORDER,
+            new TypeList(new TypeAny())
+          )
+        );
+      });
+
     });
 
-    it('Bool', () => {
-      let result = new Runner().run(compareBool('>='));
-      expect(result).deep.equals(comparisonResultGE);
+    describe('Prev', () => {
+
+      it('Integer', () => {
+        let result = new Runner().run([
+          'program {',
+          '  return (',
+          '    ' + i18n('PRIM:prev') + '(-3),',
+          '    ' + i18n('PRIM:prev') + '(-2),',
+          '    ' + i18n('PRIM:prev') + '(-1),',
+          '    ' + i18n('PRIM:prev') + '(0),',
+          '    ' + i18n('PRIM:prev') + '(1),',
+          '    ' + i18n('PRIM:prev') + '(2),',
+          '    ' + i18n('PRIM:prev') + '(3)',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).deep.equals(
+          new ValueTuple([
+            new ValueInteger(-4),
+            new ValueInteger(-3),
+            new ValueInteger(-2),
+            new ValueInteger(-1),
+            new ValueInteger(0),
+            new ValueInteger(1),
+            new ValueInteger(2),
+          ])
+        );
+      });
+
+      it('Bool', () => {
+        let result = new Runner().run([
+          'program {',
+          '  return (',
+          '    ' + i18n('PRIM:prev') + '(' + i18n('CONS:False') + '),',
+          '    ' + i18n('PRIM:prev') + '(' + i18n('CONS:True') + ')',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).deep.equals(
+          new ValueTuple([
+            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          ])
+        );
+      });
+
+      it('Color', () => {
+        let result = new Runner().run([
+          'program {',
+          '  return (',
+          '    ' + i18n('PRIM:prev') + '(' + i18n('CONS:Color0') + '),',
+          '    ' + i18n('PRIM:prev') + '(' + i18n('CONS:Color1') + '),',
+          '    ' + i18n('PRIM:prev') + '(' + i18n('CONS:Color2') + '),',
+          '    ' + i18n('PRIM:prev') + '(' + i18n('CONS:Color3') + ')',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).deep.equals(
+          new ValueTuple([
+            new ValueStructure(i18n('TYPE:Color'), i18n('CONS:Color3'), {}),
+            new ValueStructure(i18n('TYPE:Color'), i18n('CONS:Color0'), {}),
+            new ValueStructure(i18n('TYPE:Color'), i18n('CONS:Color1'), {}),
+            new ValueStructure(i18n('TYPE:Color'), i18n('CONS:Color2'), {}),
+          ])
+        );
+      });
+
+      it('Dir', () => {
+        let result = new Runner().run([
+          'program {',
+          '  return (',
+          '    ' + i18n('PRIM:prev') + '(' + i18n('CONS:Dir0') + '),',
+          '    ' + i18n('PRIM:prev') + '(' + i18n('CONS:Dir1') + '),',
+          '    ' + i18n('PRIM:prev') + '(' + i18n('CONS:Dir2') + '),',
+          '    ' + i18n('PRIM:prev') + '(' + i18n('CONS:Dir3') + ')',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).deep.equals(
+          new ValueTuple([
+            new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir3'), {}),
+            new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir0'), {}),
+            new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir1'), {}),
+            new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir2'), {}),
+          ])
+        );
+      });
+
+      it('Fail for other types', () => {
+        let result = () => new Runner().run([
+          'program {',
+          '  return (' + i18n('PRIM:prev') + '([]))',
+          '}',
+        ].join('\n'));
+        expect(result).throws(
+          i18n('errmsg:expected-value-of-some-type-but-got')(
+            TYPES_WITH_ORDER,
+            new TypeList(new TypeAny())
+          )
+        );
+      });
+
     });
 
-    it('Color', () => {
-      let result = new Runner().run(compareColor('>='));
-      expect(result).deep.equals(comparisonResultGE);
+    describe('Opposite', () => {
+
+      it('Integer', () => {
+        let result = new Runner().run([
+          'program {',
+          '  return (',
+          '    ' + i18n('PRIM:opposite') + '(-3),',
+          '    ' + i18n('PRIM:opposite') + '(-2),',
+          '    ' + i18n('PRIM:opposite') + '(-1),',
+          '    ' + i18n('PRIM:opposite') + '(0),',
+          '    ' + i18n('PRIM:opposite') + '(1),',
+          '    ' + i18n('PRIM:opposite') + '(2),',
+          '    ' + i18n('PRIM:opposite') + '(3)',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).deep.equals(
+          new ValueTuple([
+            new ValueInteger(3),
+            new ValueInteger(2),
+            new ValueInteger(1),
+            new ValueInteger(0),
+            new ValueInteger(-1),
+            new ValueInteger(-2),
+            new ValueInteger(-3),
+          ])
+        );
+      });
+
+      it('Bool', () => {
+        let result = new Runner().run([
+          'program {',
+          '  return (',
+          '    ' + i18n('PRIM:opposite') + '(' + i18n('CONS:False') + '),',
+          '    ' + i18n('PRIM:opposite') + '(' + i18n('CONS:True') + ')',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).deep.equals(
+          new ValueTuple([
+            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          ])
+        );
+      });
+
+      it('Dir', () => {
+        let result = new Runner().run([
+          'program {',
+          '  return (',
+          '    ' + i18n('PRIM:opposite') + '(' + i18n('CONS:Dir0') + '),',
+          '    ' + i18n('PRIM:opposite') + '(' + i18n('CONS:Dir1') + '),',
+          '    ' + i18n('PRIM:opposite') + '(' + i18n('CONS:Dir2') + '),',
+          '    ' + i18n('PRIM:opposite') + '(' + i18n('CONS:Dir3') + ')',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).deep.equals(
+          new ValueTuple([
+            new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir2'), {}),
+            new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir3'), {}),
+            new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir0'), {}),
+            new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir1'), {}),
+          ])
+        );
+      });
+
+      it('Fail for other types', () => {
+        let result = () => new Runner().run([
+          'program {',
+          '  return (',
+          '    ' + i18n('PRIM:opposite') + '(' + i18n('CONS:Color0') + ')',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).throws();
+      });
+
     });
 
-    it('Dir', () => {
-      let result = new Runner().run(compareDir('>='));
-      expect(result).deep.equals(comparisonResultGE);
-    });
+    describe('Unary minus', () => {
 
-    it('Fail for other types', () => {
-      let result = () => new Runner().run(compareFail('>='));
-      expect(result).throws(
-        i18n('errmsg:expected-value-of-some-type-but-got')(
-          TYPES_WITH_ORDER,
-          new TypeString()
-        )
-      );
-    });
+      it('Integer', () => {
+        let result = new Runner().run([
+          'program {',
+          '  a := -42',
+          '  b := 0',
+          '  c := 42',
+          '  return (-a, -b, -c)',
+          '}',
+        ].join('\n'));
+        expect(result).deep.equals(
+          new ValueTuple([
+            new ValueInteger(42),
+            new ValueInteger(0),
+            new ValueInteger(-42),
+          ])
+        );
+      });
 
-    it('Fail if types do not match', () => {
-      let result = () => new Runner().run(compareMismatch('>='));
-      expect(result).throws(
-        i18n('errmsg:expected-values-to-have-compatible-types')(
-          new TypeInteger(),
-          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True')).type()
-        )
-      );
+      it('Bool', () => {
+        let result = new Runner().run([
+          'program {',
+          '  a := ' + i18n('CONS:True'),
+          '  b := ' + i18n('CONS:False'),
+          '  return (-a, -b)',
+          '}',
+        ].join('\n'));
+        expect(result).deep.equals(
+          new ValueTuple([
+            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+          ])
+        );
+      });
+
+      it('Dir', () => {
+        let result = new Runner().run([
+          'program {',
+          '  a := ' + i18n('CONS:Dir0'),
+          '  b := ' + i18n('CONS:Dir1'),
+          '  c := ' + i18n('CONS:Dir2'),
+          '  d := ' + i18n('CONS:Dir3'),
+          '  return (-a, -b, -c, -d)',
+          '}',
+        ].join('\n'));
+        expect(result).deep.equals(
+          new ValueTuple([
+            new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir2'), {}),
+            new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir3'), {}),
+            new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir0'), {}),
+            new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir1'), {}),
+          ])
+        );
+      });
+
+      it('Fail for other types', () => {
+        let result = () => new Runner().run([
+          'program {',
+          '  return (-())',
+          '}',
+        ].join('\n'));
+        expect(result).throws(
+          i18n('errmsg:expected-value-of-some-type-but-got')(
+            TYPES_WITH_OPPOSITE,
+            new TypeTuple([])
+          )
+        );
+      });
+
     });
 
   });
 
-  describe('Lesser than (<)', () => {
+  describe('max/min Bool/Dir/Color', () => {
 
-    it('Integer', () => {
-      let result = new Runner().run(compareInteger('<'));
-      expect(result).deep.equals(comparisonResultLT);
-    });
-
-    it('Bool', () => {
-      let result = new Runner().run(compareBool('<'));
-      expect(result).deep.equals(comparisonResultLT);
-    });
-
-    it('Color', () => {
-      let result = new Runner().run(compareColor('<'));
-      expect(result).deep.equals(comparisonResultLT);
-    });
-
-    it('Dir', () => {
-      let result = new Runner().run(compareDir('<'));
-      expect(result).deep.equals(comparisonResultLT);
-    });
-
-    it('Fail for other types', () => {
-      let result = () => new Runner().run(compareFail('<'));
-      expect(result).throws(
-        i18n('errmsg:expected-value-of-some-type-but-got')(
-          TYPES_WITH_ORDER,
-          new TypeString()
-        )
-      );
-    });
-
-    it('Fail if types do not match', () => {
-      let result = () => new Runner().run(compareMismatch('<'));
-      expect(result).throws(
-        i18n('errmsg:expected-values-to-have-compatible-types')(
-          new TypeInteger(),
-          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True')).type()
-        )
-      );
-    });
-
-  });
-
-  describe('Greater than (>)', () => {
-
-    it('Integer', () => {
-      let result = new Runner().run(compareInteger('>'));
-      expect(result).deep.equals(comparisonResultGT);
-    });
-
-    it('Bool', () => {
-      let result = new Runner().run(compareBool('>'));
-      expect(result).deep.equals(comparisonResultGT);
-    });
-
-    it('Color', () => {
-      let result = new Runner().run(compareColor('>'));
-      expect(result).deep.equals(comparisonResultGT);
-    });
-
-    it('Dir', () => {
-      let result = new Runner().run(compareDir('>'));
-      expect(result).deep.equals(comparisonResultGT);
-    });
-
-    it('Fail for other types', () => {
-      let result = () => new Runner().run(compareFail('>'));
-      expect(result).throws(
-        i18n('errmsg:expected-value-of-some-type-but-got')(
-          TYPES_WITH_ORDER,
-          new TypeString()
-        )
-      );
-    });
-
-    it('Fail if types do not match', () => {
-      let result = () => new Runner().run(compareMismatch('>'));
-      expect(result).throws(
-        i18n('errmsg:expected-values-to-have-compatible-types')(
-          new TypeInteger(),
-          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True')).type()
-        )
-      );
-    });
-
-  });
-
-  describe('Next', () => {
-
-    it('Integer', () => {
+    it('max/min Bool/Dir/Color', () => {
       let result = new Runner().run([
         'program {',
         '  return (',
-        '    ' + i18n('PRIM:next') + '(-3),',
-        '    ' + i18n('PRIM:next') + '(-2),',
-        '    ' + i18n('PRIM:next') + '(-1),',
-        '    ' + i18n('PRIM:next') + '(0),',
-        '    ' + i18n('PRIM:next') + '(1),',
-        '    ' + i18n('PRIM:next') + '(2),',
-        '    ' + i18n('PRIM:next') + '(3)',
+        '    ' + i18n('PRIM:minBool') + '(),',
+        '    ' + i18n('PRIM:maxBool') + '(),',
+        '    ' + i18n('PRIM:minColor') + '(),',
+        '    ' + i18n('PRIM:maxColor') + '(),',
+        '    ' + i18n('PRIM:minDir') + '(),',
+        '    ' + i18n('PRIM:maxDir') + '()',
         '  )',
         '}',
       ].join('\n'));
       expect(result).deep.equals(
         new ValueTuple([
-          new ValueInteger(-2),
-          new ValueInteger(-1),
-          new ValueInteger(0),
-          new ValueInteger(1),
-          new ValueInteger(2),
-          new ValueInteger(3),
-          new ValueInteger(4),
-        ])
-      );
-    });
-
-    it('Bool', () => {
-      let result = new Runner().run([
-        'program {',
-        '  return (',
-        '    ' + i18n('PRIM:next') + '(' + i18n('CONS:False') + '),',
-        '    ' + i18n('PRIM:next') + '(' + i18n('CONS:True') + ')',
-        '  )',
-        '}',
-      ].join('\n'));
-      expect(result).deep.equals(
-        new ValueTuple([
-          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
           new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
-        ])
-      );
-    });
-
-    it('Color', () => {
-      let result = new Runner().run([
-        'program {',
-        '  return (',
-        '    ' + i18n('PRIM:next') + '(' + i18n('CONS:Color0') + '),',
-        '    ' + i18n('PRIM:next') + '(' + i18n('CONS:Color1') + '),',
-        '    ' + i18n('PRIM:next') + '(' + i18n('CONS:Color2') + '),',
-        '    ' + i18n('PRIM:next') + '(' + i18n('CONS:Color3') + ')',
-        '  )',
-        '}',
-      ].join('\n'));
-      expect(result).deep.equals(
-        new ValueTuple([
-          new ValueStructure(i18n('TYPE:Color'), i18n('CONS:Color1'), {}),
-          new ValueStructure(i18n('TYPE:Color'), i18n('CONS:Color2'), {}),
-          new ValueStructure(i18n('TYPE:Color'), i18n('CONS:Color3'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
           new ValueStructure(i18n('TYPE:Color'), i18n('CONS:Color0'), {}),
-        ])
-      );
-    });
-
-    it('Dir', () => {
-      let result = new Runner().run([
-        'program {',
-        '  return (',
-        '    ' + i18n('PRIM:next') + '(' + i18n('CONS:Dir0') + '),',
-        '    ' + i18n('PRIM:next') + '(' + i18n('CONS:Dir1') + '),',
-        '    ' + i18n('PRIM:next') + '(' + i18n('CONS:Dir2') + '),',
-        '    ' + i18n('PRIM:next') + '(' + i18n('CONS:Dir3') + ')',
-        '  )',
-        '}',
-      ].join('\n'));
-      expect(result).deep.equals(
-        new ValueTuple([
-          new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir1'), {}),
-          new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir2'), {}),
-          new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir3'), {}),
-          new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir0'), {}),
-        ])
-      );
-    });
-
-    it('Fail for other types', () => {
-      let result = () => new Runner().run([
-        'program {',
-        '  return (' + i18n('PRIM:next') + '([]))',
-        '}',
-      ].join('\n'));
-      expect(result).throws(
-        i18n('errmsg:expected-value-of-some-type-but-got')(
-          TYPES_WITH_ORDER,
-          new TypeList(new TypeAny())
-        )
-      );
-    });
-
-  });
-
-  describe('Prev', () => {
-
-    it('Integer', () => {
-      let result = new Runner().run([
-        'program {',
-        '  return (',
-        '    ' + i18n('PRIM:prev') + '(-3),',
-        '    ' + i18n('PRIM:prev') + '(-2),',
-        '    ' + i18n('PRIM:prev') + '(-1),',
-        '    ' + i18n('PRIM:prev') + '(0),',
-        '    ' + i18n('PRIM:prev') + '(1),',
-        '    ' + i18n('PRIM:prev') + '(2),',
-        '    ' + i18n('PRIM:prev') + '(3)',
-        '  )',
-        '}',
-      ].join('\n'));
-      expect(result).deep.equals(
-        new ValueTuple([
-          new ValueInteger(-4),
-          new ValueInteger(-3),
-          new ValueInteger(-2),
-          new ValueInteger(-1),
-          new ValueInteger(0),
-          new ValueInteger(1),
-          new ValueInteger(2),
-        ])
-      );
-    });
-
-    it('Bool', () => {
-      let result = new Runner().run([
-        'program {',
-        '  return (',
-        '    ' + i18n('PRIM:prev') + '(' + i18n('CONS:False') + '),',
-        '    ' + i18n('PRIM:prev') + '(' + i18n('CONS:True') + ')',
-        '  )',
-        '}',
-      ].join('\n'));
-      expect(result).deep.equals(
-        new ValueTuple([
-          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
-          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
-        ])
-      );
-    });
-
-    it('Color', () => {
-      let result = new Runner().run([
-        'program {',
-        '  return (',
-        '    ' + i18n('PRIM:prev') + '(' + i18n('CONS:Color0') + '),',
-        '    ' + i18n('PRIM:prev') + '(' + i18n('CONS:Color1') + '),',
-        '    ' + i18n('PRIM:prev') + '(' + i18n('CONS:Color2') + '),',
-        '    ' + i18n('PRIM:prev') + '(' + i18n('CONS:Color3') + ')',
-        '  )',
-        '}',
-      ].join('\n'));
-      expect(result).deep.equals(
-        new ValueTuple([
           new ValueStructure(i18n('TYPE:Color'), i18n('CONS:Color3'), {}),
-          new ValueStructure(i18n('TYPE:Color'), i18n('CONS:Color0'), {}),
-          new ValueStructure(i18n('TYPE:Color'), i18n('CONS:Color1'), {}),
-          new ValueStructure(i18n('TYPE:Color'), i18n('CONS:Color2'), {}),
-        ])
-      );
-    });
-
-    it('Dir', () => {
-      let result = new Runner().run([
-        'program {',
-        '  return (',
-        '    ' + i18n('PRIM:prev') + '(' + i18n('CONS:Dir0') + '),',
-        '    ' + i18n('PRIM:prev') + '(' + i18n('CONS:Dir1') + '),',
-        '    ' + i18n('PRIM:prev') + '(' + i18n('CONS:Dir2') + '),',
-        '    ' + i18n('PRIM:prev') + '(' + i18n('CONS:Dir3') + ')',
-        '  )',
-        '}',
-      ].join('\n'));
-      expect(result).deep.equals(
-        new ValueTuple([
-          new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir3'), {}),
           new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir0'), {}),
-          new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir1'), {}),
-          new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir2'), {}),
+          new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir3'), {}),
         ])
       );
     });
-
-    it('Fail for other types', () => {
-      let result = () => new Runner().run([
-        'program {',
-        '  return (' + i18n('PRIM:prev') + '([]))',
-        '}',
-      ].join('\n'));
-      expect(result).throws(
-        i18n('errmsg:expected-value-of-some-type-but-got')(
-          TYPES_WITH_ORDER,
-          new TypeList(new TypeAny())
-        )
-      );
-    });
-
   });
 
-  describe('Opposite', () => {
+  describe('Arithmetic operators', () => {
 
-    it('Integer', () => {
+    it('Addition', () => {
       let result = new Runner().run([
         'program {',
         '  return (',
-        '    ' + i18n('PRIM:opposite') + '(-3),',
-        '    ' + i18n('PRIM:opposite') + '(-2),',
-        '    ' + i18n('PRIM:opposite') + '(-1),',
-        '    ' + i18n('PRIM:opposite') + '(0),',
-        '    ' + i18n('PRIM:opposite') + '(1),',
-        '    ' + i18n('PRIM:opposite') + '(2),',
-        '    ' + i18n('PRIM:opposite') + '(3)',
+        '    839708017193356897142867 + 1248806268977307630139540',
         '  )',
         '}',
       ].join('\n'));
       expect(result).deep.equals(
-        new ValueTuple([
-          new ValueInteger(3),
-          new ValueInteger(2),
-          new ValueInteger(1),
-          new ValueInteger(0),
-          new ValueInteger(-1),
-          new ValueInteger(-2),
-          new ValueInteger(-3),
-        ])
+        new ValueInteger('2088514286170664527282407')
       );
     });
 
-    it('Bool', () => {
-      let result = new Runner().run([
-        'program {',
-        '  return (',
-        '    ' + i18n('PRIM:opposite') + '(' + i18n('CONS:False') + '),',
-        '    ' + i18n('PRIM:opposite') + '(' + i18n('CONS:True') + ')',
-        '  )',
-        '}',
-      ].join('\n'));
-      expect(result).deep.equals(
-        new ValueTuple([
-          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
-          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
-        ])
-      );
-    });
-
-    it('Dir', () => {
-      let result = new Runner().run([
-        'program {',
-        '  return (',
-        '    ' + i18n('PRIM:opposite') + '(' + i18n('CONS:Dir0') + '),',
-        '    ' + i18n('PRIM:opposite') + '(' + i18n('CONS:Dir1') + '),',
-        '    ' + i18n('PRIM:opposite') + '(' + i18n('CONS:Dir2') + '),',
-        '    ' + i18n('PRIM:opposite') + '(' + i18n('CONS:Dir3') + ')',
-        '  )',
-        '}',
-      ].join('\n'));
-      expect(result).deep.equals(
-        new ValueTuple([
-          new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir2'), {}),
-          new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir3'), {}),
-          new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir0'), {}),
-          new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir1'), {}),
-        ])
-      );
-    });
-
-    it('Fail for other types', () => {
+    it('Addition: check types of arguments', () => {
       let result = () => new Runner().run([
         'program {',
-        '  return (',
-        '    ' + i18n('PRIM:opposite') + '(' + i18n('CONS:Color0') + ')',
-        '  )',
+        '  return (1 + "")',
         '}',
       ].join('\n'));
       expect(result).throws();
     });
 
-  });
-
-  describe('Unary minus', () => {
-
-    it('Integer', () => {
+    it('Subtraction', () => {
       let result = new Runner().run([
         'program {',
-        '  a := -42',
-        '  b := 0',
-        '  c := 42',
-        '  return (-a, -b, -c)',
+        '  return (',
+        '    839708017193356897142867 - 1248806268977307630139540',
+        '  )',
         '}',
       ].join('\n'));
       expect(result).deep.equals(
-        new ValueTuple([
-          new ValueInteger(42),
-          new ValueInteger(0),
-          new ValueInteger(-42),
-        ])
+        new ValueInteger('409098251783950732996673').negate()
       );
     });
 
-    it('Bool', () => {
+    it('Multiplication', () => {
       let result = new Runner().run([
         'program {',
-        '  a := ' + i18n('CONS:True'),
-        '  b := ' + i18n('CONS:False'),
-        '  return (-a, -b)',
+        '  return (',
+        '    839708017193356897142867 * 1248806268977307630139540',
+        '  )',
         '}',
       ].join('\n'));
       expect(result).deep.equals(
-        new ValueTuple([
-          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
-          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
-        ])
+        new ValueInteger('1048632635981568913405455338700366140602525661180')
       );
     });
 
-    it('Dir', () => {
-      let result = new Runner().run([
-        'program {',
-        '  a := ' + i18n('CONS:Dir0'),
-        '  b := ' + i18n('CONS:Dir1'),
-        '  c := ' + i18n('CONS:Dir2'),
-        '  d := ' + i18n('CONS:Dir3'),
-        '  return (-a, -b, -c, -d)',
-        '}',
-      ].join('\n'));
-      expect(result).deep.equals(
-        new ValueTuple([
-          new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir2'), {}),
-          new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir3'), {}),
-          new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir0'), {}),
-          new ValueStructure(i18n('TYPE:Dir'), i18n('CONS:Dir1'), {}),
-        ])
-      );
-    });
-
-    it('Fail for other types', () => {
-      let result = () => new Runner().run([
-        'program {',
-        '  return (-())',
-        '}',
-      ].join('\n'));
-      expect(result).throws(
-        i18n('errmsg:expected-value-of-some-type-but-got')(
-          TYPES_WITH_OPPOSITE,
-          new TypeTuple([])
-        )
-      );
-    });
 
   });
 
