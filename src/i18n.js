@@ -472,6 +472,19 @@ const ES = {
   'errmsg:switch-does-not-match':
     'El valor analizado no coincide con ninguna de las ramas del switch.',
 
+  /* Board operations */
+  'errmsg:cannot-move-to':
+    function (dirName) {
+      return 'No se puede mover hacia la dirección ' + dirName +
+             ': cae afuera del tablero.';
+    },
+
+  'errmsg:cannot-remove-stone':
+    function (dirName) {
+      return 'No se puede sacar una bolita de color ' + dirName +
+             ': no hay bolitas de ese color.';
+    },
+
   /* Runtime */
   'CONS:TIMEOUT': 'TIMEOUT',
 
@@ -496,9 +509,16 @@ const ES = {
   'CONS:Dir3': 'Oeste',
 
   'PRIM:PutStone': 'Poner',
+  'PRIM:RemoveStone': 'Sacar',
+  'PRIM:Move': 'Mover',
+  'PRIM:GoToEdge': 'IrAlBorde',
+  'PRIM:EmptyBoardContents': 'VaciarTablero',
   'PRIM:numStones': 'nroBolitas',
+  'PRIM:anyStones': 'hayBolitas',
+  'PRIM:canMove': 'puedeMover',
   'PRIM:next': 'siguiente',
   'PRIM:prev': 'previo',
+  'PRIM:opposite': 'opuesto',
 
   /* Helpers */
   '<alternative>':

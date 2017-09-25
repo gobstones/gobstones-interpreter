@@ -685,7 +685,9 @@ export class VirtualMachine {
     }
 
     /* Validate the arguments using the primitive-specific validator */
-    primitive.validateArguments(instruction.startPos, instruction.endPos, args);
+    primitive.validateArguments(
+      instruction.startPos, instruction.endPos, this.globalState(), args
+    );
 
     /* Proceed to call the primitive operation */
     let result = primitive.call(this.globalState(), args); /* mutates 'args' */

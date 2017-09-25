@@ -92,6 +92,14 @@ export class Runner {
     return this._code;
   }
 
+  get result() {
+    return this._result;
+  }
+
+  get globalState() {
+    return this._vm.globalState();
+  }
+
   /* Create a new symbol table, including definitions for all the primitive
    * types and operations (which come from RuntimePrimitives) */
   _newSymtableWithPrimitives() {

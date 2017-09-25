@@ -176,8 +176,71 @@ export class RuntimeState {
     this._board[this._head.x][this._head.y][colorName] = n;
   }
 
+  removeStone(colorName) {
+    let n = this._board[this._head.x][this._head.y][colorName];
+    if (n.le(new ValueInteger(0))) {
+      throw Error('Cannot remove stone.');
+    }
+    n = n.sub(new ValueInteger(1));
+    this._board[this._head.x][this._head.y][colorName] = n;
+  }
+
   numStones(colorName) {
     return this._board[this._head.x][this._head.y][colorName];
+  }
+
+  move(dirName) {
+    if (!this.canMove(dirName)) {
+      throw Error('Cannot move.');
+    }
+    let delta = this._deltaForDirection(dirName);
+    this._head.x += delta[0];
+    this._head.y += delta[1];
+  }
+
+  goToEdge(dirName) {
+    if (dirName == i18n('CONS:Dir0')) {
+      this._head.y = this._height - 1;
+    } else if (dirName == i18n('CONS:Dir1')) {
+      this._head.x = this._width - 1;
+    } else if (dirName == i18n('CONS:Dir2')) {
+      this._head.y = 0;
+    } else if (dirName == i18n('CONS:Dir3')) {
+      this._head.x = 0;
+    } else {
+      throw Error('Invalid direction: ' + dirName);
+    }
+  }
+
+  emptyBoardContents() {
+    for (let x = 0; x < this._width; x++) {
+      for (let y = 0; y < this._height; y++) {
+        this._board[x][y] = this._emptyCell();
+      }
+    }
+  }
+
+  canMove(dirName) {
+    let delta = this._deltaForDirection(dirName);
+    let x = this._head.x + delta[0];
+    let y = this._head.y + delta[1];
+    return 0 <= x && x < this._width && 0 <= y && y < this._height;
+  }
+
+  _deltaForDirection(dirName) {
+    let delta;
+    if (dirName == i18n('CONS:Dir0')) {
+      delta = [0, 1];
+    } else if (dirName == i18n('CONS:Dir1')) {
+      delta = [1, 0];
+    } else if (dirName == i18n('CONS:Dir2')) {
+      delta = [0, -1];
+    } else if (dirName == i18n('CONS:Dir3')) {
+      delta = [-1, 0];
+    } else {
+      throw Error('Invalid direction: ' + dirName);
+    }
+    return delta;
   }
 
   _emptyCell() {
@@ -214,8 +277,8 @@ class PrimitiveOperation {
    * positions, and a list of arguments.
    * It should throw a GbsRuntimeError if the arguments are invalid.
    */
-  validateArguments(startPos, endPos, args) {
-    this._argumentValidator(startPos, endPos, args);
+  validateArguments(startPos, endPos, globalState, args) {
+    this._argumentValidator(startPos, endPos, globalState, args);
   }
 
 }
@@ -266,7 +329,7 @@ function dirFromValue(value) {
 
 /* Argument validators */
 
-function noValidation(startPos, endPos, args) {
+function noValidation(startPos, endPos, globalState, args) {
 }
 
 function isInteger(x) {
@@ -360,7 +423,7 @@ function genericNext(a) {
   } else if (isDir(a)) {
     return valueFromDir(dirNext(dirFromValue(a)));
   } else {
-    throw Error('genericNext: unknown value.');
+    throw Error('genericNext: value has no next.');
   }
 }
 
@@ -378,10 +441,21 @@ function genericPrev(a) {
   } else if (isDir(a)) {
     return valueFromDir(dirPrev(dirFromValue(a)));
   } else {
-    throw Error('genericNext: unknown value.');
+    throw Error('genericPrev: value has no prev.');
   }
 }
 
+function genericOpposite(a) {
+  if (isInteger(a)) {
+    return a.negate();
+  } else if (isBool(a)) {
+    return valueFromBool(!boolFromValue(a));
+  } else if (isDir(a)) {
+    return valueFromDir(dirOpposite(dirFromValue(a)));
+  } else {
+    throw Error('genericOpposite: value has no opposite.');
+  }
+}
 /* Validate that the type of 'x' is among the given list of types */
 function validateTypeAmong(startPos, endPos, x, types) {
   /* Succeed if the type of x is in the list 'types' */
@@ -470,11 +544,63 @@ export class RuntimePrimitives {
         }
       );
 
+    this._primitiveProcedures[i18n('PRIM:RemoveStone')] =
+      new PrimitiveOperation(
+        [typeColor],
+        function (startPos, endPos, globalState, args) {
+          let colorName = colorFromValue(args[0]);
+          if (globalState.numStones(colorName).le(new ValueInteger(0))) {
+            throw new GbsRuntimeError(startPos, endPos,
+                        i18n('errmsg:cannot-remove-stone')(colorName)
+                      );
+          }
+        },
+        function (globalState, color) {
+          globalState.removeStone(colorFromValue(color));
+          return null;
+        }
+      );
+
+    this._primitiveProcedures[i18n('PRIM:Move')] =
+      new PrimitiveOperation(
+        [typeDir],
+        function (startPos, endPos, globalState, args) {
+          let dirName = dirFromValue(args[0]);
+          if (!globalState.canMove(dirName)) {
+            throw new GbsRuntimeError(startPos, endPos,
+                        i18n('errmsg:cannot-move-to')(dirName)
+                      );
+          }
+        },
+        function (globalState, dir) {
+          globalState.move(dirFromValue(dir));
+          return null;
+        }
+      );
+
+    this._primitiveProcedures[i18n('PRIM:GoToEdge')] =
+      new PrimitiveOperation(
+        [typeDir], noValidation,
+        function (globalState, dir) {
+          globalState.goToEdge(dirFromValue(dir));
+          return null;
+        }
+      );
+
+    this._primitiveProcedures[i18n('PRIM:EmptyBoardContents')] =
+      new PrimitiveOperation(
+        [], noValidation,
+        function (globalState, dir) {
+          globalState.emptyBoardContents();
+          return null;
+        }
+      );
+
     this._primitiveProcedures['_FAIL'] =
       /* Procedure that always fails */
       new PrimitiveOperation(
         [typeString],
-        function (startPos, endPos, args) {
+        function (startPos, endPos, globalState, args) {
           throw new GbsRuntimeError(startPos, endPos, args[0].string);
         },
         function (globalState, errMsg) {
@@ -488,7 +614,7 @@ export class RuntimePrimitives {
     this._primitiveFunctions['_makeRange'] =
       new PrimitiveOperation(
         [typeAny, typeAny],
-        function (startPos, endPos, args) {
+        function (startPos, endPos, globalState, args) {
           let first = args[0];
           let last = args[1];
           validateCompatibleTypes(startPos, endPos, first, last);
@@ -543,7 +669,7 @@ export class RuntimePrimitives {
     this._primitiveFunctions['_makeRangeWithSecond'] =
       new PrimitiveOperation(
         [typeAny, typeAny, typeAny],
-        function (startPos, endPos, args) {
+        function (startPos, endPos, globalState, args) {
           let first = args[0];
           let last = args[1];
           let second = args[2];
@@ -590,10 +716,27 @@ export class RuntimePrimitives {
         }
       );
 
+    this._primitiveFunctions[i18n('PRIM:anyStones')] =
+      new PrimitiveOperation(
+        [typeColor], noValidation,
+        function (globalState, color) {
+          let num = globalState.numStones(colorFromValue(color));
+          return valueFromBool(num.gt(new ValueInteger(0)));
+        }
+      );
+
+    this._primitiveFunctions[i18n('PRIM:canMove')] =
+      new PrimitiveOperation(
+        [typeDir], noValidation,
+        function (globalState, dir) {
+          return valueFromBool(globalState.canMove(dirFromValue(dir)));
+        }
+      );
+
     this._primitiveFunctions[i18n('PRIM:next')] =
       new PrimitiveOperation(
         [typeAny],
-        function (startPos, endPos, args) {
+        function (startPos, endPos, globalState, args) {
           let value = args[0];
           validateTypeAmong(startPos, endPos, value, TYPES_WITH_ORDER);
         },
@@ -605,12 +748,24 @@ export class RuntimePrimitives {
     this._primitiveFunctions[i18n('PRIM:prev')] =
       new PrimitiveOperation(
         [typeAny],
-        function (startPos, endPos, args) {
+        function (startPos, endPos, globalState, args) {
           let value = args[0];
           validateTypeAmong(startPos, endPos, value, TYPES_WITH_ORDER);
         },
         function (globalState, value) {
           return genericPrev(value);
+        }
+      );
+
+    this._primitiveFunctions[i18n('PRIM:opposite')] =
+      new PrimitiveOperation(
+        [typeAny],
+        function (startPos, endPos, globalState, args) {
+          let value = args[0];
+          validateTypeAmong(startPos, endPos, value, TYPES_WITH_ORDER);
+        },
+        function (globalState, value) {
+          return genericOpposite(value);
         }
       );
 
@@ -633,27 +788,19 @@ export class RuntimePrimitives {
     this._primitiveFunctions['-(unary)'] =
       new PrimitiveOperation(
         [typeAny],
-        function (startPos, endPos, args) {
+        function (startPos, endPos, globalState, args) {
           let a = args[0];
           validateTypeAmong(startPos, endPos, a, TYPES_WITH_OPPOSITE);
         },
         function (globalState, a) {
-          if (isInteger(a)) {
-            return a.negate();
-          } else if (isBool(a)) {
-            return valueFromBool(!boolFromValue(a));
-          } else if (isDir(a)) {
-            return valueFromDir(dirOpposite(dirFromValue(a)));
-          } else {
-            throw Error('Value has no opposite.');
-          }
+          return genericOpposite(a);
         }
       );
 
     this._primitiveFunctions['<='] =
       new PrimitiveOperation(
         [typeAny, typeAny],
-        function (startPos, endPos, args) {
+        function (startPos, endPos, globalState, args) {
           let a = args[0];
           let b = args[1];
           validateCompatibleTypes(startPos, endPos, a, b);
@@ -668,7 +815,7 @@ export class RuntimePrimitives {
     this._primitiveFunctions['>='] =
       new PrimitiveOperation(
         [typeAny, typeAny],
-        function (startPos, endPos, args) {
+        function (startPos, endPos, globalState, args) {
           let a = args[0];
           let b = args[1];
           validateCompatibleTypes(startPos, endPos, a, b);
@@ -683,7 +830,7 @@ export class RuntimePrimitives {
     this._primitiveFunctions['<'] =
       new PrimitiveOperation(
         [typeAny, typeAny],
-        function (startPos, endPos, args) {
+        function (startPos, endPos, globalState, args) {
           let a = args[0];
           let b = args[1];
           validateCompatibleTypes(startPos, endPos, a, b);
@@ -698,7 +845,7 @@ export class RuntimePrimitives {
     this._primitiveFunctions['>'] =
       new PrimitiveOperation(
         [typeAny, typeAny],
-        function (startPos, endPos, args) {
+        function (startPos, endPos, globalState, args) {
           let a = args[0];
           let b = args[1];
           validateCompatibleTypes(startPos, endPos, a, b);
