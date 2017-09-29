@@ -82,5 +82,21 @@
   ["function", "maxDir", [],
     "",
     "Denota la máxima dirección."
+  ],
+  ["function", "primero", ["lista"],
+    "La lista no puede ser vacía.",
+    "Denota la cabeza de la lista, es decir, su primer elemento."
+  ],
+  ["function", "resto", ["lista"],
+    "La lista no puede ser vacía.",
+    "Denota la cola de la lista, es decir, la lista que consta de todos los elementos excepto el primero."
+  ],
+  ["function", "comienzo", ["lista"],
+    "La lista no puede ser vacía.",
+    "Denota el comienzo de la lista, es decir, la lista que consta de todos los elementos excepto el último."
+  ],
+  ["function", "ultimo", ["lista"],
+    "La lista no puede ser vacía.",
+    "Denota el último elemento de la lista."
   ]
 ]

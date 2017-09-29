@@ -143,6 +143,294 @@ describe('Primitive functions, procedures and operators', () => {
 
   describe('Relational operators', () => {
 
+    describe('Equality (==)', () => {
+
+      it('Integer', () => {
+        let result = new Runner().run([
+          'program {',
+          '  return (' +
+          '    0 == (0),',
+          '    0 == 1,',
+          '    0 == -1,',
+          '    1 == 0,',
+          '    1 == 1,',
+          '    1 == -1,',
+          '    -1 == 0,',
+          '    -1 == 1,',
+          '    -1 == -1,',
+          '    -0 == -0,',
+          '    1000000000000000000000 - 1 == 999999999999999999999,',
+          '    1000000000000000000000 == 999999999999999999999',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).deep.equals(new ValueTuple([
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+        ]));
+      });
+
+      it('String', () => {
+        let result = new Runner().run([
+          'program {',
+          '  return (' +
+          '    "" == "",',
+          '    "" == "foo",',
+          '    "" == "bar",',
+          '    "foo" == "",',
+          '    "foo" == "foo",',
+          '    "foo" == "bar",',
+          '    "bar" == "",',
+          '    "bar" == "foo",',
+          '    "bar" == "bar",',
+          '    "\\a" == "\\a"',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).deep.equals(new ValueTuple([
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+        ]));
+      });
+
+      it('String', () => {
+        let result = new Runner().run([
+          'program {',
+          '  return (' +
+          '    "" == "",',
+          '    "" == "foo",',
+          '    "" == "bar",',
+          '    "foo" == "",',
+          '    "foo" == "foo",',
+          '    "foo" == "bar",',
+          '    "bar" == "",',
+          '    "bar" == "foo",',
+          '    "bar" == "bar",',
+          '    "\\a" == "\\a"',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).deep.equals(new ValueTuple([
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+        ]));
+      });
+
+      it('Tuple', () => {
+        let result = new Runner().run([
+          'program {',
+          '  return (' +
+          '    () == (),',
+          '    (1,2) == (1,2),',
+          '    (1,2) == (2,1),',
+          '    (1,2,3) == (1,2,3),',
+          '    (1,2,3) == (2,2,3),',
+          '    (1,2,3) == (1,3,4),',
+          '    (1,2,3) == (1,2,4),',
+          '    (1,2,"foo") == (1,2,"foo"),',
+          '    (1,2,"foo") == (1,2,"bar")',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).deep.equals(new ValueTuple([
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+        ]));
+      });
+
+      it('List', () => {
+        let result = new Runner().run([
+          'program {',
+          '  return (' +
+          '    [] == [],',
+          '    [] == [1],',
+          '    [] == [1,2,3],',
+          '    [] == [1,3,2],',
+          '    [1] == [],',
+          '    [1] == [1],',
+          '    [1] == [1,2,3],',
+          '    [1] == [1,3,2],',
+          '    [1,2,3] == [],',
+          '    [1,2,3] == [1],',
+          '    [1,2,3] == [1,2,3],',
+          '    [1,2,3] == [1,3,2],',
+          '    [1,3,2] == [],',
+          '    [1,3,2] == [1],',
+          '    [1,3,2] == [1,2,3],',
+          '    [1,3,2] == [1,3,2]',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).deep.equals(new ValueTuple([
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+        ]));
+      });
+
+      it('Structure', () => {
+        let result = new Runner().run([
+          'type A is variant {',
+          '  case B {',
+          '    field a',
+          '    field b',
+          '  }',
+          '  case C {',
+          '    field a',
+          '    field b',
+          '  }',
+          '  case D {',
+          '  }',
+          '}',
+          'program {',
+          '  return (',
+          '    D == D,',
+          '    D == D(),',
+          '    B(a <- 1, b <- 2) == B(a <- 1, b <- 2),',
+          '    B(a <- 1, b <- 2) == B(b <- 2, a <- 1),',
+          '    B(a <- 1, b <- 2) == B(a <- 1, b <- 3),',
+          '    B(a <- 1, b <- 2) == B(a <- 2, b <- 1),',
+          '    B(a <- 1, b <- 2) == C(a <- 1, b <- 2),',
+          '    B(a <- 1, b <- 2) == D',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).deep.equals(new ValueTuple([
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+        ]));
+      });
+
+      it('Fail if types do not match', () => {
+        let result = () => new Runner().run([
+          'type A is record {',
+          '}',
+          'type B is record {',
+          '}',
+          'program {',
+          '  return (A == B)',
+          '}',
+        ].join('\n'));
+        expect(result).throws(
+          i18n('errmsg:expected-values-to-have-compatible-types')(
+            new ValueStructure('A', 'A', {}).type(),
+            new ValueStructure('B', 'B', {}).type(),
+          )
+        );
+      });
+
+    });
+
+    describe('Disequality (/=)', () => {
+
+      it('Disequality for values', () => {
+        let result = new Runner().run([
+          'type A is record {',
+          '  field a',
+          '}',
+          'program {',
+          '  return (',
+          '    0 /= 0,',
+          '    0 /= 1,',
+          '    "foo" /= "foo",',
+          '    "foo" /= "bar",',
+          '    () /= (),',
+          '    (1,2,3) /= (1,3,2),',
+          '    [1,2,3] /= [1,2,3],',
+          '    [1,2,3] /= [],',
+          '    A(a <- 1) /= A(a <- 1),',
+          '    A(a <- 1) /= A(a <- 2)',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).deep.equals(
+          new ValueTuple([
+            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+          ])
+        );
+      });
+
+      it('Fail if types do not match', () => {
+        let result = () => new Runner().run([
+          'program {',
+          '  return (() /= (1,2,3))',
+          '}',
+        ].join('\n'));
+        expect(result).throws(
+          i18n('errmsg:expected-values-to-have-compatible-types')(
+            new TypeTuple([]),
+            new TypeTuple([
+              new TypeInteger(),
+              new TypeInteger(),
+              new TypeInteger(),
+            ]),
+          )
+        );
+      });
+
+    });
+
     describe('Lesser or equal than (<=)', () => {
 
       it('Integer', () => {
@@ -180,7 +468,7 @@ describe('Primitive functions, procedures and operators', () => {
         expect(result).throws(
           i18n('errmsg:expected-values-to-have-compatible-types')(
             new TypeInteger(),
-            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True')).type()
+            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}).type()
           )
         );
       });
@@ -224,7 +512,7 @@ describe('Primitive functions, procedures and operators', () => {
         expect(result).throws(
           i18n('errmsg:expected-values-to-have-compatible-types')(
             new TypeInteger(),
-            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True')).type()
+            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}).type()
           )
         );
       });
@@ -268,7 +556,7 @@ describe('Primitive functions, procedures and operators', () => {
         expect(result).throws(
           i18n('errmsg:expected-values-to-have-compatible-types')(
             new TypeInteger(),
-            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True')).type()
+            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}).type()
           )
         );
       });
@@ -312,7 +600,7 @@ describe('Primitive functions, procedures and operators', () => {
         expect(result).throws(
           i18n('errmsg:expected-values-to-have-compatible-types')(
             new TypeInteger(),
-            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True')).type()
+            new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}).type()
           )
         );
       });
@@ -719,13 +1007,29 @@ describe('Primitive functions, procedures and operators', () => {
       let result = new Runner().run([
         'program {',
         '  return (',
+        '    0 + 0,',
+        '    0 + 1,',
+        '    0 + 2,',
+        '    1 + 1,',
+        '    3 + 2,',
+        '    2 + 3,',
+        '    1 + -3,',
+        '    -3 + -1,',
         '    839708017193356897142867 + 1248806268977307630139540',
         '  )',
         '}',
       ].join('\n'));
-      expect(result).deep.equals(
+      expect(result).deep.equals(new ValueTuple([
+        new ValueInteger('0'),
+        new ValueInteger('1'),
+        new ValueInteger('2'),
+        new ValueInteger('2'),
+        new ValueInteger('5'),
+        new ValueInteger('5'),
+        new ValueInteger('2').negate(),
+        new ValueInteger('4').negate(),
         new ValueInteger('2088514286170664527282407')
-      );
+      ]));
     });
 
     it('Addition: check types of arguments', () => {
@@ -741,28 +1045,211 @@ describe('Primitive functions, procedures and operators', () => {
       let result = new Runner().run([
         'program {',
         '  return (',
+        '    0 - 0,',
+        '    0 - 1,',
+        '    0 - 2,',
+        '    2 - 0,',
+        '    2 - 1,',
+        '    2 - 3,',
+        '    0 - -1,',
+        '    0 - -2,',
+        '    -2 - 1,',
+        '    -2 - -1,',
         '    839708017193356897142867 - 1248806268977307630139540',
         '  )',
         '}',
       ].join('\n'));
-      expect(result).deep.equals(
+      expect(result).deep.equals(new ValueTuple([
+        new ValueInteger('0'),
+        new ValueInteger('1').negate(),
+        new ValueInteger('2').negate(),
+        new ValueInteger('2'),
+        new ValueInteger('1'),
+        new ValueInteger('1').negate(),
+        new ValueInteger('1'),
+        new ValueInteger('2'),
+        new ValueInteger('3').negate(),
+        new ValueInteger('1').negate(),
         new ValueInteger('409098251783950732996673').negate()
-      );
+      ]));
     });
 
     it('Multiplication', () => {
       let result = new Runner().run([
         'program {',
         '  return (',
+        '    1 * 1,',
+        '    2 * 2,',
+        '    2 * -3,',
+        '    -2 * 3,',
+        '    -2 * -3,',
+        '    0 * 0,',
+        '    0 * 1,',
+        '    0 * -1,',
+        '    9 * 4,',
+        '    4 * 9,',
         '    839708017193356897142867 * 1248806268977307630139540',
         '  )',
         '}',
       ].join('\n'));
-      expect(result).deep.equals(
-        new ValueInteger('1048632635981568913405455338700366140602525661180')
-      );
+      expect(result).deep.equals(new ValueTuple([
+        new ValueInteger('1'),
+        new ValueInteger('4'),
+        new ValueInteger('6').negate(),
+        new ValueInteger('6').negate(),
+        new ValueInteger('6'),
+        new ValueInteger('0'),
+        new ValueInteger('0'),
+        new ValueInteger('0'),
+        new ValueInteger('36'),
+        new ValueInteger('36'),
+        new ValueInteger('1048632635981568913405455338700366140602525661180'),
+      ]));
     });
 
+    it('Division', () => {
+      let result = new Runner().run([
+        'program {',
+        '  return (',
+        '    0 div 1,',
+        '    0 div 2,',
+        /* Positive / positive */
+        '    10 div 1, 10 div 2, 10 div 3, 10 div 4, 10 div 5,',
+        '    10 div 6, 10 div 7, 10 div 8, 10 div 9, 10 div 10,',
+        '    10 div 11,',
+        /* Positive / negative */
+        '    10 div -1, 10 div -2, 10 div -3, 10 div -4, 10 div -5,',
+        '    10 div -6, 10 div -7, 10 div -8, 10 div -9, 10 div -10,',
+        '    10 div -11,',
+        /* Negative / positive */
+        '    -10 div 1, -10 div 2, -10 div 3, -10 div 4, -10 div 5,',
+        '    -10 div 6, -10 div 7, -10 div 8, -10 div 9, -10 div 10,',
+        '    -10 div 11,',
+        /* Negative / negative */
+        '    -10 div -1, -10 div -2, -10 div -3, -10 div -4, -10 div -5,',
+        '    -10 div -6, -10 div -7, -10 div -8, -10 div -9, -10 div -10,',
+        '    -10 div -11,',
+        /* Big */
+        '    1248806268977307630139540 div 831719335689717',
+        '  )',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(new ValueTuple([
+        new ValueInteger('0'),
+        new ValueInteger('0'),
+        /* Positive / positive */
+        new ValueInteger('10'), new ValueInteger('5'),
+        new ValueInteger('3'), new ValueInteger('2'),
+        new ValueInteger('2'), new ValueInteger('1'),
+        new ValueInteger('1'), new ValueInteger('1'),
+        new ValueInteger('1'), new ValueInteger('1'),
+        new ValueInteger('0'),
+        /* Positive / negative */
+        new ValueInteger('-10'), new ValueInteger('-5'),
+        new ValueInteger('-4'), new ValueInteger('-3'),
+        new ValueInteger('-2'), new ValueInteger('-2'),
+        new ValueInteger('-2'), new ValueInteger('-2'),
+        new ValueInteger('-2'), new ValueInteger('-1'),
+        new ValueInteger('-1'),
+        /* Negative / positive */
+        new ValueInteger('-10'), new ValueInteger('-5'),
+        new ValueInteger('-4'), new ValueInteger('-3'),
+        new ValueInteger('-2'), new ValueInteger('-2'),
+        new ValueInteger('-2'), new ValueInteger('-2'),
+        new ValueInteger('-2'), new ValueInteger('-1'),
+        new ValueInteger('-1'),
+        /* Negative / negative */
+        new ValueInteger('10'), new ValueInteger('5'),
+        new ValueInteger('3'), new ValueInteger('2'),
+        new ValueInteger('2'), new ValueInteger('1'),
+        new ValueInteger('1'), new ValueInteger('1'),
+        new ValueInteger('1'), new ValueInteger('1'),
+        new ValueInteger('0'),
+        /* Big */
+        new ValueInteger('1501475576'),
+      ]));
+    });
+
+    it('Fail on zero division for div', () => {
+      let result = () => new Runner().run([
+        'program {',
+        '  return (1 div 0)',
+        '}'
+      ].join('\n'));
+      expect(result).throws(i18n('errmsg:cannot-divide-by-zero'));
+    });
+
+    it('Modulo', () => {
+      let result = new Runner().run([
+        'program {',
+        '  return (',
+        '    0 mod 1,',
+        '    0 mod 2,',
+        /* Positive / positive */
+        '    10 mod 1, 10 mod 2, 10 mod 3, 10 mod 4, 10 mod 5,',
+        '    10 mod 6, 10 mod 7, 10 mod 8, 10 mod 9, 10 mod 10,',
+        '    10 mod 11,',
+        /* Positive / negative */
+        '    10 mod -1, 10 mod -2, 10 mod -3, 10 mod -4, 10 mod -5,',
+        '    10 mod -6, 10 mod -7, 10 mod -8, 10 mod -9, 10 mod -10,',
+        '    10 mod -11,',
+        /* Negative / positive */
+        '    -10 mod 1, -10 mod 2, -10 mod 3, -10 mod 4, -10 mod 5,',
+        '    -10 mod 6, -10 mod 7, -10 mod 8, -10 mod 9, -10 mod 10,',
+        '    -10 mod 11,',
+        /* Negative / negative */
+        '    -10 mod -1, -10 mod -2, -10 mod -3, -10 mod -4, -10 mod -5,',
+        '    -10 mod -6, -10 mod -7, -10 mod -8, -10 mod -9, -10 mod -10,',
+        '    -10 mod -11,',
+        /* Big */
+        '    1248806268977307630139540 mod 831719335689717',
+        '  )',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(new ValueTuple([
+        new ValueInteger('0'),
+        new ValueInteger('0'),
+        /* Positive / positive */
+        new ValueInteger('0'), new ValueInteger('0'),
+        new ValueInteger('1'), new ValueInteger('2'),
+        new ValueInteger('0'), new ValueInteger('4'),
+        new ValueInteger('3'), new ValueInteger('2'),
+        new ValueInteger('1'), new ValueInteger('0'),
+        new ValueInteger('10'),
+        /* Positive / negative */
+        new ValueInteger('0'), new ValueInteger('0'),
+        new ValueInteger('-2'), new ValueInteger('-2'),
+        new ValueInteger('0'), new ValueInteger('-2'),
+        new ValueInteger('-4'), new ValueInteger('-6'),
+        new ValueInteger('-8'), new ValueInteger('0'),
+        new ValueInteger('-1'),
+        /* Negative / positive */
+        new ValueInteger('0'), new ValueInteger('0'),
+        new ValueInteger('2'), new ValueInteger('2'),
+        new ValueInteger('0'), new ValueInteger('2'),
+        new ValueInteger('4'), new ValueInteger('6'),
+        new ValueInteger('8'), new ValueInteger('0'),
+        new ValueInteger('1'),
+        /* Negative / negative */
+        new ValueInteger('0'), new ValueInteger('0'),
+        new ValueInteger('-1'), new ValueInteger('-2'),
+        new ValueInteger('0'), new ValueInteger('-4'),
+        new ValueInteger('-3'), new ValueInteger('-2'),
+        new ValueInteger('-1'), new ValueInteger('0'),
+        new ValueInteger('-10'),
+        /* Big */
+        new ValueInteger('352252440287548'),
+      ]));
+    });
+
+    it('Fail on zero division for mod', () => {
+      let result = () => new Runner().run([
+        'program {',
+        '  return (1 mod 0)',
+        '}'
+      ].join('\n'));
+      expect(result).throws(i18n('errmsg:cannot-divide-by-zero'));
+    });
 
   });
 
@@ -1180,6 +1667,215 @@ describe('Primitive functions, procedures and operators', () => {
           ].join('\n'));
           expect(result).throws();
         });
+
+    });
+
+  });
+
+  describe('List operations', () => {
+
+    describe('Append (++)', () => {
+
+      it('Append lists', () => {
+        let result = new Runner().run([
+          'program {',
+          '  return (',
+          '    [] ++ [],',
+          '    [1,2,3] ++ [4,5],',
+          '    [[]] ++ [[], []]',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).deep.equals(new ValueTuple([
+           new ValueList([]),
+           new ValueList([
+             new ValueInteger(1),
+             new ValueInteger(2),
+             new ValueInteger(3),
+             new ValueInteger(4),
+             new ValueInteger(5),
+           ]),
+           new ValueList([
+             new ValueList([]),
+             new ValueList([]),
+             new ValueList([]),
+           ]),
+        ]));
+      });
+
+      it('Fail if types are not compatible', () => {
+        let result = () => new Runner().run([
+          'program {',
+          '  return (',
+          '    [[],["a"],[]] ++ [[],[1],[]]',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).throws(
+          i18n('errmsg:expected-values-to-have-compatible-types')(
+            new TypeList(new TypeList(new TypeString())),
+            new TypeList(new TypeList(new TypeInteger())),
+          )
+        );
+      });
+
+    });
+
+    describe('Head', () => {
+
+      it('Head', () => {
+        let result = new Runner().run([
+          'program {',
+          '  return (',
+          '    ' + i18n('PRIM:head') + '([1,2,3])',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).deep.equals(new ValueInteger(1));
+      });
+
+      it('Fail on empty list', () => {
+        let result = () => new Runner().run([
+          'program {',
+          '  return (',
+          '    ' + i18n('PRIM:head') + '([])',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).throws(i18n('errmsg:list-cannot-be-empty'));
+      });
+
+      it('Fail if not a list', () => {
+        let result = () => new Runner().run([
+          'program {',
+          '  return (',
+          '    ' + i18n('PRIM:head') + '(1)',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).throws();
+      });
+
+    });
+
+    describe('Tail', () => {
+
+      it('Tail', () => {
+        let result = new Runner().run([
+          'program {',
+          '  return (',
+          '    ' + i18n('PRIM:tail') + '([1,2,3])',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).deep.equals(
+          new ValueList([
+            new ValueInteger(2),
+            new ValueInteger(3),
+          ])
+        );
+      });
+
+      it('Fail on empty list', () => {
+        let result = () => new Runner().run([
+          'program {',
+          '  return (',
+          '    ' + i18n('PRIM:tail') + '([])',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).throws(i18n('errmsg:list-cannot-be-empty'));
+      });
+
+      it('Fail if not a list', () => {
+        let result = () => new Runner().run([
+          'program {',
+          '  return (',
+          '    ' + i18n('PRIM:tail') + '("foo")',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).throws();
+      });
+
+    });
+
+    describe('Init', () => {
+
+      it('Init', () => {
+        let result = new Runner().run([
+          'program {',
+          '  return (',
+          '    ' + i18n('PRIM:init') + '([1,2,3])',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).deep.equals(
+          new ValueList([
+            new ValueInteger(1),
+            new ValueInteger(2),
+          ])
+        );
+      });
+
+      it('Fail on empty list', () => {
+        let result = () => new Runner().run([
+          'program {',
+          '  return (',
+          '    ' + i18n('PRIM:init') + '([])',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).throws(i18n('errmsg:list-cannot-be-empty'));
+      });
+
+      it('Fail if not a list', () => {
+        let result = () => new Runner().run([
+          'program {',
+          '  return (',
+          '    ' + i18n('PRIM:init') + '((1,2,3))',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).throws();
+      });
+
+    });
+
+    describe('Last', () => {
+
+      it('Last', () => {
+        let result = new Runner().run([
+          'program {',
+          '  return (',
+          '    ' + i18n('PRIM:last') + '([1,2,3])',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).deep.equals(new ValueInteger(3));
+      });
+
+      it('Fail on empty list', () => {
+        let result = () => new Runner().run([
+          'program {',
+          '  return (',
+          '    ' + i18n('PRIM:last') + '([])',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).throws(i18n('errmsg:list-cannot-be-empty'));
+      });
+
+      it('Fail if not a list', () => {
+        let result = () => new Runner().run([
+          'program {',
+          '  return (',
+          '    ' + i18n('PRIM:last') + '(' + i18n('CONS:True') + ')',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).throws();
+      });
 
     });
 

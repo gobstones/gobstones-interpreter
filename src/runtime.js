@@ -7,6 +7,7 @@ import {
   TypeInteger,
   TypeString,
   TypeStructure,
+  TypeList,
   joinTypes,
 } from './value';
 import {
@@ -293,7 +294,7 @@ let typeString = new TypeString();
 
 let typeBool = new TypeStructure(i18n('TYPE:Bool'), {});
 
-/* let typeListAny = new TypeList(new TypeAny()); */ // Not used yet
+let typeListAny = new TypeList(new TypeAny());
 
 function valueFromBool(bool) {
   if (bool) {
@@ -818,6 +819,8 @@ export class RuntimePrimitives {
         }
       );
 
+    /* Arithmetic operators */
+
     this._primitiveFunctions['+'] =
       new PrimitiveOperation(
         [typeInteger, typeInteger], noValidation,
@@ -842,6 +845,38 @@ export class RuntimePrimitives {
         }
       );
 
+    this._primitiveFunctions['div'] =
+      new PrimitiveOperation(
+        [typeInteger, typeInteger],
+        function (startPos, endPos, globalState, args) {
+          let b = args[1];
+          if (b.eq(new ValueInteger(0))) {
+            throw new GbsRuntimeError(startPos, endPos,
+              i18n('errmsg:cannot-divide-by-zero')
+            );
+          }
+        },
+        function (globalState, a, b) {
+          return a.div(b);
+        }
+      );
+
+    this._primitiveFunctions['mod'] =
+      new PrimitiveOperation(
+        [typeInteger, typeInteger],
+        function (startPos, endPos, globalState, args) {
+          let b = args[1];
+          if (b.eq(new ValueInteger(0))) {
+            throw new GbsRuntimeError(startPos, endPos,
+              i18n('errmsg:cannot-divide-by-zero')
+            );
+          }
+        },
+        function (globalState, a, b) {
+          return a.mod(b);
+        }
+      );
+
     this._primitiveFunctions['-(unary)'] =
       new PrimitiveOperation(
         [typeAny],
@@ -851,6 +886,34 @@ export class RuntimePrimitives {
         },
         function (globalState, a) {
           return genericOpposite(a);
+        }
+      );
+
+    /* Relational operators */
+
+    this._primitiveFunctions['=='] =
+      new PrimitiveOperation(
+        [typeAny, typeAny],
+        function (startPos, endPos, globalState, args) {
+          let a = args[0];
+          let b = args[1];
+          validateCompatibleTypes(startPos, endPos, a, b);
+        },
+        function (globalState, a, b) {
+          return valueFromBool(a.equal(b));
+        }
+      );
+
+    this._primitiveFunctions['/='] =
+      new PrimitiveOperation(
+        [typeAny, typeAny],
+        function (startPos, endPos, globalState, args) {
+          let a = args[0];
+          let b = args[1];
+          validateCompatibleTypes(startPos, endPos, a, b);
+        },
+        function (globalState, a, b) {
+          return valueFromBool(!a.equal(b));
         }
       );
 
@@ -911,6 +974,84 @@ export class RuntimePrimitives {
         },
         function (globalState, a, b) {
           return genericGT(a, b);
+        }
+      );
+
+    /* List opreators */
+    this._primitiveFunctions['++'] =
+      new PrimitiveOperation(
+        [typeListAny, typeListAny],
+        function (startPos, endPos, globalState, args) {
+          let a = args[0];
+          let b = args[1];
+          validateCompatibleTypes(startPos, endPos, a, b);
+        },
+        function (globalState, a, b) {
+          return a.append(b);
+        }
+      );
+
+    this._primitiveFunctions[i18n('PRIM:head')] =
+      new PrimitiveOperation(
+        [typeListAny],
+        function (startPos, endPos, globalState, args) {
+          let a = args[0];
+          if (a.length() === 0) {
+            throw new GbsRuntimeError(startPos, endPos,
+              i18n('errmsg:list-cannot-be-empty')
+            );
+          }
+        },
+        function (globalState, a) {
+          return a.head();
+        }
+      );
+
+    this._primitiveFunctions[i18n('PRIM:tail')] =
+      new PrimitiveOperation(
+        [typeListAny],
+        function (startPos, endPos, globalState, args) {
+          let a = args[0];
+          if (a.length() === 0) {
+            throw new GbsRuntimeError(startPos, endPos,
+              i18n('errmsg:list-cannot-be-empty')
+            );
+          }
+        },
+        function (globalState, a) {
+          return a.tail();
+        }
+      );
+
+    this._primitiveFunctions[i18n('PRIM:init')] =
+      new PrimitiveOperation(
+        [typeListAny],
+        function (startPos, endPos, globalState, args) {
+          let a = args[0];
+          if (a.length() === 0) {
+            throw new GbsRuntimeError(startPos, endPos,
+              i18n('errmsg:list-cannot-be-empty')
+            );
+          }
+        },
+        function (globalState, a) {
+          return a.init();
+        }
+      );
+
+    this._primitiveFunctions[i18n('PRIM:last')] =
+      new PrimitiveOperation(
+        [typeListAny],
+        function (startPos, endPos, globalState, args) {
+          let a = args[0];
+          if (a.length() === 0) {
+            throw new GbsRuntimeError(startPos, endPos,
+              i18n('errmsg:list-cannot-be-empty')
+            );
+          }
+        },
+        function (globalState, a) {
+          return a.last();
         }
       );
 

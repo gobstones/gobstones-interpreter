@@ -472,6 +472,12 @@ const ES = {
   'errmsg:switch-does-not-match':
     'El valor analizado no coincide con ninguna de las ramas del switch.',
 
+  'errmsg:cannot-divide-by-zero':
+    'No se puede dividir por cero.',
+
+  'errmsg:list-cannot-be-empty':
+    'La lista no puede ser vacía.',
+
   /* Board operations */
   'errmsg:cannot-move-to':
     function (dirName) {
@@ -525,6 +531,11 @@ const ES = {
   'PRIM:maxColor': 'maxColor',
   'PRIM:minDir': 'minDir',
   'PRIM:maxDir': 'maxDir',
+
+  'PRIM:head': 'primero',
+  'PRIM:tail': 'resto',
+  'PRIM:init': 'ultimo',
+  'PRIM:last': 'comienzo',
 
   /* Helpers */
   '<alternative>':

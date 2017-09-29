@@ -381,6 +381,10 @@ export class ValueInteger extends Value {
     return new TypeInteger();
   }
 
+  equal(other) {
+    return other.tag === V_Integer && this.number === other.number;
+  }
+
   add(other) {
     let a = Integer(this._number);
     let b = Integer(other._number);
@@ -397,6 +401,54 @@ export class ValueInteger extends Value {
     let a = Integer(this._number);
     let b = Integer(other._number);
     return new ValueInteger(a.multiply(b).toString());
+  }
+
+  /* Gobstones calculates quotients using
+   * modulo (i.e.truncating towards minus infinity)
+   * rather than
+   * remainder (i.e.truncating towards 0).
+   *
+   * We need to adjust the result to match the standard Gobstones
+   * semantics, namely:
+   *
+   * if a and b have the same sign, then
+   *   a div b  =  abs(a) / abs(b)
+   *
+   * if a and b have different signs, then
+   *   a div b  =  -((abs(a) + abs(b) - 1) / abs(b))
+   *
+   * Here "div" denotes the official Gobstones division operator,
+   * while "/" denotes the JavaScript/bigint implementation.
+   */
+  div(other) {
+    let z = new ValueInteger(0);
+    if (this.gt(z) === other.gt(z)) {
+      /* Same sign */
+      let a = Integer(this.abs()._number);
+      let b = Integer(other.abs()._number);
+      return new ValueInteger(a.divide(b).toString());
+    } else {
+      /* Different sign */
+      let inc = other.abs().sub(new ValueInteger(1));
+      let a = Integer(this.abs().add(inc)._number);
+      let b = Integer(other.abs()._number);
+      return new ValueInteger(a.divide(b).negate().toString());
+    }
+  }
+
+  /* Calculate the modulus from the equation a = qb + r,
+   * i.e.  r = a - qb */
+  mod(other) {
+    let q = this.div(other);
+    return this.sub(q.mul(other));
+  }
+
+  eq(other) {
+    return this.equal(other);
+  }
+
+  ne(other) {
+    return !this.equal(other);
   }
 
   le(other) {
@@ -426,6 +478,14 @@ export class ValueInteger extends Value {
   negate() {
     let a = Integer(this._number);
     return new ValueInteger(a.negate().toString());
+  }
+
+  abs() {
+    if (this.gt(new ValueInteger(0))) {
+      return this;
+    } else {
+      return this.negate();
+    }
   }
 
   asNumber() {
@@ -493,6 +553,10 @@ export class ValueString extends Value {
     return this._string;
   }
 
+  equal(other) {
+    return other.tag === V_String && this.string === other.string;
+  }
+
   type() {
     return new TypeString();
   }
@@ -519,6 +583,21 @@ export class ValueTuple extends Value {
 
   size() {
     return this._components.length;
+  }
+
+  equal(other) {
+    if (other.tag !== V_Tuple) {
+      return false;
+    }
+    if (this.components.length !== other.components.length) {
+      return false;
+    }
+    for (let i = 0; i < this.components.length; i++) {
+      if (!this.components[i].equal(other.components[i])) {
+        return false;
+      }
+    }
+    return true;
   }
 
   type() {
@@ -553,6 +632,21 @@ export class ValueList extends Value {
     return this._elements;
   }
 
+  equal(other) {
+    if (other.tag !== V_List) {
+      return false;
+    }
+    if (this.elements.length !== other.elements.length) {
+      return false;
+    }
+    for (let i = 0; i < this.elements.length; i++) {
+      if (!this.elements[i].equal(other.elements[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   type() {
     return this._type;
   }
@@ -568,6 +662,42 @@ export class ValueList extends Value {
     }
     return new TypeList(contentType);
   }
+
+  append(other) {
+    let allElements = [];
+    for (let elem of this.elements) {
+      allElements.push(elem);
+    }
+    for (let elem of other.elements) {
+      allElements.push(elem);
+    }
+    return new ValueList(allElements);
+  }
+
+  head() {
+    return this.elements[0];
+  }
+
+  tail() {
+    let elements = [];
+    for (let i = 1; i < this.elements.length; i++) {
+      elements.push(this.elements[i]);
+    }
+    return new ValueList(elements);
+  }
+
+  init() {
+    let elements = [];
+    for (let i = 0; i < this.elements.length - 1; i++) {
+      elements.push(this.elements[i]);
+    }
+    return new ValueList(elements);
+  }
+
+  last() {
+    return this.elements[this.elements.length - 1];
+  }
+
 }
 
 /* An instance of ValueStructure represents a 'structure' i.e.  a value
@@ -634,6 +764,22 @@ export class ValueStructure extends Value {
     return newStructure;
   }
 
+  equal(other) {
+    if (other.tag !== V_Structure) {
+      return false;
+    }
+    if (this.constructorName !== other.constructorName) {
+      return false;
+    }
+    let fieldNames = this.fieldNames();
+    for (let fieldName of fieldNames) {
+      if (!this.fields[fieldName].equal(other.fields[fieldName])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   type() {
     let fieldTypes = {};
     for (let fieldName in this._fields) {
@@ -643,5 +789,6 @@ export class ValueStructure extends Value {
     cases[this._constructorName] = fieldTypes;
     return new TypeStructure(this._typeName, cases);
   }
+
 }
 
