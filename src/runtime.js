@@ -97,8 +97,8 @@ export class RuntimeState {
      *
      * By default, create an empty 9x9 board.
      */
-    this._width = 9;
-    this._height = 9;
+    this._width = 11;
+    this._height = 7;
     this._board = [];
     for (let x = 0; x < this._width; x++) {
       let column = [];
@@ -139,7 +139,7 @@ export class RuntimeState {
     jboard.board = [];
     for (let x = 0; x < this._width; x++) {
       let column = [];
-      for (let y = 0; y < this._width; y++) {
+      for (let y = 0; y < this._height; y++) {
         let cell = {};
         cell['a'] = this._board[x][y][i18n('CONS:Color0')].asNumber();
         cell['n'] = this._board[x][y][i18n('CONS:Color1')].asNumber();
@@ -159,7 +159,7 @@ export class RuntimeState {
     this._head.x = jboard.head[0];
     this._head.y = jboard.head[1];
     for (let x = 0; x < this._width; x++) {
-      for (let y = 0; y < this._width; y++) {
+      for (let y = 0; y < this._height; y++) {
         let cell = jboard.board[x][y];
         this._board[x][y][i18n('CONS:Color0')] = new ValueInteger(cell['a']);
         this._board[x][y][i18n('CONS:Color1')] = new ValueInteger(cell['n']);

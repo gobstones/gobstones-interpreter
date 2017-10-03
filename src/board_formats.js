@@ -100,6 +100,37 @@ function gsboardToJboard(gsBoardString) {
   return jboard;
 }
 
+function gbbFromJboard(jboard) {
+  let gbb = [];
+  gbb.push('GBB/1.0');
+  gbb.push(
+    'size'
+    + ' ' + jboard.width.toString()
+    + ' ' + jboard.height.toString()
+  );
+  gbb.push(
+    'head'
+    + ' ' + jboard.head[0].toString()
+    + ' ' + jboard.head[1].toString()
+  );
+  for (let y = 0; y < jboard.height; y++) {
+    for (let x = 0; x < jboard.width; x++) {
+      let cell = jboard.board[x][y];
+      let c = 'cell ' + x.toString() + ' ' + y.toString();
+      c += ' A ' + cell.a.toString();
+      c += ' N ' + cell.n.toString();
+      c += ' R ' + cell.r.toString();
+      c += ' V ' + cell.v.toString();
+      gbb.push(c);
+    }
+  }
+  return gbb.join('\n') + '\n';
+}
+
+function gbbToJboard(gbb) {
+  throw Error('Not implemented.');
+}
+
 let BOARD_FORMAT_LIST = [
 
   new BoardFormat(
@@ -117,6 +148,14 @@ let BOARD_FORMAT_LIST = [
     'json',
     gsboardFromJboard,
     gsboardToJboard
+  ),
+
+  new BoardFormat(
+    'gbb',
+    'GBB/1.0',
+    'gbb',
+    gbbFromJboard,
+    gbbToJboard,
   ),
 
 ];
