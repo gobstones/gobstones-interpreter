@@ -1,0 +1,53 @@
+[
+  ["type", "ID", "String"],
+  ["type", "NUM", "Integer"],
+  ["type", "STRING", "String"],
+  ["data", "Main",
+    ["Main", ["definitions", ["*", "Definition"]]]
+  ],
+  ["data", "Definition",
+    ["DefProgram", ["body", "Statement"]],
+    ["DefInteractiveProgram", ["branches", ["*", "SwitchBranch"]]],
+    ["DefProcedure", ["name", "ID"], ["parameters", ["*", "ID"]], ["body", "Statement"]],
+    ["DefFunction", ["name", "ID"], ["parameters", ["*", "ID"]], ["body", "Statement"]],
+    ["DefType", ["typeName", "ID"], ["constructorDeclarations", ["*", "ConstructorDeclaration"]]]
+  ],
+  ["data", "Statement",
+    ["StmtBlock", ["statements", ["*", "Statement"]]],
+    ["StmtReturn", ["result", "Expression"]],
+    ["StmtIf", ["condition", "Expression"], ["thenBlock", "Statement"], ["elseBlock", ["?", "Statement"]]],
+    ["StmtRepeat", ["times", "Expression"], ["body", "Statement"]],
+    ["StmtForeach", ["index", "ID"], ["range", "Expression"], ["body", "Statement"]],
+    ["StmtWhile", ["condition", "Expression"], ["body", "Statement"]],
+    ["StmtSwitch", ["subject", "Expression"], ["branches", ["*", "SwitchBranch"]]],
+    ["StmtAssignVariable", ["variable", "ID"], ["value", "Expression"]],
+    ["StmtAssignTuple", ["variables", ["*", "ID"]], ["value", "Expression"]],
+    ["StmtProcedureCall", ["procedureName", "ID"], ["args", ["*", "Expression"]]]
+  ],
+  ["data", "SwitchBranch",
+    ["SwitchBranch", ["pattern", "Pattern"], ["body", "Statement"]]
+  ],
+  ["data", "Pattern",
+    ["PatternWildcard"],
+    ["PatternStructure", ["constructorName", "ID"], ["parameters", ["*", "ID"]]],
+    ["PatternTuple", ["parameters", ["*", "ID"]]],
+    ["PatternTimeout", ["timeout", "NUM"]]
+  ],
+  ["data", "Expression",
+    ["ExprVariable", ["variableName", "ID"]],
+    ["ExprConstantNumber", ["number", "NUM"]],
+    ["ExprConstantString", ["string", "STRING"]],
+    ["ExprList", ["elements", ["*", "Expression"]]],
+    ["ExprRange", ["first", "Expression"], ["second", ["?", "Expression"]], ["last", "Expression"]],
+    ["ExprTuple", ["elements", ["*", "Expression"]]],
+    ["ExprStructure", ["constructorName", "ID"], ["fieldBindings", ["*", "FieldBinding"]]],
+    ["ExprStructureUpdate", ["constructorName", "ID"], ["original", "Expression"], ["fieldBindings", ["*", "FieldBinding"]]],
+    ["ExprFunctionCall", ["functionName", "ID"], ["args", ["*", "Expression"]]]
+  ],
+  ["data", "ConstructorDeclaration",
+    ["ConstructorDeclaration", ["constructorName", "ID"], ["fieldNames", ["*", "ID"]]]
+  ],
+  ["data", "FieldBinding",
+    ["FieldBinding", ["fieldName", "ID"], ["value", "Expression"]]
+  ]
+]

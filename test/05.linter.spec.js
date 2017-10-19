@@ -24,7 +24,7 @@ describe('Linter', () => {
 
   it('Accept completely empty source', () => {
     let code = '';
-    var symtable = lint(code);
+    let symtable = lint(code);
     expect(symtable.program === null).equals(true);
   });
 
@@ -32,13 +32,13 @@ describe('Linter', () => {
 
     it('Accept empty program', () => {
       let code = 'program {}';
-      var symtable = lint(code);
+      let symtable = lint(code);
       expect(symtable.program !== null).equals(true);
     });
 
     it('Accept empty interactive program', () => {
       let code = 'interactive program {}';
-      var symtable = lint(code);
+      let symtable = lint(code);
       expect(symtable.program !== null).equals(true);
     });
 
@@ -84,7 +84,7 @@ describe('Linter', () => {
         'procedure P() {}',
         'program {}',
       ].join('\n');
-      var symtable = lint(code);
+      let symtable = lint(code);
       expect(symtable.program !== null).equals(true);
       expect(symtable.procedureDefinition('P') !== null).equals(true);
     });
@@ -110,7 +110,7 @@ describe('Linter', () => {
         'procedure Q() {}',
         'program {}',
       ].join('\n');
-      var symtable = lint(code);
+      let symtable = lint(code);
       expect(symtable.program !== null).equals(true);
       expect(symtable.procedureDefinition('P') !== null).equals(true);
       expect(symtable.procedureDefinition('Q') !== null).equals(true);
@@ -125,7 +125,7 @@ describe('Linter', () => {
         'function f() { return (1) }',
         'program {}',
       ].join('\n');
-      var symtable = lint(code);
+      let symtable = lint(code);
       expect(symtable.program !== null).equals(true);
       expect(symtable.functionDefinition('f') !== null).equals(true);
     });
@@ -151,7 +151,7 @@ describe('Linter', () => {
         'function g() { return (2) }',
         'program {}',
       ].join('\n');
-      var symtable = lint(code);
+      let symtable = lint(code);
       expect(symtable.program !== null).equals(true);
       expect(symtable.functionDefinition('f') !== null).equals(true);
       expect(symtable.functionDefinition('g') !== null).equals(true);
@@ -166,7 +166,7 @@ describe('Linter', () => {
         'type A is record {}',
         'program {}',
       ].join('\n');
-      var symtable = lint(code);
+      let symtable = lint(code);
       expect(symtable.program !== null).equals(true);
       expect(symtable.typeDefinition('A') !== null).equals(true);
       expect(symtable.typeConstructors('A')).deep.equals(['A']);
@@ -196,7 +196,7 @@ describe('Linter', () => {
         'type C is variant { case C1 {} case C2 {} case C3 {} }',
         'program {}',
       ].join('\n');
-      var symtable = lint(code);
+      let symtable = lint(code);
       expect(symtable.program !== null).equals(true);
       expect(symtable.typeDefinition('A') !== null).equals(true);
       expect(symtable.typeDefinition('B') !== null).equals(true);
@@ -250,14 +250,14 @@ describe('Linter', () => {
         '}',
         'program {}',
       ].join('\n');
-      var symtable = lint(code);
+      let symtable = lint(code);
       expect(symtable.constructorFields('A')).deep.equals(['x', 'y']);
       expect(symtable.constructorFields('A')).deep.equals(['x', 'y']);
       expect(symtable.constructorFields('B1')).deep.equals(['x', 'z']);
       expect(symtable.constructorFields('B2')).deep.equals(['y', 'z']);
       expect(symtable.constructorFields('C')).deep.equals([]);
 
-      var dx = symtable.fieldDescriptor('x');
+      let dx = symtable.fieldDescriptor('x');
       expect(dx.length).equals(2);
       expect(dx[0].typeName).equals('A');
       expect(dx[0].constructorName).equals('A');
@@ -266,7 +266,7 @@ describe('Linter', () => {
       expect(dx[1].constructorName).equals('B1');
       expect(dx[1].index).equals(0);
 
-      var dy = symtable.fieldDescriptor('y');
+      let dy = symtable.fieldDescriptor('y');
       expect(dy.length).equals(2);
       expect(dy[0].typeName).equals('A');
       expect(dy[0].constructorName).equals('A');
@@ -275,7 +275,7 @@ describe('Linter', () => {
       expect(dy[1].constructorName).equals('B2');
       expect(dy[1].index).equals(0);
 
-      var dz = symtable.fieldDescriptor('z');
+      let dz = symtable.fieldDescriptor('z');
       expect(dz.length).equals(2);
       expect(dz[0].typeName).equals('B');
       expect(dz[0].constructorName).equals('B1');
@@ -680,7 +680,7 @@ describe('Linter', () => {
 
   describe('Pattern matching', () => {
 
-    it('Reject type used as constructor pattern', () => {
+    it('Reject type used as structure pattern', () => {
       let code = [
         'type A is variant {',
         '  case A1 {}',
@@ -698,7 +698,7 @@ describe('Linter', () => {
       );
     });
 
-    it('Reject procedure used as constructor pattern', () => {
+    it('Reject procedure used as structure pattern', () => {
       let code = [
         'procedure A() {',
         '}',
@@ -713,7 +713,7 @@ describe('Linter', () => {
       );
     });
 
-    it('Reject undeclared constructor pattern', () => {
+    it('Reject undeclared structure pattern', () => {
       let code = [
         'program {',
         '  switch (1) {',
@@ -726,7 +726,7 @@ describe('Linter', () => {
       );
     });
 
-    it('Accept constructor pattern with 0 arguments', () => {
+    it('Accept structure pattern with 0 arguments', () => {
       let code = [
         'type T is variant {',
         '  case A {',
@@ -746,7 +746,7 @@ describe('Linter', () => {
       expect(lint(code).program !== null).equals(true);
     });
 
-    it('Reject constructor pattern if arity does not match', () => {
+    it('Reject structure pattern if arity does not match', () => {
       let code = [
         'type T is variant {',
         '  case A {',
@@ -764,11 +764,11 @@ describe('Linter', () => {
         '}',
       ].join('\n');
       expect(() => lint(code)).throws(
-        i18n('errmsg:constructor-pattern-arity-mismatch')('A', 2, 1)
+        i18n('errmsg:structure-pattern-arity-mismatch')('A', 2, 1)
       );
     });
 
-    it('Accept constructor pattern if arity matches', () => {
+    it('Accept structure pattern if arity matches', () => {
       let code = [
         'type T is variant {',
         '  case A {',
@@ -822,7 +822,7 @@ describe('Linter', () => {
       expect(lint(code).program !== null).equals(true);
     });
 
-    it('Reject repeated constructor patterns', () => {
+    it('Reject repeated structure patterns', () => {
       let code = [
         'type A is variant {',
         '  case A1 { field x }',
@@ -838,7 +838,7 @@ describe('Linter', () => {
         '}',
       ].join('\n');
       expect(() => lint(code)).throws(
-        i18n('errmsg:constructor-pattern-repeats-constructor')('A2')
+        i18n('errmsg:structure-pattern-repeats-constructor')('A2')
       );
     });
 
@@ -852,24 +852,24 @@ describe('Linter', () => {
         '}',
       ].join('\n');
       expect(() => lint(code)).throws(
-        i18n('errmsg:constructor-pattern-repeats-tuple-arity')(2)
+        i18n('errmsg:structure-pattern-repeats-tuple-arity')(2)
       );
     });
 
     it('Reject repeated TIMEOUT patterns', () => {
       let code = [
         'interactive program {',
-        '  TIMEOUT(1) -> {}',
-        '  TIMEOUT(2) -> {}',
+        '  ' + i18n('CONS:TIMEOUT') + '(1) -> {}',
+        '  ' + i18n('CONS:TIMEOUT') + '(2) -> {}',
         '}',
       ].join('\n');
       expect(() => lint(code)).throws(
-        i18n('errmsg:constructor-pattern-repeats-timeout')
+        i18n('errmsg:structure-pattern-repeats-timeout')
       );
     });
 
 
-    it('Reject constructor patterns of different types', () => {
+    it('Reject structure patterns of different types', () => {
       let code = [
         'type A is record {',
         '}',
@@ -887,7 +887,7 @@ describe('Linter', () => {
       );
     });
 
-    it('Reject constructor pattern vs. tuple pattern', () => {
+    it('Reject structure pattern vs. tuple pattern', () => {
       let code = [
         'type A is record {',
         '}',
@@ -929,7 +929,7 @@ describe('Linter', () => {
       let code = [
         'program {',
         '  switch (1) {',
-        '    TIMEOUT(100) -> {}',
+        '    ' + i18n('CONS:TIMEOUT') + '(100) -> {}',
         '  }',
         '}',
       ].join('\n');
@@ -941,7 +941,7 @@ describe('Linter', () => {
     it('Accept event patterns and wildcards in interactive program', () => {
       let code = [
         'interactive program {',
-        '  TIMEOUT(100) -> {}',
+        '  ' + i18n('CONS:TIMEOUT') + '(100) -> {}',
         '  _            -> {}',
         '}',
       ].join('\n');
@@ -959,7 +959,7 @@ describe('Linter', () => {
       );
     });
 
-    it('Reject repeated parameter names in constructor pattern', () => {
+    it('Reject repeated parameter names in structure pattern', () => {
       let code = [
         'type A is record {',
         '  field x',
@@ -1019,7 +1019,7 @@ describe('Linter', () => {
 
   });
 
-  describe('Constructor instantiation and update', () => {
+  describe('Structure construction and update', () => {
 
     it('Reject type used as constructor', () => {
       let code = [
@@ -1061,7 +1061,7 @@ describe('Linter', () => {
       expect(lint(code).program !== null).equals(true);
     });
 
-    it('Reject constructor instantiation with repeated fields', () => {
+    it('Reject structure construction with repeated fields', () => {
       let code = [
         'type A is record {',
         '  field x',
@@ -1072,11 +1072,11 @@ describe('Linter', () => {
         '}',
       ].join('\n');
       expect(() => lint(code)).throws(
-        i18n('errmsg:constructor-instantiation-repeated-field')('A', 'x')
+        i18n('errmsg:structure-construction-repeated-field')('A', 'x')
       );
     });
 
-    it('Reject constructor instantiation with invalid fields', () => {
+    it('Reject structure construction with invalid fields', () => {
       let code = [
         'type A is record {',
         '  field x',
@@ -1087,11 +1087,11 @@ describe('Linter', () => {
         '}',
       ].join('\n');
       expect(() => lint(code)).throws(
-        i18n('errmsg:constructor-instantiation-invalid-field')('A', 'z')
+        i18n('errmsg:structure-construction-invalid-field')('A', 'z')
       );
     });
 
-    it('Reject constructor instantiation with missing fields', () => {
+    it('Reject structure construction with missing fields', () => {
       let code = [
         'type A is record {',
         '  field x',
@@ -1103,11 +1103,11 @@ describe('Linter', () => {
         '}',
       ].join('\n');
       expect(() => lint(code)).throws(
-        i18n('errmsg:constructor-instantiation-missing-field')('A', 'y')
+        i18n('errmsg:structure-construction-missing-field')('A', 'y')
       );
     });
 
-    it('Accept typical constructor instantiation', () => {
+    it('Accept typical structure construction', () => {
       let code = [
         'type A is record {',
         '  field x',
@@ -1121,7 +1121,7 @@ describe('Linter', () => {
       expect(lint(code).program !== null).equals(true);
     });
 
-    it('Reject constructor instantiation of an _EVENT', () => {
+    it('Reject structure construction of an _EVENT', () => {
       let code = [
         'program {',
         '  x := K_ENTER',
@@ -1137,11 +1137,11 @@ describe('Linter', () => {
       expect(
         () => new Linter(symtable).lint(new Parser(code).parse())
       ).throws(
-        i18n('errmsg:constructor-instantiation-cannot-be-an-event')('K_ENTER')
+        i18n('errmsg:structure-construction-cannot-be-an-event')('K_ENTER')
       );
     });
 
-    it('Reject constructor update with repeated fields', () => {
+    it('Reject structure update with repeated fields', () => {
       let code = [
         'type A is record {',
         '  field x',
@@ -1153,11 +1153,11 @@ describe('Linter', () => {
         '}',
       ].join('\n');
       expect(() => lint(code)).throws(
-        i18n('errmsg:constructor-instantiation-repeated-field')('A', 'y')
+        i18n('errmsg:structure-construction-repeated-field')('A', 'y')
       );
     });
 
-    it('Reject constructor update with invalid fields', () => {
+    it('Reject structure update with invalid fields', () => {
       let code = [
         'type A is record {',
         '  field x',
@@ -1169,11 +1169,11 @@ describe('Linter', () => {
         '}',
       ].join('\n');
       expect(() => lint(code)).throws(
-        i18n('errmsg:constructor-instantiation-invalid-field')('A', 'z')
+        i18n('errmsg:structure-construction-invalid-field')('A', 'z')
       );
     });
 
-    it('Accept typical constructor update', () => {
+    it('Accept typical structure update', () => {
       let code = [
         'type A is record {',
         '  field x',

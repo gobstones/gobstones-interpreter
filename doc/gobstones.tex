@@ -4,24 +4,20 @@
 \usepackage{xspace}
 \usepackage{amsmath}
 \usepackage{tabularx}
+\usepackage{longtable}
 \usepackage[spanish]{babel}
 \begin{document}
 \colorlet{darkgreen}{green!60!black}
 \newcommand{\chr}[1]{\texttt{'}\textcolor{blue}{\texttt{#1}}\texttt{'}}
 \newcommand{\str}[1]{\texttt{"}\textcolor{blue}{\texttt{#1}}\texttt{"}}
-\newcommand{\tok}[1]{\textcolor{red}{\texttt{#1}}}
-\newcommand{\symbolentry}[3]{#1 & #2 && #3 \\}
-\newcommand{\nb}[1]{\footnotesize{#1}}
-\newcommand{\NB}[1]{
-  & {\footnotesize {#1}}
-}
-\newcommand{\s}[1]{\textcolor{blue}{{\it$\langle$#1$\rangle$}}}
+\newcommand{\token}[1]{\textcolor{red}{\texttt{#1}}}
+\newcommand{\nonterminal}[1]{\textcolor{blue}{{\it$\langle$#1$\rangle$}}}
 \newcommand{\nonEmpty}[1]{#1$_{1}$}
-\newcommand{\produccion}[2]{
+\newcommand{\production}[2]{
   \noindent
-  \begin{tabularx}{\textwidth}{lrlr}
+  \begin{tabular}{lrl}
   #1 & $\xrightarrow{\hspace{.5cm}}$ & #2
-  \end{tabularx}\\
+  \end{tabular}\\
 }
 \newcommand{\EMPTY}{$\epsilon$}
 \newcommand{\ALT}{
@@ -34,6 +30,7 @@
 
 \newcommand{\type}[1]{\textcolor{blue}{\texttt{#1}}}
 \renewcommand{\ast}[1]{\textcolor{darkgreen}{\texttt{\underline{#1}}}}
+\newcommand{\instruction}[1]{\textcolor{darkgreen}{\texttt{\underline{#1}}}}
 \newcommand{\typedecl}[2]{\noindent
   \begin{tabularx}{\textwidth}{lrlr}
   #1 & $=$ & #2
@@ -52,13 +49,19 @@
 \newcommand{\DEBE}{{\bf DEBE}\xspace}
 \newcommand{\DEBEN}{{\bf DEBEN}\xspace}
 
-\section{Gram\'atica de XGobstones}
+\newcommand{\typename}[1]{\textcolor{blue}{\texttt{#1}}}
+\newcommand{\constructorname}[1]{\textcolor{red}{\texttt{#1}}}
+\newcommand{\fieldname}[1]{\textcolor{darkgreen}{\textit{#1}}}
+
+\tableofcontents
+
+\section{Gram\'atica}
 
 \subsection{Sintaxis l\'exica}
 
 \begin{itemize}
 \item Se ignoran:
-\chr{\textbackslash t} (\texttt{TAB}, chr 8),
+\chr{\textbackslash t} (\texttt{TAB}, chr 9),
 \chr{\textbackslash n} (\texttt{LF}, chr 10),
 \chr{\textbackslash r} (\texttt{CR}, chr 13),
 \chr{\,} (\texttt{SPACE}, chr 32).
@@ -67,128 +70,66 @@
 \item El tokenizador reconoce directivas {\em pragma} de la forma \str{/*@parte$_1$@parte$_2$@...@parte$_n$@*/}. La idea es que esto pueda ser un mecanismo extensible de directivas. Ver m\'as abajo las directivas soportadas.
 \end{itemize}
 
-
 \subsection{Lista de s\'imbolos terminales}
 
-Todos los s\'imbolos terminales se acompa\~nan de su nombre \tok{EN\_MAYUSCULAS}.\bigskip
+Todos los s\'imbolos terminales se acompa\~nan de su nombre \token{EN\_MAYUSCULAS}.\bigskip
 
-\noindent{\bf Identificadores y constantes}\medskip\\
-\begin{tabularx}{\textwidth}{llXp{4cm}}
-\symbolentry{\texttt{0|[1-9][0-9]*}}{\tok{NUM}}{\nb{Constante num\'erica (sin ceros a la izquierda).}}
-\symbolentry{\texttt{[:lower:]([:letter:]|[:digit:]|\_|')*}}{\tok{LOWERID}}{\nb{Identificador en min\'uscula: \'indices, par\'ametros, funciones, variables, campos.}}
-\symbolentry{\texttt{[:upper:]([:letter:]|[:digit:]|\_|')*}}{\tok{UPPERID}}{\nb{Identificador en may\'uscula: constructores, procedimientos, tipos.}}
-\symbolentry{\texttt{"(\textbackslash{a}|\textbackslash{b}|\textbackslash{f}|\textbackslash{n}|\textbackslash{r}|\textbackslash{t}|\textbackslash{v}|\textbackslash\textbackslash|\textbackslash"|[\^{}\textbackslash"])*"}}{\tok{STRING}}{\nb{Constante de cadena.}}
-\end{tabularx}
-\medskip
-
-Clarificaciones:
 \begin{itemize}
+
 \item {\bf Constantes num\'ericas.}
-Son una secuencia de d\'igitos decimales que representan enteros positivos.
-No pueden tener ceros innecesarios a la izquierda.
+  Son una secuencia de d\'igitos decimales que representan enteros positivos.
+  No pueden tener ceros innecesarios a la izquierda.
+  \begin{center}
+    \token{NUM} ::= \texttt{0|[1-9][0-9]*}
+  \end{center}
+
 \item {\bf Identificadores.}
-Comienzan por un caracter alfab\'etico y
-est\'an seguidos por cero o m\'as caracteres,
-ya sea alfab\'eticos, num\'ericos, gui\'on bajo (\texttt{\_}) o comilla simple (\texttt{'}).
-Se aceptan caracteres Unicode arbitrarios. Decimos que un caracter $c$ es {\bf alfab\'etico}
-cuando tiene dos variantes, una min\'uscula y una may\'uscula, es decir cuando:
-\[
-\texttt{$c$.toUpperCase() != $c$.toLowerCase()}
-\]
-Los identificadores \tok{LOWERID} comienzan por un caracter en min\'usculas y
-los identificadores \tok{UPPERID} comienzan por un caracter en may\'usculas.
+  Comienzan por un caracter alfab\'etico y
+  est\'an seguidos por cero o m\'as caracteres,
+  ya sea alfab\'eticos, num\'ericos, gui\'on bajo (\texttt{\_}) o comilla simple (\texttt{'}).
+  Se aceptan caracteres Unicode arbitrarios. Decimos que un caracter $c$ es {\bf alfab\'etico}
+  cuando tiene dos variantes, una min\'uscula y una may\'uscula, es decir cuando:
+  \[
+  \texttt{$c$.toUpperCase() != $c$.toLowerCase()}
+  \]
+  Los identificadores \token{LOWERID} comienzan por un caracter en min\'usculas
+  (y sirven para identificar \'indices, par\'ametros, funciones, variables, campos).
+  Los identificadores \token{UPPERID} comienzan por un caracter en may\'usculas
+  (y sirven para identificador constructores, procedimientos, tipos).
+  \begin{center}
+    \token{LOWERID} ::= \texttt{[:lower:]([:alpha:]|[0-9]|\_|')*}
+  \end{center}
+  \begin{center}
+    \token{UPPERID} ::= \texttt{[:upper:]([:alpha:]|[0-9]|\_|')*}
+  \end{center}
 
-\item {\bf Constantes de {\em string}.}
-Las cadenas est\'an delimitadas por comillas dobles (\chr{"}).
-Todos los caracteres desde la comilla que abre hasta la que cierra se
-toman literalmente salvo la contrabarra (\chr{\textbackslash}) que se
-interpreta como un caracter de escape.
-Los escapes admitidos son:
-\begin{center}
-\texttt{\textbackslash\textbackslash}
-\hspace{1cm}
-\texttt{\textbackslash"}
-\end{center}
-\begin{center}
-\texttt{\textbackslash{a}}
-\hspace{1cm}
-\texttt{\textbackslash{b}}
-\hspace{1cm}
-\texttt{\textbackslash{f}}
-\hspace{1cm}
-\texttt{\textbackslash{n}}
-\hspace{1cm}
-\texttt{\textbackslash{r}}
-\hspace{1cm}
-\texttt{\textbackslash{t}}
-\hspace{1cm}
-\texttt{\textbackslash{v}}
-\end{center}
-con su significado acostumbrado en la tradici\'on de C
-({\em cf.} la gram\'atica oficial de Gobstones).
+\item {\bf Constantes de cadena.}
+  Las cadenas est\'an delimitadas por comillas dobles (\chr{"}).
+  Todos los caracteres desde la comilla que abre hasta la que cierra se
+  toman literalmente salvo la contrabarra (\chr{\textbackslash}) que se
+  interpreta como un caracter de escape.
+  Los escapes admitidos son:
+  \begin{itemize}
+  \item \texttt{\textbackslash\textbackslash} -- contrabarra (\textbackslash)
+  \item \texttt{\textbackslash"} -- comilla doble (")
+  \item \texttt{\textbackslash{a}} -- \texttt{BEL}, chr 7
+  \item \texttt{\textbackslash{b}} -- \texttt{BS}, chr 8
+  \item \texttt{\textbackslash{f}} -- \texttt{FF}, chr 12
+  \item \texttt{\textbackslash{n}} -- \texttt{LF}, chr 10
+  \item \texttt{\textbackslash{r}} -- \texttt{CR}, chr 13
+  \item \texttt{\textbackslash{t}} -- \texttt{TAB}, chr 9
+  \item \texttt{\textbackslash{v}} -- \texttt{VT}, chr 11
+  \end{itemize}
+  \begin{center}
+    \token{STRING} ::= \texttt{"(\textbackslash{a}|\textbackslash{b}|\textbackslash{f}|\textbackslash{n}|\textbackslash{r}|\textbackslash{t}|\textbackslash{v}|\textbackslash\textbackslash|\textbackslash"|[\^{}\textbackslash"])*"}
+  \end{center}
+
+\item {\bf Lista completa de tokens.}
+  \begin{longtable}{llp{.6\textwidth}}
+  % El siguiente tex se genera a partir de 01-tokens.json usando gendoc.py.
+  \input{01-tokens.tex}
+  \end{longtable}
 \end{itemize}
-\bigskip
-
-\noindent{\bf Palabras clave}\medskip\\
-\begin{tabularx}{\textwidth}{llXp{10cm}}
-\symbolentry{\texttt{program}}{\tok{PROGRAM}}{\nb{Para declarar la rutina principal.}}
-\symbolentry{\texttt{interactive}}{\tok{INTERACTIVE}}{\nb{Para declarar una rutina principal interactiva con \texttt{interactive program}.}}
-\symbolentry{\texttt{procedure}}{\tok{PROCEDURE}}{\nb{Para declarar procedimientos.}}
-\symbolentry{\texttt{function}}{\tok{FUNCTION}}{\nb{Para declarar funciones.}}
-\symbolentry{\texttt{return}}{\tok{RETURN}}{\nb{Para devolver valores de funciones y de la rutina principal.}}
-\symbolentry{\texttt{if}}{\tok{IF}}{\nb{Para la alternativa condicional.}}
-\symbolentry{\texttt{then}}{\tok{THEN}}{\nb{Palabra clave opcional para la rama ``then''.}}
-\symbolentry{\texttt{else}}{\tok{ELSE}}{\nb{Para la rama ``else''.}}
-\symbolentry{\texttt{repeat}}{\tok{REPEAT}}{\nb{Repetici\'on simple.}}
-\symbolentry{\texttt{foreach}}{\tok{FOREACH}}{\nb{Repetici\'on indexada.}}
-\symbolentry{\texttt{in}}{\tok{IN}}{\nb{Para declarar el rango de la repetici\'on indexada.}}
-\symbolentry{\texttt{while}}{\tok{WHILE}}{\nb{Repetici\'on condicional.}}
-\symbolentry{\texttt{switch}}{\tok{SWITCH}}{\nb{Para hacer {\em pattern matching}.}}
-\symbolentry{\texttt{match}}{\tok{SWITCH}}{\nb{Alternativa para \texttt{switch}.}}
-\symbolentry{\texttt{to}}{\tok{TO}}{\nb{Palabra clave opcional despu\'es del sujeto sobre el que se hace {\em pattern matching}.}}
-\symbolentry{\texttt{let}}{\tok{LET}}{\nb{Palabra clave opcional para la asignaci\'on. Es obligatoria en el caso de las asignaciones que hacen {\em destructuring} de tuplas.}}
-\symbolentry{\texttt{not}}{\tok{NOT}}{\nb{Negaci\'on l\'ogica.}}
-\symbolentry{\texttt{mod}}{\tok{MOD}}{\nb{Resto de la divisi\'on entera.}}
-\symbolentry{\texttt{div}}{\tok{DIV}}{\nb{Cociente de la divisi\'on entera.}}
-\symbolentry{\texttt{type}}{\tok{TYPE}}{\nb{Para la declaraci\'on de nuevos tipos.}}
-\symbolentry{\texttt{is}}{\tok{IS}}{\nb{Palabra clave para acompa\~nar la declaraci\'on de un nuevo tipo.}}
-\symbolentry{\texttt{record}}{\tok{RECORD}}{\nb{Para tipos registro.}}
-\symbolentry{\texttt{variant}}{\tok{VARIANT}}{\nb{Para tipos variantes.}}
-\symbolentry{\texttt{case}}{\tok{CASE}}{\nb{Para las alternativas de tipos variantes.}}
-\symbolentry{\texttt{field}}{\tok{FIELD}}{\nb{Para los campos de tipos registro.}}
-\symbolentry{\texttt{\_}}{\tok{UNDERSCORE}}{\nb{Para marcar el caso ``default'' en un switch/match.}}
-\symbolentry{\texttt{TIMEOUT}}{\tok{TIMEOUT}}{\nb{Para la rama ``timeout'' en un interactive program.}}
-\end{tabularx}\bigskip
-
-\noindent{\bf S\'imbolos}\medskip\\
-\begin{tabularx}{\textwidth}{llXp{10cm}}
-\symbolentry{\texttt{(}}{\tok{LPAREN}}{\nb{Par\'entesis izquierdo.}}
-\symbolentry{\texttt{)}}{\tok{RPAREN}}{\nb{Par\'entesis derecho.}}
-\symbolentry{\texttt{\{}}{\tok{LBRACE}}{\nb{Llave izquierda.}}
-\symbolentry{\texttt{\}}}{\tok{RBRACE}}{\nb{Llave derecha.}}
-\symbolentry{\texttt{[}}{\tok{LBRACK}}{\nb{Corchete izquierdo (para listas y rangos).}}
-\symbolentry{\texttt{]}}{\tok{RBRACK}}{\nb{Corchete derecho.}}
-\symbolentry{\texttt{,}}{\tok{COMMA}}{\nb{Coma.}}
-\symbolentry{\texttt{;}}{\tok{SEMICOLON}}{\nb{Punto y coma (separador de instrucciones opcional).}}
-\symbolentry{\texttt{..}}{\tok{RANGE}}{\nb{Para rangos, p.ej. \texttt{[1..10]}.}}
-\symbolentry{\texttt{:=}}{\tok{ASSIGN}}{\nb{Asignaci\'on.}}
-\symbolentry{\texttt{\&\&}}{\tok{AND}}{\nb{Conjunci\'on.}}
-\symbolentry{\texttt{||}}{\tok{OR}}{\nb{Disyunci\'on.}}
-\symbolentry{\texttt{<-}}{\tok{GETS}}{\nb{Para inicializar campos, p.ej. \texttt{Coord(x <- 1, y <- 2)}.}}
-\symbolentry{\texttt{|}}{\tok{PIPE}}{\nb{Para actualizar campos, p.ej. \texttt{Coord(c | x <- 2)}.}}
-\symbolentry{\texttt{->}}{\tok{ARROW}}{\nb{Usado en las ramas de un \texttt{switch}, p.ej. \texttt{Norte ->\ \{r := 1\}}.}}
-\symbolentry{\texttt{==}}{\tok{EQ}}{\nb{Comparaci\'on por igualdad.}}
-\symbolentry{\texttt{/=}}{\tok{NE}}{\nb{Comparaci\'on por desigualdad.}}
-\symbolentry{\texttt{<=}}{\tok{LE}}{\nb{Comparaci\'on por menor o igual.}}
-\symbolentry{\texttt{>=}}{\tok{GE}}{\nb{Comparaci\'on por mayor o igual.}}
-\symbolentry{\texttt{<}}{\tok{LT}}{\nb{Comparaci\'on por menor estricto.}}
-\symbolentry{\texttt{>}}{\tok{LT}}{\nb{Comparaci\'on por mayor estricto.}}
-\symbolentry{\texttt{++}}{\tok{CONCAT}}{\nb{Operador de concatenaci\'on de listas.}}
-\symbolentry{\texttt{+}}{\tok{PLUS}}{\nb{Suma de n\'umeros.}}
-\symbolentry{\texttt{-}}{\tok{MINUS}}{\nb{Resta de n\'umeros y menos unario.}}
-\symbolentry{\texttt{*}}{\tok{TIMES}}{\nb{Producto de n\'umeros.}}
-\symbolentry{\texttt{\^}}{\tok{POW}}{\nb{Potencia.}}
-\end{tabularx}\bigskip
 
 \subsection{Pragmas}
 
@@ -217,8 +158,9 @@ procedure P() {
 \end{verbatim}
 El parser idealmente deber\'ia reportar que hay un error de sintaxis en la regi\'on \texttt{B}.
 
-\subsection{Gram\'atica}
-Los s\'imbolos no terminales se describen con su nombre \s{enCursiva}.
+\subsection{Producciones de la gram\'atica}
+
+Los s\'imbolos no terminales se describen con su nombre \nonterminal{enCursiva}.
 Las producciones se escriben siguiendo las convenciones usuales de EBNF.
 La gram\'atica es liberal en algunos sentidos. En particular:
 \begin{itemize}
@@ -230,7 +172,7 @@ el \texttt{return} \'unicamente aparezca como \'ultima instrucci\'on del bloque,
 es una restricci\'on que se posterga para la etapa de chequeo sem\'antico
 ({\em lint}).
 \item Se admite el gui\'on bajo (\chr{\_}) como un posible patr\'on en el lado
-izquierdo de las ramas de un \texttt{switch} y en el lado izquierdo de las ramas de un.
+izquierdo de las ramas de un \texttt{switch} y en el lado izquierdo de las ramas de un
 \texttt{interactive program}.
 En una lista de ramas deber\'ia haber un \'unico gui\'on bajo, y deber\'ia ser el \'ultimo
 patr\'on de la lista pero esto, de nuevo, se relega a la etapa de lint.
@@ -244,304 +186,10 @@ en las producciones, sino en la tabla de precedencia.
 en t\'erminos, factores, \'atomos, etc., tal como se hace en la gram\'atica oficial).
 \bigskip
 
-\produccion{\s{start}}{\s{definition}*}
+% El siguiente tex se genera a partir de 02-grammar.json usando gendoc.py.
+\input{02-grammar.tex}
 
-\produccion{\s{definition}}{
-\s{defProgram}
-\ALT
-\s{defInteractiveProgram}
-\ALT
-\s{defProcedure}
-\ALT
-\s{defFunction}
-\ALT
-\s{defType}
-}
-
-\produccion{\s{defProgram}}{
-  \tok{PROGRAM} \s{stmtBlock}
-}
-
-\produccion{\s{defInteractiveProgram}}{
-  \tok{INTERACTIVE} \tok{PROGRAM} \tok{LBRACE} \s{stmtSwitchBranch}* \tok{RBRACE}
-}
-
-\produccion{\s{defProcedure}}{
-  \tok{PROCEDURE} \tok{LPAREN} \s{loweridSeq} \tok{RPAREN} \s{stmtBlock}
-}
-
-\produccion{\s{defFunction}}{
-  \tok{FUNCTION} \tok{LPAREN} \s{loweridSeq} \tok{RPAREN} \s{stmtBlock}
-}
-
-\produccion{\s{defType}}{
-  \tok{TYPE} \tok{UPPERID} \tok{IS} \tok{RECORD} \tok{LBRACE} \s{fieldDeclaration}* \tok{RBRACE}
-\ALT
-  \tok{TYPE} \tok{UPPERID} \tok{IS} \tok{VARIANT} \tok{LBRACE} \s{constructorDeclaration}* \tok{RBRACE}
-}
-
-\produccion{\s{constructorDeclaration}}{
-  \tok{CASE} \tok{UPPERID} \tok{LBRACE} \s{fieldDeclaration}* \tok{RBRACE}
-}
-
-\produccion{\s{fieldDeclaration}}{
-  \tok{FIELD} \tok{LOWERID}
-}
-
-\produccion{\s{loweridSeq}}{
-  \EMPTY
-\ALT
-  \s{\nonEmpty{loweridSeq}}
-}
-
-\produccion{\s{\nonEmpty{loweridSeq}}}{
-  \tok{LOWERID} (\tok{COMMA} \s{\nonEmpty{loweridSeq}})?
-}
-
-\noindent {\bf Statements.}
-
-\produccion{\s{statement}}{
-  \s{stmtBlock}
-\ALT
-  \s{stmtReturn}
-\ALT
-  \s{stmtIf}
-\ALT
-  \s{stmtRepeat}
-\ALT
-  \s{stmtForeach}
-\ALT
-  \s{stmtWhile}
-\ALT
-  \s{stmtSwitch}
-\ALT
-  \s{stmtLet}
-\ALT
-  \s{stmtVariableAssignment}
-\ALT
-  \s{stmtProcedureCall}
-}
-
-\produccion{\s{stmtBlock}}{
-  \tok{LBRACE} (\s{statement} \tok{SEMICOLON}?)* \tok{RBRACE}
-}
-
-\produccion{\s{stmtReturn}}{
-  \tok{RETURN} \tok{LPAREN} \s{expressionSeq} \tok{RPAREN}
-}
-
-\produccion{\s{stmtIf}}{
-  \tok{IF} \tok{LPAREN} \s{expression} \tok{RPAREN} 
-           \tok{THEN}? \s{stmtBlock}
-           (\tok{ELSE} \s{stmtBlock})?
-}
-
-\produccion{\s{stmtRepeat}}{
-  \tok{REPEAT} \tok{LPAREN} \s{expression} \tok{RPAREN} \s{stmtBlock}
-}
-
-\produccion{\s{stmtForeach}}{
-  \tok{FOREACH} \tok{LOWERID} \tok{IN} \s{expression} \s{stmtBlock}
-}
-
-\produccion{\s{stmtWhile}}{
-  \tok{WHILE} \tok{LPAREN} \s{expression} \tok{RPAREN} \s{stmtBlock}
-}
-
-\produccion{\s{stmtSwitch}}{
-  \tok{SWITCH} \tok{LPAREN} \s{expression} \tok{RPAREN} \tok{TO}? \tok{LBRACE} \s{stmtSwitchBranch}* \tok{RBRACE}
-}
-
-\produccion{\s{stmtSwitchBranch}}{
-  \s{pattern} \tok{ARROW} \s{stmtBlock}
-}
-
-\produccion{\s{stmtLet}}{
-  \tok{LET} \s{stmtVariableAssignment}
-\ALT
-  \tok{LET} \s{stmtTupleAssignment}
-}
-
-\produccion{\s{stmtVariableAssignment}}{
-  \tok{LOWERID} \tok{ASSIGN} \s{expression}
-}
-
-\produccion{\s{stmtTupleAssignment}}{
-  \tok{LPAREN} \tok{RPAREN} \tok{ASSIGN} \s{expression}
-\ALT
-  \tok{LPAREN} \tok{LOWERID} \tok{COMMA} \s{\nonEmpty{loweridSeq}} \tok{RPAREN} \tok{ASSIGN} \s{expression}
-}
-
-\produccion{\s{stmtProcedureCall}}{
-  \tok{UPPERID} \tok{LPAREN} \s{expressionSeq} \tok{RPAREN}
-}
-
-\noindent {\bf Patterns.}
-
-\produccion{\s{pattern}}{
-  \s{patternWildcard}
-\ALT
-  \s{patternConstructor}
-\ALT
-  \s{patternTuple}
-\ALT
-  \s{patternTimeout}
-}
-
-\produccion{\s{patternWildcard}}{
-  \tok{UNDERSCORE}
-}
-
-\produccion{\s{patternConstructor}}{
-  \tok{UPPERID} (\tok{LPAREN} \s{loweridSeq} \tok{RPAREN})?
-}
-
-\produccion{\s{patternTuple}}{
-  \tok{LPAREN} \tok{RPAREN}
-\ALT
-  \tok{LPAREN} \tok{LOWERID} \tok{COMMA} \s{\nonEmpty{loweridSeq}} \tok{RPAREN}
-}
-
-\produccion{\s{patternTimeout}}{
-  \tok{TIMEOUT} \tok{LPAREN} \tok{NUM} \tok{RPAREN}
-}
-
-
-\noindent {\bf Expressions.}
-
-\produccion{\s{expression}}{
-  \s{exprAtom}
-\ALT
-  \s{expression} \s{infixOperator} \s{expression}
-\ALT
-  \s{prefixOperator} \s{expression}
-\ALT
-  \tok{LPAREN} \s{expression} \tok{RPAREN}
-}
-
-\produccion{\s{exprAtom}}{
-  \s{exprVariable}
-\ALT
-  \s{exprFunctionCall}
-\ALT
-  \s{exprConstantNumber}
-\ALT
-  \s{exprConstantString}
-\ALT
-  \s{exprList}
-\ALT
-  \s{exprRange}
-\ALT
-  \s{exprTuple}
-\ALT
-  \s{exprConstructor}
-\ALT
-  \s{exprConstructorUpdate}
-}
-
-\produccion{\s{exprVariable}}{
-  \tok{LOWERID}
-}
-
-\produccion{\s{exprFunctionCall}}{
-  \tok{LOWERID} \tok{LPAREN} \s{expressionSeq} \tok{RPAREN}
-}
-
-\produccion{\s{exprConstantNumber}}{
-  \tok{NUM}
-}
-
-\produccion{\s{exprConstantString}}{
-  \tok{STRING}
-}
-
-\produccion{\s{exprList}}{
-  \tok{LBRACK} \s{expressionSeq} \tok{RBRACK}
-}
-
-\produccion{\s{exprRange}}{
-  \tok{LBRACK} \s{expression} \tok{RANGE} \s{expression} \tok{RBRACK}
-\ALT
-  \tok{LBRACK} \s{expression} \tok{COMMA} \s{expression} \tok{RANGE} \s{expression} \tok{RBRACK}
-}
-
-\produccion{\s{exprTuple}}{
-  \tok{LPAREN} \tok{RPAREN}
-\ALT
-  \tok{LPAREN} \s{expression} \tok{COMMA} \s{\nonEmpty{expressionSeq}} \tok{RPAREN}
-}
-
-\produccion{\s{exprConstructor}}{
-  \tok{UPPERID} (\tok{LPAREN} \s{fieldBindingSeq} \tok{RPAREN})?
-}
-
-\produccion{\s{exprConstructorUpdate}}{
-  \tok{UPPERID} \tok{LPAREN} \s{expression} \tok{PIPE} \s{fieldBindingSeq} \tok{RPAREN}
-}
-
-\produccion{\s{fieldBinding}}{
-  \tok{LOWERID} \tok{GETS} \s{expression}
-}
-
-\produccion{\s{fieldBindingSeq}}{
-  \EMPTY
-\ALT
-  \s{\nonEmpty{fieldBindingSeq}}
-}
-
-\produccion{\s{\nonEmpty{fieldBindingSeq}}}{
-  \s{fieldBinding} (\tok{COMMA} \s{\nonEmpty{fieldBindingSeq}})?
-}
-
-\produccion{\s{infixOperator}}{
-  \tok{OR}
-\ALTA
-  \tok{AND}
-\ALTA
-  \tok{EQ}
-\ALTA
-  \tok{NE}
-\ALTA
-  \tok{LE}
-\ALTA
-  \tok{GE}
-\ALTA
-  \tok{LT}
-\ALTA
-  \tok{GT}
-\ALTA
-  \tok{CONCAT}
-\ALT
-  \tok{PLUS}
-\ALTA
-  \tok{MINUS}
-\ALTA
-  \tok{TIMES}
-\ALTA
-  \tok{DIV}
-\ALTA
-  \tok{MOD}
-\ALTA
-  \tok{POW}
-}
-
-\produccion{\s{prefixOperator}}{
-  \tok{MINUS}
-\ALT
-  \tok{NOT}
-}
-
-\produccion{\s{expressionSeq}}{
-  \EMPTY
-\ALT
-  \s{\nonEmpty{expressionSeq}}
-}
-
-\produccion{\s{\nonEmpty{expressionSeq}}}{
-  \s{expression} (\tok{COMMA} \s{\nonEmpty{expressionSeq}})?
-}
-
-\subsubsection{Precedencia de operadores}
+\subsection{Precedencia de operadores}
 
 Los operadores se organizan seg\'un la siguiente tabla.
 Cada fila corresponde a un nivel de precedencia, ordenados de menor a mayor precedencia.
@@ -552,30 +200,30 @@ operador binario no asociativo ({\bf Infix}),
 operador unario prefijo ({\bf Prefix}).
 
 \begin{itemize}
-\item {\bf InfixR:} \tok{OR} (\texttt{||})
-\item {\bf InfixR:} \tok{AND} (\texttt{\&\&})
-\item {\bf Prefix:} \tok{NOT} (\texttt{not})
+\item {\bf InfixR:} \token{OR} (\texttt{||})
+\item {\bf InfixR:} \token{AND} (\texttt{\&\&})
+\item {\bf Prefix:} \token{NOT} (\texttt{not})
 \item {\bf Infix:}
-  \tok{EQ} (\texttt{==})
-  \tok{NE} (\texttt{/=})
-  \tok{LE} (\texttt{<=})
-  \tok{GE} (\texttt{>=})
-  \tok{LT} (\texttt{<})
-  \tok{GT} (\texttt{>})
+  \token{EQ} (\texttt{==})
+  \token{NE} (\texttt{/=})
+  \token{LE} (\texttt{<=})
+  \token{GE} (\texttt{>=})
+  \token{LT} (\texttt{<})
+  \token{GT} (\texttt{>})
 \item {\bf InfixL:}
-  \tok{CONCAT} (\texttt{++})
+  \token{CONCAT} (\texttt{++})
 \item {\bf InfixL:}
-  \tok{PLUS} (\texttt{+})
-  \tok{MINUS} (\texttt{-})
+  \token{PLUS} (\texttt{+})
+  \token{MINUS} (\texttt{-})
 \item {\bf InfixL:}
-  \tok{TIMES} (\texttt{*})
+  \token{TIMES} (\texttt{*})
 \item {\bf InfixL:}
-  \tok{DIV} (\texttt{div})
-  \tok{MOD} (\texttt{mod})
+  \token{DIV} (\texttt{div})
+  \token{MOD} (\texttt{mod})
 \item {\bf InfixR:}
-  \tok{POW} (\texttt{\^})
+  \token{POW} (\texttt{\^})
 \item {\bf Prefix:}
-  \tok{MINUS} (\texttt{-}, menos unario)
+  \token{MINUS} (\texttt{-}, menos unario)
 \end{itemize}
 
 \subsection{\'Arbol de sintaxis abstracta}
@@ -606,7 +254,7 @@ recursivamente de la siguiente manera:
             el primero es una expresi\'on que representa la condici\'on
             del if,
             el segundo es un comando que representa la rama \texttt{then},
-            y el tercero puede ser \texttt{null} (si la rama \texttt{else})
+            y el tercero puede ser \texttt{null} (si la rama \texttt{else}
             se encuentra ausente), o un comando que representa la rama \texttt{else}.
       \end{itemize}
 \item Como se mencion\'o arriba, en algunos (pocos) casos
@@ -633,81 +281,10 @@ representan un comando if-then-else.
 En JavaScript, su clase asociada se llama \texttt{ASTStmtIf},
 y su tag asociado es el s\'imbolo \texttt{N\_StmtIf}.
 
-\typedecl{\type{ID}}{String}
-\typedecl{\type{NUM}}{Int}
-\typedecl{\type{STRING}}{String}
-\datadecl{\type{Main}}{\ast{Main}(definitions : [\type{Definition}])}
-\datadecl{\type{Definition}}{
-  \ast{DefProgram}(body : \type{Statement})
-\ALT
-  \ast{DefInteractiveProgram}(branches : [\type{SwitchBranch}])
-\ALT
-  \ast{DefProcedure}(name : \type{ID}, parameters : [\type{ID}], body : \type{Statement})
-\ALT
-  \ast{DefFunction}(name : \type{ID}, parameters : [\type{ID}], body : \type{Statement})
-\ALT
-  \ast{DefType}(typeName : \type{ID}, constructorDeclarations : [\type{ConstructorDeclaration}])
-}
-\datadecl{\type{Statement}}{
-  \ast{StmtBlock}(statements : [\type{Statement}])
-\ALT
-  \ast{StmtReturn}(result : \type{Expression})
-\ALT
-  \ast{StmtIf}(condition : \type{Expression}, thenBlock : \type{Expression}, elseBlock : \type{Expression}?)
-\ALT
-  \ast{StmtRepeat}(times : \type{Expression}, body : \type{Statement})
-\ALT
-  \ast{StmtForeach}(index : \type{ID}, range : \type{Expression}, body : \type{Statement})
-\ALT
-  \ast{StmtWhile}(condition : \type{Expression}, body : \type{Statement})
-\ALT
-  \ast{StmtSwitch}(subject : \type{Expression}, branches : [\type{SwitchBranch}])
-\ALT
-  \ast{StmtAssignVariable}(variable : \type{ID}, value : \type{Expression})
-\ALT
-  \ast{StmtAssignTuple}(variables : [\type{ID}], value : \type{Expression})
-\ALT
-  \ast{StmtProcedureCall}(procedureName : [\type{ID}], args : [\type{Expression}])
-}
-\datadecl{\type{SwitchBranch}}{
-  \ast{SwitchBranch}(pattern : \type{Pattern}, body : \type{Expression})
-}
-\datadecl{\type{Pattern}}{
-  \ast{PatternWildcard}()
-\ALT
-  \ast{PatternConstructor}(constructorName : \type{ID}, parameters : [\type{ID}])
-\ALT
-  \ast{PatternTuple}(parameters : [\type{ID}])
-\ALT
-  \ast{PatternTimeout}(timeout : \type{NUM})
-}
-\datadecl{\type{Expression}}{
-  \ast{ExprVariable}(variableName : \type{ID})
-\ALT
-  \ast{ExprConstantNumber}(number : \type{NUM})
-\ALT
-  \ast{ExprConstantString}(string : \type{STRING})
-\ALT
-  \ast{ExprList}(elements : [\type{Expression}])
-\ALT
-  \ast{ExprRange}(first : \type{Expression}, second : \type{Expression}?, last : \type{Expression})
-\ALT
-  \ast{ExprTuple}(elements : [\type{Expression}])
-\ALT
-  \ast{ExprConstructor}(constructorName : \type{ID}, fieldBindings : [\type{FieldBinding}])
-\ALT
-  \ast{ExprConstructorUpdate}(constructorName : \type{ID}, original : \type{Expression}, fieldBindings : [\type{FieldBinding}])
-\ALT
-  \ast{ExprFunctionCall}(functionName : \type{ID}, args : [\type{Expression}])
-}
-\datadecl{\type{ConstructorDeclaration}}{
-  \ast{ConstructorDeclaration}(constructorName : \type{ID}, fieldNames : [\type{ID}])
-}
-\datadecl{\type{FieldBinding}}{
-  \ast{FieldBinding}(fieldName : \type{ID}, value : \type{Expression})
-}
+% El siguiente tex se genera a partir de 03-ast.json usando gendoc.py.
+\input{03-ast.tex}
 
-\section{Linter}
+\section{An\'alisis sem\'antico}
 
 La etapa de an\'alisis sem\'antico (o {\em linting}) verifica de manera est\'atica que el programa cumpla las siguientes condiciones.
 \bigskip
@@ -880,5 +457,81 @@ La etapa de an\'alisis sem\'antico (o {\em linting}) verifica de manera est\'ati
 \item El n\'umero de argumentos pasados a un campo (usado como funci\'on observadora) \DEBE ser exactamente 1.
 \end{itemize}
 
+\section{M\'aquina virtual}
+
+Un programa en Gobstones/XGobstones se compila a una serie de instrucciones para una m\'aquina
+virtual {\em ad hoc}. La implementaci\'on de un compilador y una m\'aquina virtual,
+en lugar de un mero int\'erprete recursivo, agrega bastante complejidad a la base de c\'odigo,
+y es razonable preguntarse hasta qu\'e punto hacer un compilador no es {\em overkill}.
+
+La principal raz\'on para contar con un compilador en este caso no tiene que ver con cuestiones de
+eficiencia, sino con la posibilidad de tener representado expl\'icitamente el estado de
+ejecuci\'on de un programa.
+Esto permite:
+\begin{enumerate}
+\item Hacer un {\em step} controlado del programa,
+      para poder visualizar el avance paso a paso de la ejecuci\'on.
+\item Potencialmente pausar y continuar la ejecuci\'on de un programa.
+\item Ejecutar programas que potencialmente se cuelgan abort\'andolos por medio de diferentes
+      criterios de {\em timeout}.
+\end{enumerate}
+Esta funcionalidad no se puede implementar de manera directa en un int\'erprete recursivo
+(las posibles implementaciones, por ejemplo usando continuaciones, son
+dif\'iciles de entender y mantener).
+
+El c\'odigo para la m\'aquina virtual es una instancia de la clase \texttt{Code},
+que b\'asicamente consta de una lista de instrucciones. Las instrucciones est\'an
+basadas en una arquitectura sencilla ``orientada a pila''.
+
+El estado de ejecuci\'on de un programa consta de los siguientes datos:
+\begin{itemize}
+\item Un c\'odigo (\texttt{Code}) que, como dijimos, es b\'asicamente una lista de instrucciones.
+\item Una pila no vac\'ia de estados globales.
+      El estado global actual es el estado en el tope de la pila.
+      En Gobstones/XGobstones el estado global corresponde al tablero,
+      pero podr\'ia corresponder a otras entidades mutables en otras variantes
+      concebibles del lenguaje.
+      Cada vez que se ingresa a una funci\'on definida por el usuario,
+      el estado global actual se copia y se mete en la pila de estados globales
+      (con la instrucci\'on \instruction{SaveState}).
+      Cada vez que finaliza una funci\'on definida por el usuario,
+      se saca el estado global actual del tope de la pila de estados globales
+      (con la instrucci\'on \instruction{RestoreState}).
+      Esto permite implementar la sem\'antica de Gobstones,
+      de acuerdo con la cual las funciones no tienen efectos (todos sus efectos
+      se deshacen).
+\item Una ``pila de llamadas'' (\texttt{callStack}).
+      La pila de llamadas es una pila no vac\'ia de {\em frames}.
+      Un {\em frame} es el estado local
+      o contexto de ejecuci\'on de la rutina actual (tambi\'en conocido como
+      {\em stack frame} o {\em registro de activaci\'on} en la literatura).
+      Un {\em frame} es una instancia de la
+      clase \texttt{Frame} y consta de los siguientes datos:
+      \begin{itemize}
+      \item El {\em instruction pointer}, que es un \'indice dentro de la lista de instrucciones.
+      \item Una pila de valores locales.
+      \item Un diccionario de nombres locales, que asocia los nombres de
+            par\'ametros, \'indices y variables a un valor.
+      \end{itemize}
+\end{itemize}
+Cuando decimos ``el {\em instruction pointer}''
+nos referimos al {\em instruction pointer} del {\em frame} que est\'a en el tope de la pila de llamadas.
+De igual modo, cuando decimos ``la pila''
+nos referimos a la pila del {\em frame} que est\'a en el tope de la pila de llamadas.
+\'Idem para el diccionario de nombres locales.
+
+\subsection{Instrucciones}
+
+Las instrucciones de la m\'aquina virtual se describen a continuaci\'on:
+
+% El siguiente tex se genera a partir de 04-instructions.json usando gendoc.py.
+\input{04-instructions.tex}
+
+\subsection{Primitivas}
+
+Los tipos, procedimientos y funciones disponibles en el lenguaje de manera primitiva se listan a continuaci\'on:
+
+% El siguiente tex se genera a partir de 04-instructions.json usando gendoc.py.
+\input{05-builtins.tex}
 
 \end{document}

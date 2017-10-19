@@ -24,7 +24,7 @@ import {
   ASTStmtProcedureCall,
   /* Patterns */
   ASTPatternWildcard,
-  ASTPatternConstructor,
+  ASTPatternStructure,
   ASTPatternTuple,
   ASTPatternTimeout,
   /* Expressions */
@@ -34,8 +34,8 @@ import {
   ASTExprList,
   ASTExprRange,
   ASTExprTuple,
-  ASTExprConstructor,
-  ASTExprConstructorUpdate,
+  ASTExprStructure,
+  ASTExprStructureUpdate,
   ASTExprFunctionCall,
   /* SwitchBranch */
   ASTSwitchBranch,
@@ -379,7 +379,7 @@ describe('Parser: expressions', () => {
 
   });
 
-  describe('Constructor instantiation expression', () => {
+  describe('Structure creation expression', () => {
 
     it('Accept constructor with no arguments, no parentheses', () => {
       let parser = new Parser(
@@ -392,7 +392,7 @@ describe('Parser: expressions', () => {
           new ASTStmtBlock([
             new ASTStmtAssignVariable(
               tok(T_LOWERID, 'x'),
-              new ASTExprConstructor(tok(T_UPPERID, 'Norte'), [])
+              new ASTExprStructure(tok(T_UPPERID, 'Norte'), [])
             )
           ])
         )
@@ -410,7 +410,7 @@ describe('Parser: expressions', () => {
           new ASTStmtBlock([
             new ASTStmtAssignVariable(
               tok(T_LOWERID, 'x'),
-              new ASTExprConstructor(tok(T_UPPERID, 'Norte'), [])
+              new ASTExprStructure(tok(T_UPPERID, 'Norte'), [])
             )
           ])
         )
@@ -501,7 +501,7 @@ describe('Parser: expressions', () => {
           new ASTStmtBlock([
             new ASTStmtAssignVariable(
               tok(T_LOWERID, 'c'),
-              new ASTExprConstructor(tok(T_UPPERID, 'Coord'), [
+              new ASTExprStructure(tok(T_UPPERID, 'Coord'), [
                 new ASTFieldBinding(
                   tok(T_LOWERID, 'x'),
                   new ASTExprConstantNumber(tok(T_NUM, '1'))
@@ -524,7 +524,7 @@ describe('Parser: expressions', () => {
           new ASTStmtBlock([
             new ASTStmtAssignVariable(
               tok(T_LOWERID, 'c'),
-              new ASTExprConstructor(tok(T_UPPERID, 'Coord'), [
+              new ASTExprStructure(tok(T_UPPERID, 'Coord'), [
                 new ASTFieldBinding(
                   tok(T_LOWERID, 'x'),
                   new ASTExprConstantNumber(tok(T_NUM, '1'))
@@ -551,7 +551,7 @@ describe('Parser: expressions', () => {
           new ASTStmtBlock([
             new ASTStmtAssignVariable(
               tok(T_LOWERID, 'c'),
-              new ASTExprConstructor(tok(T_UPPERID, 'Coord'), [
+              new ASTExprStructure(tok(T_UPPERID, 'Coord'), [
                 new ASTFieldBinding(
                   tok(T_LOWERID, 'x'),
                   new ASTExprConstantNumber(tok(T_NUM, '1'))
@@ -611,10 +611,10 @@ describe('Parser: expressions', () => {
           new ASTStmtBlock([
             new ASTStmtAssignVariable(
               tok(T_LOWERID, 'c'),
-              new ASTExprConstructor(tok(T_UPPERID, 'Box'), [
+              new ASTExprStructure(tok(T_UPPERID, 'Box'), [
                 new ASTFieldBinding(
                   tok(T_LOWERID, 'left'),
-                  new ASTExprConstructor(tok(T_UPPERID, 'Coord'), [
+                  new ASTExprStructure(tok(T_UPPERID, 'Coord'), [
                     new ASTFieldBinding(
                       tok(T_LOWERID, 'x'),
                       new ASTExprConstantNumber(tok(T_NUM, '10'))
@@ -627,7 +627,7 @@ describe('Parser: expressions', () => {
                 ),
                 new ASTFieldBinding(
                   tok(T_LOWERID, 'right'),
-                  new ASTExprConstructor(tok(T_UPPERID, 'Coord'), [
+                  new ASTExprStructure(tok(T_UPPERID, 'Coord'), [
                     new ASTFieldBinding(
                       tok(T_LOWERID, 'x'),
                       new ASTExprConstantNumber(tok(T_NUM, '11'))
@@ -705,7 +705,7 @@ describe('Parser: expressions', () => {
 
   });
 
-  describe('Constructor update expression', () => {
+  describe('Structure update expression', () => {
 
     it('Accept constructor update', () => {
       let parser = new Parser(
@@ -720,7 +720,7 @@ describe('Parser: expressions', () => {
           new ASTStmtBlock([
             new ASTStmtAssignVariable(
               tok(T_LOWERID, 'c1'),
-              new ASTExprConstructorUpdate(
+              new ASTExprStructureUpdate(
                 tok(T_UPPERID, 'Coord'),
                 new ASTExprVariable(tok(T_LOWERID, 'c0')),
                 [
@@ -733,7 +733,7 @@ describe('Parser: expressions', () => {
             ),
             new ASTStmtAssignVariable(
               tok(T_LOWERID, 'c2'),
-              new ASTExprConstructorUpdate(
+              new ASTExprStructureUpdate(
                 tok(T_UPPERID, 'Coord'),
                 new ASTExprVariable(tok(T_LOWERID, 'c1')),
                 [
@@ -750,7 +750,7 @@ describe('Parser: expressions', () => {
             ),
             new ASTStmtAssignVariable(
               tok(T_LOWERID, 'c3'),
-              new ASTExprConstructorUpdate(
+              new ASTExprStructureUpdate(
                 tok(T_UPPERID, 'Coord'),
                 new ASTExprVariable(tok(T_LOWERID, 'c2')),
                 [

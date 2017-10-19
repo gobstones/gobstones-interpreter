@@ -52,7 +52,7 @@ function isIdent(chr) {
   return isAlpha(chr) || isDigit(chr) || chr === '_' || chr === "'";
 }
 
-const KEYWORDS = {
+let KEYWORDS = {
   'program': T_PROGRAM,
   'interactive': T_INTERACTIVE,
   'procedure': T_PROCEDURE,
@@ -84,9 +84,10 @@ const KEYWORDS = {
   'field': T_FIELD,
   /* Default case in a switch/match */
   '_': T_UNDERSCORE,
-  /* Pattern for timeouts in an interactive program */
-  'TIMEOUT': T_TIMEOUT,
 };
+
+/* Pattern for timeouts in an interactive program */
+KEYWORDS[i18n('CONS:TIMEOUT')] = T_TIMEOUT;
 
 /* Note: the order is relevant so that the 'maximal munch' rule applies. */
 const SYMBOLS = [
@@ -248,25 +249,25 @@ export class Lexer {
         this._reader = this._reader.consumeCharacter();
         switch (c2) {
           case 'a':
-            result.push('\a');
+            result.push('\u0007');
             break;
           case 'b':
-            result.push('\b');
+            result.push('\u0008');
             break;
           case 'f':
-            result.push('\f');
+            result.push('\u000c');
             break;
           case 'n':
-            result.push('\n');
+            result.push('\u000a');
             break;
           case 'r':
-            result.push('\r');
+            result.push('\u000d');
             break;
           case 't':
-            result.push('\t');
+            result.push('\u0009');
             break;
           case 'v':
-            result.push('\v');
+            result.push('\u000b');
             break;
           default:
             result.push(c2);

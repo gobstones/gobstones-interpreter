@@ -316,7 +316,7 @@ export class SymbolTable {
 
     let constructorFields = {};
     let fieldNames = [];
-    let index = 0; 
+    let index = 0;
     for (let fieldName of constructorDeclaration.fieldNames) {
       if (fieldName.value in constructorFields) {
         throw new GbsSyntaxError(

@@ -24,7 +24,7 @@ import {
   ASTStmtProcedureCall,
   /* Patterns */
   ASTPatternWildcard,
-  ASTPatternConstructor,
+  ASTPatternStructure,
   ASTPatternTuple,
   ASTPatternTimeout,
   /* Expressions */
@@ -34,8 +34,8 @@ import {
   ASTExprList,
   ASTExprRange,
   ASTExprTuple,
-  ASTExprConstructor,
-  ASTExprConstructorUpdate,
+  ASTExprStructure,
+  ASTExprStructureUpdate,
   ASTExprFunctionCall,
   /* SwitchBranch */
   ASTSwitchBranch,
@@ -778,21 +778,21 @@ describe('Parser: statements', () => {
               new ASTExprVariable(tok(T_LOWERID, 'foo')),
               [
                 new ASTSwitchBranch(
-                  new ASTPatternConstructor(
+                  new ASTPatternStructure(
                     tok(T_UPPERID, 'Norte'),
                     []
                   ),
                   new ASTStmtBlock([])
                 ),
                 new ASTSwitchBranch(
-                  new ASTPatternConstructor(
+                  new ASTPatternStructure(
                     tok(T_UPPERID, 'Este'),
                     []
                   ),
                   new ASTStmtBlock([])
                 ),
                 new ASTSwitchBranch(
-                  new ASTPatternConstructor(
+                  new ASTPatternStructure(
                     tok(T_UPPERID, 'Sur'),
                     []
                   ),
@@ -828,35 +828,35 @@ describe('Parser: statements', () => {
               new ASTExprVariable(tok(T_LOWERID, 'foo')),
               [
                 new ASTSwitchBranch(
-                  new ASTPatternConstructor(
+                  new ASTPatternStructure(
                     tok(T_UPPERID, 'INIT'),
                     []
                   ),
                   new ASTStmtBlock([])
                 ),
                 new ASTSwitchBranch(
-                  new ASTPatternConstructor(
+                  new ASTPatternStructure(
                     tok(T_UPPERID, 'Leaf'),
                     [tok(T_LOWERID, 'x')]
                   ),
                   new ASTStmtBlock([])
                 ),
                 new ASTSwitchBranch(
-                  new ASTPatternConstructor(
+                  new ASTPatternStructure(
                     tok(T_UPPERID, 'Norte'),
                     []
                   ),
                   new ASTStmtBlock([])
                 ),
                 new ASTSwitchBranch(
-                  new ASTPatternConstructor(
+                  new ASTPatternStructure(
                     tok(T_UPPERID, 'Cons'),
                     [tok(T_LOWERID, 'x'), tok(T_LOWERID, 'xs')]
                   ),
                   new ASTStmtBlock([])
                 ),
                 new ASTSwitchBranch(
-                  new ASTPatternConstructor(
+                  new ASTPatternStructure(
                     tok(T_UPPERID, 'A'),
                     [
                       tok(T_LOWERID, 'foo'),

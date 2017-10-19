@@ -20,7 +20,7 @@ import {
   N_StmtProcedureCall,
   /* Patterns */
   N_PatternWildcard,
-  N_PatternConstructor,
+  N_PatternStructure,
   N_PatternTuple,
   N_PatternTimeout,
   /* Expressions */
@@ -30,8 +30,8 @@ import {
   N_ExprList,
   N_ExprRange,
   N_ExprTuple,
-  N_ExprConstructor,
-  N_ExprConstructorUpdate,
+  N_ExprStructure,
+  N_ExprStructureUpdate,
   N_ExprFunctionCall,
   /* SwitchBranch: pattern -> body */
   N_SwitchBranch,
@@ -142,7 +142,7 @@ export class Linter {
 
   _lintDefProgram(definition) {
     /* Lint body */
-    this._lintStmtBlock(definition.body, true/*allowReturn*/);
+    this._lintStmtBlock(definition.body, true /* allowReturn */);
 
     /* Remove all local names */
     this._symtable.exitScope();
@@ -150,9 +150,11 @@ export class Linter {
 
   _lintDefInteractiveProgram(definition) {
     /* Lint all branches */
-    this._lintSwitchBranches(definition.branches, true/*isInteractiveProgram*/);
+    this._lintSwitchBranches(
+      definition.branches, true /* isInteractiveProgram */
+    );
   }
-  
+
   _lintDefProcedure(definition) {
     /* Check that it does not have a return statement */
     if (isBlockWithReturn(definition.body)) {
@@ -168,7 +170,7 @@ export class Linter {
     }
 
     /* Lint body */
-    this._lintStmtBlock(definition.body, false/*!allowReturn*/);
+    this._lintStmtBlock(definition.body, false /* !allowReturn */);
 
     /* Remove all local names */
     this._symtable.exitScope();
@@ -189,7 +191,7 @@ export class Linter {
     }
 
     /* Lint body */
-    this._lintStmtBlock(definition.body, true/*allowReturn*/);
+    this._lintStmtBlock(definition.body, true /* allowReturn */);
 
     /* Remove all local names */
     this._symtable.exitScope();
@@ -205,7 +207,7 @@ export class Linter {
     switch (statement.tag) {
       case N_StmtBlock:
         /* Do not allow return in nested blocks */
-        return this._lintStmtBlock(statement, false/*!allowReturn*/);
+        return this._lintStmtBlock(statement, false /* !allowReturn */);
       case N_StmtReturn:
         return this._lintStmtReturn(statement);
       case N_StmtIf:
@@ -278,9 +280,11 @@ export class Linter {
 
   _lintStmtSwitch(statement) {
     this._lintExpression(statement.subject);
-    this._lintSwitchBranches(statement.branches, false/*isInteractiveProgram*/);
+    this._lintSwitchBranches(
+      statement.branches, false /* !isInteractiveProgram */
+    );
   }
-  
+
   _lintSwitchBranches(branches, isInteractiveProgram) {
     /* Check that each pattern is well-formed */
     for (let branch of branches) {
@@ -304,7 +308,7 @@ export class Linter {
 
   /* Check that there is at most one wildcard at the end */
   _switchBranchesCheckWildcard(branches) {
-    let i = 0; 
+    let i = 0;
     const n = branches.length;
     for (let branch of branches) {
       if (branch.pattern.tag === N_PatternWildcard && i !== n - 1) {
@@ -325,12 +329,12 @@ export class Linter {
     let coveredTimeout = false;
     for (let branch of branches) {
       switch (branch.pattern.tag) {
-        case N_PatternConstructor:
+        case N_PatternStructure:
           let constructorName = branch.pattern.constructorName.value;
           if (constructorName in coveredConstructors) {
             throw new GbsSyntaxError(
               branch.pattern.startPos, branch.pattern.endPos,
-              i18n('errmsg:constructor-pattern-repeats-constructor')(
+              i18n('errmsg:structure-pattern-repeats-constructor')(
                 constructorName
               )
             );
@@ -342,7 +346,7 @@ export class Linter {
           if (arity in coveredTuples) {
             throw new GbsSyntaxError(
               branch.pattern.startPos, branch.pattern.endPos,
-              i18n('errmsg:constructor-pattern-repeats-tuple-arity')(arity)
+              i18n('errmsg:structure-pattern-repeats-tuple-arity')(arity)
             );
           }
           coveredTuples[arity] = true;
@@ -351,7 +355,7 @@ export class Linter {
           if (coveredTimeout) {
             throw new GbsSyntaxError(
               branch.pattern.startPos, branch.pattern.endPos,
-              i18n('errmsg:constructor-pattern-repeats-timeout')
+              i18n('errmsg:structure-pattern-repeats-timeout')
             );
           }
           coveredTimeout = true;
@@ -408,11 +412,11 @@ export class Linter {
 
   /* Recursively lint the body of each branch. Locally bind parameters. */
   _lintSwitchBranchBody(branch) {
-    for (var parameter of branch.pattern.parameters) {
+    for (let parameter of branch.pattern.parameters) {
       this._symtable.addNewLocalName(parameter, LocalParameter);
     }
     this._lintStatement(branch.body);
-    for (var parameter of branch.pattern.parameters) {
+    for (let parameter of branch.pattern.parameters) {
       this._symtable.removeLocalName(parameter);
     }
   }
@@ -422,7 +426,7 @@ export class Linter {
     switch (pattern.tag) {
       case N_PatternWildcard:
         return null;
-      case N_PatternConstructor:
+      case N_PatternStructure:
         return this._symtable.constructorType(pattern.constructorName.value);
       case N_PatternTuple:
         return '_TUPLE_' + pattern.parameters.length.toString();
@@ -431,7 +435,7 @@ export class Linter {
       default:
         throw Error(
                 'Linter: pattern "'
-              + Symbol.keyFor(branch.tag)
+              + Symbol.keyFor(pattern.tag)
               + '" not implemented.'
               );
     }
@@ -504,8 +508,8 @@ export class Linter {
     switch (pattern.tag) {
       case N_PatternWildcard:
         return this._lintPatternWildcard(pattern);
-      case N_PatternConstructor:
-        return this._lintPatternConstructor(pattern);
+      case N_PatternStructure:
+        return this._lintPatternStructure(pattern);
       case N_PatternTuple:
         return this._lintPatternTuple(pattern);
       case N_PatternTimeout:
@@ -513,7 +517,7 @@ export class Linter {
       default:
         throw Error(
                 'Linter: pattern "'
-               + Symbol.keyFor(branch.tag)
+               + Symbol.keyFor(pattern.tag)
                + '" not implemented.'
               );
     }
@@ -523,7 +527,7 @@ export class Linter {
     /* No restrictions */
   }
 
-  _lintPatternConstructor(pattern) {
+  _lintPatternStructure(pattern) {
     let name = pattern.constructorName.value;
 
     /* Check that the constructor exists */
@@ -542,7 +546,7 @@ export class Linter {
     if (received > 0 && expected !== received) {
       throw new GbsSyntaxError(
         pattern.startPos, pattern.endPos,
-        i18n('errmsg:constructor-pattern-arity-mismatch')(
+        i18n('errmsg:structure-pattern-arity-mismatch')(
           name,
           expected,
           received
@@ -575,10 +579,10 @@ export class Linter {
         return this._lintExprRange(expression);
       case N_ExprTuple:
         return this._lintExprTuple(expression);
-      case N_ExprConstructor:
-        return this._lintExprConstructor(expression);
-      case N_ExprConstructorUpdate:
-        return this._lintExprConstructorUpdate(expression);
+      case N_ExprStructure:
+        return this._lintExprStructure(expression);
+      case N_ExprStructureUpdate:
+        return this._lintExprStructureUpdate(expression);
       case N_ExprFunctionCall:
         return this._lintExprFunctionCall(expression);
       default:
@@ -623,21 +627,21 @@ export class Linter {
     }
   }
 
-  _lintExprConstructor(expression) {
-    this._lintExprConstructorOrUpdate(expression, null);
+  _lintExprStructure(expression) {
+    this._lintExprStructureOrUpdate(expression, null);
   }
 
-  _lintExprConstructorUpdate(expression) {
-    this._lintExprConstructorOrUpdate(expression, expression.original);
+  _lintExprStructureUpdate(expression) {
+    this._lintExprStructureOrUpdate(expression, expression.original);
   }
 
-  /* Check a fresh constructor instantiation: C(x1 <- e1, ..., xN <- eN)
-   * or a constructor update: C(original | x1 <- e1, ..., xN <- eN).
+  /* Check a structure construction: C(x1 <- e1, ..., xN <- eN)
+   * or a structure update: C(original | x1 <- e1, ..., xN <- eN).
    *
-   * If original is null, it is a fresh instantiation.
+   * If original is null, it is a structure construction.
    * If original is not null, it is the updated expression.
    * */
-  _lintExprConstructorOrUpdate(expression, original) {
+  _lintExprStructureOrUpdate(expression, original) {
     /* Check that constructor exists */
     let constructorName = expression.constructorName.value;
     if (!this._symtable.isConstructor(constructorName)) {
@@ -647,13 +651,13 @@ export class Linter {
       return;
     }
 
-    this._checkConstructorTypeNotEvent(constructorName, expression);
-    this._checkConstructorNoRepeatedFields(constructorName, expression);
-    this._checkConstructorBindingsCorrect(constructorName, expression);
+    this._checkStructureTypeNotEvent(constructorName, expression);
+    this._checkStructureNoRepeatedFields(constructorName, expression);
+    this._checkStructureBindingsCorrect(constructorName, expression);
 
-    /* If it is a fresh instantiation, check that the fields are complete */
+    /* If it is a structure construction, check that the fields are complete */
     if (original === null) {
-      this._checkConstructorBindingsComplete(constructorName, expression);
+      this._checkStructureBindingsComplete(constructorName, expression);
     }
 
     /* If it is an update, recursively check the original expression */
@@ -667,16 +671,16 @@ export class Linter {
     }
   }
 
-  /* Check that there are no repeated fields in a constructor
-   * instantiation/update */
-  _checkConstructorNoRepeatedFields(constructorName, expression) {
+  /* Check that there are no repeated fields in a structure
+   * construction/update */
+  _checkStructureNoRepeatedFields(constructorName, expression) {
     let declaredFields = expression.fieldNames();
     let seen = {};
     for (let fieldName of declaredFields) {
       if (fieldName in seen) {
         throw new GbsSyntaxError(
           expression.startPos, expression.endPos,
-          i18n('errmsg:constructor-instantiation-repeated-field')(
+          i18n('errmsg:structure-construction-repeated-field')(
            constructorName,
            fieldName
           )
@@ -686,16 +690,16 @@ export class Linter {
     }
   }
 
-  /* Check that all bindings in a constructor instantiation/update
+  /* Check that all bindings in a structure construction/update
    * correspond to existing fields */
-  _checkConstructorBindingsCorrect(constructorName, expression) {
+  _checkStructureBindingsCorrect(constructorName, expression) {
     let declaredFields = expression.fieldNames();
     let constructorFields = this._symtable.constructorFields(constructorName);
     for (let fieldName of declaredFields) {
-      if (constructorFields.indexOf(fieldName) == -1) {
+      if (constructorFields.indexOf(fieldName) === -1) {
         throw new GbsSyntaxError(
           expression.startPos, expression.endPos,
-          i18n('errmsg:constructor-instantiation-invalid-field')(
+          i18n('errmsg:structure-construction-invalid-field')(
            constructorName,
            fieldName
           )
@@ -704,16 +708,16 @@ export class Linter {
     }
   }
 
-  /* Check that bindings in a constructor instantiation/update
+  /* Check that bindings in a structure construction/update
    * cover all existing fields */
-  _checkConstructorBindingsComplete(constructorName, expression) {
+  _checkStructureBindingsComplete(constructorName, expression) {
     let declaredFields = expression.fieldNames();
     let constructorFields = this._symtable.constructorFields(constructorName);
     for (let fieldName of constructorFields) {
-      if (declaredFields.indexOf(fieldName) == -1) {
+      if (declaredFields.indexOf(fieldName) === -1) {
         throw new GbsSyntaxError(
           expression.startPos, expression.endPos,
-          i18n('errmsg:constructor-instantiation-missing-field')(
+          i18n('errmsg:structure-construction-missing-field')(
            constructorName,
            fieldName
           )
@@ -722,14 +726,14 @@ export class Linter {
     }
   }
 
-  /* Check that a constructor instantiation/update does not involve
+  /* Check that a structure construction/update does not involve
    * constructors of the _EVENT type, which should only be
    * handled implicitly in an interactive program. */
-  _checkConstructorTypeNotEvent(constructorName, expression) {
+  _checkStructureTypeNotEvent(constructorName, expression) {
     if (this._symtable.constructorType(constructorName) === '_EVENT') {
       throw new GbsSyntaxError(
         expression.startPos, expression.endPos,
-        i18n('errmsg:constructor-instantiation-cannot-be-an-event')(
+        i18n('errmsg:structure-construction-cannot-be-an-event')(
          constructorName
         )
       );

@@ -1,0 +1,102 @@
+[
+  ["type", "Bool",
+    ["True"],
+    ["False"]
+  ],
+  ["type", "Color",
+    ["Azul"],
+    ["Negro"],
+    ["Rojo"],
+    ["Verde"]
+  ],
+  ["type", "Dir",
+    ["Norte"],
+    ["Este"],
+    ["Sur"],
+    ["Oeste"]
+  ],
+  ["procedure", "Mover", ["dir"],
+   "El cabezal debe poder moverse hacia la dirección indicada.",
+   "Mueve el cabezal hacia la dirección indicada."
+  ],
+  ["procedure", "Poner", ["color"],
+   "",
+   "Pone una bolita del color indicado en la posición del tablero donde se encuentra el cabezal."
+  ],
+  ["procedure", "Sacar", ["color"],
+   "Debe haber una bolita del color indicado en la posición del tablero donde se encuentra el cabezal.",
+   "Saca una bolita del color indicado en la posición del tablero donde se encuentra el cabezal."
+  ],
+  ["procedure", "IrAlBorde", ["dir"],
+   "",
+   "Mueve el cabezal hacia el extremo de la dirección indicada."
+  ],
+  ["procedure", "VaciarTablero", [],
+   "",
+   "Vacía el contenido de todas las celdas del tablero."
+  ],
+  ["function", "puedeMover", ["dir"],
+    "",
+    "Denota verdadero si el cabezal puede moverse hacia la dirección indicada."
+  ],
+  ["function", "nroBolitas", ["color"],
+    "",
+    "Denota el número de bolitas del color indicado en la posición donde se encuentra el cabezal."
+  ],
+  ["function", "hayBolitas", ["color"],
+    "",
+    "Denota verdadero si hay bolitas del color indicado en la posición donde se encuentra el cabezal."
+  ],
+  ["function", "siguiente", ["x"],
+    "El parámetro x debe ser un entero, booleano, color o dirección.",
+    "Denota el siguiente de x en el orden correspondiente al tipo de x."
+  ],
+  ["function", "previo", ["x"],
+    "El parámetro x debe ser un entero, booleano, color o dirección.",
+    "Denota el anterior de x en el orden correspondiente al tipo de x."
+  ],
+  ["function", "opuesto", ["x"],
+    "El parámetro x debe ser un entero, booleano o dirección.",
+    "Denota el opuesto de x en el orden correspondiente al tipo de x."
+  ],
+  ["function", "minBool", [],
+    "",
+    "Denota el mínimo valor booleano."
+  ],
+  ["function", "maxBool", [],
+    "",
+    "Denota el máximo valor booleano."
+  ],
+  ["function", "minColor", [],
+    "",
+    "Denota el mínimo color."
+  ],
+  ["function", "maxBool", [],
+    "",
+    "Denota el máximo color."
+  ],
+  ["function", "minDir", [],
+    "",
+    "Denota la mínima dirección."
+  ],
+  ["function", "maxDir", [],
+    "",
+    "Denota la máxima dirección."
+  ],
+  ["function", "primero", ["lista"],
+    "La lista no puede ser vacía.",
+    "Denota la cabeza de la lista, es decir, su primer elemento."
+  ],
+  ["function", "resto", ["lista"],
+    "La lista no puede ser vacía.",
+    "Denota la cola de la lista, es decir, la lista que consta de todos los elementos excepto el primero."
+  ],
+  ["function", "comienzo", ["lista"],
+    "La lista no puede ser vacía.",
+    "Denota el comienzo de la lista, es decir, la lista que consta de todos los elementos excepto el último."
+  ],
+  ["function", "ultimo", ["lista"],
+    "La lista no puede ser vacía.",
+    "Denota el último elemento de la lista."
+  ]
+]

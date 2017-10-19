@@ -1,4 +1,4 @@
-import { GbsWarning, GbsSyntaxError } from './exceptions';
+import { GbsSyntaxError } from './exceptions';
 import { Lexer } from './lexer';
 import { i18n } from './i18n';
 import {
@@ -16,7 +16,6 @@ import {
   T_MINUS, T_TIMES, T_POW
 } from './token';
 import {
-  ASTNode,
   /* Main */
   ASTMain,
   /* Definitions */
@@ -38,7 +37,7 @@ import {
   ASTStmtProcedureCall,
   /* Patterns */
   ASTPatternWildcard,
-  ASTPatternConstructor,
+  ASTPatternStructure,
   ASTPatternTuple,
   ASTPatternTimeout,
   /* Expressions */
@@ -48,8 +47,8 @@ import {
   ASTExprList,
   ASTExprRange,
   ASTExprTuple,
-  ASTExprConstructor,
-  ASTExprConstructorUpdate,
+  ASTExprStructure,
+  ASTExprStructureUpdate,
   ASTExprFunctionCall,
   /* SwitchBranch */
   ASTSwitchBranch,
@@ -320,7 +319,7 @@ export class Parser {
   }
 
   _parseFieldNames() {
-    let fieldNames = []
+    let fieldNames = [];
     while (this._currentToken.tag === T_FIELD) {
       this._match(T_FIELD);
       fieldNames.push(this._parseLowerid());
@@ -393,7 +392,7 @@ export class Parser {
         this._match(T_SEMICOLON);
       }
     }
-    let endPos = this._currentToken.startPos; 
+    let endPos = this._currentToken.startPos;
     this._match(T_RBRACE);
     let result = new ASTStmtBlock(statements);
     result.startPos = startPos;
@@ -427,7 +426,7 @@ export class Parser {
     if (this._currentToken.tag === T_ELSE) {
       this._match(T_ELSE);
       elseBlock = this._parseStmtBlock();
-      endPos = elseBlock.endPos
+      endPos = elseBlock.endPos;
     } else {
       elseBlock = null;
       endPos = thenBlock.endPos;
@@ -447,7 +446,7 @@ export class Parser {
     let body = this._parseStmtBlock();
     let result = new ASTStmtRepeat(times, body);
     result.startPos = startPos;
-    result.endPos = body.endPos
+    result.endPos = body.endPos;
     return result;
   }
 
@@ -460,7 +459,7 @@ export class Parser {
     let body = this._parseStmtBlock();
     let result = new ASTStmtForeach(index, range, body);
     result.startPos = startPos;
-    result.endPos = body.endPos
+    result.endPos = body.endPos;
     return result;
   }
 
@@ -473,7 +472,7 @@ export class Parser {
     let body = this._parseStmtBlock();
     let result = new ASTStmtWhile(condition, body);
     result.startPos = startPos;
-    result.endPos = body.endPos
+    result.endPos = body.endPos;
     return result;
   }
 
@@ -500,9 +499,9 @@ export class Parser {
     let startPos = this._currentToken.startPos;
     this._match(T_LET);
     let result;
-    if (this._currentToken.tag == T_LOWERID) {
+    if (this._currentToken.tag === T_LOWERID) {
       result = this._parseStmtAssignVariable();
-    } else if (this._currentToken.tag == T_LPAREN) {
+    } else if (this._currentToken.tag === T_LPAREN) {
       result = this._parseStmtAssignTuple();
     } else {
       throw new GbsSyntaxError(
@@ -571,7 +570,7 @@ export class Parser {
       case T_UNDERSCORE:
         return this._parsePatternWildcard();
       case T_UPPERID:
-        return this._parsePatternConstructor();
+        return this._parsePatternStructure();
       case T_LPAREN:
         return this._parsePatternTuple();
       case T_TIMEOUT:
@@ -597,7 +596,7 @@ export class Parser {
     return result;
   }
 
-  _parsePatternConstructor() {
+  _parsePatternStructure() {
     let startPos = this._currentToken.startPos;
     let endPos = this._currentToken.startPos;
     let constructor = this._parseUpperid();
@@ -610,7 +609,7 @@ export class Parser {
     } else {
       parameters = [];
     }
-    let result = new ASTPatternConstructor(constructor, parameters);
+    let result = new ASTPatternStructure(constructor, parameters);
     result.startPos = startPos;
     result.endPos = endPos;
     return result;
@@ -653,7 +652,7 @@ export class Parser {
   _parseExpression() {
     return this._parseExprOperator(0);
   }
-  
+
   /* Read an expression of the given level.
    *
    * If the list OPERATORS of precedence levels has N elements, then:
@@ -710,7 +709,7 @@ export class Parser {
       return left;
     }
   }
-  
+
   _parseExprOperatorInfixL(level) {
     let result = this._parseExprOperator(level + 1);
     while (OPERATORS[level].isOperator(this._currentToken)) {
@@ -771,7 +770,7 @@ export class Parser {
       case T_STRING:
         return this._parseExprConstantString();
       case T_UPPERID:
-        return this._parseExprConstructorOrConstructorUpdate();
+        return this._parseExprStructureOrStructureUpdate();
       case T_LPAREN:
         return this._parseExprTuple();
       case T_LBRACK:
@@ -791,7 +790,7 @@ export class Parser {
     let id = this._parseLowerid();
     let result;
     let endPos;
-    if (this._currentToken.tag == T_LPAREN) {
+    if (this._currentToken.tag === T_LPAREN) {
       this._match(T_LPAREN);
       let args = this._parseExpressionSeq(T_RPAREN);
       result = new ASTExprFunctionCall(id, args);
@@ -826,10 +825,10 @@ export class Parser {
 
   /*
    * Parse any of the following constructions:
-   * (1) Constructor with no arguments: "Norte"
-   * (2) Constructor with no arguments and explicit parentheses: "Nil()"
-   * (3) Constructor with arguments: "Coord(x <- 1, y <- 2)"
-   * (4) Update constructor with arguments: "Coord(expression | x <- 2)"
+   * (1) Structure with no arguments: "Norte"
+   * (2) Structure with no arguments and explicit parentheses: "Nil()"
+   * (3) Structure with arguments: "Coord(x <- 1, y <- 2)"
+   * (4) Update structure with arguments: "Coord(expression | x <- 2)"
    *
    * Deciding between (3) and (4) unfortunately cannot be done with one
    * token of lookahead, so after reading the constructor and a left
@@ -841,20 +840,20 @@ export class Parser {
    *   and recover its name.
    * - If the next token is PIPE ("|") we are in case (4), and we go on.
    */
-  _parseExprConstructorOrConstructorUpdate() {
+  _parseExprStructureOrStructureUpdate() {
     let constructorName = this._parseUpperid();
     if (this._currentToken.tag !== T_LPAREN) {
-      /* Constructor with no arguments, e.g. "Norte" */
-      let result = new ASTExprConstructor(constructorName, []);
+      /* Structure with no arguments, e.g. "Norte" */
+      let result = new ASTExprStructure(constructorName, []);
       result.startPos = constructorName.startPos;
       result.endPos = constructorName.endPos;
       return result;
     }
     this._match(T_LPAREN);
     if (this._currentToken.tag === T_RPAREN) {
-      /* Constructor with no arguments with explicit parentheses,
+      /* Structure with no arguments with explicit parentheses,
        * e.g. "Nil()" */
-      let result = new ASTExprConstructor(constructorName, []);
+      let result = new ASTExprStructure(constructorName, []);
       let endPos = this._currentToken.startPos;
       this._match(T_RPAREN);
       result.startPos = constructorName.startPos;
@@ -873,9 +872,9 @@ export class Parser {
             )
           );
         }
-        return this._parseConstructor(constructorName, subject.variableName);
+        return this._parseStructure(constructorName, subject.variableName);
       case T_PIPE:
-        return this._parseConstructorUpdate(constructorName, subject);
+        return this._parseStructureUpdate(constructorName, subject);
       case T_COMMA: case T_RPAREN:
         /* Issue a specific error message to deal with a common
          * programming error, namely calling a procedure name
@@ -907,14 +906,14 @@ export class Parser {
     }
   }
 
-  /* Parse a constructor   A(x1 <- expr1, ..., xN <- exprN)
+  /* Parse a structure   A(x1 <- expr1, ..., xN <- exprN)
    * where N >= 1,
    * assuming that  "A(x1" has already been read.
    *
    * - constructorName and fieldName1 correspond to "A" and "x1"
    *   respectively.
    */
-  _parseConstructor(constructorName, fieldName1) {
+  _parseStructure(constructorName, fieldName1) {
     /* Read "<- expr1" */
     this._match(T_GETS);
     let value1 = this._parseExpression();
@@ -929,21 +928,21 @@ export class Parser {
     /* Read ")" */
     let endPos = this._currentToken.startPos;
     this._match(T_RPAREN);
-    /* Return an ExprConstructor node */
-    let result = new ASTExprConstructor(constructorName, fieldBindings);
+    /* Return an ExprStructure node */
+    let result = new ASTExprStructure(constructorName, fieldBindings);
     result.startPos = constructorName.startPos;
     result.endPos = endPos;
     return result;
   }
 
-  /* Parse a constructor update  A(e | x1 <- expr1, ..., xN <- exprN)
+  /* Parse a structure update  A(e | x1 <- expr1, ..., xN <- exprN)
    * where N >= 1,
    * assuming that "A(e" has already been read.
    *
    * constructorName and original correspond to "A" and "e"
    * respectively.
    */
-  _parseConstructorUpdate(constructorName, original) {
+  _parseStructureUpdate(constructorName, original) {
     /* Read "|" */
     this._match(T_PIPE);
     /* Read "x2 <- expr2, ..., xN <- exprN" (this might be empty) */
@@ -954,8 +953,8 @@ export class Parser {
     /* Read ")" */
     let endPos = this._currentToken.startPos;
     this._match(T_RPAREN);
-    /* Return an ExprConstructorUpdate node */
-    let result = new ASTExprConstructorUpdate(
+    /* Return an ExprStructureUpdate node */
+    let result = new ASTExprStructureUpdate(
                       constructorName, original, fieldBindings
                  );
     result.startPos = constructorName.startPos;
@@ -1065,7 +1064,7 @@ export class Parser {
     this._match(T_RPAREN);
 
     let result;
-    if (expressionList.length == 1) {
+    if (expressionList.length === 1) {
       result = expressionList[0];
     } else {
       result = new ASTExprTuple(expressionList);
@@ -1078,7 +1077,7 @@ export class Parser {
   /** SwitchBranch **/
 
   _parseSwitchBranches() {
-    let branches = []
+    let branches = [];
     while (this._currentToken.tag !== T_RBRACE) {
       branches.push(this._parseSwitchBranch());
     }

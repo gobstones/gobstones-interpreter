@@ -28,6 +28,10 @@ const config = {
     libraryTarget: 'umd',
     umdNamedDefine: true
   },
+  target: 'node',
+  node: {
+    fs: 'empty'
+  },
   module: {
     rules: [
       {

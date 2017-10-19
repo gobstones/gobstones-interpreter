@@ -86,6 +86,13 @@ const ES = {
   'LocalIndex': 'índice',
   'LocalParameter': 'parámetro',
 
+  /* Descriptions of value types */
+  'V_Integer': 'un número',
+  'V_String': 'una cadena',
+  'V_Tuple': 'una tupla',
+  'V_List': 'una lista',
+  'V_Structure': 'una estructura',
+
   /* Lexer */
   'errmsg:unclosed-multiline-comment':
     'El comentario se abre pero nunca se cierra.',
@@ -256,7 +263,7 @@ const ES = {
            + ES['<n>-arguments'](received) + '.';
     },
 
-  'errmsg:constructor-pattern-arity-mismatch':
+  'errmsg:structure-pattern-arity-mismatch':
     function (name, expected, received) {
       return 'El constructor "' + name + '" tiene '
            + ES['<n>-fields'](expected)
@@ -294,18 +301,18 @@ const ES = {
   'errmsg:wildcard-pattern-should-be-last':
     'El comodín "_" tiene que ser la última rama del switch.',
 
-  'errmsg:constructor-pattern-repeats-constructor':
+  'errmsg:structure-pattern-repeats-constructor':
     function (name) {
       return 'Hay dos ramas distintas para el constructor "' + name + '".';
     },
 
-  'errmsg:constructor-pattern-repeats-tuple-arity':
+  'errmsg:structure-pattern-repeats-tuple-arity':
     function (arity) {
       return 'Hay dos ramas distintas para las tuplas de ' + arity.toString()
            + ' componentes.';
     },
 
-  'errmsg:constructor-pattern-repeats-timeout':
+  'errmsg:structure-pattern-repeats-timeout':
     'Hay dos ramas distintas para el TIMEOUT.',
 
   'errmsg:pattern-does-not-match-type':
@@ -321,31 +328,214 @@ const ES = {
   'errmsg:patterns-in-switch-must-not-be-events':
     'Los patrones de un "switch" no pueden ser eventos.',
 
-  'errmsg:constructor-instantiation-repeated-field':
+  'errmsg:structure-construction-repeated-field':
     function (constructorName, fieldName) {
       return 'El campo "' + fieldName + '" está repetido en '
            + 'la instanciación del constructor "' + constructorName + '".';
     },
 
-  'errmsg:constructor-instantiation-invalid-field':
+  'errmsg:structure-construction-invalid-field':
     function (constructorName, fieldName) {
       return 'El campo "' + fieldName + '" no es un campo válido '
            + 'para el constructor "' + constructorName + '".';
     },
 
-  'errmsg:constructor-instantiation-missing-field':
+  'errmsg:structure-construction-missing-field':
     function (constructorName, fieldName) {
       return 'Falta darle valor al campo "' + fieldName + '" '
            + 'del constructor "' + constructorName + '".';
     },
 
-  'errmsg:constructor-instantiation-cannot-be-an-event':
+  'errmsg:structure-construction-cannot-be-an-event':
     function (constructorName) {
       return 'El constructor "' + constructorName + '" corresponde a un '
            + 'evento, y solamente se puede manejar implícitamente '
            + 'en un programa interactivo (el usuario no puede construir '
            + 'instancias).';
     },
+
+  /* Runtime errors (virtual machine) */
+  'errmsg:undefined-variable':
+    function (variableName) {
+      return 'La variable "' + variableName + '" no está definida.';
+    },
+
+  'errmsg:too-few-arguments':
+    function (routineName) {
+      return 'Faltan argumentos para "' + routineName + '".';
+    },
+
+  'errmsg:expected-structure-but-got':
+    function (constructorName, valueTag) {
+      return 'Se esperaba una estructura construida '
+           + 'con el constructor "' + constructorName + '", '
+           + 'pero se recibió ' + valueTag + '.';
+    },
+
+  'errmsg:expected-constructor-but-got':
+    function (constructorNameExpected, constructorNameReceived) {
+      return 'Se esperaba una estructura construida '
+           + 'con el constructor "'
+           + constructorNameExpected + '", '
+           + 'pero el constructor recibido es '
+           + constructorNameReceived + '".';
+    },
+
+  'errmsg:incompatible-types-on-assignment':
+    function (variableName, oldType, newType) {
+      return 'La variable "' + variableName + '" '
+           + 'contenía un valor de tipo ' + oldType + ', '
+           + 'no se le puede asignar un valor de tipo ' + newType + '".';
+    },
+
+  'errmsg:incompatible-types-on-list-creation':
+    function (index, oldType, newType) {
+      return 'Todos los elementos de una lista deben ser del mismo tipo. '
+           + 'Los elementos son de tipo ' + oldType + ', '
+           + 'pero el elemento en la posición ' + index.toString() + ' '
+           + 'es de tipo ' + newType + '.';
+    },
+
+  'errmsg:incompatible-types-on-structure-update':
+    function (fieldName, oldType, newType) {
+      return 'El campo "' + fieldName + '" es de tipo ' + oldType + '. '
+           + 'No se lo puede actualizar con un valor de tipo ' + newType + '.';
+    },
+
+  'errmsg:expected-tuple-value-but-got':
+    function (receivedType) {
+      return 'Se esperaba una tupla pero se recibió un valor '
+           + 'de tipo ' + receivedType + '.';
+    },
+
+  'errmsg:tuple-component-out-of-bounds':
+    function (size, index) {
+      return 'Índice fuera de rango. '
+           + 'La tupla es de tamaño ' + size.toString() + ' y '
+           + 'el índice es ' + index.toString() + '.';
+    },
+
+  'errmsg:expected-structure-value-but-got':
+    function (receivedType) {
+      return 'Se esperaba una estructura pero se recibió un valor '
+           + 'de tipo ' + receivedType + '.';
+    },
+
+  'errmsg:structure-field-not-present':
+    function (fieldNames, missingFieldName) {
+      return 'La estructura no tiene un campo "' + missingFieldName + '". '
+           + 'Los campos son: [' + fieldNames.join(', ') + '].';
+    },
+
+  'errmsg:primitive-does-not-exist':
+    function (primitiveName) {
+      return 'La operación primitiva "' + primitiveName + '" '
+           + 'no existe o no está disponible.';
+    },
+
+  'errmsg:primitive-arity-mismatch':
+    function (name, expected, received) {
+      return 'La operación "' + name + '" espera recibir '
+           + ES['<n>-parameters'](expected)
+           + ' pero se la invoca con '
+           + ES['<n>-arguments'](received) + '.';
+    },
+
+  'errmsg:primitive-argument-type-mismatch':
+    function (name, parameterIndex, expectedType, receivedType) {
+      return 'El parámetro #' + parameterIndex.toString() + ' '
+           + 'de la operación "' + name + '" '
+           + 'debería ser de tipo ' + expectedType + ' '
+           + 'pero el argumento es de tipo ' + receivedType + '.';
+    },
+
+  'errmsg:expected-value-of-type-but-got':
+    function (expectedType, receivedType) {
+      return 'Se esperaba un valor de tipo ' + expectedType + ' '
+           + 'pero se recibió un valor de tipo ' + receivedType + '.';
+    },
+
+  'errmsg:expected-value-of-some-type-but-got':
+    function (expectedTypes, receivedType) {
+      return 'Se esperaba un valor de alguno de los siguientes tipos: '
+           + expectedTypes.join(', ')
+           + '; pero se recibió un valor de tipo ' + receivedType + '.';
+    },
+
+  'errmsg:expected-values-to-have-compatible-types':
+    function (type1, type2) {
+      return 'Los tipos de los valores deben ser compatibles, '
+           + 'pero uno es de tipo ' + type1 + ' '
+           + 'y el otro es de tipo ' + type2 + '.';
+    },
+
+  'errmsg:switch-does-not-match':
+    'El valor analizado no coincide con ninguna de las ramas del switch.',
+
+  'errmsg:cannot-divide-by-zero':
+    'No se puede dividir por cero.',
+
+  'errmsg:list-cannot-be-empty':
+    'La lista no puede ser vacía.',
+
+  /* Board operations */
+  'errmsg:cannot-move-to':
+    function (dirName) {
+      return 'No se puede mover hacia la dirección ' + dirName +
+             ': cae afuera del tablero.';
+    },
+
+  'errmsg:cannot-remove-stone':
+    function (dirName) {
+      return 'No se puede sacar una bolita de color ' + dirName +
+             ': no hay bolitas de ese color.';
+    },
+
+  /* Runtime */
+  'CONS:TIMEOUT': 'TIMEOUT',
+
+  'TYPE:Integer': 'Integer',
+  'TYPE:String': 'String',
+  'TYPE:Tuple': 'Tuple',
+  'TYPE:List': 'List',
+  'TYPE:Bool': 'Bool',
+  'CONS:False': 'False',
+  'CONS:True': 'True',
+
+  'TYPE:Color': 'Color',
+  'CONS:Color0': 'Azul',
+  'CONS:Color1': 'Negro',
+  'CONS:Color2': 'Rojo',
+  'CONS:Color3': 'Verde',
+
+  'TYPE:Dir': 'Dir',
+  'CONS:Dir0': 'Norte',
+  'CONS:Dir1': 'Este',
+  'CONS:Dir2': 'Sur',
+  'CONS:Dir3': 'Oeste',
+
+  'PRIM:PutStone': 'Poner',
+  'PRIM:RemoveStone': 'Sacar',
+  'PRIM:Move': 'Mover',
+  'PRIM:GoToEdge': 'IrAlBorde',
+  'PRIM:EmptyBoardContents': 'VaciarTablero',
+  'PRIM:numStones': 'nroBolitas',
+  'PRIM:anyStones': 'hayBolitas',
+  'PRIM:canMove': 'puedeMover',
+  'PRIM:next': 'siguiente',
+  'PRIM:prev': 'previo',
+  'PRIM:opposite': 'opuesto',
+  'PRIM:minBool': 'minBool',
+  'PRIM:maxBool': 'maxBool',
+  'PRIM:minColor': 'minColor',
+  'PRIM:maxColor': 'maxColor',
+  'PRIM:minDir': 'minDir',
+  'PRIM:maxDir': 'maxDir',
+
+  'PRIM:head': 'primero',
+  'PRIM:tail': 'resto',
+  'PRIM:init': 'ultimo',
+  'PRIM:last': 'comienzo',
 
   /* Helpers */
   '<alternative>':

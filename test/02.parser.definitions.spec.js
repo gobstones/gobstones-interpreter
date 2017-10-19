@@ -24,7 +24,7 @@ import {
   ASTStmtProcedureCall,
   /* Patterns */
   ASTPatternWildcard,
-  ASTPatternConstructor,
+  ASTPatternStructure,
   ASTPatternTuple,
   ASTPatternTimeout,
   /* Expressions */
@@ -34,8 +34,8 @@ import {
   ASTExprList,
   ASTExprRange,
   ASTExprTuple,
-  ASTExprConstructor,
-  ASTExprConstructorUpdate,
+  ASTExprStructure,
+  ASTExprStructureUpdate,
   ASTExprFunctionCall,
   /* SwitchBranch */
   ASTSwitchBranch,
@@ -189,7 +189,7 @@ describe('Parser: definitions', () => {
       let parser = new Parser(
                      'interactive program {\n'
                    + '  INIT -> {}\n'
-                   + '  TIMEOUT(500) -> {}\n'
+                   + '  ' + i18n('CONS:TIMEOUT') + '(500) -> {}\n'
                    + '  PRESS(x, y) -> {}\n'
                    + '  _ -> {}\n'
                    + '}\n'
@@ -197,7 +197,7 @@ describe('Parser: definitions', () => {
       expectAST(parser.parse(), [
         new ASTDefInteractiveProgram([
           new ASTSwitchBranch(
-            new ASTPatternConstructor(tok(T_UPPERID, 'INIT'), []),
+            new ASTPatternStructure(tok(T_UPPERID, 'INIT'), []),
             new ASTStmtBlock([])
           ),
           new ASTSwitchBranch(
@@ -205,7 +205,7 @@ describe('Parser: definitions', () => {
             new ASTStmtBlock([])
           ),
           new ASTSwitchBranch(
-            new ASTPatternConstructor(tok(T_UPPERID, 'PRESS'), [
+            new ASTPatternStructure(tok(T_UPPERID, 'PRESS'), [
               tok(T_LOWERID, 'x'),
               tok(T_LOWERID, 'y')
             ]),
