@@ -51,6 +51,9 @@ export class SymbolTable {
   constructor() {
     this._program = null;
 
+    /* true iff the program is interactive */
+    this._isInteractiveProgram = false;
+
     /* Each procedure name is mapped to its definition */
     this._procedures = {};
 
@@ -107,6 +110,10 @@ export class SymbolTable {
 
   get program() {
     return this._program;
+  }
+
+  isInteractiveProgram() {
+    return this._isInteractiveProgram;
   }
 
   isProcedure(name) {
@@ -224,6 +231,7 @@ export class SymbolTable {
 
   defInteractiveProgram(definition) {
     this.defProgram(definition);
+    this._isInteractiveProgram = true;
   }
 
   defProcedure(definition) {

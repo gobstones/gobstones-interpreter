@@ -33,7 +33,8 @@ export class Runner {
   constructor() {
     /* These are set after running a program once */
     this._ast = null;
-    this._symtable = null;
+    this._symtable = this._newSymtableWithPrimitives();
+    this._linter = new Linter(this._symtable);
     this._code = null;
     this._vm = null;
     this._result = null;
@@ -66,9 +67,12 @@ export class Runner {
     this._ast = new Parser(input).parse();
   }
 
+  enableLintCheck(linterCheckId, enabled) {
+    this._linter.enableCheck(linterCheckId, enabled);
+  }
+ 
   lint() {
-    let initialSymtable = this._newSymtableWithPrimitives();
-    this._symtable = new Linter(initialSymtable).lint(this._ast);
+    this._symtable = this._linter.lint(this._ast);
   }
 
   compile() {

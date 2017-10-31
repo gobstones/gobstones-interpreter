@@ -1,135 +1,87 @@
+/* Gobstones API for backwards compatibility with gs-weblang-core */
 import { RuntimeState } from './runtime.js';
 import { Runner } from './runner.js';
-import { readJboardFromFile, writeJboardToFile } from './board_formats.js';
 
 const fs = require('fs');
 
-function startsWith(string, prefix) {
-  return string.substring(0, prefix.length) === prefix;
-}
+class ParseResult {
 
-function readOptions(argv) {
-  let options = {
-    'arguments': [],
-    'initial-board': null,
-    'output-board': null,
-    'print-ast': false,
-    'print-code': false,
-    'help': false,
-  };
-  let i = 2;
-  while (i < argv.length) {
-    if (argv[i] === '-h' || argv[i] === '--help') {
-      options['help'] = true;
-    } else if (argv[i] === '-a' || argv[i] === '--ast') {
-      options['print-ast'] = true;
-    } else if (argv[i] === '-c' || argv[i] === '--code') {
-      options['print-code'] = true;
-    } else if (argv[i] === '-i' && i + 1 < argv.length) {
-      options['initial-board'] = argv[i + 1];
-      i++;
-    } else if (startsWith(argv[i], '--initial-board=')) {
-      options['initial-board'] = argv[i].substring('--initial-board='.length);
-    } else if (argv[i] === '-o' && i + 1 < argv.length) {
-      options['output-board'] = argv[i + 1];
-      i++;
-    } else if (startsWith(argv[i], '--output-board=')) {
-      options['output-board'] = argv[i].substring('--output-board='.length);
+  constructor(runner) {
+
+    this.program = {};
+    if (runner.symbolTable.isInteractiveProgram()) {
+      this.program.alias = 'interactiveProgram';
     } else {
-      options['arguments'].push(argv[i]);
+      this.program.alias = 'program';
     }
-    i++;
+    this.program.interpret = function (board) {
+      // TODO
+    };
+
+    this.declarations = []; // TODO
   }
-  return options;
+
 }
 
-function help() {
-  let helpMessage = [
-    'Usage:',
-    'gobstones-interpreter input.gbs',
-    '',
-    ' -a, --ast                   Print AST (do not run).',
-    ' -c, --code                  Print virtual machine code (do not run).',
-    ' -i, --initial-board=<file>  Load initial board. Default: empty 9x9.',
-    ' -o, --output-board=<file>   Save final board.',
-    ' -h, --help                  Display this help message.',
-  ];
-  console.log(helpMessage.join('\n'));
-}
-
-function printGbsException(exception) {
-  console.log(exception.message);
-  let startPos = [
-    exception.startPos.filename,
-    exception.startPos.line,
-    exception.startPos.column,
-  ].join(':');
-  let endPos = [
-    exception.endPos.line,
-    exception.endPos.column,
-  ].join(':');
-  console.log('At: ' + startPos + '--' + endPos);
-}
-
-function runProgram(options, filename) {
-  let contents = fs.readFileSync(filename, 'utf8');
-  try {
-    let inputs = {};
-    inputs[filename] = contents;
-    let runner = new Runner();
-
-    if (options['print-ast']) {
-      runner.parse(inputs);
-      runner.lint();
-      console.log(runner.abstractSyntaxTree.toString());
-      return;
-    }
-
-    if (options['print-code']) {
-      runner.parse(inputs);
-      runner.lint();
-      runner.compile();
-      console.log(runner.virtualMachineCode.toString());
-      return;
-    }
-
-    let initialState = new RuntimeState();
-    if (options['initial-board'] !== null) {
-      initialState.load(readJboardFromFile(options['initial-board']));
-    }
-
-    let output = runner.runState(inputs, initialState);
-    let finalState = output.state.dump();
-    console.log(JSON.stringify(finalState));
-    if (options['output-board'] !== null) {
-      writeJboardToFile(options['output-board'], finalState);
-    }
-    if (output.result !== null) {
-      /* The program has a return value */
-      console.log(output.result.toString());
-    }
-  } catch (exception) {
-    if (exception.isGobstonesException === undefined) {
-      throw exception;
-    }
-    printGbsException(exception);
+class ParseError {
+  constructor(exception) {
+    this.message = exception.message;
+    this.reason = {};
+    this.reason.code = 'TODO'; // TODO
+    this.reason.detail = [];   // TODO
+    this.on = {};
+    this.on.range = {};
+    this.on.range.start = {};
+    this.on.range.start.row = exception.startPos.line;
+    this.on.range.start.column = exception.startPos.column;
+    this.on.range.end = {};
+    this.on.range.end.row = exception.endPos.line;
+    this.on.range.end.column = exception.endPos.column;
+    this.on.region = exception.startPos.region;
   }
 }
 
-function main() {
-  let options = readOptions(process.argv);
+export class GobstonesInterpreterAPI {
 
-  if (options['help']) {
-    help();
-    return;
+  constructor() {
+
+    this.config = {};
+    this.config.setLanguage = function (code) {
+      // TODO
+    };
+    this.config.setInfiniteLoopTimeout = function (milliseconds) {
+      // TODO
+    };
+    this.config.setXGobstonesEnabled = function (isEnabled) {
+      // TODO
+    };
+
+    this.gbb = {};
+    this.gbb.read = function (gbb) {
+      // TODO
+    };
+    this.gbb.write = function (gbb) {
+      // TODO
+    };
+
+    this.parse = function (sourceCode) {
+      try {
+        let runner = new Runner();
+        runner.parse(sourceCode);
+        /* Do not check if there is a main 'program' present. */
+        runner.enableLintCheck(
+          'source-should-have-a-program-definition', false
+        );
+        runner.lint();
+        return new ParseResult(runner);
+      } catch (exception) {
+        if (exception.isGobstonesException === undefined) {
+          throw exception;
+        }
+        return new ParseError(exception)
+      }
+    };
   }
 
-  if (options['arguments'].length === 1) {
-    runProgram(options, options['arguments'][0]);
-  } else {
-    help();
-  }
 }
-
-main();
 
