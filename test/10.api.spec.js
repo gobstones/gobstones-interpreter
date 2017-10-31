@@ -34,6 +34,8 @@ describe('Gobstones API', () => {
 
   it('Parse syntax error', () => {
     let result = api().parse('program { P() }');
+    expect(result.reason.code).equals('undefined-procedure');
+    expect(result.reason.detail).deep.equals(['P']);
     expect(result.message).equals(i18n('errmsg:undefined-procedure')('P'));
     expect(result.on.range.start.row).equals(1);
     expect(result.on.range.start.column).equals(11);

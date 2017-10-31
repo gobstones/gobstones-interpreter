@@ -27,8 +27,8 @@ class ParseError {
   constructor(exception) {
     this.message = exception.message;
     this.reason = {};
-    this.reason.code = 'TODO'; // TODO
-    this.reason.detail = [];   // TODO
+    this.reason.code = exception.reason;
+    this.reason.detail = exception.args;
     this.on = {};
     this.on.range = {};
     this.on.range.start = {};

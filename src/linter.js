@@ -50,6 +50,10 @@ function isBlockWithReturn(stmt) {
       && stmt.statements.slice(-1)[0].tag === N_StmtReturn;
 }
 
+function fail(startPos, endPos, reason, args) {
+  throw new GbsSyntaxError(startPos, endPos, reason, args);
+}
+
 /* A semantic analyzer receives
  *   a symbol table (instance of SymbolTable)
  *   an abstract syntax tree (the output of a parser)
@@ -119,9 +123,9 @@ export class Linter {
     this._enabledLinterChecks[linterCheckId] = enabled;
   }
 
-  _lintCheck(linterCheckId, startPos, endPos, message) {
-    if (this._enabledLinterChecks[linterCheckId]) {
-      throw new GbsSyntaxError(startPos, endPos, message);
+  _lintCheck(startPos, endPos, reason, args) {
+    if (this._enabledLinterChecks[reason]) {
+      fail(startPos, endPos, reason, args);
     }
   }
 
@@ -137,9 +141,8 @@ export class Linter {
     /* The source should either be empty or have exactly one program */
     if (ast.definitions.length > 0 && this._symtable.program === null) {
       this._lintCheck(
-        'source-should-have-a-program-definition',
         ast.startPos, ast.endPos,
-        i18n('errmsg:source-should-have-a-program-definition')
+        'source-should-have-a-program-definition', []
       );
     }
 
@@ -207,9 +210,8 @@ export class Linter {
     /* Check that it does not have a return statement */
     if (isBlockWithReturn(definition.body)) {
       this._lintCheck(
-        'procedure-should-not-have-return',
         definition.startPos, definition.endPos,
-        i18n('errmsg:procedure-should-not-have-return')(definition.name.value)
+        'procedure-should-not-have-return', [definition.name.value]
       );
     }
 
@@ -229,9 +231,8 @@ export class Linter {
     /* Check that it has a return statement */
     if (!isBlockWithReturn(definition.body)) {
       this._lintCheck(
-        'function-should-have-return',
         definition.startPos, definition.endPos,
-        i18n('errmsg:function-should-have-return')(definition.name.value)
+        'function-should-have-return', [definition.name.value]
       );
     }
 
@@ -290,9 +291,8 @@ export class Linter {
       let returnAllowed = allowReturn && i === block.statements.length - 1;
       if (!returnAllowed && statement.tag === N_StmtReturn) {
         this._lintCheck(
-          'return-statement-not-allowed-here',
           statement.startPos, statement.endPos,
-          i18n('errmsg:return-statement-not-allowed-here')
+          'return-statement-not-allowed-here', []
         );
       }
       this._lintStatement(statement);
@@ -365,9 +365,8 @@ export class Linter {
       if (branch.pattern.tag === N_PatternWildcard && i !== n - 1) {
 
         this._lintCheck(
-          'wildcard-pattern-should-be-last',
           branch.pattern.startPos, branch.pattern.endPos,
-          i18n('errmsg:wildcard-pattern-should-be-last')
+          'wildcard-pattern-should-be-last', []
         );
       }
       i++;
@@ -386,11 +385,8 @@ export class Linter {
           let constructorName = branch.pattern.constructorName.value;
           if (constructorName in coveredConstructors) {
             this._lintCheck(
-              'structure-pattern-repeats-constructor',
               branch.pattern.startPos, branch.pattern.endPos,
-              i18n('errmsg:structure-pattern-repeats-constructor')(
-                constructorName
-              )
+              'structure-pattern-repeats-constructor', [constructorName]
             );
           }
           coveredConstructors[constructorName] = true;
@@ -399,9 +395,8 @@ export class Linter {
           let arity = branch.pattern.parameters.length;
           if (arity in coveredTuples) {
             this._lintCheck(
-              'structure-pattern-repeats-tuple-arity',
               branch.pattern.startPos, branch.pattern.endPos,
-              i18n('errmsg:structure-pattern-repeats-tuple-arity')(arity)
+              'structure-pattern-repeats-tuple-arity', [arity]
             );
           }
           coveredTuples[arity] = true;
@@ -409,9 +404,8 @@ export class Linter {
         case N_PatternTimeout:
           if (coveredTimeout) {
             this._lintCheck(
-              'structure-pattern-repeats-timeout',
               branch.pattern.startPos, branch.pattern.endPos,
-              i18n('errmsg:structure-pattern-repeats-timeout')
+              'structure-pattern-repeats-timeout', []
             );
           }
           coveredTimeout = true;
@@ -430,12 +424,11 @@ export class Linter {
         expectedType = patternType;
       } else if (patternType !== null && expectedType !== patternType) {
         this._lintCheck(
-          'pattern-does-not-match-type',
           branch.pattern.startPos, branch.pattern.endPos,
-          i18n('errmsg:pattern-does-not-match-type')(
+          'pattern-does-not-match-type', [
             i18n('<pattern-type>')(expectedType),
             i18n('<pattern-type>')(patternType)
-          )
+          ]
         );
       }
     }
@@ -447,9 +440,8 @@ export class Linter {
       let patternType = this._patternType(branch.pattern);
       if (patternType !== null && patternType !== '_EVENT') {
         this._lintCheck(
-          'patterns-in-interactive-program-must-be-events',
           branch.pattern.startPos, branch.pattern.endPos,
-          i18n('errmsg:patterns-in-interactive-program-must-be-events')
+          'patterns-in-interactive-program-must-be-events', []
         );
       }
     }
@@ -461,9 +453,8 @@ export class Linter {
       let patternType = this._patternType(branch.pattern);
       if (patternType === '_EVENT') {
         this._lintCheck(
-          'patterns-in-switch-must-not-be-events',
           branch.pattern.startPos, branch.pattern.endPos,
-          i18n('errmsg:patterns-in-switch-must-not-be-events')
+          'patterns-in-switch-must-not-be-events', []
         );
       }
     }
@@ -511,9 +502,8 @@ export class Linter {
       this._symtable.setLocalName(variable, LocalVariable);
       if (variable.value in variables) {
         this._lintCheck(
-          'repeated-variable-in-tuple-assignment',
           variable.startPos, variable.endPos,
-          i18n('errmsg:repeated-variable-in-tuple-assignment')(variable.value)
+          'repeated-variable-in-tuple-assignment', [variable.value]
         );
       }
       variables[variable.value] = true;
@@ -528,18 +518,16 @@ export class Linter {
     if (!this._symtable.isProcedure(name)) {
       if (this._symtable.isConstructor(name)) {
         this._lintCheck(
-          'constructor-used-as-procedure',
           statement.startPos, statement.endPos,
-          i18n('errmsg:constructor-used-as-procedure')(
+          'constructor-used-as-procedure', [
             name,
             this._symtable.constructorType(name)
-          )
+          ]
         );
       } else {
         this._lintCheck(
-          'undefined-procedure',
           statement.startPos, statement.endPos,
-          i18n('errmsg:undefined-procedure')(name)
+          'undefined-procedure', [name]
         );
       }
     }
@@ -549,13 +537,12 @@ export class Linter {
     let received = statement.args.length;
     if (expected !== received) {
       this._lintCheck(
-        'procedure-arity-mismatch',
         statement.startPos, statement.endPos,
-        i18n('errmsg:procedure-arity-mismatch')(
+        'procedure-arity-mismatch', [
           name,
           expected,
           received
-        )
+        ]
       );
     }
 
@@ -608,13 +595,12 @@ export class Linter {
     let received = pattern.parameters.length;
     if (received > 0 && expected !== received) {
       this._lintCheck(
-        'structure-pattern-arity-mismatch',
         pattern.startPos, pattern.endPos,
-        i18n('errmsg:structure-pattern-arity-mismatch')(
+        'structure-pattern-arity-mismatch', [
           name,
           expected,
           received
-        )
+        ]
       );
     }
   }
@@ -743,12 +729,11 @@ export class Linter {
     for (let fieldName of declaredFields) {
       if (fieldName in seen) {
         this._lintCheck(
-          'structure-construction-repeated-field',
           expression.startPos, expression.endPos,
-          i18n('errmsg:structure-construction-repeated-field')(
+          'structure-construction-repeated-field', [
            constructorName,
            fieldName
-          )
+          ]
         );
       }
       seen[fieldName] = true;
@@ -763,12 +748,11 @@ export class Linter {
     for (let fieldName of declaredFields) {
       if (constructorFields.indexOf(fieldName) === -1) {
         this._lintCheck(
-          'structure-construction-invalid-field',
           expression.startPos, expression.endPos,
-          i18n('errmsg:structure-construction-invalid-field')(
+          'structure-construction-invalid-field', [
            constructorName,
            fieldName
-          )
+          ]
         );
       }
     }
@@ -782,12 +766,11 @@ export class Linter {
     for (let fieldName of constructorFields) {
       if (declaredFields.indexOf(fieldName) === -1) {
         this._lintCheck(
-          'structure-construction-missing-field',
           expression.startPos, expression.endPos,
-          i18n('errmsg:structure-construction-missing-field')(
+          'structure-construction-missing-field', [
            constructorName,
            fieldName
-          )
+          ]
         );
       }
     }
@@ -799,11 +782,8 @@ export class Linter {
   _checkStructureTypeNotEvent(constructorName, expression) {
     if (this._symtable.constructorType(constructorName) === '_EVENT') {
       this._lintCheck(
-        'structure-construction-cannot-be-an-event',
         expression.startPos, expression.endPos,
-        i18n('errmsg:structure-construction-cannot-be-an-event')(
-         constructorName
-        )
+        'structure-construction-cannot-be-an-event', [constructorName]
       );
     }
   }
@@ -813,9 +793,8 @@ export class Linter {
     let name = expression.functionName.value;
     if (!this._symtable.isFunction(name) && !this._symtable.isField(name)) {
       this._lintCheck(
-        'undefined-function',
         expression.startPos, expression.endPos,
-        i18n('errmsg:undefined-function')(name)
+        'undefined-function', [name]
       );
     }
 
@@ -830,13 +809,12 @@ export class Linter {
     let received = expression.args.length;
     if (expected !== received) {
       this._lintCheck(
-        'function-arity-mismatch',
         expression.startPos, expression.endPos,
-        i18n('errmsg:function-arity-mismatch')(
+        'function-arity-mismatch', [
           name,
           expected,
           received
-        )
+        ]
       );
     }
 
@@ -855,24 +833,21 @@ export class Linter {
   _failExpectedConstructorButGot(startPos, endPos, name) {
     if (this._symtable.isType(name)) {
       this._lintCheck(
-        'type-used-as-constructor',
         startPos, endPos,
-        i18n('errmsg:type-used-as-constructor')(
+        'type-used-as-constructor', [
           name,
           this._symtable.typeConstructors(name)
-        )
+        ]
       );
     } else if (this._symtable.isProcedure(name)) {
       this._lintCheck(
-        'procedure-used-as-constructor',
         startPos, endPos,
-        i18n('errmsg:procedure-used-as-constructor')(name)
+        'procedure-used-as-constructor', [name]
       );
     } else {
       this._lintCheck(
-        'undeclared-constructor',
         startPos, endPos,
-        i18n('errmsg:undeclared-constructor')(name)
+        'undeclared-constructor', [name]
       );
     }
   }

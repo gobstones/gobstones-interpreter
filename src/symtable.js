@@ -43,6 +43,10 @@ class LocalNameDescriptor {
   }
 }
 
+function fail(startPos, endPos, reason, args) {
+  throw new GbsSyntaxError(startPos, endPos, reason, args);
+}
+
 /* A symbol table keeps track of definitions, associating:
  * - procedure and function names to their code
  * - type definitions, constructors, and fields
@@ -218,12 +222,12 @@ export class SymbolTable {
 
   defProgram(definition) {
     if (this._program !== null) {
-      throw new GbsSyntaxError(
+      fail(
         definition.startPos, definition.endPos,
-        i18n('errmsg:program-already-defined')(
+        'program-already-defined', [
           i18nPosition(this._program.startPos),
           i18nPosition(definition.startPos)
-        )
+        ]
       );
     }
     this._program = definition;
@@ -237,13 +241,13 @@ export class SymbolTable {
   defProcedure(definition) {
     let name = definition.name.value;
     if (name in this._procedures) {
-      throw new GbsSyntaxError(
+      fail(
         definition.name.startPos, definition.name.endPos,
-        i18n('errmsg:procedure-already-defined')(
+        'procedure-already-defined', [
           name,
           i18nPosition(this._procedures[name].startPos),
           i18nPosition(definition.startPos)
-        )
+        ]
       );
     }
     let parameters = [];
@@ -257,24 +261,24 @@ export class SymbolTable {
   defFunction(definition) {
     let name = definition.name.value;
     if (name in this._functions) {
-      throw new GbsSyntaxError(
+      fail(
         definition.name.startPos, definition.name.endPos,
-        i18n('errmsg:function-already-defined')(
+        'function-already-defined', [
           name,
           i18nPosition(this._functions[name].startPos),
           i18nPosition(definition.startPos)
-        )
+        ]
       );
     } else if (name in this._fields) {
       let fieldPos =
         this._constructors[this._fields[name][0].constructorName].startPos;
-      throw new GbsSyntaxError(
+      fail(
         definition.name.startPos, definition.name.endPos,
-        i18n('errmsg:function-and-field-cannot-have-the-same-name')(
+        'function-and-field-cannot-have-the-same-name', [
           name,
           i18nPosition(definition.startPos),
           i18nPosition(fieldPos)
-        )
+        ]
       );
     }
     let parameters = [];
@@ -288,13 +292,13 @@ export class SymbolTable {
   defType(definition) {
     let typeName = definition.typeName.value;
     if (typeName in this._types) {
-      throw new GbsSyntaxError(
+      fail(
         definition.typeName.startPos, definition.typeName.endPos,
-        i18n('errmsg:type-already-defined')(
+        'type-already-defined', [
           typeName,
           i18nPosition(this._types[typeName].startPos),
           i18nPosition(definition.startPos)
-        )
+        ]
       );
     }
     this._types[typeName] = definition;
@@ -309,14 +313,14 @@ export class SymbolTable {
   _declareConstructor(typeName, constructorDeclaration) {
     let constructorName = constructorDeclaration.constructorName.value;
     if (constructorName in this._constructors) {
-      throw new GbsSyntaxError(
+      fail(
         constructorDeclaration.constructorName.startPos,
         constructorDeclaration.constructorName.endPos,
-        i18n('errmsg:constructor-already-defined')(
+        'constructor-already-defined', [
           constructorName,
           i18nPosition(this._constructors[constructorName].startPos),
           i18nPosition(constructorDeclaration.startPos)
-        )
+        ]
       );
     }
     this._constructors[constructorName] = constructorDeclaration;
@@ -327,9 +331,10 @@ export class SymbolTable {
     let index = 0;
     for (let fieldName of constructorDeclaration.fieldNames) {
       if (fieldName.value in constructorFields) {
-        throw new GbsSyntaxError(
+        fail(
           fieldName.startPos, fieldName.endPos,
-          i18n('errmsg:repeated-field-name')(constructorName, fieldName.value)
+          'repeated-field-name',
+          [constructorName, fieldName.value]
         );
       }
       constructorFields[fieldName.value] = true;
@@ -345,13 +350,13 @@ export class SymbolTable {
 
   _declareField(startPos, endPos, typeName, constructorName, fieldName, index) {
     if (fieldName in this._functions) {
-      throw new GbsSyntaxError(
+      fail(
         startPos, endPos,
-        i18n('errmsg:function-and-field-cannot-have-the-same-name')(
+        'function-and-field-cannot-have-the-same-name', [
           fieldName,
           i18nPosition(this._functions[fieldName].startPos),
           i18nPosition(startPos)
-        )
+        ]
       );
     }
     if (!(fieldName in this._fields)) {
@@ -365,15 +370,15 @@ export class SymbolTable {
   /* Adds a new local name, failing if it already exists. */
   addNewLocalName(localName, category) {
     if (localName.value in this._localNames) {
-      throw new GbsSyntaxError(
+      fail(
         localName.startPos, localName.endPos,
-        i18n('errmsg:local-name-conflict')(
+        'local-name-conflict', [
           localName.value,
           i18n(Symbol.keyFor(this._localNames[localName.value].category)),
           i18nPosition(this._localNames[localName.value].position),
           i18n(Symbol.keyFor(category)),
           i18nPosition(localName.startPos)
-        )
+        ]
       );
     }
     this.setLocalName(localName, category);
@@ -384,15 +389,15 @@ export class SymbolTable {
   setLocalName(localName, category) {
     if (localName.value in this._localNames &&
         this._localNames[localName.value].category !== category) {
-      throw new GbsSyntaxError(
+      fail(
         localName.startPos, localName.endPos,
-        i18n('errmsg:local-name-conflict')(
+        'local-name-conflict', [
           localName.value,
           i18n(Symbol.keyFor(this._localNames[localName.value].category)),
           i18nPosition(this._localNames[localName.value].position),
           i18n(Symbol.keyFor(category)),
           i18nPosition(localName.startPos)
-        )
+        ]
       );
     }
     this._localNames[localName.value] =

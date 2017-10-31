@@ -33,6 +33,10 @@ import {
  * global state, and different available primitives.
  */
 
+function fail(startPos, endPos, reason, args) {
+  throw new GbsRuntimeError(startPos, endPos, reason, args);
+}
+
 let BOOL_ENUM = [
   i18n('CONS:False'),
   i18n('CONS:True'),
@@ -472,22 +476,22 @@ function validateTypeAmong(startPos, endPos, x, types) {
     typeStrings.push(type.toString());
   }
   /* Report error */
-  throw new GbsRuntimeError(startPos, endPos,
-    i18n('errmsg:expected-value-of-some-type-but-got')(
+  fail(startPos, endPos,
+    'expected-value-of-some-type-but-got', [
       typeStrings,
       x.type().toString()
-    )
+    ]
   );
 }
 
 /* Validate that the types of 'x' and 'y' are compatible */
 function validateCompatibleTypes(startPos, endPos, x, y) {
   if (joinTypes(x.type(), y.type()) === null) {
-    throw new GbsRuntimeError(startPos, endPos,
-      i18n('errmsg:expected-values-to-have-compatible-types')(
+    fail(startPos, endPos,
+      'expected-values-to-have-compatible-types', [
         x.type().toString(),
         y.type().toString(),
-      )
+      ]
     );
   }
 }
@@ -552,9 +556,7 @@ export class RuntimePrimitives {
         function (startPos, endPos, globalState, args) {
           let colorName = colorFromValue(args[0]);
           if (globalState.numStones(colorName).le(new ValueInteger(0))) {
-            throw new GbsRuntimeError(startPos, endPos,
-                        i18n('errmsg:cannot-remove-stone')(colorName)
-                      );
+            fail(startPos, endPos, 'cannot-remove-stone', [colorName]);
           }
         },
         function (globalState, color) {
@@ -569,9 +571,7 @@ export class RuntimePrimitives {
         function (startPos, endPos, globalState, args) {
           let dirName = dirFromValue(args[0]);
           if (!globalState.canMove(dirName)) {
-            throw new GbsRuntimeError(startPos, endPos,
-                        i18n('errmsg:cannot-move-to')(dirName)
-                      );
+            fail(startPos, endPos, 'cannot-move-to', [dirName]);
           }
         },
         function (globalState, dir) {
@@ -603,7 +603,7 @@ export class RuntimePrimitives {
       new PrimitiveOperation(
         [typeString],
         function (startPos, endPos, globalState, args) {
-          throw new GbsRuntimeError(startPos, endPos, args[0].string);
+          fail(startPos, endPos, args[0].string, []);
         },
         function (globalState, errMsg) {
           /* Unreachable */
@@ -851,9 +851,7 @@ export class RuntimePrimitives {
         function (startPos, endPos, globalState, args) {
           let b = args[1];
           if (b.eq(new ValueInteger(0))) {
-            throw new GbsRuntimeError(startPos, endPos,
-              i18n('errmsg:cannot-divide-by-zero')
-            );
+            fail(startPos, endPos, 'cannot-divide-by-zero', []);
           }
         },
         function (globalState, a, b) {
@@ -867,9 +865,7 @@ export class RuntimePrimitives {
         function (startPos, endPos, globalState, args) {
           let b = args[1];
           if (b.eq(new ValueInteger(0))) {
-            throw new GbsRuntimeError(startPos, endPos,
-              i18n('errmsg:cannot-divide-by-zero')
-            );
+            fail(startPos, endPos, 'cannot-divide-by-zero', []);
           }
         },
         function (globalState, a, b) {
@@ -997,9 +993,7 @@ export class RuntimePrimitives {
         function (startPos, endPos, globalState, args) {
           let a = args[0];
           if (a.length() === 0) {
-            throw new GbsRuntimeError(startPos, endPos,
-              i18n('errmsg:list-cannot-be-empty')
-            );
+            fail(startPos, endPos, 'list-cannot-be-empty', []);
           }
         },
         function (globalState, a) {
@@ -1013,9 +1007,7 @@ export class RuntimePrimitives {
         function (startPos, endPos, globalState, args) {
           let a = args[0];
           if (a.length() === 0) {
-            throw new GbsRuntimeError(startPos, endPos,
-              i18n('errmsg:list-cannot-be-empty')
-            );
+            fail(startPos, endPos, 'list-cannot-be-empty', []);
           }
         },
         function (globalState, a) {
@@ -1029,9 +1021,7 @@ export class RuntimePrimitives {
         function (startPos, endPos, globalState, args) {
           let a = args[0];
           if (a.length() === 0) {
-            throw new GbsRuntimeError(startPos, endPos,
-              i18n('errmsg:list-cannot-be-empty')
-            );
+            fail(startPos, endPos, 'list-cannot-be-empty', []);
           }
         },
         function (globalState, a) {
@@ -1045,9 +1035,7 @@ export class RuntimePrimitives {
         function (startPos, endPos, globalState, args) {
           let a = args[0];
           if (a.length() === 0) {
-            throw new GbsRuntimeError(startPos, endPos,
-              i18n('errmsg:list-cannot-be-empty')
-            );
+            fail(startPos, endPos, 'list-cannot-be-empty', []);
           }
         },
         function (globalState, a) {

@@ -504,7 +504,7 @@ export class Compiler {
 
     /* Issue an error message if there is no match */
     this._produceList(statement.startPos, statement.endPos, [
-      new IPushString(i18n('errmsg:switch-does-not-match')),
+      new IPushString('switch-does-not-match'),
       new IPrimitiveCall('_FAIL', 1),
     ]);
 
