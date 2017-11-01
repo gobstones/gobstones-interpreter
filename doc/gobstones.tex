@@ -534,4 +534,38 @@ Los tipos, procedimientos y funciones disponibles en el lenguaje de manera primi
 % El siguiente tex se genera a partir de 04-instructions.json usando gendoc.py.
 \input{05-builtins.tex}
 
+\subsection{Snapshots}
+
+Las rutinas (\texttt{program}, procedimientos y funciones),
+ya sean primitivas o definidas por el usuario,
+tienen asociados dos atributos booleanos:
+\begin{itemize}
+\item \texttt{recorded}:
+      indica si la rutina debe ser ``grabada'', es decir,
+      si se debe tomar una {\em snapshot} en el momento en que se retorna de dicha rutina.
+\item \texttt{atomic}:
+      indica si la rutina debe ser considerada ``at\'omica'', es decir,
+      si {\bf no} debe grabarse ninguna {\em snapshot} que ocurra de manera interna
+      (es decir, {\em snapshots} correspondientes a rutinas internas).
+\end{itemize}
+Se aplican las siguientes reglas:
+\begin{itemize}
+\item El \texttt{program} es siempre \texttt{recorded} y nunca \texttt{atomic}.
+\item Las funciones nunca son \texttt{recorded} y siempre son \texttt{atomic}.
+      (Los efectos que se producen durante la ejecuci\'on de una funci\'on
+      son invisibles desde el exterior, de manera que cualquier cambio en el estado
+      que se produzca durante la ejecuci\'on de una funci\'on no debe grabarse).
+\item Los procedimientos primitivos son \texttt{recorded}.
+      (Es irrelevante si son \texttt{atomic}, ya que durante la ejecuci\'on de un procedimiento
+      primitivo nunca se invoca a otro procedimiento).
+\item Los procedimientos definidos por el usuario, por defecto,
+      no son \texttt{recorded} ni \texttt{atomic}.
+      (Al ejecutar un procedimiento definido por el usuario, no se graba
+      de manera especial el estado que se obtiene al finalizar el procedimiento,
+      pero s\'i se graban las {\em snapshots} de todo lo que ocurre en su interior,
+      lo que t\'ipicamente incluye el estado que se obtiene al final de su ejecuci\'on).
+\end{itemize}
+En el futuro se pretende que los atributos \texttt{recorded} y \texttt{atomic}
+de las rutinas definidas por el usuario puedan controlarse a trav\'es de pragmas.
+
 \end{document}

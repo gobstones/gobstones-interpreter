@@ -229,7 +229,6 @@ def builtins_to_tex(json_builtins):
             tex.extend(builtin_routine_to_tex(builtin))
         else:
             raise Error('Unknown type of builtin: %s' % (builtin[0]))
-    tex.append('\\item \\TODO{TODO}')
     tex.append('\\end{itemize}')
     return tex
 
