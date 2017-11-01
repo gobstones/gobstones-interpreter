@@ -308,7 +308,7 @@ function valueFromBool(bool) {
   }
 }
 
-function boolFromValue(value) {
+export function boolFromValue(value) {
   return value.constructorName === i18n('CONS:True');
 }
 

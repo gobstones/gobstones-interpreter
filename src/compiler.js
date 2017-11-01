@@ -87,6 +87,13 @@ import { i18n } from './i18n';
  *
  * The compiler produces an instance of Code, representing code for the
  * virtual machine.
+ *
+ * Compiling a program should never throw an exception.
+ * Exceptions thrown in this module correspond to assertions,
+ * i.e. internal errors that should never occur.
+ * - Static conditions should be checked beforehand during the
+ *   parsing and linting phases.
+ * - Runtime conditions are to be checked later, during execution.
  */
 export class Compiler {
 

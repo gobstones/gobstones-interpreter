@@ -124,6 +124,14 @@ export class SymbolTable {
     return name in this._procedures;
   }
 
+  allProcedureNames() {
+    let names = [];
+    for (let name in this._procedures) {
+      names.push(name);
+    }
+    return names.sort();
+  }
+
   procedureDefinition(name) {
     if (this.isProcedure(name)) {
       return this._procedures[name];
@@ -142,6 +150,14 @@ export class SymbolTable {
 
   isFunction(name) {
     return name in this._functions;
+  }
+
+  allFunctionNames() {
+    let names = [];
+    for (let name in this._functions) {
+      names.push(name);
+    }
+    return names.sort();
   }
 
   functionDefinition(name) {

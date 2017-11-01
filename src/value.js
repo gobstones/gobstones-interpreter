@@ -353,6 +353,31 @@ export class Value {
   type() {
     return new Type('?', []);
   }
+
+  isInteger() {
+    return false;
+  }
+
+  isString() {
+    return false;
+  }
+
+  isTuple() {
+    return false;
+  }
+
+  isList() {
+    return false;
+  }
+
+  isStructure() {
+    return false;
+  }
+
+  isBoolean() {
+    return false;
+  }
+
 }
 
 export class ValueInteger extends Value {
@@ -367,6 +392,10 @@ export class ValueInteger extends Value {
         'Integer value must be constructed with an integer or a string'
       );
     }
+  }
+
+  isInteger() {
+    return true;
   }
 
   toString() {
@@ -549,6 +578,10 @@ export class ValueString extends Value {
     return res.join('');
   }
 
+  isString() {
+    return true;
+  }
+
   get string() {
     return this._string;
   }
@@ -597,6 +630,10 @@ export class ValueTuple extends Value {
         return false;
       }
     }
+    return true;
+  }
+
+  isTuple() {
     return true;
   }
 
@@ -649,6 +686,10 @@ export class ValueList extends Value {
 
   type() {
     return this._type;
+  }
+
+  isList() {
+    return true;
   }
 
   length() {
@@ -728,6 +769,14 @@ export class ValueStructure extends Value {
       res.push(fieldName + ' <- ' + this.fields[fieldName].toString());
     }
     return this._constructorName + '(' + res.join(', ') + ')';
+  }
+
+  isStructure() {
+    return true;
+  }
+
+  isBoolean() {
+    return this._typeName === i18n('TYPE:Bool');
   }
 
   get typeName() {

@@ -192,9 +192,23 @@ export class VirtualMachine {
   }
 
   run() {
+    return this.runWithTimeout(0);
+  }
+
+  /* Run the program, throwing an exception if the given timeout is met.
+   * If millisecs is 0, the program is run indefinitely. */
+  runWithTimeout(millisecs) {
+    let endTime = new Date().getTime() + millisecs;
     try {
       while (true) {
         this._step();
+        if (millisecs > 0 && new Date().getTime() > endTime) {
+          let instruction = this._currentInstruction();
+          fail(
+            instruction.startPos, instruction.endPos,
+            'timeout', [millisecs]
+          );
+        }
       }
     } catch (condition) {
       if (condition.tag === RT_ExitProgram) {

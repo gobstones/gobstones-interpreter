@@ -478,6 +478,12 @@ const ES = {
   'errmsg:list-cannot-be-empty':
     'La lista no puede ser vacía.',
 
+  'errmsg:timeout':
+    function (millisecs) {
+      return 'La ejecución del programa demoró más de '
+           + millisecs.toString() + 'ms.';
+    },
+
   /* Board operations */
   'errmsg:cannot-move-to':
     function (dirName) {
@@ -494,7 +500,7 @@ const ES = {
   /* Runtime */
   'CONS:TIMEOUT': 'TIMEOUT',
 
-  'TYPE:Integer': 'Integer',
+  'TYPE:Integer': 'Number',
   'TYPE:String': 'String',
   'TYPE:Tuple': 'Tuple',
   'TYPE:List': 'List',

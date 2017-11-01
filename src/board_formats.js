@@ -54,6 +54,62 @@ class BoardFormat {
   }
 }
 
+export function apiboardFromJboard(jboard) {
+  let apiboard = {};
+  apiboard.head = {x: jboard.head[0], y: jboard.head[1]};
+  apiboard.width = jboard.width;
+  apiboard.height = jboard.height;
+  apiboard.table = [];
+  for (let y = 0; y < jboard.height; y++) {
+    let row = [];
+    for (let x = 0; x < jboard.width; x++) {
+      let cellO = jboard.board[x][y];
+      let cell = {};
+      if (cellO.a > 0) {
+        cell.blue = cellO.a;
+      }
+      if (cellO.n > 0) {
+        cell.black = cellO.n;
+      }
+      if (cellO.r > 0) {
+        cell.red = cellO.r;
+      }
+      if (cellO.v > 0) {
+        cell.green = cellO.v;
+      }
+      row.push(cell);
+    }
+    apiboard.table.unshift(row);
+  }
+  return apiboard;
+}
+
+export function apiboardToJboard(apiboard) {
+  let jboard = {};
+  jboard.head = [apiboard.head.x, apiboard.head.y];
+  jboard.width = apiboard.width;
+  jboard.height = apiboard.height;
+  jboard.board = [];
+  for (let x = 0; x < jboard.width; x++) {
+    let column = [];
+    for (let y = 0; y < jboard.height; y++) {
+      let cell = apiboard.table[jboard.height - y - 1][x];
+      let ca = ('blue' in cell) ? cell.blue : 0;
+      let cn = ('black' in cell) ? cell.black : 0;
+      let cr = ('red' in cell) ? cell.red : 0;
+      let cv = ('green' in cell) ? cell.green : 0;
+      column.push({
+        'a': ca,
+        'n': cn,
+        'r': cr,
+        'v': cv,
+      });
+    }
+    jboard.board.push(column);
+  }
+  return jboard;
+}
+
 function gsboardFromJboard(jboard) {
   let gsboard = {};
   gsboard.x = jboard.head[0];

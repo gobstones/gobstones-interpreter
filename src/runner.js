@@ -33,6 +33,7 @@ export class Runner {
   constructor() {
     /* These are set after running a program once */
     this._ast = null;
+    this._primitives = new RuntimePrimitives();
     this._symtable = this._newSymtableWithPrimitives();
     this._linter = new Linter(this._symtable);
     this._code = null;
@@ -80,12 +81,20 @@ export class Runner {
   }
 
   execute(initialState) {
+    this.executeWithTimeout(0, initialState);
+  }
+
+  executeWithTimeout(millisecs, initialState) {
     this._vm = new VirtualMachine(this._code, initialState);
-    this._result = this._vm.run();
+    this._result = this._vm.runWithTimeout(millisecs);
   }
 
   get abstractSyntaxTree() {
     return this._ast;
+  }
+
+  get primitives() {
+    return this._primitives;
   }
 
   get symbolTable() {
@@ -109,38 +118,36 @@ export class Runner {
   _newSymtableWithPrimitives() {
     let symtable = new SymbolTable();
 
-    let primitives = new RuntimePrimitives();
-
     /* Populate symbol table with primitive types */
-    for (let type of primitives.types()) {
-      symtable.defType(this._astDefType(primitives, type));
+    for (let type of this._primitives.types()) {
+      symtable.defType(this._astDefType(type));
     }
 
     /* Populate symbol table with primitive procedures */
-    for (let procedureName of primitives.procedures()) {
-      symtable.defProcedure(this._astDefProcedure(primitives, procedureName));
+    for (let procedureName of this._primitives.procedures()) {
+      symtable.defProcedure(this._astDefProcedure(procedureName));
     }
 
     /* Populate symbol table with primitive functions */
-    for (let functionName of primitives.functions()) {
-      symtable.defFunction(this._astDefFunction(primitives, functionName));
+    for (let functionName of this._primitives.functions()) {
+      symtable.defFunction(this._astDefFunction(functionName));
     }
 
     return symtable;
   }
 
-  _astDefType(primitives, type) {
+  _astDefType(type) {
     let constructorDeclarations = [];
-    for (let constructor of primitives.typeConstructors(type)) {
+    for (let constructor of this._primitives.typeConstructors(type)) {
       constructorDeclarations.push(
-        this._astConstructorDeclaration(primitives, type, constructor)
+        this._astConstructorDeclaration(type, constructor)
       );
     }
     return new ASTDefType(tok(T_UPPERID, type), constructorDeclarations);
   }
 
-  _astDefProcedure(primitives, procedureName) {
-    let nargs = primitives.getOperation(procedureName).nargs();
+  _astDefProcedure(procedureName) {
+    let nargs = this._primitives.getOperation(procedureName).nargs();
     let parameters = [];
     for (let i = 1; i <= nargs; i++) {
       parameters.push(tok(T_LOWERID, 'x' + i.toString()));
@@ -152,8 +159,8 @@ export class Runner {
     );
   }
 
-  _astDefFunction(primitives, functionName) {
-    let nargs = primitives.getOperation(functionName).nargs();
+  _astDefFunction(functionName) {
+    let nargs = this._primitives.getOperation(functionName).nargs();
     let parameters = [];
     for (let i = 1; i <= nargs; i++) {
       parameters.push(tok(T_LOWERID, 'x' + i.toString()));
@@ -165,9 +172,9 @@ export class Runner {
     );
   }
 
-  _astConstructorDeclaration(primitives, type, constructor) {
+  _astConstructorDeclaration(type, constructor) {
     let fields = [];
-    for (let field of primitives.constructorFields(type, constructor)) {
+    for (let field of this._primitives.constructorFields(type, constructor)) {
       fields.push(tok(T_LOWERID, field));
     }
     return new ASTConstructorDeclaration(tok(T_UPPERID, constructor), fields);
