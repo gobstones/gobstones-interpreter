@@ -37,24 +37,30 @@ function fail(startPos, endPos, reason, args) {
   throw new GbsRuntimeError(startPos, endPos, reason, args);
 }
 
-let BOOL_ENUM = [
-  i18n('CONS:False'),
-  i18n('CONS:True'),
-];
+function boolEnum() {
+  return [
+    i18n('CONS:False'),
+    i18n('CONS:True'),
+  ];
+}
 
-let COLOR_ENUM = [
-  i18n('CONS:Color0'),
-  i18n('CONS:Color1'),
-  i18n('CONS:Color2'),
-  i18n('CONS:Color3'),
-];
+function colorEnum() {
+  return [
+    i18n('CONS:Color0'),
+    i18n('CONS:Color1'),
+    i18n('CONS:Color2'),
+    i18n('CONS:Color3'),
+  ];
+}
 
-let DIR_ENUM = [
-  i18n('CONS:Dir0'),
-  i18n('CONS:Dir1'),
-  i18n('CONS:Dir2'),
-  i18n('CONS:Dir3'),
-];
+function dirEnum() {
+  return [
+    i18n('CONS:Dir0'),
+    i18n('CONS:Dir1'),
+    i18n('CONS:Dir2'),
+    i18n('CONS:Dir3'),
+  ];
+}
 
 function toEnum(enumeration, name) {
   return enumeration.indexOf(name);
@@ -65,23 +71,23 @@ function fromEnum(enumeration, index) {
 }
 
 function dirOpposite(dirName) {
-  return fromEnum(DIR_ENUM, (toEnum(DIR_ENUM, dirName) + 2) % 4);
+  return fromEnum(dirEnum(), (toEnum(dirEnum(), dirName) + 2) % 4);
 }
 
 function dirNext(dirName) {
-  return fromEnum(DIR_ENUM, (toEnum(DIR_ENUM, dirName) + 1) % 4);
+  return fromEnum(dirEnum(), (toEnum(dirEnum(), dirName) + 1) % 4);
 }
 
 function dirPrev(dirName) {
-  return fromEnum(DIR_ENUM, (toEnum(DIR_ENUM, dirName) + 3) % 4);
+  return fromEnum(dirEnum(), (toEnum(dirEnum(), dirName) + 3) % 4);
 }
 
 function colorNext(colorName) {
-  return fromEnum(COLOR_ENUM, (toEnum(COLOR_ENUM, colorName) + 1) % 4);
+  return fromEnum(colorEnum(), (toEnum(colorEnum(), colorName) + 1) % 4);
 }
 
 function colorPrev(colorName) {
-  return fromEnum(COLOR_ENUM, (toEnum(COLOR_ENUM, colorName) + 3) % 4);
+  return fromEnum(colorEnum(), (toEnum(colorEnum(), colorName) + 3) % 4);
 }
 
 /*
@@ -123,7 +129,7 @@ export class RuntimeState {
       let column = [];
       for (let y = 0; y < this._height; y++) {
         let cell = {};
-        for (let colorName of COLOR_ENUM) {
+        for (let colorName of colorEnum()) {
           cell[colorName] = this._board[x][y][colorName];
         }
         column.push(cell);
@@ -250,7 +256,7 @@ export class RuntimeState {
 
   _emptyCell() {
     let cell = {};
-    for (let colorName of COLOR_ENUM) {
+    for (let colorName of colorEnum()) {
       cell[colorName] = new ValueInteger(0);
     }
     return cell;
@@ -367,9 +373,9 @@ function enumIndex(value) {
       return 0;
     }
   } else if (isColor(value)) {
-    return toEnum(COLOR_ENUM, colorFromValue(value));
+    return toEnum(colorEnum(), colorFromValue(value));
   } else if (isDir(value)) {
-    return toEnum(DIR_ENUM, dirFromValue(value));
+    return toEnum(dirEnum(), dirFromValue(value));
   } else {
     throw Error('Value should be Bool, Color or Dir.');
   }
@@ -523,19 +529,19 @@ export class RuntimePrimitives {
 
     /* Booleans */
     this._primitiveTypes[i18n('TYPE:Bool')] = {};
-    for (let boolName of BOOL_ENUM) {
+    for (let boolName of boolEnum()) {
       this._primitiveTypes[i18n('TYPE:Bool')][boolName] = [];
     }
 
     /* Colors */
     this._primitiveTypes[i18n('TYPE:Color')] = {};
-    for (let colorName of COLOR_ENUM) {
+    for (let colorName of colorEnum()) {
       this._primitiveTypes[i18n('TYPE:Color')][colorName] = [];
     }
 
     /* Directions */
     this._primitiveTypes[i18n('TYPE:Dir')] = {};
-    for (let dirName of DIR_ENUM) {
+    for (let dirName of dirEnum()) {
       this._primitiveTypes[i18n('TYPE:Dir')][dirName] = [];
     }
 
@@ -791,7 +797,7 @@ export class RuntimePrimitives {
       new PrimitiveOperation(
         [], noValidation,
         function (globalState) {
-          return valueFromColor(COLOR_ENUM[0]);
+          return valueFromColor(colorEnum()[0]);
         }
       );
 
@@ -799,7 +805,7 @@ export class RuntimePrimitives {
       new PrimitiveOperation(
         [], noValidation,
         function (globalState) {
-          return valueFromColor(COLOR_ENUM[COLOR_ENUM.length - 1]);
+          return valueFromColor(colorEnum()[colorEnum().length - 1]);
         }
       );
 
@@ -807,7 +813,7 @@ export class RuntimePrimitives {
       new PrimitiveOperation(
         [], noValidation,
         function (globalState) {
-          return valueFromDir(DIR_ENUM[0]);
+          return valueFromDir(dirEnum()[0]);
         }
       );
 
@@ -815,7 +821,7 @@ export class RuntimePrimitives {
       new PrimitiveOperation(
         [], noValidation,
         function (globalState) {
-          return valueFromDir(DIR_ENUM[DIR_ENUM.length - 1]);
+          return valueFromDir(dirEnum()[dirEnum().length - 1]);
         }
       );
 

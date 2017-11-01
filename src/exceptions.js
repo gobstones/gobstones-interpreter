@@ -12,7 +12,7 @@ export class GbsInterpreterException extends Error {
     this.args = args;
 
     this.message = i18n(errorType + ':' + reason);
-    if (args.length > 0) {
+    if (args.length > 0 && typeof this.message === 'function') {
       this.message = this.message.apply(null, args);
     }
   }

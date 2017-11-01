@@ -31,7 +31,10 @@ function tok(tag, value) {
 export class Runner {
 
   constructor() {
-    /* These are set after running a program once */
+    this.initialize();
+  }
+
+  initialize() {
     this._ast = null;
     this._primitives = new RuntimePrimitives();
     this._symtable = this._newSymtableWithPrimitives();

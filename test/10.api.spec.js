@@ -93,6 +93,14 @@ describe('Gobstones API', () => {
       expect(r.reason.detail).deep.equals([100]);
     });
 
+    it('Set the internationalization language', () => {
+      let api = API();
+      api.config.setLanguage('en');
+      let p = api.parse('program { return (North) }');
+      let r = p.program.interpret(emptyBoard(1, 1));
+      expect(r.returnValue.value).equals('North');
+    });
+
     it('Run an empty program - check final board', () => {
       let p = API().parse('program { }');
       let r = p.program.interpret(emptyBoard(3, 2));

@@ -1,12 +1,13 @@
 /* Gobstones API for backwards compatibility with gs-weblang-core */
 import { boolFromValue, RuntimeState } from './runtime.js';
 import { Runner } from './runner.js';
-import { i18n } from './i18n.js';
+import { i18n, i18nWithLanguage } from './i18n.js';
 import { apiboardFromJboard, apiboardToJboard } from './board_formats.js';
 
 const fs = require('fs');
 
 const DEFAULT_INFINITE_LOOP_TIMEOUT = 3000; /* millisecs */
+const DEFAULT_LANGUAGE = 'es'; /* millisecs */
 
 /* Backwards-compatible type/value with special cases for some types */
 function apivalueFromValue(value) {
@@ -120,28 +121,29 @@ class ParseResult {
     this.program = {};
     this.program.alias = 'program';
     this.program.interpret = function (board) {
-      try {
-        state.runner.compile();
-        // TODO: check for exceptions
-        state.runner.executeWithTimeout(
-          state.infiniteLoopTimeout,
-          apiboardToState(board)
-        );
+      return i18nWithLanguage(state.language, () => {
+        try {
+          state.runner.compile();
+          state.runner.executeWithTimeout(
+            state.infiniteLoopTimeout,
+            apiboardToState(board)
+          );
 
-        let finalBoard = apiboardFromState(state.runner.globalState);
-        let snapshots = []; // TODO
-        let returnValue = state.runner.result;
-        return new NormalExecutionResult(
-          finalBoard,
-          snapshots,
-          returnValue,
-        );
-      } catch (exception) {
-        if (exception.isGobstonesException === undefined) {
-          throw exception;
+          let finalBoard = apiboardFromState(state.runner.globalState);
+          let snapshots = []; // TODO
+          let returnValue = state.runner.result;
+          return new NormalExecutionResult(
+            finalBoard,
+            snapshots,
+            returnValue,
+          );
+        } catch (exception) {
+          if (exception.isGobstonesException === undefined) {
+            throw exception;
+          }
+          return new ExecutionError(exception)
         }
-        return new ExecutionError(exception)
-      }
+      });
     };
   }
 
@@ -149,7 +151,9 @@ class ParseResult {
     this.program = {};
     this.program.alias = 'interactiveProgram';
     this.program.interpret = function (board) {
-      // TODO
+      return i18nWithLanguage(state.language, () => {
+        // TODO
+      });
     };
   }
 
@@ -184,12 +188,13 @@ export class GobstonesInterpreterAPI {
     /* Internal state of the interpreter */
     let state = {
       infiniteLoopTimeout: DEFAULT_INFINITE_LOOP_TIMEOUT,
+      language: DEFAULT_LANGUAGE,
       runner: new Runner(),
     };
 
     this.config = {
       setLanguage: function (code) {
-        // TODO
+        state.language = code;
       },
       setInfiniteLoopTimeout: function (milliseconds) {
         state.infiniteLoopTimeout = milliseconds;
@@ -205,20 +210,23 @@ export class GobstonesInterpreterAPI {
     };
 
     this.parse = function (sourceCode) {
-      try {
-        state.runner.parse(sourceCode);
-        /* Disable checking if there is a main 'program' present. */
-        state.runner.enableLintCheck(
-          'source-should-have-a-program-definition', false
-        );
-        state.runner.lint();
-        return new ParseResult(state);
-      } catch (exception) {
-        if (exception.isGobstonesException === undefined) {
-          throw exception;
+      return i18nWithLanguage(state.language, () => {
+        try {
+          state.runner.initialize();
+          state.runner.parse(sourceCode);
+          /* Disable checking whether there is a main 'program' present. */
+          state.runner.enableLintCheck(
+            'source-should-have-a-program-definition', false
+          );
+          state.runner.lint();
+          return new ParseResult(state);
+        } catch (exception) {
+          if (exception.isGobstonesException === undefined) {
+            throw exception;
+          }
+          return new ParseError(exception)
         }
-        return new ParseError(exception)
-      }
+      });
     };
 
   }
