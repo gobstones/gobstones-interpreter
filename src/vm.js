@@ -70,15 +70,23 @@ function fail(startPos, endPos, reason, args) {
  * function or procedure (a.k.a. "activation record" or "stack frame").
  *
  * It includes:
+ * - the name of the current routine:
+ *   + 'program' for the main program
+ *   + the name of the current procedure or function
+ * - the current instruction pointer
  * - a stack of local values
  * - a map from local names to values
- * - the current instruction pointer
  */
 class Frame {
-  constructor(instructionPointer) {
+  constructor(routineName, instructionPointer) {
+    this._routineName = routineName;
     this._instructionPointer = instructionPointer;
     this._variables = {};
     this._stack = [];
+  }
+
+  get routineName() {
+    return this._routineName;
   }
 
   get instructionPointer() {
@@ -161,7 +169,7 @@ export class VirtualMachine {
      * become empty.
      */
     this._callStack = [];
-    this._callStack.push(new Frame(0 /* instructionPointer */));
+    this._callStack.push(new Frame('program', 0 /* instructionPointer */));
 
     /* The global state is the data that is available globally.
      *
@@ -189,6 +197,32 @@ export class VirtualMachine {
      */
     this._primitives = new RuntimePrimitives();
 
+    /*
+     * A "snapshot callback" is a function that takes snapshots.
+     *
+     *   snapshotCallback(routineName, position, callStack, globalState)
+     *
+     *   routineName:
+     *     It is the name of the routine that triggers the
+     *     snapshot, it might be:
+     *     - 'program' for the main program, 
+     *     - the name of a primitive procedure or function,
+     *     - the name of a user-defined procedure or function.
+     *
+     *   position:
+     *     The position in the source code for this snapshot.
+     *
+     *   callStack:
+     *     The current call stack.
+     *
+     *   globalState:
+     *     The current global state.
+     *
+     * Snapshots
+     * If _snapshotCallback is null, the VM does not take snapshots.
+     */
+    this._snapshotCallback = null;
+
   }
 
   run() {
@@ -198,17 +232,30 @@ export class VirtualMachine {
   /* Run the program, throwing an exception if the given timeout is met.
    * If millisecs is 0, the program is run indefinitely. */
   runWithTimeout(millisecs) {
-    let endTime = new Date().getTime() + millisecs;
+    return this.runWithTimeoutTakingSnapshots(millisecs, null);
+  }
+
+  /* Run the program, throwing an exception if the given timeout is met.
+   * If millisecs is 0, the program is run indefinitely.
+   *
+   * Snapshots are taken:
+   * - At the very start of the program.
+   * - At the end of the program.
+   * - After calling any primitive procedure or function.
+   * - Whenever reaching an I_Return instruction from any routine.
+   *
+   * The snapshotCallback function receives:
+   * - The current call stack (list of frames).
+   * - The current global state.
+   */
+  runWithTimeoutTakingSnapshots(millisecs, snapshotCallback) {
+    let startTime = new Date().getTime();
+    this._snapshotCallback = snapshotCallback;
+    this._takeSnapshot('program');
     try {
       while (true) {
         this._step();
-        if (millisecs > 0 && new Date().getTime() > endTime) {
-          let instruction = this._currentInstruction();
-          fail(
-            instruction.startPos, instruction.endPos,
-            'timeout', [millisecs]
-          );
-        }
+        this._timeoutIfNeeded(startTime, millisecs);
       }
     } catch (condition) {
       if (condition.tag === RT_ExitProgram) {
@@ -216,6 +263,22 @@ export class VirtualMachine {
       } else {
         throw condition;
       }
+    }
+  }
+
+  _timeoutIfNeeded(startTime, millisecs) {
+    if (millisecs > 0 && (new Date().getTime() - startTime) > millisecs) {
+      let instruction = this._currentInstruction();
+      fail(instruction.startPos, instruction.endPos, 'timeout', [millisecs]);
+    }
+  }
+
+  _takeSnapshot(routineName) {
+    if (this._snapshotCallback !== null) {
+      let instruction = this._currentInstruction();
+      this._snapshotCallback(
+        routineName, instruction.startPos, this._callStack, this.globalState()
+      );
     }
   }
 
@@ -419,7 +482,10 @@ export class VirtualMachine {
     let instruction = this._currentInstruction();
 
     /* Create a new stack frame for the callee */
-    let newFrame = new Frame(this._labelTargets[instruction.targetLabel]);
+    let newFrame = new Frame(
+                     instruction.targetLabel,
+                     this._labelTargets[instruction.targetLabel]
+                   );
     this._callStack.push(newFrame);
 
     /* Pop arguments from caller's frame and push them into callee's frame */
@@ -436,6 +502,9 @@ export class VirtualMachine {
 
   _stepReturn() {
     let innerFrame = this._currentFrame();
+
+    /* Take a snapshot when leaving a routine */
+    this._takeSnapshot(innerFrame.routineName);
 
     let returnValue;
     if (innerFrame.stackEmpty()) {
@@ -724,6 +793,10 @@ export class VirtualMachine {
     if (result !== null) {
       frame.pushValue(result);
     }
+
+    /* Take a snapshot after calling the primitive operation */
+    this._takeSnapshot(instruction.primitiveName);
+
     frame.instructionPointer++;
   }
 

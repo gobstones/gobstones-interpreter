@@ -242,5 +242,74 @@ describe('Gobstones API', () => {
 
   });
 
+  describe('Snapshots', () => {
+
+    it('Snapshots', () => {
+        let p = API().parse([
+          'procedure P() {',
+          '  Poner(Azul)',
+          '  Q()',
+          '  Poner(Azul)',
+          '}',
+          'procedure Q() {',
+          '  Poner(Azul)',
+          '}',
+          'program {',
+          '  Poner(Verde)',
+          '  P()',
+          '  Poner(Verde)',
+          '}',
+        ].join('\n'));
+        let r = p.program.interpret(emptyBoard(1, 1));
+        let s = r.snapshots
+        expect(s.length).equals(7);
+
+        expect(s[0].contextNames).deep.equals(['program']);
+        expect(s[0].board.table[0][0]).deep.equals({});
+
+        expect(s[1].contextNames).deep.equals(['program']);
+        expect(s[1].board.table[0][0]).deep.equals({green: 1});
+
+        expect(s[2].contextNames).deep.equals(['program', 'P-1']);
+        expect(s[2].board.table[0][0]).deep.equals({green: 1, blue: 1});
+
+        expect(s[3].contextNames).deep.equals(['program', 'P-2', 'Q-3']);
+        expect(s[3].board.table[0][0]).deep.equals({green: 1, blue: 2});
+
+        expect(s[4].contextNames).deep.equals(['program', 'P-4']);
+        expect(s[4].board.table[0][0]).deep.equals({green: 1, blue: 3});
+
+        expect(s[5].contextNames).deep.equals(['program']);
+        expect(s[5].board.table[0][0]).deep.equals({green: 2, blue: 3});
+
+        expect(s[6].contextNames).deep.equals(['program']);
+        expect(s[6].board.table[0][0]).deep.equals({green: 2, blue: 3});
+    });
+
+    it('Ignore snapshots inside an atomic routine', () => {
+        let p = API().parse([
+          'function f() {',
+          '  Poner(Azul)',
+          '  Poner(Azul)',
+          '  Poner(Azul)',
+          '  return (nroBolitas(Azul))',
+          '}',
+          'program {',
+          '  n := f()',
+          '}',
+        ].join('\n'));
+        let r = p.program.interpret(emptyBoard(1, 1));
+        let s = r.snapshots
+        expect(s.length).equals(2);
+
+        expect(s[0].contextNames).deep.equals(['program']);
+        expect(s[0].board.table[0][0]).deep.equals({});
+
+        expect(s[1].contextNames).deep.equals(['program']);
+        expect(s[1].board.table[0][0]).deep.equals({});
+    });
+
+  });
+
 });
 

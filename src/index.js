@@ -122,19 +122,20 @@ class ParseResult {
     this.program.alias = 'program';
     this.program.interpret = function (board) {
       return i18nWithLanguage(state.language, () => {
+        let snapshotTaker = new SnapshotTaker(state.runner);
         try {
           state.runner.compile();
-          state.runner.executeWithTimeout(
+          state.runner.executeWithTimeoutTakingSnapshots(
+            apiboardToState(board),
             state.infiniteLoopTimeout,
-            apiboardToState(board)
+            snapshotTaker.takeSnapshot.bind(snapshotTaker)
           );
 
           let finalBoard = apiboardFromState(state.runner.globalState);
-          let snapshots = []; // TODO
           let returnValue = state.runner.result;
           return new NormalExecutionResult(
             finalBoard,
-            snapshots,
+            snapshotTaker.snapshots(),
             returnValue,
           );
         } catch (exception) {
@@ -178,6 +179,103 @@ class ParseResult {
       });
     }
     return declarations;
+  }
+
+}
+
+class SnapshotTaker {
+
+  constructor(runner) {
+    this._runner = runner;
+    this._snapshots = [];
+    this._index = 0;
+  }
+
+  takeSnapshot(routineName, position, callStack, globalState) {
+    if (this._shouldTakeSnapshot(routineName, callStack)) {
+      this._snapshots.push(
+        this._snapshot(routineName, position, callStack, globalState)
+      );
+    }
+  }
+
+  snapshots() {
+    return this._snapshots;
+  }
+
+  _snapshot(routineName, position, callStack, globalState) {
+    let snapshot = {}
+    snapshot.contextNames = [];
+    for (let stackFrame of callStack) {
+      let name = stackFrame.routineName;
+      if (name !== 'program') {
+        this._index += 1;
+        name = name + '-' + this._index.toString();
+      }
+      snapshot.contextNames.push(name);
+    }
+    snapshot.board = apiboardFromState(globalState);
+    snapshot.region = position.region;
+    return snapshot;
+  }
+
+  _shouldTakeSnapshot(routineName, callStack) {
+    let routineNameStack = [];
+    for (let stackFrame of callStack) {
+      routineNameStack.push(stackFrame.routineName);
+    }
+
+    if (this._runner.primitives.isProcedure(routineName)) {
+      /* A primitive procedure must be recorded if there are no
+       * atomic routines anywhere in the call stack. */
+      return this._noAtomicRoutines(routineNameStack);
+    } else {
+      /* Other routines must be recorded if they have the 'recorded'
+       * attribute, and, moreover, there are no atomic routines other
+       * than the last one in the call stack. */
+      routineNameStack.pop();
+      return this._isRecorded(routineName)
+          && this._noAtomicRoutines(routineNameStack);
+    }
+  }
+
+  _noAtomicRoutines(routineNameStack) {
+    for (let routineName of routineNameStack) {
+      if (this._isAtomic(routineName)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  _isAtomic(routineName) {
+    if (routineName == 'program') {
+      return false;
+    } else if (this._runner.primitives.isProcedure(routineName)) {
+      /* Primitive procedure */
+      return false;
+    } else if (this._runner.symbolTable.isProcedure(routineName)) {
+      /* User-defined procedure */
+      return false;
+    } else {
+      /* Function */
+      return true;
+    }
+  }
+
+  _isRecorded(routineName) {
+    if (routineName == 'program') {
+      return true;
+    } else if (this._runner.primitives.isProcedure(routineName)) {
+      /* Primitive procedure */
+      return true;
+    } else if (this._runner.symbolTable.isProcedure(routineName)) {
+      /* User-defined procedure */
+      return false;
+    } else {
+      /* Function */
+      return false;
+    }
   }
 
 }
