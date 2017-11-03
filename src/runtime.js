@@ -62,6 +62,44 @@ function dirEnum() {
   ];
 }
 
+/* Enumeration of all the constructors of the Event type, including
+ * INIT and TIMEOUT. */
+function keyEventEnum() {
+  let modifiers = [
+    '', 'CTRL_', 'ALT_', 'SHIFT_', 'CTRL_ALT_', 'CTRL_SHIFT_', 'ALT_SHIFT_',
+    'CTRL_ALT_SHIFT_',
+  ];
+  let charKeys = [
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
+    'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 
+  ];
+  let specialKeys = [
+    'SPACE', 'ENTER', 'TAB', 'BACKSPACE', 'DELETE', 'ESCAPE',
+  ];
+  let symbolKeys = [
+    'PLUS', 'MINUS', 'ASTERISK', 'SLASH', 'EQUALS', 'L_PARENT', 'R_PARENT',
+    'L_BRACKET', 'R_BRACKET', 'L_ANGLEBR', 'R_ANGLEBR',
+  ];
+  let arrowKeys = [
+    'ARROW_LEFT', 'ARROW_RIGHT', 'ARROW_UP', 'ARROW_DOWN',
+  ];
+  let keys = charKeys.concat(specialKeys).concat(symbolKeys).concat(arrowKeys);
+
+  let eventNames = [];
+  for (let modifier of modifiers) {
+    for (let key of keys) {
+      eventNames.push('K_' + modifier + key);
+    }
+  }
+  return eventNames;
+}
+
+let KEY_EVENT_ENUM = keyEventEnum();
+
+function eventEnum() {
+  return [i18n('CONS:INIT'), i18n('CONS:TIMEOUT')].concat(KEY_EVENT_ENUM);
+}
+
 function toEnum(enumeration, name) {
   return enumeration.indexOf(name);
 }
@@ -543,6 +581,12 @@ export class RuntimePrimitives {
     this._primitiveTypes[i18n('TYPE:Dir')] = {};
     for (let dirName of dirEnum()) {
       this._primitiveTypes[i18n('TYPE:Dir')][dirName] = [];
+    }
+
+    /* Events */
+    this._primitiveTypes[i18n('TYPE:Event')] = {};
+    for (let eventName of eventEnum()) {
+      this._primitiveTypes[i18n('TYPE:Event')][eventName] = [];
     }
 
     /* --Primitive procedures-- */

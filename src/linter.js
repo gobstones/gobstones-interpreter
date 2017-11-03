@@ -434,11 +434,11 @@ export class Linter {
     }
   }
 
-  /* Check that there are patterns are of type "_EVENT" */
+  /* Check that there are patterns are of type Event */
   _switchBranchesCheckTypeEvent(branches) {
     for (let branch of branches) {
       let patternType = this._patternType(branch.pattern);
-      if (patternType !== null && patternType !== '_EVENT') {
+      if (patternType !== null && patternType !== i18n('TYPE:Event')) {
         this._lintCheck(
           branch.pattern.startPos, branch.pattern.endPos,
           'patterns-in-interactive-program-must-be-events', []
@@ -447,11 +447,11 @@ export class Linter {
     }
   }
 
-  /* Check that there are no patterns of type "_EVENT" */
+  /* Check that there are no patterns of type Event */
   _switchBranchesCheckTypeNotEvent(branches) {
     for (let branch of branches) {
       let patternType = this._patternType(branch.pattern);
-      if (patternType === '_EVENT') {
+      if (patternType === i18n('TYPE:Event')) {
         this._lintCheck(
           branch.pattern.startPos, branch.pattern.endPos,
           'patterns-in-switch-must-not-be-events', []
@@ -481,7 +481,7 @@ export class Linter {
       case N_PatternTuple:
         return '_TUPLE_' + pattern.parameters.length.toString();
       case N_PatternTimeout:
-        return '_EVENT';
+        return i18n('TYPE:Event');
       default:
         throw Error(
                 'Linter: pattern "'
@@ -777,10 +777,11 @@ export class Linter {
   }
 
   /* Check that a structure construction/update does not involve
-   * constructors of the _EVENT type, which should only be
+   * constructors of the Event type, which should only be
    * handled implicitly in an interactive program. */
   _checkStructureTypeNotEvent(constructorName, expression) {
-    if (this._symtable.constructorType(constructorName) === '_EVENT') {
+    let constructorType = this._symtable.constructorType(constructorName);
+    if (constructorType === i18n('TYPE:Event')) {
       this._lintCheck(
         expression.startPos, expression.endPos,
         'structure-construction-cannot-be-an-event', [constructorName]

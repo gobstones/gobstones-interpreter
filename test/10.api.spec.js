@@ -240,6 +240,17 @@ describe('Gobstones API', () => {
         );
     });
 
+    it('Run a program with a runtime error', () => {
+      let p = API().parse('program { x := 1 div 0 }');
+      let r = p.program.interpret(emptyBoard(1, 1));
+      expect(r.reason.code).equals('cannot-divide-by-zero');
+      expect(r.reason.detail).deep.equals([]);
+      expect(r.on.range.start.row).equals(1);
+      expect(r.on.range.start.column).equals(16);
+      expect(r.on.range.end.row).equals(1);
+      expect(r.on.range.end.column).equals(23);
+    });
+
   });
 
   describe('Snapshots', () => {
@@ -307,6 +318,183 @@ describe('Gobstones API', () => {
 
         expect(s[1].contextNames).deep.equals(['program']);
         expect(s[1].board.table[0][0]).deep.equals({});
+    });
+
+  });
+
+  describe('Interactive program', () => {
+
+    it('Initialize interactive program without timeout', () => {
+        let p = API().parse([
+          'interactive program {',
+          '  INIT -> {}',
+          '  K_ARROW_LEFT -> {}',
+          '  K_ENTER -> {}',
+          '  _ -> {}',
+          '}',
+        ].join('\n'));
+        let r = p.program.interpret(emptyBoard(1, 1));
+        expect(r.keys).deep.equals(['K_ARROW_LEFT', 'K_ENTER']);
+        expect(r.timeout).equals(null);
+    });
+
+    it('Initialize interactive program with timeout', () => {
+        let p = API().parse([
+          'interactive program {',
+          '  K_ENTER -> {}',
+          '  TIMEOUT(200) -> {}',
+          '}',
+        ].join('\n'));
+        let r = p.program.interpret(emptyBoard(1, 1));
+        expect(r.keys).deep.equals(['K_ENTER']);
+        expect(r.timeout).equals(200);
+    });
+
+    it('Run interactive program without INIT', () => {
+        let p = API().parse([
+          'interactive program {',
+          '}',
+        ].join('\n'));
+        let r = p.program.interpret(emptyBoard(1, 1));
+        expect(r.onInit()).deep.equals({
+          width: 1, height: 1, head: {x: 0, y: 0}, table: [[{}]]
+        });
+    });
+
+    it('Run interactive program with INIT', () => {
+        let p = API().parse([
+          'interactive program {',
+          '  INIT -> { Poner(Rojo) }',
+          '}',
+        ].join('\n'));
+        let r = p.program.interpret(emptyBoard(1, 1));
+        expect(r.onInit()).deep.equals({
+          width: 1, height: 1, head: {x: 0, y: 0}, table: [[{red: 1}]]
+        });
+    });
+
+    it('Run interactive program with INIT: fail', () => {
+        let p = API().parse([
+          'interactive program {',
+          '  INIT -> { Mover(Sur) }',
+          '}',
+        ].join('\n'));
+        let r = p.program.interpret(emptyBoard(1, 1));
+        expect(r.onInit().reason.code).equals('cannot-move-to');
+        expect(r.onInit().reason.detail).deep.equals(['Sur']);
+    });
+
+    it('Run interactive program with key events', () => {
+        let p = API().parse([
+          'interactive program {',
+          '  K_A -> { Poner(Azul) }',
+          '  K_B -> { Mover(Este) }',
+          '}',
+        ].join('\n'));
+        let r = p.program.interpret(emptyBoard(4, 1));
+        expect(r.onKey('K_A')).deep.equals({
+          width: 4, height: 1, head: {x: 0, y: 0}, table: [
+            [{blue: 1}, {}, {}, {}]
+          ]
+        });
+        expect(r.onKey('K_A')).deep.equals({
+          width: 4, height: 1, head: {x: 0, y: 0}, table: [
+            [{blue: 2}, {}, {}, {}]
+          ]
+        });
+        expect(r.onKey('K_B')).deep.equals({
+          width: 4, height: 1, head: {x: 1, y: 0}, table: [
+            [{blue: 2}, {}, {}, {}]
+          ]
+        });
+        expect(r.onKey('K_A')).deep.equals({
+          width: 4, height: 1, head: {x: 1, y: 0}, table: [
+            [{blue: 2}, {blue: 1}, {}, {}]
+          ]
+        });
+    });
+
+    it('Run interactive program with key events: fail', () => {
+        let p = API().parse([
+          'interactive program {',
+          '  K_A -> { Sacar(Negro) }',
+          '}',
+        ].join('\n'));
+        let r = p.program.interpret(emptyBoard(1, 1));
+        expect(r.onInit()).deep.equals({
+          width: 1, height: 1, head: {x: 0, y: 0}, table: [[{}]]
+        });
+        expect(r.onKey('K_A').reason.code).equals('cannot-remove-stone');
+        expect(r.onKey('K_A').reason.detail).deep.equals(['Negro']);
+    });
+
+    it('Run interactive program with default event', () => {
+        let p = API().parse([
+          'interactive program {',
+          '  INIT -> { Poner(Azul) }',
+          '  _    -> { Poner(Rojo) }',
+          '}',
+        ].join('\n'));
+        let r = p.program.interpret(emptyBoard(1, 1));
+        expect(r.onInit()).deep.equals({
+          width: 1, height: 1, head: {x: 0, y: 0}, table: [[{blue: 1}]]
+        });
+        expect(r.onKey('K_A')).deep.equals({
+          width: 1, height: 1, head: {x: 0, y: 0}, table: [[{blue: 1, red: 1}]]
+        });
+        expect(r.onKey('K_B')).deep.equals({
+          width: 1, height: 1, head: {x: 0, y: 0}, table: [[{blue: 1, red: 2}]]
+        });
+    });
+
+    it('Run interactive program without default event: fail', () => {
+        let p = API().parse([
+          'interactive program {',
+          '  K_A -> { Poner(Azul) }',
+          '}',
+        ].join('\n'));
+        let r = p.program.interpret(emptyBoard(1, 1));
+        expect(r.onKey('K_A')).deep.equals({
+          width: 1, height: 1, head: {x: 0, y: 0}, table: [[{blue: 1}]]
+        });
+        expect(r.onKey('K_B').reason.code).equals('switch-does-not-match');
+    });
+
+    it('Run interactive program without timeout', () => {
+        let p = API().parse([
+          'interactive program {',
+          '  _ -> { Poner(Rojo) }',
+          '}',
+        ].join('\n'));
+        let r = p.program.interpret(emptyBoard(1, 1));
+        expect(r.onInit()).deep.equals({
+          width: 1, height: 1, head: {x: 0, y: 0}, table: [[{}]]
+        });
+        expect(r.onTimeout()).deep.equals({
+          width: 1, height: 1, head: {x: 0, y: 0}, table: [[{}]]
+        });
+        expect(r.onTimeout()).deep.equals({
+          width: 1, height: 1, head: {x: 0, y: 0}, table: [[{}]]
+        });
+    });
+
+    it('Run interactive program with timeout', () => {
+        let p = API().parse([
+          'interactive program {',
+          '  TIMEOUT(100) -> { Poner(Verde) }',
+          '  _ -> { Poner(Rojo) }',
+          '}',
+        ].join('\n'));
+        let r = p.program.interpret(emptyBoard(1, 1));
+        expect(r.onInit()).deep.equals({
+          width: 1, height: 1, head: {x: 0, y: 0}, table: [[{}]]
+        });
+        expect(r.onTimeout()).deep.equals({
+          width: 1, height: 1, head: {x: 0, y: 0}, table: [[{green: 1}]]
+        });
+        expect(r.onTimeout()).deep.equals({
+          width: 1, height: 1, head: {x: 0, y: 0}, table: [[{green: 2}]]
+        });
     });
 
   });

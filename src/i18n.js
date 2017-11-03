@@ -498,12 +498,16 @@ const LOCALE_ES = {
     },
 
   /* Runtime */
-  'CONS:TIMEOUT': 'TIMEOUT',
 
   'TYPE:Integer': 'Number',
   'TYPE:String': 'String',
   'TYPE:Tuple': 'Tuple',
   'TYPE:List': 'List',
+
+  'TYPE:Event': 'Event',
+  'CONS:INIT': 'INIT',
+  'CONS:TIMEOUT': 'TIMEOUT',
+
   'TYPE:Bool': 'Bool',
   'CONS:False': 'False',
   'CONS:True': 'True',
@@ -567,7 +571,7 @@ const LOCALE_ES = {
     },
   '<pattern-type>':
     function (patternType) {
-      if (patternType.substring(0, 6) === '_EVENT') {
+      if (patternType === i18n('TYPE:Event')) {
         return 'evento del programa interactivo';
       } else if (patternType.substring(0, 7) === '_TUPLE_') {
         return 'tupla de ' + patternType.substring(7) + ' componentes';

@@ -83,6 +83,10 @@ export class Runner {
     this._code = new Compiler(this._symtable).compile(this._ast);
   }
 
+  initializeVirtualMachine(initialState) {
+    this._vm = new VirtualMachine(this._code, initialState);
+  }
+
   execute(initialState) {
     this.executeWithTimeout(initialState, 0);
   }
@@ -92,10 +96,14 @@ export class Runner {
   }
 
   executeWithTimeoutTakingSnapshots(initialState, millisecs, snapshotCallback) {
-    this._vm = new VirtualMachine(this._code, initialState);
+    this.initializeVirtualMachine(initialState);
     this._result = this._vm.runWithTimeoutTakingSnapshots(
       millisecs, snapshotCallback
     );
+  }
+
+  executeEventWithTimeout(eventValue, millisecs) {
+    this._result = this._vm.runEventWithTimeout(eventValue, millisecs);
   }
 
   get abstractSyntaxTree() {

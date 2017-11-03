@@ -3,6 +3,10 @@ import { boolFromValue, RuntimeState } from './runtime.js';
 import { Runner } from './runner.js';
 import { i18n, i18nWithLanguage } from './i18n.js';
 import { apiboardFromJboard, apiboardToJboard } from './board_formats.js';
+import { ValueStructure } from './value.js';
+import {
+  N_PatternWildcard, N_PatternStructure, N_PatternTuple, N_PatternTimeout
+} from './ast.js';
 
 const fs = require('fs');
 
@@ -54,7 +58,141 @@ class NormalExecutionResult {
 }
 
 class InteractiveExecutionResult {
-  // TODO
+  constructor(state) {
+    this.keys = this._collectKeyNames(state);
+    this.timeout = this._timeoutValue(state);
+    this.onInit = this._onInitFunction(state);
+    this.onKey = this._onKeyFunction(state);
+    this.onTimeout = this._onTimeoutFunction(state);
+  }
+
+  _hasInit(state) {
+    for (let branch of state.runner.symbolTable.program.branches) {
+      let p = branch.pattern;
+      if (p.tag === N_PatternStructure &&
+          p.constructorName.value == i18n('CONS:INIT')) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  _hasTimeout(state) {
+    return this.timeout !== null;
+  }
+
+  _collectKeyNames(state) {
+    let keys = [];
+    for (let branch of state.runner.symbolTable.program.branches) {
+      let p = branch.pattern;
+      if (p.tag === N_PatternStructure &&
+          p.constructorName.value != i18n('CONS:INIT')) {
+        keys.push(p.constructorName.value)
+      }
+    }
+    return keys;
+  }
+
+  _timeoutValue(state) {
+    for (let branch of state.runner.symbolTable.program.branches) {
+      if (branch.pattern.tag === N_PatternTimeout) {
+        return branch.pattern.timeout;
+      }
+    }
+    return null;
+  }
+
+  /* Return a function that, when called, continues running
+   * the interactive program feeding it with the INIT event.
+   *
+   * If the interactive program does not have an entry for the
+   * INIT event, the returned function has no effect.
+   */
+  _onInitFunction(state) {
+    if (this._hasInit(state)) {
+      let self = this;
+      return function () {
+        return i18nWithLanguage(state.language, () => {
+          return self._onEvent(
+            state,
+            new ValueStructure(i18n('TYPE:Event'), i18n('CONS:INIT'))
+          );
+        });
+      };
+    } else {
+      return function () {
+        return i18nWithLanguage(state.language, () => { 
+          return apiboardFromState(state.runner.globalState);
+        });
+      };
+    }
+  }
+
+  /* Return a function that, when called, continues running
+   * the interactive program feeding it with the TIMEOUT event.
+   *
+   * If the interactive program does not have an entry for the
+   * TIMEOUT event, the returned function has no effect.
+   */
+  _onTimeoutFunction(state) {
+    if (this._hasTimeout(state)) {
+      let self = this;
+      return function () {
+        return i18nWithLanguage(state.language, () => {
+          return self._onEvent(
+            state,
+            new ValueStructure(i18n('TYPE:Event'), i18n('CONS:TIMEOUT'))
+          );
+        });
+      };
+    } else {
+      return function () {
+        return i18nWithLanguage(state.language, () => { 
+          return apiboardFromState(state.runner.globalState);
+        });
+      };
+    }
+  }
+
+  /* Return a function that, when called with a key code, continues running
+   * the interactive program feeding it with the given key event.
+   *
+   * If the interactive program does not have an entry for the given
+   * key, this results in a runtime error.
+   */
+  _onKeyFunction(state) {
+    let self = this;
+    return function (keyCode) {
+      return i18nWithLanguage(state.language, () => {
+        return self._onEvent(
+          state,
+          new ValueStructure(i18n('TYPE:Event'), keyCode)
+        );
+      });
+    };
+  }
+
+  /* Continue running the interactive program feeding it with the given
+   * eventValue.
+   * On success, return a Board.
+   * On failure, return an ExecutionError. */
+  _onEvent(state, eventValue) {
+    return i18nWithLanguage(state.language, () => { 
+      try {
+        state.runner.executeEventWithTimeout(
+          eventValue,
+          state.infiniteLoopTimeout
+        );
+        return apiboardFromState(state.runner.globalState);
+      } catch (exception) {
+        if (exception.isGobstonesException === undefined) {
+          throw exception;
+        }
+        return new ExecutionError(exception);
+      }
+    });
+  }
+
 }
 
 class GobstonesInterpreterError {
@@ -110,17 +248,17 @@ class ParseResult {
     if (state.runner.symbolTable.program === null) {
       this.program = null;
     } else if (state.runner.symbolTable.isInteractiveProgram()) {
-      this._resultForInteractiveProgram(state);
+      this.program = this._resultForInteractiveProgram(state);
     } else {
-      this._resultForProgram(state);
+      this.program = this._resultForProgram(state);
     }
     this.declarations = this._collectDeclarations(state.runner);
   }
 
   _resultForProgram(state) {
-    this.program = {};
-    this.program.alias = 'program';
-    this.program.interpret = function (board) {
+    let program = {};
+    program.alias = 'program';
+    program.interpret = function (board) {
       return i18nWithLanguage(state.language, () => {
         let snapshotTaker = new SnapshotTaker(state.runner);
         try {
@@ -142,20 +280,31 @@ class ParseResult {
           if (exception.isGobstonesException === undefined) {
             throw exception;
           }
-          return new ExecutionError(exception)
+          return new ExecutionError(exception);
         }
       });
     };
+    return program;
   }
 
   _resultForInteractiveProgram(state) {
-    this.program = {};
-    this.program.alias = 'interactiveProgram';
-    this.program.interpret = function (board) {
+    let program = {};
+    program.alias = 'interactiveProgram';
+    program.interpret = function (board) {
       return i18nWithLanguage(state.language, () => {
-        // TODO
+        try {
+          state.runner.compile();
+          state.runner.initializeVirtualMachine(apiboardToState(board));
+          return new InteractiveExecutionResult(state);
+        } catch (exception) {
+          if (exception.isGobstonesException === undefined) {
+            throw exception;
+          }
+          return new ExecutionError(exception);
+        }
       });
     };
+    return program;
   }
 
   _collectDeclarations(runner) {
@@ -303,7 +452,7 @@ export class GobstonesInterpreterAPI {
     };
 
     this.gbb = {
-      read: function (gbb) {}, // TODO
+      read: function (gbb) {},     // TODO
       write: function (string) {}, // TODO
     };
 
@@ -322,7 +471,7 @@ export class GobstonesInterpreterAPI {
           if (exception.isGobstonesException === undefined) {
             throw exception;
           }
-          return new ParseError(exception)
+          return new ParseError(exception);
         }
       });
     };

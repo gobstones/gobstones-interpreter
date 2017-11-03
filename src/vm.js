@@ -235,6 +235,18 @@ export class VirtualMachine {
     return this.runWithTimeoutTakingSnapshots(millisecs, null);
   }
 
+  /* Restart the program from the beginning, with the given eventValue
+   * at the top of the stack.
+   *
+   * This is used for interactive programs, which work by iteratively
+   * making calls to this function.
+   */
+  runEventWithTimeout(eventValue, millisecs) {
+    this._callStack = [new Frame('program', 0 /* instructionPointer */)];
+    this._currentFrame().pushValue(eventValue);
+    return this.runWithTimeout(millisecs);
+  }
+
   /* Run the program, throwing an exception if the given timeout is met.
    * If millisecs is 0, the program is run indefinitely.
    *

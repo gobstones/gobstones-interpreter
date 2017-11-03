@@ -145,8 +145,14 @@ export class Compiler {
     );
   }
 
+  /* An interactive program is compiled as a switch statement
+   * followed by a Return instruction. */
   _compileDefInteractiveProgram(definition) {
-    // TODO
+    this._compileMatchSwitchBranches(definition);
+    this._produce(
+      definition.startPos, definition.endPos,
+      new IReturn()
+    );
   }
 
   /* A procedure definition:
@@ -497,11 +503,13 @@ export class Compiler {
    * labelEnd:
    */
   _compileStmtSwitch(statement) {
-    let branchLabels = [];
-
     /* Compile the subject */
     this._compileExpression(statement.subject);
+    this._compileMatchSwitchBranches(statement);
+  }
 
+  _compileMatchSwitchBranches(statement) {
+    let branchLabels = [];
     /* Attempt to match each pattern */
     for (let branch of statement.branches) {
       let label = this._freshLabel();
