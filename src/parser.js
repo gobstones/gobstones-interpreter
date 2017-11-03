@@ -192,7 +192,7 @@ export class Parser {
       case T_TYPE:
         return this._parseDefType();
       default:
-        fail(
+        return fail(
           this._currentToken.startPos, this._currentToken.endPos,
           'expected-but-found', [
             i18n('definition'),
@@ -266,7 +266,7 @@ export class Parser {
       case T_VARIANT:
         return this._parseDefTypeVariant(startPos, typeName);
       default:
-        fail(
+        return fail(
           this._currentToken.startPos, this._currentToken.endPos,
           'expected-but-found', [
             i18n('<alternative>')([
@@ -371,12 +371,12 @@ export class Parser {
          * in favour of
          *   let (x1, ..., xN) := expression
          */
-        fail(
+        return fail(
           this._currentToken.startPos, this._currentToken.endPos,
           'obsolete-tuple-assignment', []
         );
       default:
-        fail(
+        return fail(
           this._currentToken.startPos, this._currentToken.endPos,
           'expected-but-found', [
             i18n('statement'),
@@ -580,7 +580,7 @@ export class Parser {
       case T_TIMEOUT:
         return this._parsePatternTimeout();
       default:
-        fail(
+        return fail(
           this._currentToken.startPos, this._currentToken.endPos,
           'expected-but-found', [
             i18n('pattern'),
@@ -780,7 +780,7 @@ export class Parser {
       case T_LBRACK:
         return this._parseExprListOrRange();
       default:
-        fail(
+        return fail(
           this._currentToken.startPos, this._currentToken.endPos,
           'expected-but-found', [
             i18n('expression'),
@@ -883,7 +883,7 @@ export class Parser {
         /* Issue a specific error message to deal with a common
          * programming error, namely calling a procedure name
          * where an expression is expected. */
-        fail(
+        return fail(
           constructorName.startPos, constructorName.endPos,
           'expected-but-found', [
             i18n('expression'),
@@ -900,7 +900,7 @@ export class Parser {
         } else {
           expected = i18n('T_PIPE');
         }
-        fail(
+        return fail(
           constructorName.startPos, constructorName.endPos,
           'expected-but-found', [
             expected,
@@ -995,7 +995,7 @@ export class Parser {
           case T_RANGE:
             return this._parseExprRange(startPos, first, second);
           default:
-            fail(
+            return fail(
               this._currentToken.startPos, this._currentToken.endPos,
               'expected-but-found', [
                 i18n('<alternative>')([
@@ -1008,7 +1008,7 @@ export class Parser {
             );
         }
       default:
-        fail(
+        return fail(
           this._currentToken.startPos, this._currentToken.endPos,
           'expected-but-found', [
             i18n('<alternative>')([

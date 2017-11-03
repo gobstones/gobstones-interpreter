@@ -166,7 +166,7 @@ export class Lexer {
       let value = this._readStringWhile(isDigit);
       let endPos = this._reader;
       if (leadingZeroes(value) && value.length > 1) {
-        fail(
+        return fail(
           startPos, endPos,
           'numeric-constant-should-not-have-leading-zeroes', []
         );
@@ -183,7 +183,7 @@ export class Lexer {
       } else if (isLower(value[0])) {
         return new Token(T_LOWERID, value, startPos, endPos);
       } else {
-        fail(
+        return fail(
           startPos, endPos,
           'identifier-must-start-with-alphabetic-character', []
         );
@@ -282,7 +282,7 @@ export class Lexer {
         this._reader = this._reader.consumeCharacter();
       }
     }
-    fail(startPos, this._reader, 'unclosed-string-constant', []);
+    return fail(startPos, this._reader, 'unclosed-string-constant', []);
   }
 
   /* Read a symbol */
@@ -295,7 +295,7 @@ export class Lexer {
         return new Token(tag, symbol, startPos, endPos);
       }
     }
-    fail(
+    return fail(
       this._reader, this._reader,
       'unknown-token', [this._reader.peek()]
     );
@@ -399,7 +399,7 @@ export class Lexer {
         return pragma;
       }
     }
-    fail(
+    return fail(
       startPos, this._reader,
       'unclosed-multiline-comment', []
     );
@@ -416,7 +416,7 @@ export class Lexer {
       result.push(this._reader.peek());
       this._reader = this._reader.consumeInvisibleCharacter();
     }
-    fail(
+    return fail(
       startPos, this._reader,
       'unclosed-multiline-comment', []
     );

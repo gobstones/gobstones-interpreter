@@ -74,7 +74,7 @@ export class Runner {
   enableLintCheck(linterCheckId, enabled) {
     this._linter.enableCheck(linterCheckId, enabled);
   }
- 
+
   lint() {
     this._symtable = this._linter.lint(this._ast);
   }

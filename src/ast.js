@@ -411,7 +411,7 @@ export class ASTPatternTimeout extends ASTNode {
   }
 
   get timeout() {
-    return parseInt(this._children[0].value);
+    return parseInt(this._children[0].value, 10);
   }
 }
 

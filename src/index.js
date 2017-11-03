@@ -11,10 +11,20 @@ import {
   N_PatternWildcard, N_PatternStructure, N_PatternTuple, N_PatternTimeout
 } from './ast.js';
 
-const fs = require('fs');
-
 const DEFAULT_INFINITE_LOOP_TIMEOUT = 3000; /* millisecs */
 const DEFAULT_LANGUAGE = 'es'; /* millisecs */
+
+/* load a board in the API format into a fresh RuntimeState */
+function apiboardToState(apiboard) {
+  let state = new RuntimeState();
+  state.load(apiboardToJboard(apiboard));
+  return state;
+}
+
+/* Dump a RuntimeState to a board in the API format */
+function apiboardFromState(state) {
+  return apiboardFromJboard(state.dump());
+}
 
 /* Backwards-compatible type/value with special cases for some types */
 function apivalueFromValue(value) {
@@ -47,155 +57,6 @@ function apivalueFromValue(value) {
       value: value.toString()
     };
   }
-}
-
-class NormalExecutionResult {
-  constructor(finalBoard, snapshots, returnValue) {
-    this.finalBoard = finalBoard;
-    this.snapshots = snapshots;
-    this.returnValue = apivalueFromValue(returnValue);
-
-    /* Actual return value */
-    this.actualReturnValue = returnValue;
-  }
-}
-
-class InteractiveExecutionResult {
-  constructor(state) {
-    this.keys = this._collectKeyNames(state);
-    this.timeout = this._timeoutValue(state);
-    this.onInit = this._onInitFunction(state);
-    this.onKey = this._onKeyFunction(state);
-    this.onTimeout = this._onTimeoutFunction(state);
-  }
-
-  _hasInit(state) {
-    for (let branch of state.runner.symbolTable.program.branches) {
-      let p = branch.pattern;
-      if (p.tag === N_PatternStructure &&
-          p.constructorName.value == i18n('CONS:INIT')) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  _hasTimeout(state) {
-    return this.timeout !== null;
-  }
-
-  _collectKeyNames(state) {
-    let keys = [];
-    for (let branch of state.runner.symbolTable.program.branches) {
-      let p = branch.pattern;
-      if (p.tag === N_PatternStructure &&
-          p.constructorName.value != i18n('CONS:INIT')) {
-        keys.push(p.constructorName.value)
-      }
-    }
-    return keys;
-  }
-
-  _timeoutValue(state) {
-    for (let branch of state.runner.symbolTable.program.branches) {
-      if (branch.pattern.tag === N_PatternTimeout) {
-        return branch.pattern.timeout;
-      }
-    }
-    return null;
-  }
-
-  /* Return a function that, when called, continues running
-   * the interactive program feeding it with the INIT event.
-   *
-   * If the interactive program does not have an entry for the
-   * INIT event, the returned function has no effect.
-   */
-  _onInitFunction(state) {
-    if (this._hasInit(state)) {
-      let self = this;
-      return function () {
-        return i18nWithLanguage(state.language, () => {
-          return self._onEvent(
-            state,
-            new ValueStructure(i18n('TYPE:Event'), i18n('CONS:INIT'))
-          );
-        });
-      };
-    } else {
-      return function () {
-        return i18nWithLanguage(state.language, () => { 
-          return apiboardFromState(state.runner.globalState);
-        });
-      };
-    }
-  }
-
-  /* Return a function that, when called, continues running
-   * the interactive program feeding it with the TIMEOUT event.
-   *
-   * If the interactive program does not have an entry for the
-   * TIMEOUT event, the returned function has no effect.
-   */
-  _onTimeoutFunction(state) {
-    if (this._hasTimeout(state)) {
-      let self = this;
-      return function () {
-        return i18nWithLanguage(state.language, () => {
-          return self._onEvent(
-            state,
-            new ValueStructure(i18n('TYPE:Event'), i18n('CONS:TIMEOUT'))
-          );
-        });
-      };
-    } else {
-      return function () {
-        return i18nWithLanguage(state.language, () => { 
-          return apiboardFromState(state.runner.globalState);
-        });
-      };
-    }
-  }
-
-  /* Return a function that, when called with a key code, continues running
-   * the interactive program feeding it with the given key event.
-   *
-   * If the interactive program does not have an entry for the given
-   * key, this results in a runtime error.
-   */
-  _onKeyFunction(state) {
-    let self = this;
-    return function (keyCode) {
-      return i18nWithLanguage(state.language, () => {
-        return self._onEvent(
-          state,
-          new ValueStructure(i18n('TYPE:Event'), keyCode)
-        );
-      });
-    };
-  }
-
-  /* Continue running the interactive program feeding it with the given
-   * eventValue.
-   * On success, return a Board.
-   * On failure, return an ExecutionError. */
-  _onEvent(state, eventValue) {
-    return i18nWithLanguage(state.language, () => { 
-      try {
-        state.runner.executeEventWithTimeout(
-          eventValue,
-          state.infiniteLoopTimeout
-        );
-        return apiboardFromState(state.runner.globalState);
-      } catch (exception) {
-        if (exception.isGobstonesException === undefined) {
-          throw exception;
-        }
-        return new ExecutionError(exception);
-      }
-    });
-  }
-
 }
 
 class GobstonesInterpreterError {
@@ -235,14 +96,250 @@ class ExecutionError extends GobstonesInterpreterError {
   }
 }
 
-function apiboardToState(apiboard) {
-  let state = new RuntimeState();
-  state.load(apiboardToJboard(apiboard));
-  return state;
+class NormalExecutionResult {
+  constructor(finalBoard, snapshots, returnValue) {
+    this.finalBoard = finalBoard;
+    this.snapshots = snapshots;
+    this.returnValue = apivalueFromValue(returnValue);
+
+    /* Actual return value */
+    this.actualReturnValue = returnValue;
+  }
 }
 
-function apiboardFromState(state) {
-  return apiboardFromJboard(state.dump());
+class InteractiveExecutionResult {
+  constructor(state) {
+    this.keys = this._collectKeyNames(state);
+    this.timeout = this._timeoutValue(state);
+    this.onInit = this._onInitFunction(state);
+    this.onKey = this._onKeyFunction(state);
+    this.onTimeout = this._onTimeoutFunction(state);
+  }
+
+  _hasInit(state) {
+    for (let branch of state.runner.symbolTable.program.branches) {
+      let p = branch.pattern;
+      if (p.tag === N_PatternStructure &&
+          p.constructorName.value === i18n('CONS:INIT')) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  _hasTimeout(state) {
+    return this.timeout !== null;
+  }
+
+  _collectKeyNames(state) {
+    let keys = [];
+    for (let branch of state.runner.symbolTable.program.branches) {
+      let p = branch.pattern;
+      if (p.tag === N_PatternStructure &&
+          p.constructorName.value !== i18n('CONS:INIT')) {
+        keys.push(p.constructorName.value);
+      }
+    }
+    return keys;
+  }
+
+  _timeoutValue(state) {
+    for (let branch of state.runner.symbolTable.program.branches) {
+      if (branch.pattern.tag === N_PatternTimeout) {
+        return branch.pattern.timeout;
+      }
+    }
+    return null;
+  }
+
+  /* Return a function that, when called, continues running
+   * the interactive program feeding it with the INIT event.
+   *
+   * If the interactive program does not have an entry for the
+   * INIT event, the returned function has no effect.
+   */
+  _onInitFunction(state) {
+    if (this._hasInit(state)) {
+      let self = this;
+      return function () {
+        return i18nWithLanguage(state.language, () => {
+          return self._onEvent(
+            state,
+            new ValueStructure(i18n('TYPE:Event'), i18n('CONS:INIT'))
+          );
+        });
+      };
+    } else {
+      return function () {
+        return i18nWithLanguage(state.language, () => {
+          return apiboardFromState(state.runner.globalState);
+        });
+      };
+    }
+  }
+
+  /* Return a function that, when called, continues running
+   * the interactive program feeding it with the TIMEOUT event.
+   *
+   * If the interactive program does not have an entry for the
+   * TIMEOUT event, the returned function has no effect.
+   */
+  _onTimeoutFunction(state) {
+    if (this._hasTimeout(state)) {
+      let self = this;
+      return function () {
+        return i18nWithLanguage(state.language, () => {
+          return self._onEvent(
+            state,
+            new ValueStructure(i18n('TYPE:Event'), i18n('CONS:TIMEOUT'))
+          );
+        });
+      };
+    } else {
+      return function () {
+        return i18nWithLanguage(state.language, () => {
+          return apiboardFromState(state.runner.globalState);
+        });
+      };
+    }
+  }
+
+  /* Return a function that, when called with a key code, continues running
+   * the interactive program feeding it with the given key event.
+   *
+   * If the interactive program does not have an entry for the given
+   * key, this results in a runtime error.
+   */
+  _onKeyFunction(state) {
+    let self = this;
+    return function (keyCode) {
+      return i18nWithLanguage(state.language, () => {
+        return self._onEvent(
+          state,
+          new ValueStructure(i18n('TYPE:Event'), keyCode)
+        );
+      });
+    };
+  }
+
+  /* Continue running the interactive program feeding it with the given
+   * eventValue.
+   * On success, return a Board.
+   * On failure, return an ExecutionError. */
+  _onEvent(state, eventValue) {
+    return i18nWithLanguage(state.language, () => {
+      try {
+        state.runner.executeEventWithTimeout(
+          eventValue,
+          state.infiniteLoopTimeout
+        );
+        return apiboardFromState(state.runner.globalState);
+      } catch (exception) {
+        if (exception.isGobstonesException === undefined) {
+          throw exception;
+        }
+        return new ExecutionError(exception);
+      }
+    });
+  }
+
+}
+
+class SnapshotTaker {
+
+  constructor(runner) {
+    this._runner = runner;
+    this._snapshots = [];
+    this._index = 0;
+  }
+
+  takeSnapshot(routineName, position, callStack, globalState) {
+    if (this._shouldTakeSnapshot(routineName, callStack)) {
+      this._snapshots.push(
+        this._snapshot(routineName, position, callStack, globalState)
+      );
+    }
+  }
+
+  snapshots() {
+    return this._snapshots;
+  }
+
+  _snapshot(routineName, position, callStack, globalState) {
+    let snapshot = {};
+    snapshot.contextNames = [];
+    for (let stackFrame of callStack) {
+      let name = stackFrame.routineName;
+      if (name !== 'program') {
+        this._index += 1;
+        name = name + '-' + this._index.toString();
+      }
+      snapshot.contextNames.push(name);
+    }
+    snapshot.board = apiboardFromState(globalState);
+    snapshot.region = position.region;
+    return snapshot;
+  }
+
+  _shouldTakeSnapshot(routineName, callStack) {
+    let routineNameStack = [];
+    for (let stackFrame of callStack) {
+      routineNameStack.push(stackFrame.routineName);
+    }
+
+    if (this._runner.primitives.isProcedure(routineName)) {
+      /* A primitive procedure must be recorded if there are no
+       * atomic routines anywhere in the call stack. */
+      return this._noAtomicRoutines(routineNameStack);
+    } else {
+      /* Other routines must be recorded if they have the 'recorded'
+       * attribute, and, moreover, there are no atomic routines other
+       * than the last one in the call stack. */
+      routineNameStack.pop();
+      return this._isRecorded(routineName)
+          && this._noAtomicRoutines(routineNameStack);
+    }
+  }
+
+  _noAtomicRoutines(routineNameStack) {
+    for (let routineName of routineNameStack) {
+      if (this._isAtomic(routineName)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  _isAtomic(routineName) {
+    if (routineName === 'program') {
+      return false;
+    } else if (this._runner.primitives.isProcedure(routineName)) {
+      /* Primitive procedure */
+      return false;
+    } else if (this._runner.symbolTable.isProcedure(routineName)) {
+      /* User-defined procedure */
+      return false;
+    } else {
+      /* Function */
+      return true;
+    }
+  }
+
+  _isRecorded(routineName) {
+    if (routineName === 'program') {
+      return true;
+    } else if (this._runner.primitives.isProcedure(routineName)) {
+      /* Primitive procedure */
+      return true;
+    } else if (this._runner.symbolTable.isProcedure(routineName)) {
+      /* User-defined procedure */
+      return false;
+    } else {
+      /* Function */
+      return false;
+    }
+  }
+
 }
 
 class ParseResult {
@@ -331,103 +428,6 @@ class ParseResult {
       });
     }
     return declarations;
-  }
-
-}
-
-class SnapshotTaker {
-
-  constructor(runner) {
-    this._runner = runner;
-    this._snapshots = [];
-    this._index = 0;
-  }
-
-  takeSnapshot(routineName, position, callStack, globalState) {
-    if (this._shouldTakeSnapshot(routineName, callStack)) {
-      this._snapshots.push(
-        this._snapshot(routineName, position, callStack, globalState)
-      );
-    }
-  }
-
-  snapshots() {
-    return this._snapshots;
-  }
-
-  _snapshot(routineName, position, callStack, globalState) {
-    let snapshot = {}
-    snapshot.contextNames = [];
-    for (let stackFrame of callStack) {
-      let name = stackFrame.routineName;
-      if (name !== 'program') {
-        this._index += 1;
-        name = name + '-' + this._index.toString();
-      }
-      snapshot.contextNames.push(name);
-    }
-    snapshot.board = apiboardFromState(globalState);
-    snapshot.region = position.region;
-    return snapshot;
-  }
-
-  _shouldTakeSnapshot(routineName, callStack) {
-    let routineNameStack = [];
-    for (let stackFrame of callStack) {
-      routineNameStack.push(stackFrame.routineName);
-    }
-
-    if (this._runner.primitives.isProcedure(routineName)) {
-      /* A primitive procedure must be recorded if there are no
-       * atomic routines anywhere in the call stack. */
-      return this._noAtomicRoutines(routineNameStack);
-    } else {
-      /* Other routines must be recorded if they have the 'recorded'
-       * attribute, and, moreover, there are no atomic routines other
-       * than the last one in the call stack. */
-      routineNameStack.pop();
-      return this._isRecorded(routineName)
-          && this._noAtomicRoutines(routineNameStack);
-    }
-  }
-
-  _noAtomicRoutines(routineNameStack) {
-    for (let routineName of routineNameStack) {
-      if (this._isAtomic(routineName)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  _isAtomic(routineName) {
-    if (routineName == 'program') {
-      return false;
-    } else if (this._runner.primitives.isProcedure(routineName)) {
-      /* Primitive procedure */
-      return false;
-    } else if (this._runner.symbolTable.isProcedure(routineName)) {
-      /* User-defined procedure */
-      return false;
-    } else {
-      /* Function */
-      return true;
-    }
-  }
-
-  _isRecorded(routineName) {
-    if (routineName == 'program') {
-      return true;
-    } else if (this._runner.primitives.isProcedure(routineName)) {
-      /* Primitive procedure */
-      return true;
-    } else if (this._runner.symbolTable.isProcedure(routineName)) {
-      /* User-defined procedure */
-      return false;
-    } else {
-      /* Function */
-      return false;
-    }
   }
 
 }

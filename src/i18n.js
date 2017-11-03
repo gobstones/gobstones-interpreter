@@ -571,7 +571,7 @@ const LOCALE_ES = {
     },
   '<pattern-type>':
     function (patternType) {
-      if (patternType === i18n('TYPE:Event')) {
+      if (patternType === 'Event') {
         return 'evento del programa interactivo';
       } else if (patternType.substring(0, 7) === '_TUPLE_') {
         return 'tupla de ' + patternType.substring(7) + ' componentes';

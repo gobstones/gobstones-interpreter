@@ -205,7 +205,7 @@ export class VirtualMachine {
      *   routineName:
      *     It is the name of the routine that triggers the
      *     snapshot, it might be:
-     *     - 'program' for the main program, 
+     *     - 'program' for the main program,
      *     - the name of a primitive procedure or function,
      *     - the name of a user-defined procedure or function.
      *

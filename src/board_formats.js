@@ -199,7 +199,7 @@ export function gbbToJboard(gbb) {
   let jboard = {};
 
   function isWhitespace(x) {
-    return x == ' ' || x == '\t' || x == '\r' || x == '\n';
+    return x === ' ' || x === '\t' || x === '\r' || x === '\n';
   }
 
   function isNumeric(str) {
@@ -233,7 +233,7 @@ export function gbbToJboard(gbb) {
     if (!isNumeric(t)) {
       throw Error(errmsg);
     }
-    t = parseInt(t)
+    t = parseInt(t, 10);
     if (t < 0) {
       throw Error(errmsg);
     }
@@ -317,7 +317,7 @@ export function gbbToJboard(gbb) {
         jboard.board[cx][cy][colorId] = n;
       }
     } else {
-      throw Error('GBB/1.0: Malformed board: unknown command "' + op + '".')
+      throw Error('GBB/1.0: Malformed board: unknown command "' + op + '".');
     }
   }
   return jboard;
