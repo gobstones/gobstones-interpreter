@@ -499,5 +499,43 @@ describe('Gobstones API', () => {
 
   });
 
+  describe('Board format conversion', () => {
+
+    it('GBB to apiboard', () => {
+      let board = API().gbb.read([
+        'GBB/1.0',
+        'size 6 3',
+        'cell 3 1 Rojo 10 Negro 4',
+        'cell 5 2 Azul 2',
+        'cell 4 2 Azul 1',
+        'head 5 2',
+      ].join('\n'));
+      expect(board).deep.equals({
+        width: 6, height: 3,
+        head: {x: 5, y: 2},
+        table: [
+          [{}, {}, {}, {}, {blue: 1}, {blue: 2}],
+          [{}, {}, {}, {black: 4, red: 10}, {}, {}],
+          [{}, {}, {}, {}, {}, {}],
+        ]
+      });
+    });
+
+    it('Apiboard to GBB', () => {
+      let apiboard = {
+        width: 6, height: 3,
+        head: {x: 3, y: 1},
+        table: [
+          [{red: 3}, {}, {green: 2}, {}, {blue: 3, red: 1}, {}],
+          [{}, {red: 2}, {black: 2}, {}, {blue: 2}, {green: 1}],
+          [{}, {}, {green: 3}, {}, {black: 3}, {blue: 1}],
+        ]
+      };
+      let api = API();
+      expect(api.gbb.read(api.gbb.write(apiboard))).deep.equals(apiboard);
+    });
+
+  });
+
 });
 

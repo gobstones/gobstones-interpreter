@@ -2,7 +2,10 @@
 import { boolFromValue, RuntimeState } from './runtime.js';
 import { Runner } from './runner.js';
 import { i18n, i18nWithLanguage } from './i18n.js';
-import { apiboardFromJboard, apiboardToJboard } from './board_formats.js';
+import {
+  apiboardFromJboard, apiboardToJboard,
+  gbbFromJboard, gbbToJboard,
+} from './board_formats.js';
 import { ValueStructure } from './value.js';
 import {
   N_PatternWildcard, N_PatternStructure, N_PatternTuple, N_PatternTimeout
@@ -447,13 +450,21 @@ export class GobstonesInterpreterAPI {
         state.infiniteLoopTimeout = milliseconds;
       },
       setXGobstonesEnabled: function (isEnabled) {
-        // TODO
+        /* TODO */
       },
     };
 
     this.gbb = {
-      read: function (gbb) {},     // TODO
-      write: function (string) {}, // TODO
+      /* Convert a string representing a board in GBB format
+       * to a board in the "API" format. */
+      read: function (gbb) {
+        return apiboardFromJboard(gbbToJboard(gbb));
+      },
+      /* Convert a board in the "API" format to a string representing
+       * a board in GBB format. */
+      write: function (apiboard) {
+        return gbbFromJboard(apiboardToJboard(apiboard));
+      },
     };
 
     this.parse = function (sourceCode) {

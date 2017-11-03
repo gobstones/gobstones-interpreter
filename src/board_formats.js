@@ -156,7 +156,7 @@ function gsboardToJboard(gsBoardString) {
   return jboard;
 }
 
-function gbbFromJboard(jboard) {
+export function gbbFromJboard(jboard) {
   let gbb = [];
   gbb.push('GBB/1.0');
   gbb.push(
@@ -164,27 +164,163 @@ function gbbFromJboard(jboard) {
     + ' ' + jboard.width.toString()
     + ' ' + jboard.height.toString()
   );
+  for (let y = 0; y < jboard.height; y++) {
+    for (let x = 0; x < jboard.width; x++) {
+      let cell = jboard.board[x][y];
+      if (cell.a + cell.n + cell.r + cell.v === 0) {
+        continue;
+      }
+      let c = 'cell ' + x.toString() + ' ' + y.toString();
+      if (cell.a > 0) {
+        c += ' Azul ' + cell.a.toString();
+      }
+      if (cell.n > 0) {
+        c += ' Negro ' + cell.n.toString();
+      }
+      if (cell.r > 0) {
+        c += ' Rojo ' + cell.r.toString();
+      }
+      if (cell.v > 0) {
+        c += ' Verde ' + cell.v.toString();
+      }
+      gbb.push(c);
+    }
+  }
   gbb.push(
     'head'
     + ' ' + jboard.head[0].toString()
     + ' ' + jboard.head[1].toString()
   );
-  for (let y = 0; y < jboard.height; y++) {
-    for (let x = 0; x < jboard.width; x++) {
-      let cell = jboard.board[x][y];
-      let c = 'cell ' + x.toString() + ' ' + y.toString();
-      c += ' A ' + cell.a.toString();
-      c += ' N ' + cell.n.toString();
-      c += ' R ' + cell.r.toString();
-      c += ' V ' + cell.v.toString();
-      gbb.push(c);
-    }
-  }
   return gbb.join('\n') + '\n';
 }
 
-function gbbToJboard(gbb) {
-  throw Error('Not implemented.');
+export function gbbToJboard(gbb) {
+  let i = 0;
+  let jboard = {};
+
+  function isWhitespace(x) {
+    return x == ' ' || x == '\t' || x == '\r' || x == '\n';
+  }
+
+  function isNumeric(str) {
+    for (let i = 0; i < str.length; i++) {
+      if ('0123456789'.indexOf(str[i]) === -1) {
+        return false;
+      }
+    }
+    return str.length > 0;
+  }
+
+  function skipWhitespace() {
+    /* Skip whitespace */
+    if (i < gbb.length && isWhitespace(gbb[i])) {
+      i++;
+    }
+  }
+
+  function readToken() {
+    let t = [];
+    skipWhitespace();
+    while (i < gbb.length && !isWhitespace(gbb[i])) {
+      t.push(gbb[i]);
+      i++;
+    }
+    return t.join('');
+  }
+
+  function readN(errmsg) {
+    let t = readToken();
+    if (!isNumeric(t)) {
+      throw Error(errmsg);
+    }
+    t = parseInt(t)
+    if (t < 0) {
+      throw Error(errmsg);
+    }
+    return t;
+  }
+
+  function readRange(a, b, errmsg) {
+    let t = readN(errmsg);
+    if (t < a || t >= b) {
+      throw Error(errmsg);
+    }
+    return t;
+  }
+
+  if (readToken() !== 'GBB/1.0') {
+    throw Error('GBB/1.0: Board not in GBB/1.0 format.');
+  }
+  if (readToken() !== 'size') {
+    throw Error('GBB/1.0: Board lacks a size declaration.');
+  }
+  jboard.width = readN('GBB/1.0: Board width is not a number.');
+  jboard.height = readN('GBB/1.0: Board height is not a number.');
+  if (jboard.width <= 0 || jboard.height <= 0) {
+    throw Error('GBB/1.0: Board size should be positive.');
+  }
+  jboard.head = [0, 0];
+  jboard.board = [];
+  for (let i = 0; i < jboard.width; i++) {
+    let row = [];
+    for (let j = 0; j < jboard.height; j++) {
+      row.push({'a': 0, 'n': 0, 'r': 0, 'v': 0});
+    }
+    jboard.board.push(row);
+  }
+
+  let headDeclared = false;
+  let cellDeclared = {};
+  let colores = {
+    'Azul': 'a',
+    'A': 'a',
+    'Negro': 'n',
+    'N': 'n',
+    'Rojo': 'r',
+    'R': 'r',
+    'Verde': 'v',
+    'V': 'v',
+  };
+
+  while (i < gbb.length) {
+    let op = readToken();
+    if (op === '') {
+      break;
+    } else if (op === 'head') {
+      if (headDeclared) {
+        throw Error('GBB/1.0: Head position cannot be declared twice.');
+      }
+      headDeclared = true;
+      let hx = readRange(0, jboard.width, 'GBB/1.0: Invalid head position.');
+      let hy = readRange(0, jboard.height, 'GBB/1.0: Invalid head position.');
+      jboard.head = [hx, hy];
+    } else if (op === 'cell') {
+      let cx = readRange(0, jboard.width, 'GBB/1.0: Invalid cell position.');
+      let cy = readRange(0, jboard.height, 'GBB/1.0: Invalid cell position.');
+      if ([cx, cy] in cellDeclared) {
+        throw Error('GBB/1.0: Cell cannot be declared twice.');
+      }
+      cellDeclared[[cx, cy]] = true;
+
+      let colorDeclared = {};
+      while (i < gbb.length) {
+        let color = readToken();
+        if (!(color in colores)) {
+          i -= color.length;
+          break;
+        }
+        let colorId = colores[color];
+        if (colorId in colorDeclared) {
+          throw Error('GBB/1.0: Color cannot be declared twice.');
+        }
+        let n = readN('GBB/1.0: Invalid amount of stones.');
+        jboard.board[cx][cy][colorId] = n;
+      }
+    } else {
+      throw Error('GBB/1.0: Malformed board: unknown command "' + op + '".')
+    }
+  }
+  return jboard;
 }
 
 let BOARD_FORMAT_LIST = [
