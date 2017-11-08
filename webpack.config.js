@@ -28,7 +28,7 @@ const config = {
     libraryTarget: 'umd',
     umdNamedDefine: true
   },
-  target: 'node',
+  target: 'web',
   node: {
     fs: 'empty'
   },
