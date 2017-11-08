@@ -62,19 +62,31 @@ class RuntimeExitProgram extends RuntimeCondition {
   }
 }
 
+function fail(startPos, endPos, reason, args) {
+  throw new GbsRuntimeError(startPos, endPos, reason, args);
+}
+
 /* An instance of Frame represents the local execution context of a
  * function or procedure (a.k.a. "activation record" or "stack frame").
  *
  * It includes:
+ * - the name of the current routine:
+ *   + 'program' for the main program
+ *   + the name of the current procedure or function
+ * - the current instruction pointer
  * - a stack of local values
  * - a map from local names to values
- * - the current instruction pointer
  */
 class Frame {
-  constructor(instructionPointer) {
+  constructor(routineName, instructionPointer) {
+    this._routineName = routineName;
     this._instructionPointer = instructionPointer;
     this._variables = {};
     this._stack = [];
+  }
+
+  get routineName() {
+    return this._routineName;
   }
 
   get instructionPointer() {
@@ -157,7 +169,7 @@ export class VirtualMachine {
      * become empty.
      */
     this._callStack = [];
-    this._callStack.push(new Frame(0 /* instructionPointer */));
+    this._callStack.push(new Frame('program', 0 /* instructionPointer */));
 
     /* The global state is the data that is available globally.
      *
@@ -185,12 +197,77 @@ export class VirtualMachine {
      */
     this._primitives = new RuntimePrimitives();
 
+    /*
+     * A "snapshot callback" is a function that takes snapshots.
+     *
+     *   snapshotCallback(routineName, position, callStack, globalState)
+     *
+     *   routineName:
+     *     It is the name of the routine that triggers the
+     *     snapshot, it might be:
+     *     - 'program' for the main program,
+     *     - the name of a primitive procedure or function,
+     *     - the name of a user-defined procedure or function.
+     *
+     *   position:
+     *     The position in the source code for this snapshot.
+     *
+     *   callStack:
+     *     The current call stack.
+     *
+     *   globalState:
+     *     The current global state.
+     *
+     * Snapshots
+     * If _snapshotCallback is null, the VM does not take snapshots.
+     */
+    this._snapshotCallback = null;
+
   }
 
   run() {
+    return this.runWithTimeout(0);
+  }
+
+  /* Run the program, throwing an exception if the given timeout is met.
+   * If millisecs is 0, the program is run indefinitely. */
+  runWithTimeout(millisecs) {
+    return this.runWithTimeoutTakingSnapshots(millisecs, null);
+  }
+
+  /* Restart the program from the beginning, with the given eventValue
+   * at the top of the stack.
+   *
+   * This is used for interactive programs, which work by iteratively
+   * making calls to this function.
+   */
+  runEventWithTimeout(eventValue, millisecs) {
+    this._callStack = [new Frame('program', 0 /* instructionPointer */)];
+    this._currentFrame().pushValue(eventValue);
+    return this.runWithTimeout(millisecs);
+  }
+
+  /* Run the program, throwing an exception if the given timeout is met.
+   * If millisecs is 0, the program is run indefinitely.
+   *
+   * Snapshots are taken:
+   * - At the very start of the program.
+   * - At the end of the program.
+   * - After calling any primitive procedure or function.
+   * - Whenever reaching an I_Return instruction from any routine.
+   *
+   * The snapshotCallback function receives:
+   * - The current call stack (list of frames).
+   * - The current global state.
+   */
+  runWithTimeoutTakingSnapshots(millisecs, snapshotCallback) {
+    let startTime = new Date().getTime();
+    this._snapshotCallback = snapshotCallback;
+    this._takeSnapshot('program');
     try {
       while (true) {
         this._step();
+        this._timeoutIfNeeded(startTime, millisecs);
       }
     } catch (condition) {
       if (condition.tag === RT_ExitProgram) {
@@ -198,6 +275,22 @@ export class VirtualMachine {
       } else {
         throw condition;
       }
+    }
+  }
+
+  _timeoutIfNeeded(startTime, millisecs) {
+    if (millisecs > 0 && (new Date().getTime() - startTime) > millisecs) {
+      let instruction = this._currentInstruction();
+      fail(instruction.startPos, instruction.endPos, 'timeout', [millisecs]);
+    }
+  }
+
+  _takeSnapshot(routineName) {
+    if (this._snapshotCallback !== null) {
+      let instruction = this._currentInstruction();
+      this._snapshotCallback(
+        routineName, instruction.startPos, this._callStack, this.globalState()
+      );
     }
   }
 
@@ -307,8 +400,9 @@ export class VirtualMachine {
     let instruction = this._currentInstruction();
     let value = frame.getVariable(instruction.variableName);
     if (value === null) {
-      throw new GbsRuntimeError(instruction.startPos, instruction.endPos,
-          i18n('errmsg:undefined-variable')(instruction.variableName)
+      fail(
+        instruction.startPos, instruction.endPos,
+        'undefined-variable', [instruction.variableName]
       );
     }
     frame.pushValue(value);
@@ -326,12 +420,13 @@ export class VirtualMachine {
       let oldType = oldValue.type();
       let newType = newValue.type();
       if (joinTypes(oldType, newType) === null) {
-        throw new GbsRuntimeError(instruction.startPos, instruction.endPos,
-          i18n('errmsg:incompatible-types-on-assignment')(
+        fail(
+          instruction.startPos, instruction.endPos,
+          'incompatible-types-on-assignment', [
             instruction.variableName,
             oldType.toString(),
             newType.toString(),
-          )
+          ]
         );
       }
     }
@@ -399,14 +494,18 @@ export class VirtualMachine {
     let instruction = this._currentInstruction();
 
     /* Create a new stack frame for the callee */
-    let newFrame = new Frame(this._labelTargets[instruction.targetLabel]);
+    let newFrame = new Frame(
+                     instruction.targetLabel,
+                     this._labelTargets[instruction.targetLabel]
+                   );
     this._callStack.push(newFrame);
 
     /* Pop arguments from caller's frame and push them into callee's frame */
     for (let i = 0; i < instruction.nargs; i++) {
       if (callerFrame.stackEmpty()) {
-        throw new GbsRuntimeError(instruction.startPos, instruction.endPos,
-          i18n('errmsg:too-few-arguments')(instruction.targetLabel)
+        fail(
+          instruction.startPos, instruction.endPos,
+          'too-few-arguments', [instruction.targetLabel]
         );
       }
       newFrame.pushValue(callerFrame.popValue());
@@ -415,6 +514,9 @@ export class VirtualMachine {
 
   _stepReturn() {
     let innerFrame = this._currentFrame();
+
+    /* Take a snapshot when leaving a routine */
+    this._takeSnapshot(innerFrame.routineName);
 
     let returnValue;
     if (innerFrame.stackEmpty()) {
@@ -471,12 +573,13 @@ export class VirtualMachine {
       let newType = element.type();
       contentType = joinTypes(oldType, newType);
       if (contentType === null) {
-        throw new GbsRuntimeError(instruction.startPos, instruction.endPos,
-          i18n('errmsg:incompatible-types-on-list-creation')(
+        fail(
+          instruction.startPos, instruction.endPos,
+          'incompatible-types-on-list-creation', [
             index,
             oldType.toString(),
             newType.toString(),
-          )
+          ]
         );
       }
       index++;
@@ -519,19 +622,21 @@ export class VirtualMachine {
     /* Check that it is a structure and built with the same constructor */
     let structure = frame.popValue();
     if (structure.tag !== V_Structure) {
-      throw new GbsRuntimeError(instruction.startPos, instruction.endPos,
-        i18n('errmsg:expected-structure-but-got')(
+      fail(
+        instruction.startPos, instruction.endPos,
+        'expected-structure-but-got', [
           instruction.constructorName,
           i18n(Symbol.keyFor(structure.tag)),
-        )
+        ]
       );
     }
     if (structure.constructorName !== instruction.constructorName) {
-      throw new GbsRuntimeError(instruction.startPos, instruction.endPos,
-        i18n('errmsg:expected-constructor-but-got')(
+      fail(
+        instruction.startPos, instruction.endPos,
+        'expected-constructor-but-got', [
           instruction.constructorName,
           structure.constructorName,
-        )
+        ]
       );
     }
     if (structure.typeName !== instruction.typeName) {
@@ -543,12 +648,13 @@ export class VirtualMachine {
       let oldType = structure.fields[fieldName].type();
       let newType = newFields[fieldName].type();
       if (joinTypes(oldType, newType) === null) {
-        throw new GbsRuntimeError(instruction.startPos, instruction.endPos,
-          i18n('errmsg:incompatible-types-on-structure-update')(
+        fail(
+          instruction.startPos, instruction.endPos,
+          'incompatible-types-on-structure-update', [
             fieldName,
             oldType.toString(),
             newType.toString(),
-          )
+          ]
         );
       }
     }
@@ -563,15 +669,17 @@ export class VirtualMachine {
     let instruction = this._currentInstruction();
     let tuple = frame.stackTop();
     if (tuple.tag !== V_Tuple) {
-      throw new GbsRuntimeError(instruction.startPos, instruction.endPos,
-        i18n('errmsg:expected-tuple-value-but-got')(tuple.type().toString())
+      fail(
+        instruction.startPos, instruction.endPos,
+        'expected-tuple-value-but-got', [tuple.type().toString()]
       );
     }
     if (instruction.index >= tuple.size()) {
-      throw new GbsRuntimeError(instruction.startPos, instruction.endPos,
-        i18n('errmsg:tuple-component-out-of-bounds')(
+      fail(
+        instruction.startPos, instruction.endPos,
+        'tuple-component-out-of-bounds', [
           tuple.size(), instruction.index,
-        )
+        ]
       );
     }
     frame.pushValue(tuple.components[instruction.index]);
@@ -588,17 +696,18 @@ export class VirtualMachine {
       structure = frame.stackTop();
     }
     if (structure.tag !== V_Structure) {
-      throw new GbsRuntimeError(instruction.startPos, instruction.endPos,
-        i18n('errmsg:expected-structure-value-but-got')(
-          structure.type().toString()
-        )
+      fail(
+        instruction.startPos, instruction.endPos,
+        'expected-structure-value-but-got', [structure.type().toString()]
       );
     }
     if (!(instruction.fieldName in structure.fields)) {
-      throw new GbsRuntimeError(instruction.startPos, instruction.endPos,
-        i18n('errmsg:structure-field-not-present')(
-          structure.fieldNames(), instruction.fieldName,
-        )
+      fail(
+        instruction.startPos, instruction.endPos,
+        'structure-field-not-present', [
+          structure.fieldNames(),
+          instruction.fieldName,
+        ]
       );
     }
     frame.pushValue(structure.fields[instruction.fieldName]);
@@ -648,8 +757,9 @@ export class VirtualMachine {
 
     /* Check that the primitive exists */
     if (!this._primitives.isOperation(instruction.primitiveName)) {
-      throw new GbsRuntimeError(instruction.startPos, instruction.endPos,
-        i18n('errmsg:primitive-does-not-exist')(instruction.primitiveName)
+      fail(
+        instruction.startPos, instruction.endPos,
+        'primitive-does-not-exist', [instruction.primitiveName]
       );
     }
 
@@ -658,12 +768,12 @@ export class VirtualMachine {
     /* Check that the number of expected parameters coincides with
      * the actual arguments provided */
     if (primitive.argumentTypes.length !== instruction.nargs) {
-      throw new GbsRuntimeError(instruction.startPos, instruction.endPos,
-        i18n('errmsg:primitive-arity-mismatch')(
+      fail(instruction.startPos, instruction.endPos,
+        'primitive-arity-mismatch', [
           instruction.primitiveName,
           primitive.argumentTypes.length,
           instruction.nargs,
-        )
+        ]
       );
     }
 
@@ -673,13 +783,14 @@ export class VirtualMachine {
       let expectedType = primitive.argumentTypes[i];
       let receivedType = args[i].type();
       if (joinTypes(expectedType, receivedType) === null) {
-        throw new GbsRuntimeError(instruction.startPos, instruction.endPos,
-          i18n('errmsg:primitive-argument-type-mismatch')(
+        fail(
+          instruction.startPos, instruction.endPos,
+          'primitive-argument-type-mismatch', [
             instruction.primitiveName,
             i + 1,
             expectedType.toString(),
             receivedType.toString(),
-          )
+          ]
         );
       }
     }
@@ -694,6 +805,10 @@ export class VirtualMachine {
     if (result !== null) {
       frame.pushValue(result);
     }
+
+    /* Take a snapshot after calling the primitive operation */
+    this._takeSnapshot(instruction.primitiveName);
+
     frame.instructionPointer++;
   }
 
@@ -718,11 +833,12 @@ export class VirtualMachine {
     let expectedType = instruction.type;
     let receivedType = frame.stackTop().type();
     if (joinTypes(expectedType, receivedType) === null) {
-      throw new GbsRuntimeError(instruction.startPos, instruction.endPos,
-        i18n('errmsg:expected-value-of-type-but-got')(
+      fail(
+        instruction.startPos, instruction.endPos,
+        'expected-value-of-type-but-got', [
           expectedType.toString(),
           receivedType.toString(),
-        )
+        ]
       );
     }
     frame.instructionPointer++;

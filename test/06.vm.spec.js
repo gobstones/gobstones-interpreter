@@ -256,6 +256,14 @@ describe('Virtual Machine', () => {
       expect(vm.run()).deep.equals(new ValueString('not taken'));
     });
 
+    it('Infinite loop should timeout', () => {
+      let vm = makeVirtualMachine([
+        new ILabel('L'),
+        new IJump('L'),
+      ]);
+      expect(() => vm.runWithTimeout(100)).throws(i18n('errmsg:timeout')(100));
+    });
+
   });
 
   describe('Call/return', () => {

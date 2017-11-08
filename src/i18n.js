@@ -13,7 +13,7 @@ function masculino(n, singular, plural) {
   }
 }
 
-const ES = {
+const LOCALE_ES = {
 
   /* Descriptions of syntactic constructions and tokens */
   'definition':
@@ -250,25 +250,25 @@ const ES = {
   'errmsg:procedure-arity-mismatch':
     function (name, expected, received) {
       return 'El procedimiento "' + name + '" espera recibir '
-           + ES['<n>-parameters'](expected)
+           + LOCALE_ES['<n>-parameters'](expected)
            + ' pero se lo invoca con '
-           + ES['<n>-arguments'](received) + '.';
+           + LOCALE_ES['<n>-arguments'](received) + '.';
     },
 
   'errmsg:function-arity-mismatch':
     function (name, expected, received) {
       return 'La función "' + name + '" espera recibir '
-           + ES['<n>-parameters'](expected)
+           + LOCALE_ES['<n>-parameters'](expected)
            + ' pero se la invoca con '
-           + ES['<n>-arguments'](received) + '.';
+           + LOCALE_ES['<n>-arguments'](received) + '.';
     },
 
   'errmsg:structure-pattern-arity-mismatch':
     function (name, expected, received) {
       return 'El constructor "' + name + '" tiene '
-           + ES['<n>-fields'](expected)
+           + LOCALE_ES['<n>-fields'](expected)
            + ' pero el patrón tiene '
-           + ES['<n>-parameters'](received) + '.';
+           + LOCALE_ES['<n>-parameters'](received) + '.';
     },
 
   'errmsg:type-used-as-constructor':
@@ -436,9 +436,9 @@ const ES = {
   'errmsg:primitive-arity-mismatch':
     function (name, expected, received) {
       return 'La operación "' + name + '" espera recibir '
-           + ES['<n>-parameters'](expected)
+           + LOCALE_ES['<n>-parameters'](expected)
            + ' pero se la invoca con '
-           + ES['<n>-arguments'](received) + '.';
+           + LOCALE_ES['<n>-arguments'](received) + '.';
     },
 
   'errmsg:primitive-argument-type-mismatch':
@@ -478,6 +478,12 @@ const ES = {
   'errmsg:list-cannot-be-empty':
     'La lista no puede ser vacía.',
 
+  'errmsg:timeout':
+    function (millisecs) {
+      return 'La ejecución del programa demoró más de '
+           + millisecs.toString() + 'ms.';
+    },
+
   /* Board operations */
   'errmsg:cannot-move-to':
     function (dirName) {
@@ -492,12 +498,16 @@ const ES = {
     },
 
   /* Runtime */
-  'CONS:TIMEOUT': 'TIMEOUT',
 
-  'TYPE:Integer': 'Integer',
+  'TYPE:Integer': 'Number',
   'TYPE:String': 'String',
   'TYPE:Tuple': 'Tuple',
   'TYPE:List': 'List',
+
+  'TYPE:Event': 'Event',
+  'CONS:INIT': 'INIT',
+  'CONS:TIMEOUT': 'TIMEOUT',
+
   'TYPE:Bool': 'Bool',
   'CONS:False': 'False',
   'CONS:True': 'True',
@@ -561,7 +571,7 @@ const ES = {
     },
   '<pattern-type>':
     function (patternType) {
-      if (patternType.substring(0, 6) === '_EVENT') {
+      if (patternType === 'Event') {
         return 'evento del programa interactivo';
       } else if (patternType.substring(0, 7) === '_TUPLE_') {
         return 'tupla de ' + patternType.substring(7) + ' componentes';
@@ -571,14 +581,41 @@ const ES = {
     },
 };
 
-let language = 'ES';
+/* TODO: Translate LOCALE_EN */
+
+/* BEGIN: temporary declaration of LOCALE_EN */
+const LOCALE_EN = {};
+for (let key in LOCALE_ES) {
+  LOCALE_EN[key] = LOCALE_ES[key];
+}
+LOCALE_EN['CONS:Dir0'] = 'North';
+LOCALE_EN['CONS:Dir1'] = 'East';
+LOCALE_EN['CONS:Dir2'] = 'South';
+LOCALE_EN['CONS:Dir3'] = 'West';
+/* END: temporary declaration of LOCALE_EN */
+
+let CURRENT_LANGUAGE = 'es';
 
 let dictionaries = {
-  'ES': ES
+  'es': LOCALE_ES,
+  'en': LOCALE_EN,
 };
 
 export function i18n(message) {
-  return dictionaries[language][message];
+  return dictionaries[CURRENT_LANGUAGE][message];
+}
+
+export function i18nWithLanguage(code, thunk) {
+  if (!(code in dictionaries)) {
+    throw Error('Invlid language code: ' + code);
+  }
+  let oldLanguage = CURRENT_LANGUAGE;
+  CURRENT_LANGUAGE = code;
+  try {
+    return thunk();
+  } finally {
+    CURRENT_LANGUAGE = oldLanguage;
+  }
 }
 
 export function i18nPosition(position) {

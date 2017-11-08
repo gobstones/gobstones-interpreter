@@ -50,6 +50,10 @@ function isBlockWithReturn(stmt) {
       && stmt.statements.slice(-1)[0].tag === N_StmtReturn;
 }
 
+function fail(startPos, endPos, reason, args) {
+  throw new GbsSyntaxError(startPos, endPos, reason, args);
+}
+
 /* A semantic analyzer receives
  *   a symbol table (instance of SymbolTable)
  *   an abstract syntax tree (the output of a parser)
@@ -71,11 +75,58 @@ export class Linter {
 
   constructor(symtable) {
     this._symtable = symtable;
+
+    /* All checks performed by the linter have an entry in this dictionary.
+     * The value of a check indicates whether it is enabled (true) or
+     * disabled (false).
+     *
+     * If a check is disabled, it does not produce a syntax error.
+     */
+    this._enabledLinterChecks = {
+      'source-should-have-a-program-definition': true,
+      'procedure-should-not-have-return': true,
+      'function-should-have-return': true,
+      'return-statement-not-allowed-here': true,
+      'wildcard-pattern-should-be-last': true,
+      'structure-pattern-repeats-constructor': true,
+      'structure-pattern-repeats-tuple-arity': true,
+      'structure-pattern-repeats-timeout': true,
+      'pattern-does-not-match-type': true,
+      'patterns-in-interactive-program-must-be-events': true,
+      'patterns-in-switch-must-not-be-events': true,
+      'repeated-variable-in-tuple-assignment': true,
+      'constructor-used-as-procedure': true,
+      'undefined-procedure': true,
+      'procedure-arity-mismatch': true,
+      'structure-pattern-arity-mismatch': true,
+      'structure-construction-repeated-field': true,
+      'structure-construction-invalid-field': true,
+      'structure-construction-missing-field': true,
+      'structure-construction-cannot-be-an-event': true,
+      'undefined-function': true,
+      'function-arity-mismatch': true,
+      'type-used-as-constructor': true,
+      'procedure-used-as-constructor': true,
+      'undeclared-constructor': true,
+    };
   }
 
   lint(ast) {
     this._lintMain(ast);
     return this._symtable;
+  }
+
+  enableCheck(linterCheckId, enabled) {
+    if (!(linterCheckId in this._enabledLinterChecks)) {
+      throw Error('Linter check "' + linterCheckId + '" does not exist.');
+    }
+    this._enabledLinterChecks[linterCheckId] = enabled;
+  }
+
+  _lintCheck(startPos, endPos, reason, args) {
+    if (this._enabledLinterChecks[reason]) {
+      fail(startPos, endPos, reason, args);
+    }
   }
 
   _lintMain(ast) {
@@ -89,9 +140,9 @@ export class Linter {
 
     /* The source should either be empty or have exactly one program */
     if (ast.definitions.length > 0 && this._symtable.program === null) {
-      throw new GbsSyntaxError(
+      this._lintCheck(
         ast.startPos, ast.endPos,
-        i18n('errmsg:source-should-have-a-program-definition')
+        'source-should-have-a-program-definition', []
       );
     }
 
@@ -158,9 +209,9 @@ export class Linter {
   _lintDefProcedure(definition) {
     /* Check that it does not have a return statement */
     if (isBlockWithReturn(definition.body)) {
-      throw new GbsSyntaxError(
+      this._lintCheck(
         definition.startPos, definition.endPos,
-        i18n('errmsg:procedure-should-not-have-return')(definition.name.value)
+        'procedure-should-not-have-return', [definition.name.value]
       );
     }
 
@@ -179,9 +230,9 @@ export class Linter {
   _lintDefFunction(definition) {
     /* Check that it has a return statement */
     if (!isBlockWithReturn(definition.body)) {
-      throw new GbsSyntaxError(
+      this._lintCheck(
         definition.startPos, definition.endPos,
-        i18n('errmsg:function-should-have-return')(definition.name.value)
+        'function-should-have-return', [definition.name.value]
       );
     }
 
@@ -239,9 +290,9 @@ export class Linter {
     for (let statement of block.statements) {
       let returnAllowed = allowReturn && i === block.statements.length - 1;
       if (!returnAllowed && statement.tag === N_StmtReturn) {
-        throw new GbsSyntaxError(
+        this._lintCheck(
           statement.startPos, statement.endPos,
-          i18n('errmsg:return-statement-not-allowed-here')
+          'return-statement-not-allowed-here', []
         );
       }
       this._lintStatement(statement);
@@ -312,9 +363,10 @@ export class Linter {
     const n = branches.length;
     for (let branch of branches) {
       if (branch.pattern.tag === N_PatternWildcard && i !== n - 1) {
-        throw new GbsSyntaxError(
+
+        this._lintCheck(
           branch.pattern.startPos, branch.pattern.endPos,
-          i18n('errmsg:wildcard-pattern-should-be-last')
+          'wildcard-pattern-should-be-last', []
         );
       }
       i++;
@@ -332,11 +384,9 @@ export class Linter {
         case N_PatternStructure:
           let constructorName = branch.pattern.constructorName.value;
           if (constructorName in coveredConstructors) {
-            throw new GbsSyntaxError(
+            this._lintCheck(
               branch.pattern.startPos, branch.pattern.endPos,
-              i18n('errmsg:structure-pattern-repeats-constructor')(
-                constructorName
-              )
+              'structure-pattern-repeats-constructor', [constructorName]
             );
           }
           coveredConstructors[constructorName] = true;
@@ -344,18 +394,18 @@ export class Linter {
         case N_PatternTuple:
           let arity = branch.pattern.parameters.length;
           if (arity in coveredTuples) {
-            throw new GbsSyntaxError(
+            this._lintCheck(
               branch.pattern.startPos, branch.pattern.endPos,
-              i18n('errmsg:structure-pattern-repeats-tuple-arity')(arity)
+              'structure-pattern-repeats-tuple-arity', [arity]
             );
           }
           coveredTuples[arity] = true;
           break;
         case N_PatternTimeout:
           if (coveredTimeout) {
-            throw new GbsSyntaxError(
+            this._lintCheck(
               branch.pattern.startPos, branch.pattern.endPos,
-              i18n('errmsg:structure-pattern-repeats-timeout')
+              'structure-pattern-repeats-timeout', []
             );
           }
           coveredTimeout = true;
@@ -373,38 +423,38 @@ export class Linter {
       if (expectedType === null) {
         expectedType = patternType;
       } else if (patternType !== null && expectedType !== patternType) {
-        throw new GbsSyntaxError(
+        this._lintCheck(
           branch.pattern.startPos, branch.pattern.endPos,
-          i18n('errmsg:pattern-does-not-match-type')(
+          'pattern-does-not-match-type', [
             i18n('<pattern-type>')(expectedType),
             i18n('<pattern-type>')(patternType)
-          )
+          ]
         );
       }
     }
   }
 
-  /* Check that there are patterns are of type "_EVENT" */
+  /* Check that there are patterns are of type Event */
   _switchBranchesCheckTypeEvent(branches) {
     for (let branch of branches) {
       let patternType = this._patternType(branch.pattern);
-      if (patternType !== null && patternType !== '_EVENT') {
-        throw new GbsSyntaxError(
+      if (patternType !== null && patternType !== i18n('TYPE:Event')) {
+        this._lintCheck(
           branch.pattern.startPos, branch.pattern.endPos,
-          i18n('errmsg:patterns-in-interactive-program-must-be-events')
+          'patterns-in-interactive-program-must-be-events', []
         );
       }
     }
   }
 
-  /* Check that there are no patterns of type "_EVENT" */
+  /* Check that there are no patterns of type Event */
   _switchBranchesCheckTypeNotEvent(branches) {
     for (let branch of branches) {
       let patternType = this._patternType(branch.pattern);
-      if (patternType === '_EVENT') {
-        throw new GbsSyntaxError(
+      if (patternType === i18n('TYPE:Event')) {
+        this._lintCheck(
           branch.pattern.startPos, branch.pattern.endPos,
-          i18n('errmsg:patterns-in-switch-must-not-be-events')
+          'patterns-in-switch-must-not-be-events', []
         );
       }
     }
@@ -431,7 +481,7 @@ export class Linter {
       case N_PatternTuple:
         return '_TUPLE_' + pattern.parameters.length.toString();
       case N_PatternTimeout:
-        return '_EVENT';
+        return i18n('TYPE:Event');
       default:
         throw Error(
                 'Linter: pattern "'
@@ -451,9 +501,9 @@ export class Linter {
     for (let variable of statement.variables) {
       this._symtable.setLocalName(variable, LocalVariable);
       if (variable.value in variables) {
-        throw new GbsSyntaxError(
+        this._lintCheck(
           variable.startPos, variable.endPos,
-          i18n('errmsg:repeated-variable-in-tuple-assignment')(variable.value)
+          'repeated-variable-in-tuple-assignment', [variable.value]
         );
       }
       variables[variable.value] = true;
@@ -467,17 +517,17 @@ export class Linter {
     /* Check that it is a procedure */
     if (!this._symtable.isProcedure(name)) {
       if (this._symtable.isConstructor(name)) {
-        throw new GbsSyntaxError(
+        this._lintCheck(
           statement.startPos, statement.endPos,
-          i18n('errmsg:constructor-used-as-procedure')(
+          'constructor-used-as-procedure', [
             name,
             this._symtable.constructorType(name)
-          )
+          ]
         );
       } else {
-        throw new GbsSyntaxError(
+        this._lintCheck(
           statement.startPos, statement.endPos,
-          i18n('errmsg:undefined-procedure')(name)
+          'undefined-procedure', [name]
         );
       }
     }
@@ -486,13 +536,13 @@ export class Linter {
     let expected = this._symtable.procedureParameters(name).length;
     let received = statement.args.length;
     if (expected !== received) {
-      throw new GbsSyntaxError(
+      this._lintCheck(
         statement.startPos, statement.endPos,
-        i18n('errmsg:procedure-arity-mismatch')(
+        'procedure-arity-mismatch', [
           name,
           expected,
           received
-        )
+        ]
       );
     }
 
@@ -544,13 +594,13 @@ export class Linter {
     let expected = this._symtable.constructorFields(name).length;
     let received = pattern.parameters.length;
     if (received > 0 && expected !== received) {
-      throw new GbsSyntaxError(
+      this._lintCheck(
         pattern.startPos, pattern.endPos,
-        i18n('errmsg:structure-pattern-arity-mismatch')(
+        'structure-pattern-arity-mismatch', [
           name,
           expected,
           received
-        )
+        ]
       );
     }
   }
@@ -678,12 +728,12 @@ export class Linter {
     let seen = {};
     for (let fieldName of declaredFields) {
       if (fieldName in seen) {
-        throw new GbsSyntaxError(
+        this._lintCheck(
           expression.startPos, expression.endPos,
-          i18n('errmsg:structure-construction-repeated-field')(
+          'structure-construction-repeated-field', [
            constructorName,
            fieldName
-          )
+          ]
         );
       }
       seen[fieldName] = true;
@@ -697,12 +747,12 @@ export class Linter {
     let constructorFields = this._symtable.constructorFields(constructorName);
     for (let fieldName of declaredFields) {
       if (constructorFields.indexOf(fieldName) === -1) {
-        throw new GbsSyntaxError(
+        this._lintCheck(
           expression.startPos, expression.endPos,
-          i18n('errmsg:structure-construction-invalid-field')(
+          'structure-construction-invalid-field', [
            constructorName,
            fieldName
-          )
+          ]
         );
       }
     }
@@ -715,27 +765,26 @@ export class Linter {
     let constructorFields = this._symtable.constructorFields(constructorName);
     for (let fieldName of constructorFields) {
       if (declaredFields.indexOf(fieldName) === -1) {
-        throw new GbsSyntaxError(
+        this._lintCheck(
           expression.startPos, expression.endPos,
-          i18n('errmsg:structure-construction-missing-field')(
+          'structure-construction-missing-field', [
            constructorName,
            fieldName
-          )
+          ]
         );
       }
     }
   }
 
   /* Check that a structure construction/update does not involve
-   * constructors of the _EVENT type, which should only be
+   * constructors of the Event type, which should only be
    * handled implicitly in an interactive program. */
   _checkStructureTypeNotEvent(constructorName, expression) {
-    if (this._symtable.constructorType(constructorName) === '_EVENT') {
-      throw new GbsSyntaxError(
+    let constructorType = this._symtable.constructorType(constructorName);
+    if (constructorType === i18n('TYPE:Event')) {
+      this._lintCheck(
         expression.startPos, expression.endPos,
-        i18n('errmsg:structure-construction-cannot-be-an-event')(
-         constructorName
-        )
+        'structure-construction-cannot-be-an-event', [constructorName]
       );
     }
   }
@@ -744,9 +793,9 @@ export class Linter {
     /* Check that it is a function or a field */
     let name = expression.functionName.value;
     if (!this._symtable.isFunction(name) && !this._symtable.isField(name)) {
-      throw new GbsSyntaxError(
+      this._lintCheck(
         expression.startPos, expression.endPos,
-        i18n('errmsg:undefined-function')(name)
+        'undefined-function', [name]
       );
     }
 
@@ -760,13 +809,13 @@ export class Linter {
     }
     let received = expression.args.length;
     if (expected !== received) {
-      throw new GbsSyntaxError(
+      this._lintCheck(
         expression.startPos, expression.endPos,
-        i18n('errmsg:function-arity-mismatch')(
+        'function-arity-mismatch', [
           name,
           expected,
           received
-        )
+        ]
       );
     }
 
@@ -784,22 +833,22 @@ export class Linter {
    * not forbidden, but it is probably a mistake). */
   _failExpectedConstructorButGot(startPos, endPos, name) {
     if (this._symtable.isType(name)) {
-      throw new GbsSyntaxError(
+      this._lintCheck(
         startPos, endPos,
-        i18n('errmsg:type-used-as-constructor')(
+        'type-used-as-constructor', [
           name,
           this._symtable.typeConstructors(name)
-        )
+        ]
       );
     } else if (this._symtable.isProcedure(name)) {
-      throw new GbsSyntaxError(
+      this._lintCheck(
         startPos, endPos,
-        i18n('errmsg:procedure-used-as-constructor')(name)
+        'procedure-used-as-constructor', [name]
       );
     } else {
-      throw new GbsSyntaxError(
+      this._lintCheck(
         startPos, endPos,
-        i18n('errmsg:undeclared-constructor')(name)
+        'undeclared-constructor', [name]
       );
     }
   }

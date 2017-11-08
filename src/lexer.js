@@ -131,6 +131,10 @@ function leadingZeroes(string) {
   return string.length >= 0 && string[0] === '0';
 }
 
+function fail(startPos, endPos, reason, args) {
+  throw new GbsSyntaxError(startPos, endPos, reason, args);
+}
+
 /* An instance of Lexer scans source code for tokens.
  * Example:
  *
@@ -162,9 +166,9 @@ export class Lexer {
       let value = this._readStringWhile(isDigit);
       let endPos = this._reader;
       if (leadingZeroes(value) && value.length > 1) {
-        throw new GbsSyntaxError(
+        return fail(
           startPos, endPos,
-          i18n('errmsg:numeric-constant-should-not-have-leading-zeroes')
+          'numeric-constant-should-not-have-leading-zeroes', []
         );
       }
       return new Token(T_NUM, value, startPos, endPos);
@@ -179,9 +183,9 @@ export class Lexer {
       } else if (isLower(value[0])) {
         return new Token(T_LOWERID, value, startPos, endPos);
       } else {
-        throw new GbsSyntaxError(
+        return fail(
           startPos, endPos,
-          i18n('errmsg:identifier-must-start-with-alphabetic-character')
+          'identifier-must-start-with-alphabetic-character', []
         );
       }
     } else if (this._reader.peek() === '"') {
@@ -278,10 +282,7 @@ export class Lexer {
         this._reader = this._reader.consumeCharacter();
       }
     }
-    throw new GbsSyntaxError(
-                startPos, this._reader,
-                i18n('errmsg:unclosed-string-constant')
-              );
+    return fail(startPos, this._reader, 'unclosed-string-constant', []);
   }
 
   /* Read a symbol */
@@ -294,10 +295,10 @@ export class Lexer {
         return new Token(tag, symbol, startPos, endPos);
       }
     }
-    throw new GbsSyntaxError(
-                this._reader, this._reader,
-                i18n('errmsg:unknown-token')(this._reader.peek())
-              );
+    return fail(
+      this._reader, this._reader,
+      'unknown-token', [this._reader.peek()]
+    );
   }
 
   _ignoreWhitespaceAndComments() {
@@ -372,10 +373,10 @@ export class Lexer {
         this._reader = this._reader.consumeCharacter();
       }
     }
-    throw new GbsSyntaxError(
-                startPos, this._reader,
-                i18n('errmsg:unclosed-multiline-comment')
-              );
+    fail(
+      startPos, this._reader,
+      'unclosed-multiline-comment', []
+    );
   }
 
   /* Read a pragma. A pragma is a comment delimited by the
@@ -398,10 +399,10 @@ export class Lexer {
         return pragma;
       }
     }
-    throw new GbsSyntaxError(
-                startPos, this._reader,
-                i18n('errmsg:unclosed-multiline-comment')
-              );
+    return fail(
+      startPos, this._reader,
+      'unclosed-multiline-comment', []
+    );
   }
 
   /* Read an invisible string until the given delimiter is found */
@@ -415,31 +416,27 @@ export class Lexer {
       result.push(this._reader.peek());
       this._reader = this._reader.consumeInvisibleCharacter();
     }
-    throw new GbsSyntaxError(
-                startPos, this._reader,
-                i18n('errmsg:unclosed-multiline-comment')
-              );
+    return fail(
+      startPos, this._reader,
+      'unclosed-multiline-comment', []
+    );
   }
 
   _evaluatePragma(startPos, pragma) {
     if (pragma.length === 0) {
-      this._emitWarning(
-        startPos, this._reader, i18n('warning:empty-pragma')
-      );
+      this._emitWarning(startPos, this._reader, 'empty-pragma', []);
     } else if (pragma[0] === 'BEGIN_REGION') {
       let region = pragma[1];
       this._reader = this._reader.beginRegion(region);
     } else if (pragma[0] === 'END_REGION') {
       this._reader = this._reader.endRegion();
     } else {
-      this._emitWarning(
-        startPos, this._reader, i18n('warning:unknown-pragma')(pragma[0])
-      );
+      this._emitWarning(startPos, this._reader, 'unknown-pragma', [pragma[0]]);
     }
   }
 
-  _emitWarning(startPos, endPos, message) {
-    this._warnings.push(new GbsWarning(startPos, endPos, message));
+  _emitWarning(startPos, endPos, reason, args) {
+    this._warnings.push(new GbsWarning(startPos, endPos, reason, args));
   }
 
 }

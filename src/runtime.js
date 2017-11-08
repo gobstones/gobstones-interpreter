@@ -33,24 +33,72 @@ import {
  * global state, and different available primitives.
  */
 
-let BOOL_ENUM = [
-  i18n('CONS:False'),
-  i18n('CONS:True'),
-];
+function fail(startPos, endPos, reason, args) {
+  throw new GbsRuntimeError(startPos, endPos, reason, args);
+}
 
-let COLOR_ENUM = [
-  i18n('CONS:Color0'),
-  i18n('CONS:Color1'),
-  i18n('CONS:Color2'),
-  i18n('CONS:Color3'),
-];
+function boolEnum() {
+  return [
+    i18n('CONS:False'),
+    i18n('CONS:True'),
+  ];
+}
 
-let DIR_ENUM = [
-  i18n('CONS:Dir0'),
-  i18n('CONS:Dir1'),
-  i18n('CONS:Dir2'),
-  i18n('CONS:Dir3'),
-];
+function colorEnum() {
+  return [
+    i18n('CONS:Color0'),
+    i18n('CONS:Color1'),
+    i18n('CONS:Color2'),
+    i18n('CONS:Color3'),
+  ];
+}
+
+function dirEnum() {
+  return [
+    i18n('CONS:Dir0'),
+    i18n('CONS:Dir1'),
+    i18n('CONS:Dir2'),
+    i18n('CONS:Dir3'),
+  ];
+}
+
+/* Enumeration of all the constructors of the Event type, including
+ * INIT and TIMEOUT. */
+function keyEventEnum() {
+  let modifiers = [
+    '', 'CTRL_', 'ALT_', 'SHIFT_', 'CTRL_ALT_', 'CTRL_SHIFT_', 'ALT_SHIFT_',
+    'CTRL_ALT_SHIFT_',
+  ];
+  let charKeys = [
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
+    'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+  ];
+  let specialKeys = [
+    'SPACE', 'ENTER', 'TAB', 'BACKSPACE', 'DELETE', 'ESCAPE',
+  ];
+  let symbolKeys = [
+    'PLUS', 'MINUS', 'ASTERISK', 'SLASH', 'EQUALS', 'L_PARENT', 'R_PARENT',
+    'L_BRACKET', 'R_BRACKET', 'L_ANGLEBR', 'R_ANGLEBR',
+  ];
+  let arrowKeys = [
+    'ARROW_LEFT', 'ARROW_RIGHT', 'ARROW_UP', 'ARROW_DOWN',
+  ];
+  let keys = charKeys.concat(specialKeys).concat(symbolKeys).concat(arrowKeys);
+
+  let eventNames = [];
+  for (let modifier of modifiers) {
+    for (let key of keys) {
+      eventNames.push('K_' + modifier + key);
+    }
+  }
+  return eventNames;
+}
+
+let KEY_EVENT_ENUM = keyEventEnum();
+
+function eventEnum() {
+  return [i18n('CONS:INIT'), i18n('CONS:TIMEOUT')].concat(KEY_EVENT_ENUM);
+}
 
 function toEnum(enumeration, name) {
   return enumeration.indexOf(name);
@@ -61,23 +109,23 @@ function fromEnum(enumeration, index) {
 }
 
 function dirOpposite(dirName) {
-  return fromEnum(DIR_ENUM, (toEnum(DIR_ENUM, dirName) + 2) % 4);
+  return fromEnum(dirEnum(), (toEnum(dirEnum(), dirName) + 2) % 4);
 }
 
 function dirNext(dirName) {
-  return fromEnum(DIR_ENUM, (toEnum(DIR_ENUM, dirName) + 1) % 4);
+  return fromEnum(dirEnum(), (toEnum(dirEnum(), dirName) + 1) % 4);
 }
 
 function dirPrev(dirName) {
-  return fromEnum(DIR_ENUM, (toEnum(DIR_ENUM, dirName) + 3) % 4);
+  return fromEnum(dirEnum(), (toEnum(dirEnum(), dirName) + 3) % 4);
 }
 
 function colorNext(colorName) {
-  return fromEnum(COLOR_ENUM, (toEnum(COLOR_ENUM, colorName) + 1) % 4);
+  return fromEnum(colorEnum(), (toEnum(colorEnum(), colorName) + 1) % 4);
 }
 
 function colorPrev(colorName) {
-  return fromEnum(COLOR_ENUM, (toEnum(COLOR_ENUM, colorName) + 3) % 4);
+  return fromEnum(colorEnum(), (toEnum(colorEnum(), colorName) + 3) % 4);
 }
 
 /*
@@ -119,7 +167,7 @@ export class RuntimeState {
       let column = [];
       for (let y = 0; y < this._height; y++) {
         let cell = {};
-        for (let colorName of COLOR_ENUM) {
+        for (let colorName of colorEnum()) {
           cell[colorName] = this._board[x][y][colorName];
         }
         column.push(cell);
@@ -246,7 +294,7 @@ export class RuntimeState {
 
   _emptyCell() {
     let cell = {};
-    for (let colorName of COLOR_ENUM) {
+    for (let colorName of colorEnum()) {
       cell[colorName] = new ValueInteger(0);
     }
     return cell;
@@ -304,7 +352,7 @@ function valueFromBool(bool) {
   }
 }
 
-function boolFromValue(value) {
+export function boolFromValue(value) {
   return value.constructorName === i18n('CONS:True');
 }
 
@@ -363,9 +411,9 @@ function enumIndex(value) {
       return 0;
     }
   } else if (isColor(value)) {
-    return toEnum(COLOR_ENUM, colorFromValue(value));
+    return toEnum(colorEnum(), colorFromValue(value));
   } else if (isDir(value)) {
-    return toEnum(DIR_ENUM, dirFromValue(value));
+    return toEnum(dirEnum(), dirFromValue(value));
   } else {
     throw Error('Value should be Bool, Color or Dir.');
   }
@@ -472,22 +520,22 @@ function validateTypeAmong(startPos, endPos, x, types) {
     typeStrings.push(type.toString());
   }
   /* Report error */
-  throw new GbsRuntimeError(startPos, endPos,
-    i18n('errmsg:expected-value-of-some-type-but-got')(
+  fail(startPos, endPos,
+    'expected-value-of-some-type-but-got', [
       typeStrings,
       x.type().toString()
-    )
+    ]
   );
 }
 
 /* Validate that the types of 'x' and 'y' are compatible */
 function validateCompatibleTypes(startPos, endPos, x, y) {
   if (joinTypes(x.type(), y.type()) === null) {
-    throw new GbsRuntimeError(startPos, endPos,
-      i18n('errmsg:expected-values-to-have-compatible-types')(
+    fail(startPos, endPos,
+      'expected-values-to-have-compatible-types', [
         x.type().toString(),
         y.type().toString(),
-      )
+      ]
     );
   }
 }
@@ -519,20 +567,26 @@ export class RuntimePrimitives {
 
     /* Booleans */
     this._primitiveTypes[i18n('TYPE:Bool')] = {};
-    for (let boolName of BOOL_ENUM) {
+    for (let boolName of boolEnum()) {
       this._primitiveTypes[i18n('TYPE:Bool')][boolName] = [];
     }
 
     /* Colors */
     this._primitiveTypes[i18n('TYPE:Color')] = {};
-    for (let colorName of COLOR_ENUM) {
+    for (let colorName of colorEnum()) {
       this._primitiveTypes[i18n('TYPE:Color')][colorName] = [];
     }
 
     /* Directions */
     this._primitiveTypes[i18n('TYPE:Dir')] = {};
-    for (let dirName of DIR_ENUM) {
+    for (let dirName of dirEnum()) {
       this._primitiveTypes[i18n('TYPE:Dir')][dirName] = [];
+    }
+
+    /* Events */
+    this._primitiveTypes[i18n('TYPE:Event')] = {};
+    for (let eventName of eventEnum()) {
+      this._primitiveTypes[i18n('TYPE:Event')][eventName] = [];
     }
 
     /* --Primitive procedures-- */
@@ -552,9 +606,7 @@ export class RuntimePrimitives {
         function (startPos, endPos, globalState, args) {
           let colorName = colorFromValue(args[0]);
           if (globalState.numStones(colorName).le(new ValueInteger(0))) {
-            throw new GbsRuntimeError(startPos, endPos,
-                        i18n('errmsg:cannot-remove-stone')(colorName)
-                      );
+            fail(startPos, endPos, 'cannot-remove-stone', [colorName]);
           }
         },
         function (globalState, color) {
@@ -569,9 +621,7 @@ export class RuntimePrimitives {
         function (startPos, endPos, globalState, args) {
           let dirName = dirFromValue(args[0]);
           if (!globalState.canMove(dirName)) {
-            throw new GbsRuntimeError(startPos, endPos,
-                        i18n('errmsg:cannot-move-to')(dirName)
-                      );
+            fail(startPos, endPos, 'cannot-move-to', [dirName]);
           }
         },
         function (globalState, dir) {
@@ -603,7 +653,7 @@ export class RuntimePrimitives {
       new PrimitiveOperation(
         [typeString],
         function (startPos, endPos, globalState, args) {
-          throw new GbsRuntimeError(startPos, endPos, args[0].string);
+          fail(startPos, endPos, args[0].string, []);
         },
         function (globalState, errMsg) {
           /* Unreachable */
@@ -791,7 +841,7 @@ export class RuntimePrimitives {
       new PrimitiveOperation(
         [], noValidation,
         function (globalState) {
-          return valueFromColor(COLOR_ENUM[0]);
+          return valueFromColor(colorEnum()[0]);
         }
       );
 
@@ -799,7 +849,7 @@ export class RuntimePrimitives {
       new PrimitiveOperation(
         [], noValidation,
         function (globalState) {
-          return valueFromColor(COLOR_ENUM[COLOR_ENUM.length - 1]);
+          return valueFromColor(colorEnum()[colorEnum().length - 1]);
         }
       );
 
@@ -807,7 +857,7 @@ export class RuntimePrimitives {
       new PrimitiveOperation(
         [], noValidation,
         function (globalState) {
-          return valueFromDir(DIR_ENUM[0]);
+          return valueFromDir(dirEnum()[0]);
         }
       );
 
@@ -815,7 +865,7 @@ export class RuntimePrimitives {
       new PrimitiveOperation(
         [], noValidation,
         function (globalState) {
-          return valueFromDir(DIR_ENUM[DIR_ENUM.length - 1]);
+          return valueFromDir(dirEnum()[dirEnum().length - 1]);
         }
       );
 
@@ -851,9 +901,7 @@ export class RuntimePrimitives {
         function (startPos, endPos, globalState, args) {
           let b = args[1];
           if (b.eq(new ValueInteger(0))) {
-            throw new GbsRuntimeError(startPos, endPos,
-              i18n('errmsg:cannot-divide-by-zero')
-            );
+            fail(startPos, endPos, 'cannot-divide-by-zero', []);
           }
         },
         function (globalState, a, b) {
@@ -867,9 +915,7 @@ export class RuntimePrimitives {
         function (startPos, endPos, globalState, args) {
           let b = args[1];
           if (b.eq(new ValueInteger(0))) {
-            throw new GbsRuntimeError(startPos, endPos,
-              i18n('errmsg:cannot-divide-by-zero')
-            );
+            fail(startPos, endPos, 'cannot-divide-by-zero', []);
           }
         },
         function (globalState, a, b) {
@@ -997,9 +1043,7 @@ export class RuntimePrimitives {
         function (startPos, endPos, globalState, args) {
           let a = args[0];
           if (a.length() === 0) {
-            throw new GbsRuntimeError(startPos, endPos,
-              i18n('errmsg:list-cannot-be-empty')
-            );
+            fail(startPos, endPos, 'list-cannot-be-empty', []);
           }
         },
         function (globalState, a) {
@@ -1013,9 +1057,7 @@ export class RuntimePrimitives {
         function (startPos, endPos, globalState, args) {
           let a = args[0];
           if (a.length() === 0) {
-            throw new GbsRuntimeError(startPos, endPos,
-              i18n('errmsg:list-cannot-be-empty')
-            );
+            fail(startPos, endPos, 'list-cannot-be-empty', []);
           }
         },
         function (globalState, a) {
@@ -1029,9 +1071,7 @@ export class RuntimePrimitives {
         function (startPos, endPos, globalState, args) {
           let a = args[0];
           if (a.length() === 0) {
-            throw new GbsRuntimeError(startPos, endPos,
-              i18n('errmsg:list-cannot-be-empty')
-            );
+            fail(startPos, endPos, 'list-cannot-be-empty', []);
           }
         },
         function (globalState, a) {
@@ -1045,9 +1085,7 @@ export class RuntimePrimitives {
         function (startPos, endPos, globalState, args) {
           let a = args[0];
           if (a.length() === 0) {
-            throw new GbsRuntimeError(startPos, endPos,
-              i18n('errmsg:list-cannot-be-empty')
-            );
+            fail(startPos, endPos, 'list-cannot-be-empty', []);
           }
         },
         function (globalState, a) {

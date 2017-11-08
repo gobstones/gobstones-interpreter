@@ -142,6 +142,10 @@ const OPERATORS = [
   })
 ];
 
+function fail(startPos, endPos, reason, args) {
+  throw new GbsSyntaxError(startPos, endPos, reason, args);
+}
+
 /* Represents a parser for a Gobstones/XGobstones program.
  * It is structured as a straightforward recursive-descent parser.
  *
@@ -188,13 +192,13 @@ export class Parser {
       case T_TYPE:
         return this._parseDefType();
       default:
-        throw new GbsSyntaxError(
-                    this._currentToken.startPos, this._currentToken.endPos,
-                    i18n('errmsg:expected-but-found')(
-                      i18n('definition'),
-                      i18n(Symbol.keyFor(this._currentToken.tag))
-                    )
-                  );
+        return fail(
+          this._currentToken.startPos, this._currentToken.endPos,
+          'expected-but-found', [
+            i18n('definition'),
+            i18n(Symbol.keyFor(this._currentToken.tag))
+          ]
+        );
     }
   }
 
@@ -262,15 +266,15 @@ export class Parser {
       case T_VARIANT:
         return this._parseDefTypeVariant(startPos, typeName);
       default:
-        throw new GbsSyntaxError(
+        return fail(
           this._currentToken.startPos, this._currentToken.endPos,
-          i18n('errmsg:expected-but-found')(
+          'expected-but-found', [
             i18n('<alternative>')([
               i18n('T_RECORD'),
               i18n('T_VARIANT')
             ]),
             i18n(Symbol.keyFor(this._currentToken.tag))
-          )
+          ]
         );
     }
   }
@@ -367,18 +371,18 @@ export class Parser {
          * in favour of
          *   let (x1, ..., xN) := expression
          */
-        throw new GbsSyntaxError(
-                    this._currentToken.startPos, this._currentToken.endPos,
-                    i18n('errmsg:obsolete-tuple-assignment')
-                  );
+        return fail(
+          this._currentToken.startPos, this._currentToken.endPos,
+          'obsolete-tuple-assignment', []
+        );
       default:
-        throw new GbsSyntaxError(
-                    this._currentToken.startPos, this._currentToken.endPos,
-                    i18n('errmsg:expected-but-found')(
-                      i18n('statement'),
-                      i18n(Symbol.keyFor(this._currentToken.tag))
-                    )
-                  );
+        return fail(
+          this._currentToken.startPos, this._currentToken.endPos,
+          'expected-but-found', [
+            i18n('statement'),
+            i18n(Symbol.keyFor(this._currentToken.tag))
+          ]
+        );
     }
   }
 
@@ -504,15 +508,15 @@ export class Parser {
     } else if (this._currentToken.tag === T_LPAREN) {
       result = this._parseStmtAssignTuple();
     } else {
-      throw new GbsSyntaxError(
+      fail(
         this._currentToken.startPos, this._currentToken.endPos,
-        i18n('errmsg:expected-but-found')(
+        'expected-but-found', [
           i18n('<alternative>')(
             i18n('T_LOWERID'),
             i18n('T_LPAREN')
           ),
           i18n(Symbol.keyfor(this._currentToken.tag))
-        )
+        ]
       );
     }
     result.startPos = startPos;
@@ -534,9 +538,9 @@ export class Parser {
     this._match(T_LPAREN);
     let variables = this._parseLoweridSeq();
     if (variables.length === 1) {
-      throw new GbsSyntaxError(
+      fail(
         startPos, this._currentToken.endPos,
-        i18n('errmsg:assignment-tuple-cannot-be-singleton')
+        'assignment-tuple-cannot-be-singleton', []
       );
     }
     this._match(T_RPAREN);
@@ -576,12 +580,12 @@ export class Parser {
       case T_TIMEOUT:
         return this._parsePatternTimeout();
       default:
-        throw new GbsSyntaxError(
+        return fail(
           this._currentToken.startPos, this._currentToken.endPos,
-          i18n('errmsg:expected-but-found')(
+          'expected-but-found', [
             i18n('pattern'),
             i18n(Symbol.keyFor(this._currentToken.tag))
-          )
+          ]
         );
     }
   }
@@ -620,9 +624,9 @@ export class Parser {
     this._match(T_LPAREN);
     let parameters = this._parseLoweridSeq();
     if (parameters.length === 1) {
-      throw new GbsSyntaxError(
+      fail(
         startPos, this._currentToken.endPos,
-        i18n('errmsg:pattern-tuple-cannot-be-singleton')
+        'pattern-tuple-cannot-be-singleton', []
       );
     }
     let endPos = this._currentToken.startPos;
@@ -690,12 +694,12 @@ export class Parser {
 
       /* Check that it is not used associatively */
       if (OPERATORS[level].isOperator(this._currentToken)) {
-        throw new GbsSyntaxError(
+        fail(
           this._currentToken.startPos, this._currentToken.endPos,
-          i18n('errmsg:operators-are-not-associative')(
+          'operators-are-not-associative', [
             i18n(Symbol.keyFor(op.tag)),
             i18n(Symbol.keyFor(this._currentToken.tag))
-          )
+          ]
         );
       }
 
@@ -776,13 +780,13 @@ export class Parser {
       case T_LBRACK:
         return this._parseExprListOrRange();
       default:
-        throw new GbsSyntaxError(
-                    this._currentToken.startPos, this._currentToken.endPos,
-                    i18n('errmsg:expected-but-found')(
-                      i18n('expression'),
-                      i18n(Symbol.keyFor(this._currentToken.tag))
-                    )
-                  );
+        return fail(
+          this._currentToken.startPos, this._currentToken.endPos,
+          'expected-but-found', [
+            i18n('expression'),
+            i18n(Symbol.keyFor(this._currentToken.tag))
+          ]
+        );
     }
   }
 
@@ -864,12 +868,12 @@ export class Parser {
     switch (this._currentToken.tag) {
       case T_GETS:
         if (subject.tag !== N_ExprVariable) {
-          throw new GbsSyntaxError(
+          fail(
             this._currentToken.startPos, this._currentToken.endPos,
-            i18n('errmsg:expected-but-found')(
+            'expected-but-found', [
               i18n('T_PIPE'),
               i18n('T_GETS')
-            )
+            ]
           );
         }
         return this._parseStructure(constructorName, subject.variableName);
@@ -879,12 +883,12 @@ export class Parser {
         /* Issue a specific error message to deal with a common
          * programming error, namely calling a procedure name
          * where an expression is expected. */
-        throw new GbsSyntaxError(
+        return fail(
           constructorName.startPos, constructorName.endPos,
-          i18n('errmsg:expected-but-found')(
+          'expected-but-found', [
             i18n('expression'),
             i18n('procedure call')
-          )
+          ]
         );
       default:
         let expected;
@@ -896,12 +900,12 @@ export class Parser {
         } else {
           expected = i18n('T_PIPE');
         }
-        throw new GbsSyntaxError(
+        return fail(
           constructorName.startPos, constructorName.endPos,
-          i18n('errmsg:expected-but-found')(
+          'expected-but-found', [
             expected,
             i18n(Symbol.keyFor(this._currentToken.tag))
-          )
+          ]
         );
     }
   }
@@ -991,29 +995,29 @@ export class Parser {
           case T_RANGE:
             return this._parseExprRange(startPos, first, second);
           default:
-            throw new GbsSyntaxError(
+            return fail(
               this._currentToken.startPos, this._currentToken.endPos,
-              i18n('errmsg:expected-but-found')(
+              'expected-but-found', [
                 i18n('<alternative>')([
                   i18n('T_COMMA'),
                   i18n('T_RANGE'),
                   i18n('T_RBRACK')
                 ]),
                 i18n(Symbol.keyFor(this._currentToken.tag))
-              )
+              ]
             );
         }
       default:
-        throw new GbsSyntaxError(
+        return fail(
           this._currentToken.startPos, this._currentToken.endPos,
-          i18n('errmsg:expected-but-found')(
+          'expected-but-found', [
             i18n('<alternative>')([
               i18n('T_COMMA'),
               i18n('T_RANGE'),
               i18n('T_RBRACK')
             ]),
             i18n(Symbol.keyFor(this._currentToken.tag))
-          )
+          ]
         );
     }
   }
@@ -1117,13 +1121,13 @@ export class Parser {
    * Then advance to the next token. */
   _match(tokenTag) {
     if (this._currentToken.tag !== tokenTag) {
-      throw new GbsSyntaxError(
-                  this._currentToken.startPos, this._currentToken.endPos,
-                  i18n('errmsg:expected-but-found')(
-                    i18n(Symbol.keyFor(tokenTag)),
-                    i18n(Symbol.keyFor(this._currentToken.tag))
-                  )
-                );
+      fail(
+        this._currentToken.startPos, this._currentToken.endPos,
+        'expected-but-found', [
+          i18n(Symbol.keyFor(tokenTag)),
+          i18n(Symbol.keyFor(this._currentToken.tag))
+        ]
+      );
     }
     this._nextToken();
   }
@@ -1135,15 +1139,15 @@ export class Parser {
    */
   _matchExpected(tokenTag, tagList) {
     if (this._currentToken.tag !== tokenTag) {
-      throw new GbsSyntaxError(
-                  this._currentToken.startPos, this._currentToken.endPos,
-                  i18n('errmsg:expected-but-found')(
-                    i18n('<alternative>')(
-                      tagList.map(tag => i18n(Symbol.keyFor(tag)))
-                    ),
-                    i18n(Symbol.keyFor(this._currentToken.tag))
-                  )
-                );
+      fail(
+        this._currentToken.startPos, this._currentToken.endPos,
+        'expected-but-found', [
+          i18n('<alternative>')(
+            tagList.map(tag => i18n(Symbol.keyFor(tag)))
+          ),
+          i18n(Symbol.keyFor(this._currentToken.tag))
+        ]
+      );
     }
     this._nextToken();
   }
@@ -1174,16 +1178,16 @@ export class Parser {
       list.push(parseElement());
     }
     if (this._currentToken.tag !== rightDelimiter) {
-      throw new GbsSyntaxError(
-                  this._currentToken.startPos, this._currentToken.endPos,
-                  i18n('errmsg:expected-but-found')(
-                    i18n('<alternative>')([
-                      i18n(Symbol.keyFor(separator)),
-                      i18n(Symbol.keyFor(rightDelimiter))
-                    ]),
-                    i18n(Symbol.keyFor(this._currentToken.tag))
-                  )
-                );
+      fail(
+        this._currentToken.startPos, this._currentToken.endPos,
+        'expected-but-found', [
+          i18n('<alternative>')([
+            i18n(Symbol.keyFor(separator)),
+            i18n(Symbol.keyFor(rightDelimiter))
+          ]),
+          i18n(Symbol.keyFor(this._currentToken.tag))
+        ]
+      );
     }
     return list;
   }

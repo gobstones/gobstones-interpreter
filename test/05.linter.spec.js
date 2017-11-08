@@ -1121,7 +1121,7 @@ describe('Linter', () => {
       expect(lint(code).program !== null).equals(true);
     });
 
-    it('Reject structure construction of an _EVENT', () => {
+    it('Reject structure construction of an Event', () => {
       let code = [
         'program {',
         '  x := K_ENTER',
@@ -1129,7 +1129,7 @@ describe('Linter', () => {
       ].join('\n');
       let symtable = new SymbolTable();
       symtable.defType(
-        new ASTDefType(tok(T_UPPERID, '_EVENT'), [
+        new ASTDefType(tok(T_UPPERID, i18n('TYPE:Event')), [
           new ASTConstructorDeclaration(tok(T_UPPERID, 'K_ENTER'), [
           ])
         ])

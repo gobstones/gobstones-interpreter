@@ -87,6 +87,13 @@ import { i18n } from './i18n';
  *
  * The compiler produces an instance of Code, representing code for the
  * virtual machine.
+ *
+ * Compiling a program should never throw an exception.
+ * Exceptions thrown in this module correspond to assertions,
+ * i.e. internal errors that should never occur.
+ * - Static conditions should be checked beforehand during the
+ *   parsing and linting phases.
+ * - Runtime conditions are to be checked later, during execution.
  */
 export class Compiler {
 
@@ -138,8 +145,14 @@ export class Compiler {
     );
   }
 
+  /* An interactive program is compiled as a switch statement
+   * followed by a Return instruction. */
   _compileDefInteractiveProgram(definition) {
-    // TODO
+    this._compileMatchSwitchBranches(definition);
+    this._produce(
+      definition.startPos, definition.endPos,
+      new IReturn()
+    );
   }
 
   /* A procedure definition:
@@ -490,11 +503,13 @@ export class Compiler {
    * labelEnd:
    */
   _compileStmtSwitch(statement) {
-    let branchLabels = [];
-
     /* Compile the subject */
     this._compileExpression(statement.subject);
+    this._compileMatchSwitchBranches(statement);
+  }
 
+  _compileMatchSwitchBranches(statement) {
+    let branchLabels = [];
     /* Attempt to match each pattern */
     for (let branch of statement.branches) {
       let label = this._freshLabel();
@@ -504,7 +519,7 @@ export class Compiler {
 
     /* Issue an error message if there is no match */
     this._produceList(statement.startPos, statement.endPos, [
-      new IPushString(i18n('errmsg:switch-does-not-match')),
+      new IPushString('switch-does-not-match'),
       new IPrimitiveCall('_FAIL', 1),
     ]);
 

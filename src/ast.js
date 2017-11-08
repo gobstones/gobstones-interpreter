@@ -409,6 +409,10 @@ export class ASTPatternTimeout extends ASTNode {
   get parameters() {
     return [];
   }
+
+  get timeout() {
+    return parseInt(this._children[0].value, 10);
+  }
 }
 
 /* Expressions */
