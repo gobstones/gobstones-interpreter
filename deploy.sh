@@ -24,5 +24,5 @@ try git checkout deploy/$BRANCH
 try git checkout -b $BRANCH
 try git rm -r lib/
 try git stash pop
-try git commit -m "Deploy @ $(date +'%d/%m/%Y')"
+git commit -m "Deploy @ $(date +'%d/%m/%Y')"
 try git push -f deploy $BRANCH

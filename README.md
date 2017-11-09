@@ -18,8 +18,8 @@ parseResult.program.interpret({
   height: 2,
   head: { x: 0, y: 0 },
   table: [
-    [ { red: 0, blue: 0, green: 0, black: 0 }, {} ], // cells (0; 1) y (1; 1)
-    [ { blue: 0 }, { red: 0, black: 0 } ] // cells (0; 0) y (1; 0)
+    [ { red: 0, blue: 0, green: 0, black: 0 }, {} ], // cells (0; 1) and (1; 1)
+    [ { blue: 0 }, { red: 0, black: 0 } ] // cells (0; 0) and (1; 0)
   ]
 })
 ```
