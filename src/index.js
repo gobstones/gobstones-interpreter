@@ -91,8 +91,9 @@ class ParseError extends GobstonesInterpreterError {
 }
 
 class ExecutionError extends GobstonesInterpreterError {
-  constructor(exception) {
+  constructor(exception, snapshots) {
     super(exception);
+    this.snapshots = snapshots;
   }
 }
 
@@ -359,8 +360,9 @@ class ParseResult {
     let program = {};
     program.alias = 'program';
     program.interpret = function (board) {
+      let snapshotTaker = new SnapshotTaker(state.runner);
+
       return i18nWithLanguage(state.language, () => {
-        let snapshotTaker = new SnapshotTaker(state.runner);
         try {
           state.runner.compile();
           state.runner.executeWithTimeoutTakingSnapshots(
@@ -380,7 +382,8 @@ class ParseResult {
           if (exception.isGobstonesException === undefined) {
             throw exception;
           }
-          return new ExecutionError(exception);
+
+          return new ExecutionError(exception, snapshotTaker.snapshots());
         }
       });
     };
