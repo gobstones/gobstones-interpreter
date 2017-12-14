@@ -688,6 +688,14 @@ export class RuntimePrimitives {
         }
       );
 
+    this._primitiveFunctions['not'] =
+      new PrimitiveOperation(
+        [typeBool], noValidation,
+        function (globalState, x) {
+          return valueFromBool(!boolFromValue(x));
+        }
+      );
+
     this._primitiveFunctions['&&'] =
       new PrimitiveOperation(
         [typeAny, typeAny], noValidation,
