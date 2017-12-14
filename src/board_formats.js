@@ -213,7 +213,7 @@ export function gbbToJboard(gbb) {
 
   function skipWhitespace() {
     /* Skip whitespace */
-    if (i < gbb.length && isWhitespace(gbb[i])) {
+    while (i < gbb.length && isWhitespace(gbb[i])) {
       i++;
     }
   }

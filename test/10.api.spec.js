@@ -521,6 +521,15 @@ describe('Gobstones API', () => {
       });
     });
 
+    it('GBB to apiboard: allow Window newlines', () => {
+        let board = API().gbb.read('GBB/1.0\r\nsize 1 1');
+       expect(board).deep.equals({
+         width: 1, height: 1,
+         head: {x: 0, y: 0},
+         table: [[{}]]
+       });
+    });
+
     it('Apiboard to GBB', () => {
       let apiboard = {
         width: 6, height: 3,
