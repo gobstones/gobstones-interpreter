@@ -417,6 +417,7 @@ export class Parser {
   _parseStmtIf() {
     let startPos = this._currentToken.startPos;
     this._match(T_IF);
+
     this._match(T_LPAREN);
     let condition = this._parseExpression();
     this._match(T_RPAREN);
@@ -425,11 +426,16 @@ export class Parser {
       this._match(T_THEN);
     }
     let thenBlock = this._parseStmtBlock();
+
     let endPos;
     let elseBlock;
     if (this._currentToken.tag === T_ELSE) {
       this._match(T_ELSE);
-      elseBlock = this._parseStmtBlock();
+      if (this._currentToken.tag === T_IF) {
+        elseBlock = this._parseStmtIf();
+      } else {
+        elseBlock = this._parseStmtBlock();
+      }
       endPos = elseBlock.endPos;
     } else {
       elseBlock = null;
