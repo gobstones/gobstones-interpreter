@@ -251,6 +251,13 @@ describe('Gobstones API', () => {
       expect(r.on.range.end.column).equals(23);
     });
 
+    it('Run a program with a user-triggered runtime error', () => {
+      let p = API().parse('program { BOOM("foo") }');
+      let r = p.program.interpret(emptyBoard(1, 1));
+      expect(r.reason.code).equals('boom-called');
+      expect(r.reason.detail).deep.equals(["foo"]);
+    });
+
   });
 
   describe('Snapshots', () => {

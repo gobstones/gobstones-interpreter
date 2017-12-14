@@ -1298,6 +1298,28 @@ describe('Primitive functions, procedures and operators', () => {
 
   });
 
+  describe('User-triggered failure (BOOM and boom)', () => {
+
+    it('"BOOM" procedure should fail', () => {
+      let result = () => new Runner().run([
+        'program {',
+        '  ' + i18n('PRIM:BOOM') + '("foo")',
+        '}'
+      ].join('\n'));
+      expect(result).throws("foo");
+    });
+
+    it('"boom" function should fail', () => {
+      let result = () => new Runner().run([
+        'program {',
+        '  x := ' + i18n('PRIM:boom') + '("foo")',
+        '}'
+      ].join('\n'));
+      expect(result).throws("foo");
+    });
+
+  });
+
   describe('Gobstones board operations', () => {
 
     function runState(code) {
