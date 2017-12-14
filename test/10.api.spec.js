@@ -262,7 +262,7 @@ describe('Gobstones API', () => {
 
   describe('Snapshots', () => {
 
-    it('Snapshots', () => {
+    it('Take snapshots', () => {
         let p = API().parse([
           'procedure P() {',
           '  Poner(Azul)',
@@ -276,11 +276,12 @@ describe('Gobstones API', () => {
           '  Poner(Verde)',
           '  P()',
           '  Poner(Verde)',
+          '  P()',
           '}',
         ].join('\n'));
         let r = p.program.interpret(emptyBoard(1, 1));
         let s = r.snapshots
-        expect(s.length).equals(7);
+        expect(s.length).equals(9);
 
         expect(s[0].contextNames).deep.equals(['program']);
         expect(s[0].board.table[0][0]).deep.equals({});
@@ -291,17 +292,44 @@ describe('Gobstones API', () => {
         expect(s[2].contextNames).deep.equals(['program', 'P-1']);
         expect(s[2].board.table[0][0]).deep.equals({green: 1, blue: 1});
 
-        expect(s[3].contextNames).deep.equals(['program', 'P-2', 'Q-3']);
+        expect(s[3].contextNames).deep.equals(['program', 'P-1', 'Q-2']);
         expect(s[3].board.table[0][0]).deep.equals({green: 1, blue: 2});
 
-        expect(s[4].contextNames).deep.equals(['program', 'P-4']);
+        expect(s[4].contextNames).deep.equals(['program', 'P-1']);
         expect(s[4].board.table[0][0]).deep.equals({green: 1, blue: 3});
 
         expect(s[5].contextNames).deep.equals(['program']);
         expect(s[5].board.table[0][0]).deep.equals({green: 2, blue: 3});
 
-        expect(s[6].contextNames).deep.equals(['program']);
-        expect(s[6].board.table[0][0]).deep.equals({green: 2, blue: 3});
+        expect(s[6].contextNames).deep.equals(['program', 'P-3']);
+        expect(s[6].board.table[0][0]).deep.equals({green: 2, blue: 4});
+
+        expect(s[7].contextNames).deep.equals(['program', 'P-3', 'Q-4']);
+        expect(s[7].board.table[0][0]).deep.equals({green: 2, blue: 5});
+
+        expect(s[8].contextNames).deep.equals(['program', 'P-3']);
+        expect(s[8].board.table[0][0]).deep.equals({green: 2, blue: 6});
+
+    });
+
+    it('Take snapshots on failing program', () => {
+        let p = API().parse([
+          'program {',
+          '  Poner(Azul)',
+          '  Poner(Azul)',
+          '  Poner(Azul)',
+          '  BOOM("stop")',
+          '  Poner(Rojo)',
+          '}',
+        ].join('\n'));
+        let r = p.program.interpret(emptyBoard(1, 1));
+        expect(r.reason.code).equals('boom-called');
+        let s = r.snapshots;
+        expect(s.length).equals(4);
+        expect(s[0].board.table[0][0]).deep.equals({});
+        expect(s[1].board.table[0][0]).deep.equals({blue: 1});
+        expect(s[2].board.table[0][0]).deep.equals({blue: 2});
+        expect(s[3].board.table[0][0]).deep.equals({blue: 3});
     });
 
     it('Ignore snapshots inside an atomic routine', () => {
@@ -318,13 +346,10 @@ describe('Gobstones API', () => {
         ].join('\n'));
         let r = p.program.interpret(emptyBoard(1, 1));
         let s = r.snapshots
-        expect(s.length).equals(2);
+        expect(s.length).equals(1);
 
         expect(s[0].contextNames).deep.equals(['program']);
         expect(s[0].board.table[0][0]).deep.equals({});
-
-        expect(s[1].contextNames).deep.equals(['program']);
-        expect(s[1].board.table[0][0]).deep.equals({});
     });
 
   });

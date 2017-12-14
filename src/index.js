@@ -91,8 +91,9 @@ class ParseError extends GobstonesInterpreterError {
 }
 
 class ExecutionError extends GobstonesInterpreterError {
-  constructor(exception) {
+  constructor(exception, snapshots) {
     super(exception);
+    this.snapshots = snapshots;
   }
 }
 
@@ -238,7 +239,7 @@ class InteractiveExecutionResult {
         if (exception.isGobstonesException === undefined) {
           throw exception;
         }
-        return new ExecutionError(exception);
+        return new ExecutionError(exception, []);
       }
     });
   }
@@ -250,7 +251,6 @@ class SnapshotTaker {
   constructor(runner) {
     this._runner = runner;
     this._snapshots = [];
-    this._index = 0;
   }
 
   takeSnapshot(routineName, position, callStack, globalState) {
@@ -271,8 +271,7 @@ class SnapshotTaker {
     for (let stackFrame of callStack) {
       let name = stackFrame.routineName;
       if (name !== 'program') {
-        this._index += 1;
-        name = name + '-' + this._index.toString();
+        name = name + '-' + stackFrame.uniqueFrameId.toString();
       }
       snapshot.contextNames.push(name);
     }
@@ -359,8 +358,8 @@ class ParseResult {
     let program = {};
     program.alias = 'program';
     program.interpret = function (board) {
+      let snapshotTaker = new SnapshotTaker(state.runner);
       return i18nWithLanguage(state.language, () => {
-        let snapshotTaker = new SnapshotTaker(state.runner);
         try {
           state.runner.compile();
           state.runner.executeWithTimeoutTakingSnapshots(
@@ -380,7 +379,7 @@ class ParseResult {
           if (exception.isGobstonesException === undefined) {
             throw exception;
           }
-          return new ExecutionError(exception);
+          return new ExecutionError(exception, snapshotTaker.snapshots());
         }
       });
     };
@@ -400,7 +399,7 @@ class ParseResult {
           if (exception.isGobstonesException === undefined) {
             throw exception;
           }
-          return new ExecutionError(exception);
+          return new ExecutionError(exception, []);
         }
       });
     };

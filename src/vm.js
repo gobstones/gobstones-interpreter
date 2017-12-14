@@ -66,6 +66,21 @@ function fail(startPos, endPos, reason, args) {
   throw new GbsRuntimeError(startPos, endPos, reason, args);
 }
 
+/* Return a new unique frame id each time this function is called */
+class Counter {
+  constructor() {
+    this._counter = 0;
+  }
+
+  reset() {
+    this._counter = 0;
+  }
+
+  next() {
+    return this._counter++
+  }
+}
+
 /* An instance of Frame represents the local execution context of a
  * function or procedure (a.k.a. "activation record" or "stack frame").
  *
@@ -78,15 +93,24 @@ function fail(startPos, endPos, reason, args) {
  * - a map from local names to values
  */
 class Frame {
-  constructor(routineName, instructionPointer) {
+  constructor(frameId, routineName, instructionPointer) {
     this._routineName = routineName;
     this._instructionPointer = instructionPointer;
     this._variables = {};
     this._stack = [];
+
+    /* The unique frame identifier is used to uniquely identify
+     * a function call during a stack trace. This is used in the
+     * API to generate snapshots. */
+    this._uniqueFrameId = frameId;
   }
 
   get routineName() {
     return this._routineName;
+  }
+
+  get uniqueFrameId() {
+    return this._uniqueFrameId;
   }
 
   get instructionPointer() {
@@ -158,6 +182,8 @@ export class VirtualMachine {
      */
     this._labelTargets = this._code.labelTargets();
 
+    this._nextFrameId = 0;
+
     /* A "call stack" is a stack of frames.
      *
      * The topmost element of the stack (i.e. the last element of the list)
@@ -169,7 +195,9 @@ export class VirtualMachine {
      * become empty.
      */
     this._callStack = [];
-    this._callStack.push(new Frame('program', 0 /* instructionPointer */));
+    this._callStack.push(
+      this._newFrame('program', 0 /* instructionPointer */)
+    );
 
     /* The global state is the data that is available globally.
      *
@@ -242,7 +270,9 @@ export class VirtualMachine {
    * making calls to this function.
    */
   runEventWithTimeout(eventValue, millisecs) {
-    this._callStack = [new Frame('program', 0 /* instructionPointer */)];
+    this._callStack = [
+      this._newFrame('program', 0 /* instructionPointer */)
+    ];
     this._currentFrame().pushValue(eventValue);
     return this.runWithTimeout(millisecs);
   }
@@ -276,6 +306,12 @@ export class VirtualMachine {
         throw condition;
       }
     }
+  }
+
+  _newFrame(routineName, instructionPointer) {
+    let frameId = this._nextFrameId;
+    this._nextFrameId++;
+    return new Frame(frameId, routineName, instructionPointer);
   }
 
   _timeoutIfNeeded(startTime, millisecs) {
@@ -494,7 +530,7 @@ export class VirtualMachine {
     let instruction = this._currentInstruction();
 
     /* Create a new stack frame for the callee */
-    let newFrame = new Frame(
+    let newFrame = this._newFrame(
                      instruction.targetLabel,
                      this._labelTargets[instruction.targetLabel]
                    );
@@ -515,13 +551,13 @@ export class VirtualMachine {
   _stepReturn() {
     let innerFrame = this._currentFrame();
 
-    /* Take a snapshot when leaving a routine */
-    this._takeSnapshot(innerFrame.routineName);
-
     let returnValue;
     if (innerFrame.stackEmpty()) {
       returnValue = null;
     } else {
+      /* Take a snapshot when leaving a routine other than the program */
+      this._takeSnapshot(innerFrame.routineName);
+
       returnValue = innerFrame.popValue();
       if (!innerFrame.stackEmpty()) {
         throw Error('VM: stack should be empty');
