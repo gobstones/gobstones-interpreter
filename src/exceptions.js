@@ -11,7 +11,10 @@ export class GbsInterpreterException extends Error {
     this.reason = reason;
     this.args = args;
 
-    this.message = i18n(errorType + ':' + reason);
+    this.message = reason === 'boom-called'
+      ? args[0]
+      : i18n(errorType + ':' + reason);
+
     if (args.length > 0 && typeof this.message === 'function') {
       this.message = this.message.apply(null, args);
     }

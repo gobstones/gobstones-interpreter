@@ -256,6 +256,7 @@ describe('Gobstones API', () => {
       let r = p.program.interpret(emptyBoard(1, 1));
       expect(r.reason.code).equals('boom-called');
       expect(r.reason.detail).deep.equals(["foo"]);
+      expect(r.message).equals("foo");
     });
 
   });
