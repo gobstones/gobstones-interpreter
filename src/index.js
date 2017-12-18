@@ -359,6 +359,7 @@ class ParseResult {
     program.alias = 'program';
     program.interpret = function (board) {
       let snapshotTaker = new SnapshotTaker(state.runner);
+
       return i18nWithLanguage(state.language, () => {
         try {
           state.runner.compile();
@@ -379,6 +380,7 @@ class ParseResult {
           if (exception.isGobstonesException === undefined) {
             throw exception;
           }
+
           return new ExecutionError(exception, snapshotTaker.snapshots());
         }
       });
