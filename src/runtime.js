@@ -206,14 +206,19 @@ export class RuntimeState {
     this._height = jboard.height;
     this._head.x = jboard.head[0];
     this._head.y = jboard.head[1];
+    this._board = [];
     for (let x = 0; x < this._width; x++) {
+      let row = [];
       for (let y = 0; y < this._height; y++) {
         let cell = jboard.board[x][y];
-        this._board[x][y][i18n('CONS:Color0')] = new ValueInteger(cell['a']);
-        this._board[x][y][i18n('CONS:Color1')] = new ValueInteger(cell['n']);
-        this._board[x][y][i18n('CONS:Color2')] = new ValueInteger(cell['r']);
-        this._board[x][y][i18n('CONS:Color3')] = new ValueInteger(cell['v']);
+        let newCell = {};
+        newCell[i18n('CONS:Color0')] = new ValueInteger(cell['a']);
+        newCell[i18n('CONS:Color1')] = new ValueInteger(cell['n']);
+        newCell[i18n('CONS:Color2')] = new ValueInteger(cell['r']);
+        newCell[i18n('CONS:Color3')] = new ValueInteger(cell['v']);
+        row.push(newCell);
       }
+      this._board.push(row);
     }
   }
 

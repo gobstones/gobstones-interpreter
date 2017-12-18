@@ -562,6 +562,34 @@ describe('Gobstones API', () => {
        });
     });
 
+    it('GBB to apiboard: wider-than-taller boards', () => {
+        let board = API().gbb.read([
+          'GBB/1.0',
+          'size 2 1',
+          'cell 0 0 Azul 1',
+          'cell 1 0 Rojo 1',
+        ].join('\n'));
+       expect(board).deep.equals({
+         width: 2, height: 1,
+         head: {x: 0, y: 0},
+         table: [[{blue: 1}, {red: 1}]]
+       });
+    });
+
+    it('GBB to apiboard: taller-than-wider boards', () => {
+        let board = API().gbb.read([
+          'GBB/1.0',
+          'size 1 2',
+          'cell 0 0 Azul 1',
+          'cell 0 1 Rojo 1',
+        ].join('\n'));
+       expect(board).deep.equals({
+         width: 1, height: 2,
+         head: {x: 0, y: 0},
+         table: [[{red: 1}], [{blue: 1}]]
+       });
+    });
+
     it('Apiboard to GBB', () => {
       let apiboard = {
         width: 6, height: 3,
@@ -574,6 +602,40 @@ describe('Gobstones API', () => {
       };
       let api = API();
       expect(api.gbb.read(api.gbb.write(apiboard))).deep.equals(apiboard);
+    });
+
+    it('Apiboard to GBB', () => {
+      let apiboard = {
+        width: 8, height: 8,
+        head: {x: 0, y: 0},
+        table: [
+          [{}, {}, {}, {}, {}, {}, {}, {}],
+          [{}, {}, {}, {}, {}, {}, {}, {}],
+          [{}, {}, {}, {}, {}, {}, {}, {}],
+          [{}, {}, {}, {}, {}, {}, {}, {}],
+          [{}, {}, {}, {}, {}, {}, {}, {}],
+          [{}, {}, {}, {}, {}, {}, {}, {}],
+          [{}, {}, {}, {}, {}, {}, {}, {}],
+          [{}, {}, {}, {}, {}, {}, {}, {}],
+        ]
+      };
+      let api = API();
+      let p = api.parse('program { Mover(Norte) }');
+      let r = p.program.interpret(apiboard);
+      expect(r.finalBoard).deep.equals({
+          width: 8, height: 8,
+          head: {x: 0, y: 1},
+          table: [
+            [{}, {}, {}, {}, {}, {}, {}, {}],
+            [{}, {}, {}, {}, {}, {}, {}, {}],
+            [{}, {}, {}, {}, {}, {}, {}, {}],
+            [{}, {}, {}, {}, {}, {}, {}, {}],
+            [{}, {}, {}, {}, {}, {}, {}, {}],
+            [{}, {}, {}, {}, {}, {}, {}, {}],
+            [{}, {}, {}, {}, {}, {}, {}, {}],
+            [{}, {}, {}, {}, {}, {}, {}, {}],
+          ]
+      });
     });
 
   });
