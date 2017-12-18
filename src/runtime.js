@@ -688,6 +688,14 @@ export class RuntimePrimitives {
         }
       );
 
+    this._primitiveFunctions['not'] =
+      new PrimitiveOperation(
+        [typeBool], noValidation,
+        function (globalState, x) {
+          return valueFromBool(!boolFromValue(x));
+        }
+      );
+
     this._primitiveFunctions['&&'] =
       new PrimitiveOperation(
         [typeAny, typeAny], noValidation,
@@ -1022,6 +1030,22 @@ export class RuntimePrimitives {
           return genericGT(a, b);
         }
       );
+
+    /* User-triggered failure */
+
+    this._primitiveProcedures[i18n('PRIM:BOOM')] =
+      new PrimitiveOperation(
+        [typeString],
+        function (startPos, endPos, globalState, args) {
+          fail(startPos, endPos, 'boom-called', [args[0].string]);
+        },
+        function (globalState, msg) {
+          throw Error('Should not be reachable.');
+        }
+      );
+
+    this._primitiveFunctions[i18n('PRIM:boom')] =
+      this._primitiveProcedures[i18n('PRIM:BOOM')];
 
     /* List opreators */
     this._primitiveFunctions['++'] =

@@ -239,7 +239,7 @@ class InteractiveExecutionResult {
         if (exception.isGobstonesException === undefined) {
           throw exception;
         }
-        return new ExecutionError(exception);
+        return new ExecutionError(exception, []);
       }
     });
   }
@@ -251,7 +251,6 @@ class SnapshotTaker {
   constructor(runner) {
     this._runner = runner;
     this._snapshots = [];
-    this._index = 0;
   }
 
   takeSnapshot(routineName, position, callStack, globalState) {
@@ -272,8 +271,7 @@ class SnapshotTaker {
     for (let stackFrame of callStack) {
       let name = stackFrame.routineName;
       if (name !== 'program') {
-        this._index += 1;
-        name = name + '-' + this._index.toString();
+        name = name + '-' + stackFrame.uniqueFrameId.toString();
       }
       snapshot.contextNames.push(name);
     }
@@ -403,7 +401,7 @@ class ParseResult {
           if (exception.isGobstonesException === undefined) {
             throw exception;
           }
-          return new ExecutionError(exception);
+          return new ExecutionError(exception, []);
         }
       });
     };

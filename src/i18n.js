@@ -524,6 +524,9 @@ const LOCALE_ES = {
   'CONS:Dir2': 'Sur',
   'CONS:Dir3': 'Oeste',
 
+  'PRIM:BOOM': 'BOOM',
+  'PRIM:boom': 'boom',
+
   'PRIM:PutStone': 'Poner',
   'PRIM:RemoveStone': 'Sacar',
   'PRIM:Move': 'Mover',

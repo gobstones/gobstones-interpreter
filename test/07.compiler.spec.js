@@ -160,6 +160,58 @@ describe('Compiler', () => {
       );
     });
 
+    it('Chain of "else if"s', () => {
+      let result = new Runner().run([
+        'function f(x) {',
+        '  if (x == 1) {',
+        '    y := "a"',
+        '  } else if (x == 2) {',
+        '    y := "b"',
+        '  } else if (x == 3) {',
+        '    y := "c"',
+        '  } else {',
+        '    y := "d"',
+        '  }',
+        '  return (y)',
+        '}',
+        'function g(x) {',
+        '  y := "D"',
+        '  if (x == 1) {',
+        '    y := "A"',
+        '  } else if (x == 2) {',
+        '    y := "B"',
+        '  } else if (x == 3) {',
+        '    y := "C"',
+        '  }',
+        '  return (y)',
+        '}',
+        'program {',
+        '  return (',
+        '    (f(1), f(2), f(3), f(4))',
+        '  ,',
+        '    (g(1), g(2), g(3), g(4))',
+        '  )',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(
+        new ValueTuple([
+          new ValueTuple([
+            new ValueString("a"),
+            new ValueString("b"),
+            new ValueString("c"),
+            new ValueString("d"),
+          ]),
+          new ValueTuple([
+            new ValueString("A"),
+            new ValueString("B"),
+            new ValueString("C"),
+            new ValueString("D"),
+          ]),
+        ])
+      );
+    });
+
+
   });
 
   describe('Statements: repeat', () => {

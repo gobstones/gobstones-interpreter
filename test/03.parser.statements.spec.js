@@ -492,6 +492,132 @@ describe('Parser: statements', () => {
       expect(ast[0].body.statements[1].endPos.column).equals(38);
     });
 
+    it('Accept "if" with "else if" without "else"', () => {
+      let parser = new Parser([
+          'program {',
+          '  if (a) {',
+          '    A()',
+          '  } else if (b) {',
+          '    B()',
+          '  }',
+          '}',
+      ].join('\n'));
+      expectAST(parser.parse(), [
+        new ASTDefProgram(
+          new ASTStmtBlock([
+            new ASTStmtIf(
+              new ASTExprVariable(tok(T_LOWERID, 'a')),
+              new ASTStmtBlock([
+                  new ASTStmtProcedureCall(tok(T_UPPERID, 'A'), [])
+              ]),
+              new ASTStmtIf(
+                new ASTExprVariable(tok(T_LOWERID, 'b')),
+                new ASTStmtBlock([
+                  new ASTStmtProcedureCall(tok(T_UPPERID, 'B'), [])
+                ]),
+                null,
+              ),
+            )
+          ])
+        )
+      ]);
+    });
+
+    it('Accept "if" with "else if" with "else"', () => {
+      let parser = new Parser([
+          'program {',
+          '  if (a) {',
+          '    A()',
+          '  } else if (b) then {',
+          '    B()',
+          '  } else {',
+          '    C()',
+          '  }',
+          '}',
+      ].join('\n'));
+      expectAST(parser.parse(), [
+        new ASTDefProgram(
+          new ASTStmtBlock([
+            new ASTStmtIf(
+              new ASTExprVariable(tok(T_LOWERID, 'a')),
+              new ASTStmtBlock([
+                new ASTStmtProcedureCall(tok(T_UPPERID, 'A'), [])
+              ]),
+              new ASTStmtIf(
+                new ASTExprVariable(tok(T_LOWERID, 'b')),
+                new ASTStmtBlock([
+                  new ASTStmtProcedureCall(tok(T_UPPERID, 'B'), [])
+                ]),
+                new ASTStmtBlock([
+                  new ASTStmtProcedureCall(tok(T_UPPERID, 'C'), [])
+                ])
+              ),
+            )
+          ])
+        )
+      ]);
+    });
+
+    it('Accept chain of "else if"s', () => {
+      let parser = new Parser([
+          'program {',
+          '  if (a) {',
+          '    A()',
+          '  } else if (b) then {',
+          '    B()',
+          '  } else if (c) then {',
+          '    C()',
+          '  } else if (d) then {',
+          '    D()',
+          '  } else if (e) then {',
+          '    E()',
+          '  } else {',
+          '    F()',
+          '  }',
+          '}',
+      ].join('\n'));
+      expectAST(parser.parse(), [
+        new ASTDefProgram(
+          new ASTStmtBlock([
+            new ASTStmtIf(
+              new ASTExprVariable(tok(T_LOWERID, 'a')),
+              new ASTStmtBlock([
+                new ASTStmtProcedureCall(tok(T_UPPERID, 'A'), [])
+              ]),
+              new ASTStmtIf(
+                new ASTExprVariable(tok(T_LOWERID, 'b')),
+                new ASTStmtBlock([
+                  new ASTStmtProcedureCall(tok(T_UPPERID, 'B'), [])
+                ]),
+
+                new ASTStmtIf(
+                  new ASTExprVariable(tok(T_LOWERID, 'c')),
+                  new ASTStmtBlock([
+                    new ASTStmtProcedureCall(tok(T_UPPERID, 'C'), [])
+                  ]),
+                  new ASTStmtIf(
+                    new ASTExprVariable(tok(T_LOWERID, 'd')),
+                    new ASTStmtBlock([
+                      new ASTStmtProcedureCall(tok(T_UPPERID, 'D'), [])
+                    ]),
+                    new ASTStmtIf(
+                      new ASTExprVariable(tok(T_LOWERID, 'e')),
+                      new ASTStmtBlock([
+                        new ASTStmtProcedureCall(tok(T_UPPERID, 'E'), [])
+                      ]),
+                      new ASTStmtBlock([
+                        new ASTStmtProcedureCall(tok(T_UPPERID, 'F'), [])
+                      ]),
+                    ),
+                  ),
+                ),
+              ),
+            )
+          ])
+        )
+      ]);
+    });
+
   });
 
   describe('Foreach statement', () => {

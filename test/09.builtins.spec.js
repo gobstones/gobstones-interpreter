@@ -1000,6 +1000,51 @@ describe('Primitive functions, procedures and operators', () => {
       );
     });
   });
+    
+  describe('Logical operators', () => {
+    /* Note: conjunction and disjunction are checked in 07.compiler.spec.js
+     * since they are treated distinctly, for they are short-circuiting.
+     */
+    it('Negation', () => {
+      let result = new Runner().run([
+        'program {',
+        '  return (',
+        '    not ' + i18n('CONS:False') + ',',
+        '    not ' + i18n('CONS:True') + ',',
+        '    not not ' + i18n('CONS:False') + ',',
+        '    not not ' + i18n('CONS:True'),
+        '  )',
+        '}',
+      ].join('\n'));
+
+      expect(result).deep.equals(
+        new ValueTuple([
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+        ])
+      );
+
+    });
+
+    it('Negation: check type', () => {
+      let result = () => new Runner().run([
+        'program {',
+        '  return (not 1)',
+        '}',
+      ].join('\n'));
+      expect(result).throws(
+        i18n('errmsg:primitive-argument-type-mismatch')(
+          'not',
+          1,
+          i18n('TYPE:Bool'),
+          i18n('TYPE:Integer'),
+        )
+      );
+    });
+
+  });
 
   describe('Arithmetic operators', () => {
 
@@ -1249,6 +1294,28 @@ describe('Primitive functions, procedures and operators', () => {
         '}'
       ].join('\n'));
       expect(result).throws(i18n('errmsg:cannot-divide-by-zero'));
+    });
+
+  });
+
+  describe('User-triggered failure (BOOM and boom)', () => {
+
+    it('"BOOM" procedure should fail', () => {
+      let result = () => new Runner().run([
+        'program {',
+        '  ' + i18n('PRIM:BOOM') + '("foo")',
+        '}'
+      ].join('\n'));
+      expect(result).throws("foo");
+    });
+
+    it('"boom" function should fail', () => {
+      let result = () => new Runner().run([
+        'program {',
+        '  x := ' + i18n('PRIM:boom') + '("foo")',
+        '}'
+      ].join('\n'));
+      expect(result).throws("foo");
     });
 
   });

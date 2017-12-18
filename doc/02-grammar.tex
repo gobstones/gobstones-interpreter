@@ -77,7 +77,10 @@
 \token{RETURN} \token{LPAREN} \nonterminal{expressionSeq} \token{RPAREN}
 }
 \production{\nonterminal{stmtIf}}{
-\token{IF} \token{LPAREN} \nonterminal{expression} \token{RPAREN} (\token{THEN})? \nonterminal{stmtBlock} (\token{ELSE} \nonterminal{stmtBlock})?
+\token{IF} \nonterminal{stmtIfBranch} (\token{ELSE} \token{IF} \nonterminal{stmtIfBranch})* (\token{ELSE} \nonterminal{stmtBlock})?
+}
+\production{\nonterminal{stmtIfBranch}}{
+\token{LPAREN} \nonterminal{expression} \token{RPAREN} (\token{THEN})? \nonterminal{stmtBlock}
 }
 \production{\nonterminal{stmtRepeat}}{
 \token{REPEAT} \token{LPAREN} \nonterminal{expression} \token{RPAREN} \nonterminal{stmtBlock}

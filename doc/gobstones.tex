@@ -15,7 +15,7 @@
 \newcommand{\nonEmpty}[1]{#1$_{1}$}
 \newcommand{\production}[2]{
   \noindent
-  \begin{tabular}{lrl}
+  \begin{tabular}{lrp{10cm}}
   #1 & $\xrightarrow{\hspace{.5cm}}$ & #2
   \end{tabular}\\
 }
@@ -550,7 +550,11 @@ tienen asociados dos atributos booleanos:
 \end{itemize}
 Se aplican las siguientes reglas:
 \begin{itemize}
-\item El \texttt{program} es siempre \texttt{recorded} y nunca \texttt{atomic}.
+\item El \texttt{program} nunca \texttt{atomic}.
+      Además el \texttt{program} {\bf no} es \texttt{recorded}:
+      se toma una {\em snapshot} al comienzo del \texttt{program},
+      pero no al final. La \'ultima {\em snapshot} será la
+      ocasionada por el \'ultimo comando que tenga el atributo \texttt{recorded}.
 \item Las funciones nunca son \texttt{recorded} y siempre son \texttt{atomic}.
       (Los efectos que se producen durante la ejecuci\'on de una funci\'on
       son invisibles desde el exterior, de manera que cualquier cambio en el estado
