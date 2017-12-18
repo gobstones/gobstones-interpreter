@@ -66,21 +66,6 @@ function fail(startPos, endPos, reason, args) {
   throw new GbsRuntimeError(startPos, endPos, reason, args);
 }
 
-/* Return a new unique frame id each time this function is called */
-class Counter {
-  constructor() {
-    this._counter = 0;
-  }
-
-  reset() {
-    this._counter = 0;
-  }
-
-  next() {
-    return this._counter++
-  }
-}
-
 /* An instance of Frame represents the local execution context of a
  * function or procedure (a.k.a. "activation record" or "stack frame").
  *
