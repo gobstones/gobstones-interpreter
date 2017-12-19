@@ -1,6 +1,6 @@
 {
   "name": "gobstones-interpreter",
-  "version": "0.0.1",
+  "version": "1.0.1",
   "description": "Gobstones Web interpreter",
   "main": "lib/gobstones-interpreter.js",
   "scripts": {

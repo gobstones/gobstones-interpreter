@@ -24,6 +24,15 @@ parseResult.program.interpret({
 })
 ```
 
+## deploy to npm
+
+```bash
+# put a new version number in package.json
+# copy package.json from master to origin/bower
+git checkout origin/bower
+npm publish
+```
+
 ## important scripts
 
 * `npm install` - install the dependencies of the library
