@@ -605,7 +605,7 @@ describe('Gobstones API', () => {
       expect(api.gbb.read(api.gbb.write(apiboard))).deep.equals(apiboard);
     });
 
-    it('Apiboard to GBB', () => {
+    it('Apiboard to GBB with big board', () => {
       let apiboard = {
         width: 8, height: 8,
         head: {x: 0, y: 0},
