@@ -377,9 +377,10 @@ La etapa de an\'alisis sem\'antico (o {\em linting}) verifica de manera est\'ati
 
 {\bf Pattern matching.}
 \begin{itemize}
-\item Hay cuatro tipos de patrones:
+\item Hay cinco tipos de patrones:
   \begin{itemize}
   \item Patr\'on comod\'in (\texttt{\_}).
+  \item Patr\'on num\'erico (un n\'umero $n$, que puede ser positivo, negativo o cero).
   \item Patr\'on constructor (\texttt{C} o alternativamente \texttt{C(x$_1$, ..., x$_n$)}).
   \item Patr\'on tupla (\texttt{(x$_1$, ..., x$_n$)}).
   \item Patr\'on timeout (\texttt{TIMEOUT($n$)}).
@@ -391,6 +392,7 @@ La etapa de an\'alisis sem\'antico (o {\em linting}) verifica de manera est\'ati
 \item Si un patr\'on constructor tiene $1$ o m\'as par\'ametros, el n\'umero \DEBE coincidir con el n\'umero
       de campos del constructor correspondiente.
 \item En una secuencia de ramas los patrones constructor \PUEDEN aparecer en cualquier orden, sin respetar necesariamente el orden en que est\'an declarados.
+\item Una secuencia de ramas \NOPUEDE tener dos patrones num\'ericos con el mismo valor num\'erico.    %TODO
 \item Una secuencia de ramas \NOPUEDE tener dos patrones constructor asociados al mismo constructor.
 \item Una secuencia de ramas \NOPUEDE tener dos patrones tupla con la misma longitud.
 \item Una secuencia de ramas \NOPUEDE tener dos patrones timeout.
@@ -403,6 +405,7 @@ La etapa de an\'alisis sem\'antico (o {\em linting}) verifica de manera est\'ati
 \item En una secuencia de ramas todos los patrones \DEBEN ser compatibles.
       Son patrones compatibles:
       \begin{itemize}
+      \item Dos patrones num\'ericos.
       \item Dos patrones constructor cuyos constructores pertenecen al mismo tipo.
       \item Un patr\'on timeout con cualquier otro constructor del tipo \texttt{\_EVENT}
             (que corresponde a los eventos que pueden darse en un programa interactivo).
@@ -410,6 +413,8 @@ La etapa de an\'alisis sem\'antico (o {\em linting}) verifica de manera est\'ati
       \end{itemize}
       Dos tipos son incompatibles en cualquier otro caso. En particular, son patrones incompatibles:
       \begin{itemize}
+      \item Un patr\'on num\'erico y un patr\'on constructor.
+      \item Un patr\'on num\'erico y un patr\'on tupla.
       \item Dos patrones constructor cuyos constructores pertenecen a distintos tipos.
       \item Dos patrones tupla con distinto n\'umero de componentes.
       \item Un patr\'on constructor y un patr\'on tupla.
@@ -420,7 +425,9 @@ La etapa de an\'alisis sem\'antico (o {\em linting}) verifica de manera est\'ati
       patrones constructor del tipo \texttt{\_EVENT},
       o patrones comod\'in.
 \item Los de las ramas de los \texttt{switch} \NOPUEDEN ser eventos, es decir:
-      pueden ser patrones constructor de tipos que no sean \texttt{\_EVENT},
+      pueden ser
+      patrones num\'ericos,
+      patrones constructor de tipos que no sean \texttt{\_EVENT},
       patrones tupla,
       o patrones comod\'in.
 \end{itemize}

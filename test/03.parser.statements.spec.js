@@ -24,6 +24,7 @@ import {
   ASTStmtProcedureCall,
   /* Patterns */
   ASTPatternWildcard,
+  ASTPatternNumber,
   ASTPatternStructure,
   ASTPatternTuple,
   ASTPatternTimeout,
@@ -886,6 +887,81 @@ describe('Parser: statements', () => {
       ]);
     });
 
+    it('Accept zero as a numeric pattern', () => {
+      let parser = new Parser(
+                     'program {' +
+                     '  switch (foo) {' +
+                     '    0 -> {}' +
+                     '  }' +
+                     '}'
+                   );
+      expectAST(parser.parse(), [
+        new ASTDefProgram(
+          new ASTStmtBlock([
+            new ASTStmtSwitch(
+              new ASTExprVariable(tok(T_LOWERID, 'foo')),
+              [
+                new ASTSwitchBranch(
+                  new ASTPatternNumber(tok(T_NUM, '0')),
+                  new ASTStmtBlock([])
+                )
+              ]
+            )
+          ])
+        )
+      ]);
+    });
+
+    it('Accept positive numeric pattern', () => {
+      let parser = new Parser(
+                     'program {' +
+                     '  switch (foo) {' +
+                     '    3 -> {}' +
+                     '  }' +
+                     '}'
+                   );
+      expectAST(parser.parse(), [
+        new ASTDefProgram(
+          new ASTStmtBlock([
+            new ASTStmtSwitch(
+              new ASTExprVariable(tok(T_LOWERID, 'foo')),
+              [
+                new ASTSwitchBranch(
+                  new ASTPatternNumber(tok(T_NUM, '3')),
+                  new ASTStmtBlock([])
+                )
+              ]
+            )
+          ])
+        )
+      ]);
+    });
+
+    it('Accept negative numeric pattern', () => {
+      let parser = new Parser(
+                     'program {' +
+                     '  switch (foo) {' +
+                     '    -3 -> {}' +
+                     '  }' +
+                     '}'
+                   );
+      expectAST(parser.parse(), [
+        new ASTDefProgram(
+          new ASTStmtBlock([
+            new ASTStmtSwitch(
+              new ASTExprVariable(tok(T_LOWERID, 'foo')),
+              [
+                new ASTSwitchBranch(
+                  new ASTPatternNumber(tok(T_NUM, '-3')),
+                  new ASTStmtBlock([])
+                )
+              ]
+            )
+          ])
+        )
+      ]);
+    });
+
     it('Accept constructor pattern without arguments', () => {
       let parser = new Parser(
                      'program {' +
@@ -1102,6 +1178,48 @@ describe('Parser: statements', () => {
         i18n('errmsg:expected-but-found')(
           i18n('T_LOWERID'),
           i18n('T_LPAREN')
+        )
+      );
+    });
+
+    it('Reject malformed pattern (negative 0)', () => {
+      let parser = new Parser(
+                     'program {' +
+                     '  switch (foo) {' +
+                     '    -0 -> {}' +
+                     '  }' +
+                     '}'
+                   );
+      expect(() => parser.parse()).throws(
+        i18n('errmsg:pattern-number-cannot-be-negative-zer')
+      );
+    });
+
+    it('Reject malformed pattern (malformed 0)', () => {
+      let parser = new Parser(
+                     'program {' +
+                     '  switch (foo) {' +
+                     '    00 -> {}' +
+                     '  }' +
+                     '}'
+                   );
+      expect(() => parser.parse()).throws(
+        i18n('errmsg:numeric-constant-should-not-have-leading-zeroes')
+      );
+    });
+
+    it('Reject malformed numeric pattern (repeated minus)', () => {
+      let parser = new Parser(
+                     'program {' +
+                     '  switch (foo) {' +
+                     '    - - 1 -> {}' +
+                     '  }' +
+                     '}'
+                   );
+      expect(() => parser.parse()).throws(
+        i18n('errmsg:expected-but-found')(
+          i18n('T_NUM'),
+          i18n('T_MINUS')
         )
       );
     });

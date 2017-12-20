@@ -131,6 +131,9 @@ const LOCALE_ES = {
            + 'Se encontró: ' + found + '.';
     },
 
+  'errmsg:pattern-number-cannot-be-negative-zero':
+    'El patrón numérico no puede ser "-0".',
+
   'errmsg:pattern-tuple-cannot-be-singleton':
     'El patrón para una tupla no puede tener una sola componente. '
   + 'Las tuplas tienen 0, 2, 3, o más componentes, pero no 1.',
@@ -300,6 +303,11 @@ const LOCALE_ES = {
 
   'errmsg:wildcard-pattern-should-be-last':
     'El comodín "_" tiene que ser la última rama del switch.',
+
+  'errmsg:numeric-pattern-repeats-number':
+    function (number) {
+      return 'Hay dos ramas distintas para el número "' + number + '".';
+    },
 
   'errmsg:structure-pattern-repeats-constructor':
     function (name) {

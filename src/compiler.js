@@ -19,6 +19,7 @@ import {
   N_StmtProcedureCall,
   /* Patterns */
   N_PatternWildcard,
+  N_PatternNumber,
   N_PatternStructure,
   N_PatternTuple,
   N_PatternTimeout,
@@ -620,6 +621,8 @@ export class Compiler {
     switch (pattern.tag) {
       case N_PatternWildcard:
         return this._compilePatternCheckWildcard(pattern, targetLabel);
+      case N_PatternNumber:
+        return this._compilePatternCheckNumber(pattern, targetLabel);
       case N_PatternStructure:
         return this._compilePatternCheckStructure(pattern, targetLabel);
       case N_PatternTuple:
@@ -639,6 +642,16 @@ export class Compiler {
       pattern.startPos, pattern.endPos,
       new IJump(targetLabel)
     );
+  }
+
+  _compilePatternCheckNumber(pattern, targetLabel) {
+    this._produceList(pattern.startPos, pattern.endPos, [
+      new IDup(),
+      new ITypeCheck(new TypeInteger()),
+      new IPushInteger(pattern.number.value),
+      new IPrimitiveCall('/=', 2),
+      new IJumpIfFalse(targetLabel),
+    ]);
   }
 
   _compilePatternCheckStructure(pattern, targetLabel) {
@@ -694,6 +707,8 @@ export class Compiler {
     switch (pattern.tag) {
       case N_PatternWildcard:
         return; /* No parameters to bind */
+      case N_PatternNumber:
+        return; /* No parameters to bind */
       case N_PatternStructure:
         this._compilePatternBindStructure(pattern);
         return;
@@ -744,6 +759,8 @@ export class Compiler {
   _compilePatternUnbind(pattern) {
     switch (pattern.tag) {
       case N_PatternWildcard:
+        return; /* No parameters to unbind */
+      case N_PatternNumber:
         return; /* No parameters to unbind */
       case N_PatternStructure:
         this._compilePatternUnbindStructure(pattern);
