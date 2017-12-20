@@ -468,7 +468,19 @@ export class GobstonesInterpreterAPI {
       },
     };
 
+    this.getAst = function (sourceCode) {
+      return this._withState(sourceCode, false, (state) =>
+        state.runner.abstractSyntaxTree.toMulangLike()
+      );
+    };
+
     this.parse = function (sourceCode) {
+      return this._withState(sourceCode, true, (state) =>
+        new ParseResult(state)
+      );
+    };
+
+    this._withState = function (sourceCode, useLinter, action) {
       return i18nWithLanguage(state.language, () => {
         try {
           state.runner.initialize();
@@ -477,8 +489,8 @@ export class GobstonesInterpreterAPI {
           state.runner.enableLintCheck(
             'source-should-have-a-program-definition', false
           );
-          state.runner.lint();
-          return new ParseResult(state);
+          if (useLinter) state.runner.lint();
+          return action(state);
         } catch (exception) {
           if (exception.isGobstonesException === undefined) {
             throw exception;

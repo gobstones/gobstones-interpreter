@@ -94,6 +94,25 @@ export class ASTNode {
     }
   }
 
+  toMulangLike() {
+    return {
+      tag: this._tag.toString().replace(/(^Symbol\(|\)$)/g, ''),
+      contents: this._children.map((node) => {
+        if (node === null) {
+          return 'null';
+        } else if (node instanceof Array) {
+          return new ASTNode(Symbol('?'), node).toMulangLike().contents;
+        } else if (node instanceof ASTNode) {
+          return node.toMulangLike();
+        } else if (node instanceof Token) {
+          return node.toString();
+        } else {
+          return '?';
+        }
+      })
+    };
+  }
+
   toString() {
     return showAST(this);
   }
