@@ -505,6 +505,44 @@ describe('Compiler', () => {
       );
     });
 
+    it('Switch: match number', () => {
+      let result = new Runner().run([
+        'function f(x) {',
+        '  switch (- - -x) {',
+        '    -1 -> { y := "a" }',
+        '     0 -> { y := "b" }',
+        '     1 -> { y := "c" }',
+        '     123456789123456789123456789 -> { y := "e" }',
+        '     -123456789123456789123456789 -> { y := "f" }',
+        '     _ -> { y := "d" }',
+        '  }',
+        '  return (y)',
+        '}',
+        'program {',
+        '  return (',
+        '    f(2),',
+        '    f(1),',
+        '    f(0),',
+        '    f(-1),',
+        '    f(-2),',
+        '    f(123456789123456789123456789),',
+        '    f(-123456789123456789123456789)',
+        '  )',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(
+        new ValueTuple([
+          new ValueString("d"),
+          new ValueString("a"),
+          new ValueString("b"),
+          new ValueString("c"),
+          new ValueString("d"),
+          new ValueString("f"),
+          new ValueString("e"),
+        ])
+      );
+    });
+
     it('Switch: match record with no parameters', () => {
       let result = new Runner().run([
         'type A is record {',
@@ -699,6 +737,22 @@ describe('Compiler', () => {
         '}',
       ].join('\n'));
       expect(result).throws(i18n('errmsg:undefined-variable')('a'));
+    });
+
+    it('Switch: fail if type does not match type of numeric pattern', () => {
+      let result = () => new Runner().run([
+        'program {',
+        '  switch ([1, 2, 3]) {',
+        '    10 -> { }',
+        '  }',
+        '}',
+      ]);
+      expect(result).throws(
+        i18n('errmsg:expected-value-of-type-but-got')(
+          new TypeInteger(),
+          new TypeList(new TypeInteger()),
+        )
+      );
     });
 
     it('Switch: fail if type does not match type of structure pattern', () => {

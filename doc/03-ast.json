@@ -29,6 +29,7 @@
   ],
   ["data", "Pattern",
     ["PatternWildcard"],
+    ["PatternNumber", ["number", "NUM"]],
     ["PatternStructure", ["constructorName", "ID"], ["parameters", ["*", "ID"]]],
     ["PatternTuple", ["parameters", ["*", "ID"]]],
     ["PatternTimeout", ["timeout", "NUM"]]

@@ -20,6 +20,7 @@ import {
   N_StmtProcedureCall,
   /* Patterns */
   N_PatternWildcard,
+  N_PatternNumber,
   N_PatternStructure,
   N_PatternTuple,
   N_PatternTimeout,
@@ -98,6 +99,7 @@ export class Linter {
       'constructor-used-as-procedure': true,
       'undefined-procedure': true,
       'procedure-arity-mismatch': true,
+      'numeric-pattern-repeats-number': true,
       'structure-pattern-arity-mismatch': true,
       'structure-construction-repeated-field': true,
       'structure-construction-invalid-field': true,
@@ -116,14 +118,19 @@ export class Linter {
     return this._symtable;
   }
 
-  enableCheck(linterCheckId, enabled) {
+  _ensureLintCheckExists(linterCheckId) {
     if (!(linterCheckId in this._enabledLinterChecks)) {
       throw Error('Linter check "' + linterCheckId + '" does not exist.');
     }
+  }
+
+  enableCheck(linterCheckId, enabled) {
+    this._ensureLintCheckExists(linterCheckId);
     this._enabledLinterChecks[linterCheckId] = enabled;
   }
 
   _lintCheck(startPos, endPos, reason, args) {
+    this._ensureLintCheckExists(reason);
     if (this._enabledLinterChecks[reason]) {
       fail(startPos, endPos, reason, args);
     }
@@ -376,11 +383,25 @@ export class Linter {
   /* Check that there are no repeated constructors in a sequence
    * of branches. */
   _switchBranchesCheckNoRepeats(branches) {
+    let coveredNumbers = {};
     let coveredConstructors = {};
     let coveredTuples = {};
     let coveredTimeout = false;
     for (let branch of branches) {
       switch (branch.pattern.tag) {
+        case N_PatternWildcard:
+          /* Already checked in _switchBranchesCheckWildcard */
+          break;
+        case N_PatternNumber:
+          let number = branch.pattern.number.value;
+          if (number in coveredNumbers) {
+            this._lintCheck(
+              branch.pattern.startPos, branch.pattern.endPos,
+              'numeric-pattern-repeats-number', [number]
+            );
+          }
+          coveredNumbers[number] = true;
+          break;
         case N_PatternStructure:
           let constructorName = branch.pattern.constructorName.value;
           if (constructorName in coveredConstructors) {
@@ -410,6 +431,12 @@ export class Linter {
           }
           coveredTimeout = true;
           break;
+        default:
+          throw Error(
+                  'Linter: pattern "'
+                + Symbol.keyFor(branch.pattern.tag)
+                + '" not implemented.'
+                );
       }
     }
   }
@@ -476,6 +503,8 @@ export class Linter {
     switch (pattern.tag) {
       case N_PatternWildcard:
         return null;
+      case N_PatternNumber:
+        return i18n('TYPE:Integer');
       case N_PatternStructure:
         return this._symtable.constructorType(pattern.constructorName.value);
       case N_PatternTuple:
@@ -558,6 +587,8 @@ export class Linter {
     switch (pattern.tag) {
       case N_PatternWildcard:
         return this._lintPatternWildcard(pattern);
+      case N_PatternNumber:
+        return this._lintPatternNumber(pattern);
       case N_PatternStructure:
         return this._lintPatternStructure(pattern);
       case N_PatternTuple:
@@ -574,6 +605,10 @@ export class Linter {
   }
 
   _lintPatternWildcard(pattern) {
+    /* No restrictions */
+  }
+
+  _lintPatternNumber(pattern) {
     /* No restrictions */
   }
 

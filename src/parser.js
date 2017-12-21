@@ -37,6 +37,7 @@ import {
   ASTStmtProcedureCall,
   /* Patterns */
   ASTPatternWildcard,
+  ASTPatternNumber,
   ASTPatternStructure,
   ASTPatternTuple,
   ASTPatternTimeout,
@@ -579,6 +580,8 @@ export class Parser {
     switch (this._currentToken.tag) {
       case T_UNDERSCORE:
         return this._parsePatternWildcard();
+      case T_NUM: case T_MINUS:
+        return this._parsePatternNumber();
       case T_UPPERID:
         return this._parsePatternStructure();
       case T_LPAREN:
@@ -603,6 +606,29 @@ export class Parser {
     let endPos = startPos;
     result.startPos = startPos;
     result.endPos = endPos;
+    return result;
+  }
+
+  _parsePatternNumber() {
+    let startPos = this._currentToken.startPos;
+    let sign = '';
+    if (this._currentToken.tag === T_MINUS) {
+      this._match(T_MINUS);
+      sign = '-';
+    }
+    let number = this._currentToken;
+    this._match(T_NUM);
+    let value = sign + number.value;
+    if (value === '-0') {
+      fail(
+        startPos, number.endPos,
+        'pattern-number-cannot-be-negative-zero', []
+      );
+    }
+    number = new Token(T_NUM, value, number.startPos, number.endPos);
+    let result = new ASTPatternNumber(number);
+    result.startPos = startPos;
+    result.endPos = number.endPos;
     return result;
   }
 

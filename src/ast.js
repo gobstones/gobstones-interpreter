@@ -21,6 +21,7 @@ export const N_StmtAssignTuple = Symbol.for('N_StmtAssignTuple');
 export const N_StmtProcedureCall = Symbol.for('N_StmtProcedureCall');
 /* Patterns */
 export const N_PatternWildcard = Symbol.for('N_PatternWildcard');
+export const N_PatternNumber = Symbol.for('N_PatternNumber');
 export const N_PatternStructure = Symbol.for('N_PatternStructure');
 export const N_PatternTuple = Symbol.for('N_PatternTuple');
 export const N_PatternTimeout = Symbol.for('N_PatternTimeout');
@@ -389,6 +390,20 @@ export class ASTStmtProcedureCall extends ASTNode {
 export class ASTPatternWildcard extends ASTNode {
   constructor() {
     super(N_PatternWildcard, []);
+  }
+
+  get parameters() {
+    return [];
+  }
+}
+
+export class ASTPatternNumber extends ASTNode {
+  constructor(number) {
+    super(N_PatternNumber, [number]);
+  }
+
+  get number() {
+    return this._children[0];
   }
 
   get parameters() {

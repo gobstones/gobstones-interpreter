@@ -680,6 +680,19 @@ describe('Linter', () => {
 
   describe('Pattern matching', () => {
 
+    it('Accept numeric pattern', () => {
+      let code = [
+        'program {',
+        '  switch (1) {',
+        '    0  -> {}',
+        '    1  -> {}',
+        '    -1 -> {}',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(lint(code).program !== null).equals(true);
+    });
+
     it('Reject type used as structure pattern', () => {
       let code = [
         'type A is variant {',
@@ -822,6 +835,38 @@ describe('Linter', () => {
       expect(lint(code).program !== null).equals(true);
     });
 
+    it('Reject repeated number patterns (positive number)', () => {
+      let code = [
+        'program {',
+        '  switch (1) {',
+        '    3  -> {}',
+        '    2  -> {}',
+        '    -3 -> {}',
+        '    2  -> {}',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(() => lint(code)).throws(
+        i18n('errmsg:numeric-pattern-repeats-number')('2')
+      );
+    });
+
+    it('Reject repeated number patterns (negative number)', () => {
+      let code = [
+        'program {',
+        '  switch (1) {',
+        '    -3  -> {}',
+        '    2  -> {}',
+        '    -3 -> {}',
+        '    2  -> {}',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(() => lint(code)).throws(
+        i18n('errmsg:numeric-pattern-repeats-number')('-3')
+      );
+    });
+
     it('Reject repeated structure patterns', () => {
       let code = [
         'type A is variant {',
@@ -868,6 +913,38 @@ describe('Linter', () => {
       );
     });
 
+    it('Reject numeric pattern vs. structure pattern', () => {
+      let code = [
+        'type A is record {',
+        '}',
+        'program {',
+        '  switch (1) {',
+        '    A -> {}',
+        '    -2 -> {}',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(() => lint(code)).throws(
+        i18n('errmsg:pattern-does-not-match-type')('A', i18n('TYPE:Integer'))
+      );
+    });
+
+    it('Reject numeric pattern vs. tuple pattern', () => {
+      let code = [
+        'program {',
+        '  switch (1) {',
+        '    1233456789 -> {}',
+        '    (x, y) -> {}',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(() => lint(code)).throws(
+        i18n('errmsg:pattern-does-not-match-type')(
+          i18n('TYPE:Integer'),
+          i18n('<pattern-type>')('_TUPLE_2')
+        )
+      );
+    });
 
     it('Reject structure patterns of different types', () => {
       let code = [
