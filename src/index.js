@@ -93,7 +93,11 @@ class ParseError extends GobstonesInterpreterError {
 class ExecutionError extends GobstonesInterpreterError {
   constructor(exception, snapshots) {
     super(exception);
-    this.snapshots = snapshots;
+
+    const isTimeout = this.reason.code === 'timeout';
+    this.snapshots = isTimeout
+      ? [snapshots[snapshots.length - 1]]
+      : snapshots;
   }
 }
 
