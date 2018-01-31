@@ -593,7 +593,6 @@ const LOCALE_ES = {
 };
 /* END LOCALE_ES */
 
-
 /* BEGIN LOCALE_PT */
 const LOCALE_PT = {};
 for (let key in LOCALE_ES) {
@@ -630,7 +629,6 @@ LOCALE_PT['PRIM:maxColor'] = 'maxCor';
 LOCALE_PT['PRIM:minDir'] = 'minDir';
 LOCALE_PT['PRIM:maxDir'] = 'maxDir';
 /* END LOCALE_PT */
-
 
 /* BEGIN LOCALE_EN */
 const LOCALE_EN = {};
@@ -672,7 +670,6 @@ LOCALE_EN['PRIM:head'] = 'head';
 LOCALE_EN['PRIM:tail'] = 'tail';
 LOCALE_EN['PRIM:init'] = 'init';
 LOCALE_EN['PRIM:last'] = 'last';
-
 
 /* END LOCALE_EN */
 
