@@ -1,3 +1,4 @@
+/* BEGIN LOCALE_ES */
 
 function laPalabraClave(palabra) {
   return 'la palabra clave "' + palabra + '"';
@@ -12,7 +13,6 @@ function masculino(n, singular, plural) {
     return n.toString() + ' ' + plural;
   }
 }
-
 const LOCALE_ES = {
 
   /* Descriptions of syntactic constructions and tokens */
@@ -591,25 +591,66 @@ const LOCALE_ES = {
       }
     },
 };
+/* END LOCALE_ES */
 
-/* TODO: Translate LOCALE_EN */
 
-/* BEGIN: temporary declaration of LOCALE_EN */
+/* BEGIN LOCALE_PT */
+const LOCALE_PT = {};
+for (let key in LOCALE_ES) {
+  LOCALE_PT[key] = LOCALE_ES[key];
+}
+
+LOCALE_PT['TYPE:Color'] = 'Cor';
+LOCALE_PT['CONS:Color0'] = 'Azul';
+LOCALE_PT['CONS:Color1'] = 'Preto';
+LOCALE_PT['CONS:Color2'] = 'Vermelho';
+LOCALE_PT['CONS:Color3'] = 'Verde';
+
+LOCALE_PT['TYPE:Dir'] = 'Dir';
+LOCALE_PT['CONS:Dir0'] = 'Norte';
+LOCALE_PT['CONS:Dir1'] = 'Leste';
+LOCALE_PT['CONS:Dir2'] = 'Sul';
+LOCALE_PT['CONS:Dir3'] = 'Oeste';
+
+LOCALE_PT['PRIM:PutStone'] = 'Colocar';
+LOCALE_PT['PRIM:RemoveStone'] = 'Retirar';
+LOCALE_PT['PRIM:Move'] = 'Mover';
+LOCALE_PT['PRIM:GoToEdge'] = 'IrABorda';
+LOCALE_PT['PRIM:EmptyBoardContents'] = 'EsvaziarQuadro';
+LOCALE_PT['PRIM:numStones'] = 'nroPedras';
+LOCALE_PT['PRIM:anyStones'] = 'haPedras';
+LOCALE_PT['PRIM:canMove'] = 'podeMover';
+LOCALE_PT['PRIM:next'] = 'seguinte';
+LOCALE_PT['PRIM:prev'] = 'previo';
+LOCALE_PT['PRIM:opposite'] = 'oposto';
+LOCALE_PT['PRIM:minBool'] = 'minBool';
+LOCALE_PT['PRIM:maxBool'] = 'maxBool';
+LOCALE_PT['PRIM:minColor'] = 'minCor';
+LOCALE_PT['PRIM:maxColor'] = 'maxCor';
+LOCALE_PT['PRIM:minDir'] = 'minDir';
+LOCALE_PT['PRIM:maxDir'] = 'maxDir';
+/* END LOCALE_PT */
+
+
+/* BEGIN LOCALE_EN */
 const LOCALE_EN = {};
 for (let key in LOCALE_ES) {
   LOCALE_EN[key] = LOCALE_ES[key];
 }
+
 LOCALE_EN['CONS:Dir0'] = 'North';
 LOCALE_EN['CONS:Dir1'] = 'East';
 LOCALE_EN['CONS:Dir2'] = 'South';
 LOCALE_EN['CONS:Dir3'] = 'West';
-/* END: temporary declaration of LOCALE_EN */
+
+/* END LOCALE_EN */
 
 let CURRENT_LANGUAGE = 'es';
 
 let dictionaries = {
   'es': LOCALE_ES,
   'en': LOCALE_EN,
+  'pt': LOCALE_PT,
 };
 
 export function i18n(message) {
