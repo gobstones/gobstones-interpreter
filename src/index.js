@@ -1,4 +1,3 @@
-/* Gobstones API for backwards compatibility with gs-weblang-core */
 import { boolFromValue, RuntimeState } from './runtime.js';
 import { Runner } from './runner.js';
 import { i18n, i18nWithLanguage } from './i18n.js';
@@ -12,7 +11,7 @@ import {
 } from './ast.js';
 
 const DEFAULT_INFINITE_LOOP_TIMEOUT = 3000; /* millisecs */
-const DEFAULT_LANGUAGE = 'es'; /* millisecs */
+const DEFAULT_LANGUAGE = 'es';
 
 /* load a board in the API format into a fresh RuntimeState */
 function apiboardToState(apiboard) {
