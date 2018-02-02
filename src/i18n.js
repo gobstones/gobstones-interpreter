@@ -1107,7 +1107,7 @@ LOCALE_PT['errmsg:cannot-remove-stone'] =
 
   /* Runtime */
 
-LOCALE_PT['TYPE:Color'] = 'Cor';
+LOCALE_PT['TYPE:Color'] = 'Color';
 LOCALE_PT['CONS:Color0'] = 'Azul';
 LOCALE_PT['CONS:Color1'] = 'Preto';
 LOCALE_PT['CONS:Color2'] = 'Vermelho';
