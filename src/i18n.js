@@ -1,10 +1,10 @@
 /* BEGIN LOCALE_ES */
 
-function laPalabraClave(palabra) {
+function keywordEs(palabra) {
   return 'la palabra clave "' + palabra + '"';
 }
 
-function masculino(n, singular, plural) {
+function pluralizeEs(n, singular, plural) {
   if (n === 0) {
     return 'ningún ' + singular;
   } else if (n === 1) {
@@ -29,30 +29,30 @@ const LOCALE_ES = {
   'T_STRING': 'una cadena (string)',
   'T_UPPERID': 'un identificador con mayúsculas',
   'T_LOWERID': 'un identificador con minúsculas',
-  'T_PROGRAM': laPalabraClave('program'),
-  'T_INTERACTIVE': laPalabraClave('interactive'),
-  'T_PROCEDURE': laPalabraClave('procedure'),
-  'T_FUNCTION': laPalabraClave('function'),
-  'T_RETURN': laPalabraClave('return'),
-  'T_IF': laPalabraClave('if'),
-  'T_THEN': laPalabraClave('then'),
-  'T_ELSE': laPalabraClave('else'),
-  'T_REPEAT': laPalabraClave('repeat'),
-  'T_FOREACH': laPalabraClave('foreach'),
-  'T_IN': laPalabraClave('in'),
-  'T_WHILE': laPalabraClave('while'),
-  'T_SWITCH': laPalabraClave('switch'),
-  'T_TO': laPalabraClave('to'),
-  'T_LET': laPalabraClave('let'),
-  'T_NOT': laPalabraClave('not'),
-  'T_DIV': laPalabraClave('div'),
-  'T_MOD': laPalabraClave('mod'),
-  'T_TYPE': laPalabraClave('type'),
-  'T_IS': laPalabraClave('is'),
-  'T_RECORD': laPalabraClave('record'),
-  'T_VARIANT': laPalabraClave('variant'),
-  'T_CASE': laPalabraClave('case'),
-  'T_FIELD': laPalabraClave('field'),
+  'T_PROGRAM': keywordEs('program'),
+  'T_INTERACTIVE': keywordEs('interactive'),
+  'T_PROCEDURE': keywordEs('procedure'),
+  'T_FUNCTION': keywordEs('function'),
+  'T_RETURN': keywordEs('return'),
+  'T_IF': keywordEs('if'),
+  'T_THEN': keywordEs('then'),
+  'T_ELSE': keywordEs('else'),
+  'T_REPEAT': keywordEs('repeat'),
+  'T_FOREACH': keywordEs('foreach'),
+  'T_IN': keywordEs('in'),
+  'T_WHILE': keywordEs('while'),
+  'T_SWITCH': keywordEs('switch'),
+  'T_TO': keywordEs('to'),
+  'T_LET': keywordEs('let'),
+  'T_NOT': keywordEs('not'),
+  'T_DIV': keywordEs('div'),
+  'T_MOD': keywordEs('mod'),
+  'T_TYPE': keywordEs('type'),
+  'T_IS': keywordEs('is'),
+  'T_RECORD': keywordEs('record'),
+  'T_VARIANT': keywordEs('variant'),
+  'T_CASE': keywordEs('case'),
+  'T_FIELD': keywordEs('field'),
   'T_UNDERSCORE': 'un guión bajo ("_")',
   'T_LPAREN': 'un paréntesis izquierdo ("(")',
   'T_RPAREN': 'un paréntesis derecho (")")',
@@ -570,15 +570,15 @@ const LOCALE_ES = {
     },
   '<n>-parameters':
     function (n) {
-      return masculino(n, 'parámetro', 'parámetros');
+      return pluralizeEs(n, 'parámetro', 'parámetros');
     },
   '<n>-arguments':
     function (n) {
-      return masculino(n, 'argumento', 'argumentos');
+      return pluralizeEs(n, 'argumento', 'argumentos');
     },
   '<n>-fields':
     function (n) {
-      return masculino(n, 'campo', 'campos');
+      return pluralizeEs(n, 'campo', 'campos');
     },
   '<pattern-type>':
     function (patternType) {
@@ -594,6 +594,20 @@ const LOCALE_ES = {
 /* END LOCALE_ES */
 
 /* BEGIN LOCALE_PT */
+function keywordPt(palabra) {
+  return '‘a palavra chave "' + palabra + '"';
+}
+
+function pluralizePt(n, singular, plural) {
+  if (n === 0) {
+    return 'nenhum ' + singular;
+  } else if (n === 1) {
+    return 'um ' + singular;
+  } else {
+    return n.toString() + ' ' + plural;
+  }
+}
+
 const LOCALE_PT = {};
 for (let key in LOCALE_ES) {
   LOCALE_PT[key] = LOCALE_ES[key];
@@ -602,7 +616,8 @@ for (let key in LOCALE_ES) {
   /* Descriptions of syntactic constructions and tokens */
 LOCALE_PT['definition'] =
   'uma definição (de programa, função, procedimento, ou tipo)';
-LOCALE_PT['pattern'] = 'um padrão (comodín "_", construtor aplicado a variáveis, ou tupla)';
+LOCALE_PT['pattern'] =
+  'um padrão (comodín "_", construtor aplicado a variáveis, ou tupla)';
 LOCALE_PT['statement'] = 'um comando';
 LOCALE_PT['expression'] = 'uma expressão';
 LOCALE_PT['procedure call'] = 'uma invocação a um procedimento';
@@ -612,30 +627,30 @@ LOCALE_PT['T_NUM'] = 'um número';
 LOCALE_PT['T_STRING'] = 'uma corrente (string)';
 LOCALE_PT['T_UPPERID'] = 'um identificador com maiúsculas';
 LOCALE_PT['T_LOWERID'] = 'um identificador com minúsculas';
-LOCALE_PT['T_PROGRAM'] = aPalavraChave('program');
-LOCALE_PT['T_INTERACTIVE'] = aPalavraChave('interactive');
-LOCALE_PT['T_PROCEDURE'] = aPalavraChave('procedure');
-LOCALE_PT['T_FUNCTION'] = aPalavraChave('function');
-LOCALE_PT['T_RETURN'] = aPalavraChave('return');
-LOCALE_PT['T_IF'] = aPalavraChave('if');
-LOCALE_PT['T_THEN'] = aPalavraChave('then');
-LOCALE_PT['T_ELSE'] = aPalavraChave('else');
-LOCALE_PT['T_REPEAT'] = aPalavraChave('repeat');
-LOCALE_PT['T_FOREACH'] = aPalavraChave('foreach');
-LOCALE_PT['T_IN'] = aPalavraChave('in');
-LOCALE_PT['T_WHILE'] = aPalavraChave('while');
-LOCALE_PT['T_SWITCH'] = aPalavraChave('switch');
-LOCALE_PT['T_TO'] = aPalavraChave('to');
-LOCALE_PT['T_LET'] = aPalavraChave('let');
-LOCALE_PT['T_NOT'] = aPalavraChave('not');
-LOCALE_PT['T_DIV'] = aPalavraChave('div');
-LOCALE_PT['T_MOD'] = aPalavraChave('mod');
-LOCALE_PT['T_TYPE'] = aPalavraChave('type');
-LOCALE_PT['T_IS'] = aPalavraChave('is');
-LOCALE_PT['T_RECORD'] = aPalavraChave('record');
-LOCALE_PT['T_VARIANT'] = aPalavraChave('variant');
-LOCALE_PT['T_CASE'] = aPalavraChave('case');
-LOCALE_PT['T_FIELD'] = aPalavraChave('field');
+LOCALE_PT['T_PROGRAM'] = keywordPt('program');
+LOCALE_PT['T_INTERACTIVE'] = keywordPt('interactive');
+LOCALE_PT['T_PROCEDURE'] = keywordPt('procedure');
+LOCALE_PT['T_FUNCTION'] = keywordPt('function');
+LOCALE_PT['T_RETURN'] = keywordPt('return');
+LOCALE_PT['T_IF'] = keywordPt('if');
+LOCALE_PT['T_THEN'] = keywordPt('then');
+LOCALE_PT['T_ELSE'] = keywordPt('else');
+LOCALE_PT['T_REPEAT'] = keywordPt('repeat');
+LOCALE_PT['T_FOREACH'] = keywordPt('foreach');
+LOCALE_PT['T_IN'] = keywordPt('in');
+LOCALE_PT['T_WHILE'] = keywordPt('while');
+LOCALE_PT['T_SWITCH'] = keywordPt('switch');
+LOCALE_PT['T_TO'] = keywordPt('to');
+LOCALE_PT['T_LET'] = keywordPt('let');
+LOCALE_PT['T_NOT'] = keywordPt('not');
+LOCALE_PT['T_DIV'] = keywordPt('div');
+LOCALE_PT['T_MOD'] = keywordPt('mod');
+LOCALE_PT['T_TYPE'] = keywordPt('type');
+LOCALE_PT['T_IS'] = keywordPt('is');
+LOCALE_PT['T_RECORD'] = keywordPt('record');
+LOCALE_PT['T_VARIANT'] = keywordPt('variant');
+LOCALE_PT['T_CASE'] = keywordPt('case');
+LOCALE_PT['T_FIELD'] = keywordPt('field');
 LOCALE_PT['T_UNDERSCORE'] = 'um sublinhado ("_")';
 LOCALE_PT['T_LPAREN'] = 'um parênteses esquerdo ("(")';
 LOCALE_PT['T_RPAREN'] = 'um parênteses direito (")")';
@@ -722,7 +737,8 @@ LOCALE_PT['errmsg:pattern-tuple-cannot-be-singleton'] =
   + 'As tuplas têm 0, 2, 3, ou mais componentes, mas não 1.';
 
 LOCALE_PT['errmsg:assignment-tuple-cannot-be-singleton'] =
-    'A designação a uma tupla não pode ser constituída por apenas um componente. '
+    'A designação a uma tupla não pode ser '
+  + ' constituída por apenas um componente. '
   + 'As tuplas têm 0, 2, 3, ou mais componentes, mas não 1.';
 
 LOCALE_PT['errmsg:operators-are-not-associative'] =
@@ -1138,15 +1154,15 @@ LOCALE_PT['<position>'] =
     };
 LOCALE_PT['<n>-parameters'] =
     function (n) {
-      return masculino(n, 'parâmetro', 'parâmetros');
+      return pluralizePt(n, 'parâmetro', 'parâmetros');
     };
 LOCALE_PT['<n>-arguments'] =
     function (n) {
-      return masculino(n, 'argumento', 'argumentos');
+      return pluralizePt(n, 'argumento', 'argumentos');
     };
 LOCALE_PT['<n>-fields'] =
     function (n) {
-      return masculino(n, 'campo', 'campos');
+      return pluralizePt(n, 'campo', 'campos');
     };
 LOCALE_PT['<pattern-type>'] =
     function (patternType) {
