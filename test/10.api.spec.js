@@ -231,11 +231,28 @@ describe('Gobstones API', () => {
         ].join('\n'));
         let r = p.program.interpret(emptyBoard(1, 1));
         expect(r.returnValue.type).equals('Tuple(Number, String)');
-        expect(r.returnValue.value).equals('(1, "x")');
+        expect(r.returnValue.value).deep.equals([1, 'x']);
         expect(r.actualReturnValue).deep.equals(
           new ValueTuple([
             new ValueInteger(1),
             new ValueString('x'),
+          ])
+        );
+    });
+
+    it('List return value', () => {
+        let p = API().parse([
+          'program {',
+          '  return ([1, 2])',
+          '}',
+        ].join('\n'));
+        let r = p.program.interpret(emptyBoard(1, 1));
+        expect(r.returnValue.type).equals('List(Number)');
+        expect(r.returnValue.value).deep.equals([1, 2]);
+        expect(r.actualReturnValue).deep.equals(
+          new ValueList([
+            new ValueInteger(1),
+            new ValueInteger(2),
           ])
         );
     });

@@ -27,6 +27,20 @@ function apiboardFromState(state) {
 
 /* Backwards-compatible type/value with special cases for some types */
 function apivalueFromValue(value) {
+  const composedValue = (componentKind) => {
+    const elements = value[componentKind].map((it) => {
+      const apiValue = apivalueFromValue(it);
+      const value = apiValue && apiValue.value;
+
+      return value;
+    });
+
+    return {
+      type: value.type().toString(),
+      value: elements
+    };
+  };
+
   if (value === null) {
     return null;
   }
@@ -45,6 +59,10 @@ function apivalueFromValue(value) {
       type: i18n('TYPE:String'),
       value: value.string
     };
+  } else if (value.isTuple()) {
+    return composedValue('components');
+  } else if (value.isList()) {
+    return composedValue('elements');
   } else if (value.isStructure()) {
     return {
       type: value.typeName,
