@@ -113,6 +113,18 @@ function listOfTypes(types) {
   return typeStrings.join(', ');
 }
 
+function openingDelimiterName(delimiter) {
+  if (delimiter === '(' || delimiter === ')') {
+    return 'un paréntesis abierto "("';
+  } else if (delimiter === '[' || delimiter === ']') {
+    return 'un corchete abierto "["';
+  } else if (delimiter === '{' || delimiter === '}') {
+    return 'una llave abierta "{"';
+  } else {
+    return delimiter;
+  }
+}
+
 export const LOCALE_ES = {
 
   /* Descriptions of syntactic constructions and tokens */
@@ -219,6 +231,18 @@ export const LOCALE_ES = {
   'warning:unknown-pragma':
     function (pragmaName) {
       return 'Directiva pragma desconocida: "' + pragmaName + '".';
+    },
+
+  'errmsg:unmatched-opening-delimiter':
+    function (delimiter) {
+      return 'Se encontró ' + openingDelimiterName(delimiter)
+           + ' pero nunca se cierra.';
+    },
+
+  'errmsg:unmatched-closing-delimiter':
+    function (delimiter) {
+      return 'Se encontró un "' + delimiter + '" '
+           + 'pero no había ' + openingDelimiterName(delimiter) + '.';
     },
 
   /* Parser */

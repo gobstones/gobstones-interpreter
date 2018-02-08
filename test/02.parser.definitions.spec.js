@@ -161,13 +161,10 @@ describe('Parser: definitions', () => {
       );
     });
 
-    it('Fail is missing right brace', () => {
+    it('Fail if missing right brace', () => {
       let parser = new Parser('program {'); /*}*/
       expect(() => parser.parse()).throws(
-        i18n('errmsg:expected-but-found')(
-          i18n('statement'),
-          i18n('T_EOF')
-        )
+        i18n('errmsg:unmatched-opening-delimiter')('{')
       );
     });
 
@@ -335,10 +332,7 @@ describe('Parser: definitions', () => {
     it('Fail on invalid block', () => {
       let parser = new Parser('procedure P\n(x, y) }');
       expect(() => parser.parse()).throws(
-        i18n('errmsg:expected-but-found')(
-          i18n('T_LBRACE'),
-          i18n('T_RBRACE')
-        )
+        i18n('errmsg:unmatched-closing-delimiter')('}')
       );
     });
      

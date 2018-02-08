@@ -377,21 +377,21 @@ describe('Parser: statements', () => {
     });
 
     it('Fail if missing "then" block', () => {
-      let parser = new Parser('program { if(xxx)');
+      let parser = new Parser('program { if(xxx) }');
       expect(() => parser.parse()).throws(
         i18n('errmsg:expected-but-found')(
           i18n('T_LBRACE'),
-          i18n('T_EOF')
-       )
+          i18n('T_RBRACE')
+        )
       );
     });
 
     it('Fail if missing "else" block', () => {
-      let parser = new Parser('program { if(xxx) {} else');
+      let parser = new Parser('program { if(xxx) {} else }');
       expect(() => parser.parse()).throws(
         i18n('errmsg:expected-but-found')(
           i18n('T_LBRACE'),
-          i18n('T_EOF')
+          i18n('T_RBRACE')
        )
       );
     });
@@ -470,12 +470,9 @@ describe('Parser: statements', () => {
     });
 
     it('Fail if missing right parenthesis', () => {
-      let parser = new Parser('program { repeat (n');
+      let parser = new Parser('program { repeat (n }');
       expect(() => parser.parse()).throws(
-        i18n('errmsg:expected-but-found')(
-          i18n('T_RPAREN'),
-          i18n('T_EOF')
-       )
+        i18n('errmsg:unmatched-opening-delimiter')('(')
       );
     });
 
@@ -1463,10 +1460,7 @@ describe('Parser: statements', () => {
                      '}\n'
                    );
       expect(() => parser.parse()).throws(
-        i18n('errmsg:expected-but-found')(
-          i18n('expression'),
-          i18n('T_RBRACE')
-        )
+        i18n('errmsg:unmatched-opening-delimiter')('(')
       );
     });
 

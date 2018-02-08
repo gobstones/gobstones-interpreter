@@ -135,6 +135,12 @@ function fail(startPos, endPos, reason, args) {
   throw new GbsSyntaxError(startPos, endPos, reason, args);
 }
 
+const CLOSING_DELIMITERS = {
+  '(': ')',
+  '[': ']',
+  '{': '}',
+};
+
 /* An instance of Lexer scans source code for tokens.
  * Example:
  *
@@ -154,12 +160,20 @@ export class Lexer {
     this._multifileReader = new MultifileReader(input);
     this._reader = this._multifileReader.readCurrentFile();
     this._warnings = [];
+
+    /*
+     * A stack of tokens '(', '[' and '{', to provide more helpful
+     * error reporting if delimiters are not balanced.
+     */
+    this._delimiterStack = [];
   }
 
   /* Return the next token from the input */
   nextToken() {
     if (!this._findNextToken()) {
-      return new Token(T_EOF, null, this._reader, this._reader);
+      let token = new Token(T_EOF, null, this._reader, this._reader);
+      this._checkBalancedDelimiters(token);
+      return token;
     }
     if (isDigit(this._reader.peek())) {
       let startPos = this._reader;
@@ -292,7 +306,9 @@ export class Lexer {
         let startPos = this._reader;
         this._reader = this._reader.consumeString(symbol);
         let endPos = this._reader;
-        return new Token(tag, symbol, startPos, endPos);
+        let token = new Token(tag, symbol, startPos, endPos);
+        this._checkBalancedDelimiters(token);
+        return token;
       }
     }
     return fail(
@@ -437,6 +453,40 @@ export class Lexer {
 
   _emitWarning(startPos, endPos, reason, args) {
     this._warnings.push(new GbsWarning(startPos, endPos, reason, args));
+  }
+
+  /* Check that reading a delimiter keeps the delimiter stack balanced. */
+  _checkBalancedDelimiters(token) {
+    if (token.tag === T_EOF && this._delimiterStack.length > 0) {
+      let openingDelimiter = this._delimiterStack.pop();
+      return fail(
+               openingDelimiter.startPos, openingDelimiter.endPos,
+               'unmatched-opening-delimiter',
+               [openingDelimiter.value]
+             );
+    } else if (token.tag === T_LPAREN
+            || token.tag === T_LBRACE
+            || token.tag === T_LBRACK) {
+      this._delimiterStack.push(token);
+    } else if (token.tag == T_RPAREN
+            || token.tag == T_RBRACE
+            || token.tag == T_RBRACK) {
+      if (this._delimiterStack.length === 0) {
+        return fail(
+                 token.startPos, token.endPos,
+                 'unmatched-closing-delimiter',
+                 [token.value]
+               );
+      }
+      let openingDelimiter = this._delimiterStack.pop();
+      if (CLOSING_DELIMITERS[openingDelimiter.value] != token.value) {
+        return fail(
+                 openingDelimiter.startPos, openingDelimiter.endPos,
+                 'unmatched-opening-delimiter',
+                 [openingDelimiter.value]
+               );
+      }
+    }
   }
 
 }

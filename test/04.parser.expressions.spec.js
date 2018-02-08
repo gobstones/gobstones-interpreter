@@ -895,12 +895,13 @@ describe('Parser: expressions', () => {
     it('Fail if list ends prematurely (empty list)', () => {
       let parser = new Parser(
                      'program {\n' +
-                     '  x := [\n'
+                     '  x := [\n' +
+                     '  ;\n'
                    );
       expect(() => parser.parse()).throws(
         i18n('errmsg:expected-but-found')(
           i18n('expression'),
-          i18n('T_EOF')
+          i18n('T_SEMICOLON')
         )
       );
     });
@@ -908,12 +909,12 @@ describe('Parser: expressions', () => {
     it('Fail if list ends prematurely (singleton)', () => {
       let parser = new Parser(
                      'program {\n' +
-                     '  x := [1,\n'
+                     '  x := [1,;\n'
                    );
       expect(() => parser.parse()).throws(
         i18n('errmsg:expected-but-found')(
           i18n('expression'),
-          i18n('T_EOF')
+          i18n('T_SEMICOLON')
         )
       );
     });
@@ -921,12 +922,12 @@ describe('Parser: expressions', () => {
     it('Fail if list ends prematurely (typical list)', () => {
       let parser = new Parser(
                      'program {\n' +
-                     '  x := [1,2,\n'
+                     '  x := [1,2, ;\n'
                    );
       expect(() => parser.parse()).throws(
         i18n('errmsg:expected-but-found')(
           i18n('expression'),
-          i18n('T_EOF')
+          i18n('T_SEMICOLON')
         )
       );
     });
@@ -1046,12 +1047,12 @@ describe('Parser: expressions', () => {
     it('Fail if range ends prematurely', () => {
       let parser = new Parser(
                      'program {\n' +
-                     '  x := [1..\n'
+                     '  x := [1..;\n'
                    );
       expect(() => parser.parse()).throws(
         i18n('errmsg:expected-but-found')(
           i18n('expression'),
-          i18n('T_EOF')
+          i18n('T_SEMICOLON')
         )
       );
     });
@@ -1059,12 +1060,12 @@ describe('Parser: expressions', () => {
     it('Fail if range ends prematurely (with second element)', () => {
       let parser = new Parser(
                      'program {\n' +
-                     '  x := [1,2..\n'
+                     '  x := [1,2..;\n'
                    );
       expect(() => parser.parse()).throws(
         i18n('errmsg:expected-but-found')(
           i18n('expression'),
-          i18n('T_EOF')
+          i18n('T_SEMICOLON')
         )
       );
     });

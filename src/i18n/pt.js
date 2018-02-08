@@ -21,7 +21,7 @@ for (let key in LOCALE_ES) {
   LOCALE_PT[key] = LOCALE_ES[key];
 }
 
-  /* Descriptions of syntactic constructions and tokens */
+/* Descriptions of syntactic constructions and tokens */
 LOCALE_PT['definition'] =
   'uma definição (de programa, função, procedimento, ou tipo)';
 LOCALE_PT['pattern'] =
@@ -87,19 +87,19 @@ LOCALE_PT['T_MINUS'] = 'o operador de diferença ("-")';
 LOCALE_PT['T_TIMES'] = 'o operador de produto ("*")';
 LOCALE_PT['T_POW'] = 'o operador de potência ("^")';
 
-  /* Local name categories */
+/* Local name categories */
 LOCALE_PT['LocalVariable'] = 'variável';
 LOCALE_PT['LocalIndex'] = 'índice';
 LOCALE_PT['LocalParameter'] = 'parâmetro';
 
-  /* Descriptions of value types */
+/* Descriptions of value types */
 LOCALE_PT['V_Integer'] = 'um número';
 LOCALE_PT['V_String'] = 'uma cadeia';
 LOCALE_PT['V_Tuple'] = 'uma tupla';
 LOCALE_PT['V_List'] = 'uma lista';
 LOCALE_PT['V_Structure'] = 'uma estrutura';
 
-  /* Lexer */
+/* Lexer */
 LOCALE_PT['errmsg:unclosed-multiline-comment'] =
   'O comentário abre mas nunca fecha.';
 
@@ -127,7 +127,7 @@ LOCALE_PT['warning:unknown-pragma'] =
       return 'Diretiva pragma desconhecida: "' + pragmaName + '".';
     };
 
-  /* Parser */
+/* Parser */
 LOCALE_PT['errmsg:empty-source'] =
     'O programa está vazio.';
 
@@ -162,7 +162,7 @@ LOCALE_PT['errmsg:obsolete-tuple-assignment'] =
   + 'Nota: a sintaxe de designação de tuplas "(x1, ..., xN) := y" '
   + 'está obsoleta. Usar "let (x1, ..., xN) := y".';
 
-  /* Linter */
+/* Linter */
 LOCALE_PT['errmsg:program-already-defined'] =
     function (pos1, pos2) {
       return 'Já havia um programa definido em ' + pos1 + '.\n'
@@ -369,7 +369,7 @@ LOCALE_PT['errmsg:structure-construction-cannot-be-an-event'] =
            + 'instâncias).';
     };
 
-  /* Runtime errors (virtual machine) */
+/* Runtime errors (virtual machine) */
 LOCALE_PT['errmsg:undefined-variable'] =
     function (variableName) {
       return 'A variável "' + variableName + '" não está definida.';
@@ -500,7 +500,7 @@ LOCALE_PT['errmsg:timeout'] =
            + millisecs.toString() + 'ms.';
     };
 
-  /* Board operations */
+/* Board operations */
 LOCALE_PT['errmsg:cannot-move-to'] =
     function (dirName) {
       return 'Não é possível mover para a direção ' + dirName +
@@ -513,7 +513,7 @@ LOCALE_PT['errmsg:cannot-remove-stone'] =
              ': não há pedras dessa cor.';
     };
 
-  /* Runtime */
+/* Runtime */
 
 LOCALE_PT['TYPE:Color'] = 'Cor';
 LOCALE_PT['CONS:Color0'] = 'Azul';
@@ -550,7 +550,7 @@ LOCALE_PT['PRIM:tail'] = 'resto';
 LOCALE_PT['PRIM:init'] = 'ultimo';
 LOCALE_PT['PRIM:last'] = 'comeco';
 
-  /* Helpers */
+/* Helpers */
 LOCALE_PT['<alternative>'] =
     function (strings) {
       return 'alguma das seguintes alternativas:\n'
