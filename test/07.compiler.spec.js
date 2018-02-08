@@ -1,9 +1,6 @@
 import chai from 'chai';
 
-import {
-  TYPES_WITH_ORDER,
-  TYPES_WITH_OPPOSITE,
-} from '../src/runtime';
+import { typesWithOrder } from '../src/runtime';
 import { Runner } from '../src/runner';
 import { i18n } from '../src/i18n';
 
@@ -1110,7 +1107,7 @@ describe('Compiler', () => {
       ].join('\n'));
       expect(result).throws(
         i18n('errmsg:expected-value-of-some-type-but-got')(
-          TYPES_WITH_ORDER,
+          typesWithOrder(),
           new TypeString()
         )
       );

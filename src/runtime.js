@@ -345,7 +345,9 @@ let typeInteger = new TypeInteger();
 
 let typeString = new TypeString();
 
-let typeBool = new TypeStructure(i18n('TYPE:Bool'), {});
+function typeBool() {
+  return new TypeStructure(i18n('TYPE:Bool'), {});
+}
 
 let typeListAny = new TypeList(new TypeAny());
 
@@ -361,7 +363,9 @@ export function boolFromValue(value) {
   return value.constructorName === i18n('CONS:True');
 }
 
-let typeColor = new TypeStructure(i18n('TYPE:Color'), {});
+function typeColor() {
+  return new TypeStructure(i18n('TYPE:Color'), {});
+}
 
 function valueFromColor(colorName) {
   return new ValueStructure(i18n('TYPE:Color'), colorName, {});
@@ -371,7 +375,9 @@ function colorFromValue(value) {
   return value.constructorName;
 }
 
-let typeDir = new TypeStructure(i18n('TYPE:Dir'), {});
+function typeDir() {
+  return new TypeStructure(i18n('TYPE:Dir'), {});
+}
 
 function valueFromDir(dirName) {
   return new ValueStructure(i18n('TYPE:Dir'), dirName, {});
@@ -392,19 +398,26 @@ function isInteger(x) {
 }
 
 function isBool(x) {
-  return joinTypes(x.type(), typeBool) !== null;
+  return joinTypes(x.type(), typeBool()) !== null;
 }
 
 function isColor(x) {
-  return joinTypes(x.type(), typeColor) !== null;
+  return joinTypes(x.type(), typeColor()) !== null;
 }
 
 function isDir(x) {
-  return joinTypes(x.type(), typeDir) !== null;
+  return joinTypes(x.type(), typeDir()) !== null;
 }
 
-export const TYPES_WITH_OPPOSITE = [typeInteger, typeBool, typeDir];
-export const TYPES_WITH_ORDER = [typeInteger, typeBool, typeColor, typeDir];
+export function typesWithOpposite() {
+  return [typeInteger, typeBool(), typeDir()];
+}
+
+export function typesWithOrder() {
+  return [
+    typeInteger, typeBool(), typeColor(), typeDir()
+  ]; 
+}
 
 /* Generic operations */
 
@@ -598,7 +611,7 @@ export class RuntimePrimitives {
 
     this._primitiveProcedures[i18n('PRIM:PutStone')] =
       new PrimitiveOperation(
-        [typeColor], noValidation,
+        [typeColor()], noValidation,
         function (globalState, color) {
           globalState.putStone(colorFromValue(color));
           return null;
@@ -607,7 +620,7 @@ export class RuntimePrimitives {
 
     this._primitiveProcedures[i18n('PRIM:RemoveStone')] =
       new PrimitiveOperation(
-        [typeColor],
+        [typeColor()],
         function (startPos, endPos, globalState, args) {
           let colorName = colorFromValue(args[0]);
           if (globalState.numStones(colorName).le(new ValueInteger(0))) {
@@ -622,7 +635,7 @@ export class RuntimePrimitives {
 
     this._primitiveProcedures[i18n('PRIM:Move')] =
       new PrimitiveOperation(
-        [typeDir],
+        [typeDir()],
         function (startPos, endPos, globalState, args) {
           let dirName = dirFromValue(args[0]);
           if (!globalState.canMove(dirName)) {
@@ -637,7 +650,7 @@ export class RuntimePrimitives {
 
     this._primitiveProcedures[i18n('PRIM:GoToEdge')] =
       new PrimitiveOperation(
-        [typeDir], noValidation,
+        [typeDir()], noValidation,
         function (globalState, dir) {
           globalState.goToEdge(dirFromValue(dir));
           return null;
@@ -675,8 +688,8 @@ export class RuntimePrimitives {
           let first = args[0];
           let last = args[1];
           validateCompatibleTypes(startPos, endPos, first, last);
-          validateTypeAmong(startPos, endPos, first, TYPES_WITH_ORDER);
-          validateTypeAmong(startPos, endPos, last, TYPES_WITH_ORDER);
+          validateTypeAmong(startPos, endPos, first, typesWithOrder());
+          validateTypeAmong(startPos, endPos, last, typesWithOrder());
         },
         function (globalState, first, last) {
           let current = first;
@@ -695,7 +708,7 @@ export class RuntimePrimitives {
 
     this._primitiveFunctions['not'] =
       new PrimitiveOperation(
-        [typeBool], noValidation,
+        [typeBool()], noValidation,
         function (globalState, x) {
           return valueFromBool(!boolFromValue(x));
         }
@@ -775,7 +788,7 @@ export class RuntimePrimitives {
 
     this._primitiveFunctions[i18n('PRIM:numStones')] =
       new PrimitiveOperation(
-        [typeColor], noValidation,
+        [typeColor()], noValidation,
         function (globalState, color) {
           return globalState.numStones(colorFromValue(color));
         }
@@ -783,7 +796,7 @@ export class RuntimePrimitives {
 
     this._primitiveFunctions[i18n('PRIM:anyStones')] =
       new PrimitiveOperation(
-        [typeColor], noValidation,
+        [typeColor()], noValidation,
         function (globalState, color) {
           let num = globalState.numStones(colorFromValue(color));
           return valueFromBool(num.gt(new ValueInteger(0)));
@@ -792,7 +805,7 @@ export class RuntimePrimitives {
 
     this._primitiveFunctions[i18n('PRIM:canMove')] =
       new PrimitiveOperation(
-        [typeDir], noValidation,
+        [typeDir()], noValidation,
         function (globalState, dir) {
           return valueFromBool(globalState.canMove(dirFromValue(dir)));
         }
@@ -803,7 +816,7 @@ export class RuntimePrimitives {
         [typeAny],
         function (startPos, endPos, globalState, args) {
           let value = args[0];
-          validateTypeAmong(startPos, endPos, value, TYPES_WITH_ORDER);
+          validateTypeAmong(startPos, endPos, value, typesWithOrder());
         },
         function (globalState, value) {
           return genericNext(value);
@@ -815,7 +828,7 @@ export class RuntimePrimitives {
         [typeAny],
         function (startPos, endPos, globalState, args) {
           let value = args[0];
-          validateTypeAmong(startPos, endPos, value, TYPES_WITH_ORDER);
+          validateTypeAmong(startPos, endPos, value, typesWithOrder());
         },
         function (globalState, value) {
           return genericPrev(value);
@@ -827,7 +840,7 @@ export class RuntimePrimitives {
         [typeAny],
         function (startPos, endPos, globalState, args) {
           let value = args[0];
-          validateTypeAmong(startPos, endPos, value, TYPES_WITH_ORDER);
+          validateTypeAmong(startPos, endPos, value, typesWithOrder());
         },
         function (globalState, value) {
           return genericOpposite(value);
@@ -941,7 +954,7 @@ export class RuntimePrimitives {
         [typeAny],
         function (startPos, endPos, globalState, args) {
           let a = args[0];
-          validateTypeAmong(startPos, endPos, a, TYPES_WITH_OPPOSITE);
+          validateTypeAmong(startPos, endPos, a, typesWithOpposite());
         },
         function (globalState, a) {
           return genericOpposite(a);
@@ -983,8 +996,8 @@ export class RuntimePrimitives {
           let a = args[0];
           let b = args[1];
           validateCompatibleTypes(startPos, endPos, a, b);
-          validateTypeAmong(startPos, endPos, a, TYPES_WITH_ORDER);
-          validateTypeAmong(startPos, endPos, b, TYPES_WITH_ORDER);
+          validateTypeAmong(startPos, endPos, a, typesWithOrder());
+          validateTypeAmong(startPos, endPos, b, typesWithOrder());
         },
         function (globalState, a, b) {
           return genericLE(a, b);
@@ -998,8 +1011,8 @@ export class RuntimePrimitives {
           let a = args[0];
           let b = args[1];
           validateCompatibleTypes(startPos, endPos, a, b);
-          validateTypeAmong(startPos, endPos, a, TYPES_WITH_ORDER);
-          validateTypeAmong(startPos, endPos, b, TYPES_WITH_ORDER);
+          validateTypeAmong(startPos, endPos, a, typesWithOrder());
+          validateTypeAmong(startPos, endPos, b, typesWithOrder());
         },
         function (globalState, a, b) {
           return genericGE(a, b);
@@ -1013,8 +1026,8 @@ export class RuntimePrimitives {
           let a = args[0];
           let b = args[1];
           validateCompatibleTypes(startPos, endPos, a, b);
-          validateTypeAmong(startPos, endPos, a, TYPES_WITH_ORDER);
-          validateTypeAmong(startPos, endPos, b, TYPES_WITH_ORDER);
+          validateTypeAmong(startPos, endPos, a, typesWithOrder());
+          validateTypeAmong(startPos, endPos, b, typesWithOrder());
         },
         function (globalState, a, b) {
           return genericLT(a, b);
@@ -1028,8 +1041,8 @@ export class RuntimePrimitives {
           let a = args[0];
           let b = args[1];
           validateCompatibleTypes(startPos, endPos, a, b);
-          validateTypeAmong(startPos, endPos, a, TYPES_WITH_ORDER);
-          validateTypeAmong(startPos, endPos, b, TYPES_WITH_ORDER);
+          validateTypeAmong(startPos, endPos, a, typesWithOrder());
+          validateTypeAmong(startPos, endPos, b, typesWithOrder());
         },
         function (globalState, a, b) {
           return genericGT(a, b);

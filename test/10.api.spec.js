@@ -658,5 +658,26 @@ describe('Gobstones API', () => {
 
   });
 
+  describe('Internationalization', () => {
+
+    it('Allow arbitrary names for TYPE:Color', () => {
+      let apiboard = {
+        width: 1, height: 1,
+        head: {x: 0, y: 0},
+        table: [[{}]]
+      };
+      let api = API();
+      api.config.setLanguage('pt');
+      let p = api.parse('program { Colocar(Vermelho) }');
+      let r = p.program.interpret(apiboard);
+      expect(r.finalBoard).deep.equals({
+          width: 1, height: 1,
+          head: {x: 0, y: 0},
+          table: [[{red: 1}]]
+      });
+    });
+
+  });
+
 });
 
