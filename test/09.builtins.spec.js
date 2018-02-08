@@ -1038,8 +1038,9 @@ describe('Primitive functions, procedures and operators', () => {
         i18n('errmsg:primitive-argument-type-mismatch')(
           'not',
           1,
-          i18n('TYPE:Bool'),
-          i18n('TYPE:Integer'),
+          1,
+          new TypeStructure(i18n('TYPE:Bool'), {}),
+          new TypeInteger(),
         )
       );
     });

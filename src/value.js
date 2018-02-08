@@ -72,6 +72,43 @@ class Type {
   get tag() {
     return this._tag;
   }
+
+  isAny() {
+    return false;
+  }
+
+  isInteger() {
+    return false;
+  }
+
+  isString() {
+    return false;
+  }
+
+  isTuple() {
+    return false;
+  }
+
+  isList() {
+    return false;
+  }
+  
+  isStructure() {
+    return false;
+  }
+
+  isBoolean() {
+    return false;
+  }
+
+  isColor() {
+    return false;
+  }
+
+  isDirection() {
+    return false;
+  }
+
 }
 
 export class TypeAny extends Type {
@@ -82,6 +119,11 @@ export class TypeAny extends Type {
   toString() {
     return '?';
   }
+
+  isAny() {
+    return true;
+  }
+
 }
 
 export class TypeInteger extends Type {
@@ -92,6 +134,11 @@ export class TypeInteger extends Type {
   toString() {
     return i18n('TYPE:Integer');
   }
+
+  isInteger() {
+    return true;
+  }
+
 }
 
 export class TypeString extends Type {
@@ -102,6 +149,11 @@ export class TypeString extends Type {
   toString() {
     return i18n('TYPE:String');
   }
+
+  isString() {
+    return true;
+  }
+
 }
 
 export class TypeTuple extends Type {
@@ -121,6 +173,11 @@ export class TypeTuple extends Type {
     }
     return i18n('TYPE:Tuple') + '(' + strings.join(', ') + ')';
   }
+
+  isTuple() {
+    return true;
+  }
+
 }
 
 export class TypeList extends Type {
@@ -136,6 +193,11 @@ export class TypeList extends Type {
   toString() {
     return i18n('TYPE:List') + '(' + this._contentType.toString() + ')';
   }
+
+  isList() {
+    return true;
+  }
+  
 }
 
 export class TypeStructure extends Type {
@@ -178,6 +240,23 @@ export class TypeStructure extends Type {
       return caseStrings.join(' + ');
     }
   }
+
+  isStructure() {
+    return true;
+  }
+
+  isBoolean() {
+    return this._typeName === i18n('TYPE:Bool');
+  }
+
+  isColor() {
+    return this._typeName === i18n('TYPE:Color');
+  }
+
+  isDirection() {
+    return this._typeName === i18n('TYPE:Dir');
+  }
+
 }
 
 /* Attempts to calculate the "join" of two types.
@@ -355,27 +434,27 @@ export class Value {
   }
 
   isInteger() {
-    return false;
+    return this.type().isInteger();
   }
 
   isString() {
-    return false;
+    return this.type().isString();
   }
 
   isTuple() {
-    return false;
+    return this.type().isTuple();
   }
 
   isList() {
-    return false;
+    return this.type().isList();
   }
 
   isStructure() {
-    return false;
+    return this.type().isStructure();
   }
 
   isBoolean() {
-    return false;
+    return this.type().isBoolean();
   }
 
 }
@@ -392,10 +471,6 @@ export class ValueInteger extends Value {
         'Integer value must be constructed with an integer or a string'
       );
     }
-  }
-
-  isInteger() {
-    return true;
   }
 
   toString() {
@@ -578,10 +653,6 @@ export class ValueString extends Value {
     return res.join('');
   }
 
-  isString() {
-    return true;
-  }
-
   get string() {
     return this._string;
   }
@@ -630,10 +701,6 @@ export class ValueTuple extends Value {
         return false;
       }
     }
-    return true;
-  }
-
-  isTuple() {
     return true;
   }
 
@@ -686,10 +753,6 @@ export class ValueList extends Value {
 
   type() {
     return this._type;
-  }
-
-  isList() {
-    return true;
   }
 
   length() {
@@ -769,14 +832,6 @@ export class ValueStructure extends Value {
       res.push(fieldName + ' <- ' + this.fields[fieldName].toString());
     }
     return this._constructorName + '(' + res.join(', ') + ')';
-  }
-
-  isStructure() {
-    return true;
-  }
-
-  isBoolean() {
-    return this._typeName === i18n('TYPE:Bool');
   }
 
   get typeName() {

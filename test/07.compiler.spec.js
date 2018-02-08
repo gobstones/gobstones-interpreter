@@ -94,8 +94,8 @@ describe('Compiler', () => {
       ].join('\n'));
       expect(result).throws(
         i18n('errmsg:expected-value-of-type-but-got')(
-          new TypeStructure(i18n('TYPE:Bool'), {}).toString(),
-          new TypeInteger().toString(),
+          new TypeStructure(i18n('TYPE:Bool'), {}),
+          new TypeInteger(),
         )
       );
     });
@@ -151,8 +151,8 @@ describe('Compiler', () => {
       ].join('\n'));
       expect(result).throws(
         i18n('errmsg:expected-value-of-type-but-got')(
-          new TypeStructure(i18n('TYPE:Bool'), {}).toString(),
-          new TypeStructure('B', {'B': {'x': new TypeInteger()}}).toString(),
+          new TypeStructure(i18n('TYPE:Bool'), {}),
+          new TypeStructure('B', {'B': {'x': new TypeInteger()}}),
         )
       );
     });
@@ -856,6 +856,7 @@ describe('Compiler', () => {
         i18n('errmsg:primitive-argument-type-mismatch')(
           i18n('PRIM:PutStone'),
           1,
+          1,
           new TypeStructure(i18n('TYPE:Color'), {}),
           new TypeInteger(),
         )
@@ -1552,6 +1553,7 @@ describe('Compiler', () => {
         i18n('errmsg:primitive-argument-type-mismatch')(
           '+',
           1,
+          2,
           new TypeInteger(),
           new TypeString(),
         )

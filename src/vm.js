@@ -447,8 +447,8 @@ export class VirtualMachine {
           instruction.startPos, instruction.endPos,
           'incompatible-types-on-assignment', [
             instruction.variableName,
-            oldType.toString(),
-            newType.toString(),
+            oldType,
+            newType,
           ]
         );
       }
@@ -600,8 +600,8 @@ export class VirtualMachine {
           instruction.startPos, instruction.endPos,
           'incompatible-types-on-list-creation', [
             index,
-            oldType.toString(),
-            newType.toString(),
+            oldType,
+            newType,
           ]
         );
       }
@@ -675,8 +675,8 @@ export class VirtualMachine {
           instruction.startPos, instruction.endPos,
           'incompatible-types-on-structure-update', [
             fieldName,
-            oldType.toString(),
-            newType.toString(),
+            oldType,
+            newType,
           ]
         );
       }
@@ -694,7 +694,7 @@ export class VirtualMachine {
     if (tuple.tag !== V_Tuple) {
       fail(
         instruction.startPos, instruction.endPos,
-        'expected-tuple-value-but-got', [tuple.type().toString()]
+        'expected-tuple-value-but-got', [tuple.type()]
       );
     }
     if (instruction.index >= tuple.size()) {
@@ -721,7 +721,7 @@ export class VirtualMachine {
     if (structure.tag !== V_Structure) {
       fail(
         instruction.startPos, instruction.endPos,
-        'expected-structure-value-but-got', [structure.type().toString()]
+        'expected-structure-value-but-got', [structure.type()]
       );
     }
     if (!(instruction.fieldName in structure.fields)) {
@@ -811,8 +811,9 @@ export class VirtualMachine {
           'primitive-argument-type-mismatch', [
             instruction.primitiveName,
             i + 1,
-            expectedType.toString(),
-            receivedType.toString(),
+            instruction.nargs,
+            expectedType,
+            receivedType,
           ]
         );
       }
@@ -859,8 +860,8 @@ export class VirtualMachine {
       fail(
         instruction.startPos, instruction.endPos,
         'expected-value-of-type-but-got', [
-          expectedType.toString(),
-          receivedType.toString(),
+          expectedType,
+          receivedType,
         ]
       );
     }

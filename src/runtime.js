@@ -532,16 +532,11 @@ function validateTypeAmong(startPos, endPos, x, types) {
       return;
     }
   }
-  /* Build a list of type names for error reporting */
-  let typeStrings = [];
-  for (let type of types) {
-    typeStrings.push(type.toString());
-  }
   /* Report error */
   fail(startPos, endPos,
     'expected-value-of-some-type-but-got', [
-      typeStrings,
-      x.type().toString()
+      types,
+      x.type()
     ]
   );
 }
@@ -551,8 +546,8 @@ function validateCompatibleTypes(startPos, endPos, x, y) {
   if (joinTypes(x.type(), y.type()) === null) {
     fail(startPos, endPos,
       'expected-values-to-have-compatible-types', [
-        x.type().toString(),
-        y.type().toString(),
+        x.type(),
+        y.type(),
       ]
     );
   }
@@ -840,7 +835,7 @@ export class RuntimePrimitives {
         [typeAny],
         function (startPos, endPos, globalState, args) {
           let value = args[0];
-          validateTypeAmong(startPos, endPos, value, typesWithOrder());
+          validateTypeAmong(startPos, endPos, value, typesWithOpposite());
         },
         function (globalState, value) {
           return genericOpposite(value);
