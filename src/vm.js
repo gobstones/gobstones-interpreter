@@ -78,6 +78,7 @@ function fail(startPos, endPos, reason, args) {
  * - a map from local names to values
  */
 class Frame {
+
   constructor(frameId, routineName, instructionPointer) {
     this._routineName = routineName;
     this._instructionPointer = instructionPointer;
@@ -143,6 +144,7 @@ class Frame {
     }
     return this._stack.pop();
   }
+
 }
 
 /*
@@ -863,6 +865,16 @@ export class VirtualMachine {
       );
     }
     frame.instructionPointer++;
+  }
+
+  /* Return the current dynamic stack of regions */
+  regionStack() {
+    let regionStack = [];
+    for (let stackFrame of this._callStack) {
+      let instruction = this._code.at(stackFrame.instructionPointer);
+      regionStack.push(instruction.startPos.region);
+    }
+    return regionStack;
   }
 
 }
