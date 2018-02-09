@@ -466,32 +466,32 @@ export class Lexer {
   _checkBalancedDelimiters(token) {
     if (token.tag === T_EOF && this._delimiterStack.length > 0) {
       let openingDelimiter = this._delimiterStack.pop();
-      return fail(
-               openingDelimiter.startPos, openingDelimiter.endPos,
-               'unmatched-opening-delimiter',
-               [openingDelimiter.value]
-             );
+      fail(
+        openingDelimiter.startPos, openingDelimiter.endPos,
+        'unmatched-opening-delimiter',
+        [openingDelimiter.value]
+      );
     } else if (token.tag === T_LPAREN
             || token.tag === T_LBRACE
             || token.tag === T_LBRACK) {
       this._delimiterStack.push(token);
-    } else if (token.tag == T_RPAREN
-            || token.tag == T_RBRACE
-            || token.tag == T_RBRACK) {
+    } else if (token.tag === T_RPAREN
+            || token.tag === T_RBRACE
+            || token.tag === T_RBRACK) {
       if (this._delimiterStack.length === 0) {
-        return fail(
-                 token.startPos, token.endPos,
-                 'unmatched-closing-delimiter',
-                 [token.value]
-               );
+        fail(
+          token.startPos, token.endPos,
+          'unmatched-closing-delimiter',
+          [token.value]
+        );
       }
       let openingDelimiter = this._delimiterStack.pop();
-      if (CLOSING_DELIMITERS[openingDelimiter.value] != token.value) {
-        return fail(
-                 openingDelimiter.startPos, openingDelimiter.endPos,
-                 'unmatched-opening-delimiter',
-                 [openingDelimiter.value]
-               );
+      if (CLOSING_DELIMITERS[openingDelimiter.value] !== token.value) {
+        fail(
+          openingDelimiter.startPos, openingDelimiter.endPos,
+          'unmatched-opening-delimiter',
+          [openingDelimiter.value]
+        );
       }
     }
   }

@@ -440,7 +440,7 @@ export class SymbolTable {
    *   - any type name (e.g. 'A')
    *
    * The result is a dictionary of attributes.
-   * 
+   *
    */
   getAttributes(globalName) {
     if (globalName === 'program' && this._program !== null) {

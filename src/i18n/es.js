@@ -41,7 +41,6 @@ function describeType(type) {
     if (description === null) {
       return null;
     } else {
-      let gender = description[0];
       let plural = description[2];
       return ['f', 'lista de ' + plural, 'listas de ' + plural];
     }

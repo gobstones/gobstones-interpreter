@@ -416,7 +416,7 @@ export function typesWithOpposite() {
 export function typesWithOrder() {
   return [
     typeInteger, typeBool(), typeColor(), typeDir()
-  ]; 
+  ];
 }
 
 /* Generic operations */

@@ -92,7 +92,7 @@ class Type {
   isList() {
     return false;
   }
-  
+
   isStructure() {
     return false;
   }
@@ -197,7 +197,7 @@ export class TypeList extends Type {
   isList() {
     return true;
   }
-  
+
 }
 
 export class TypeStructure extends Type {

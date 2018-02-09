@@ -151,7 +151,6 @@ export class ASTNode {
     this._attributes = attributes;
   }
 
-
 }
 
 /* Main */
