@@ -379,6 +379,9 @@ class ParseResult {
       this.program = this._resultForProgram(state);
     }
     this.declarations = this._collectDeclarations(state.runner);
+    this.getAttributes = function (globalName) {
+      return state.runner.symbolTable.getAttributes(globalName);
+    };
   }
 
   _resultForProgram(state) {

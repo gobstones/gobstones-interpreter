@@ -206,10 +206,12 @@ export class Parser {
   _parseDefProgram() {
     let startPos = this._currentToken.startPos;
     this._match(T_PROGRAM);
+    let attributes = this._lexer.getPendingAttributes();
     let block = this._parseStmtBlock();
     let result = new ASTDefProgram(block);
     result.startPos = startPos;
     result.endPos = block.endPos;
+    result.attributes = attributes;
     return result;
   }
 
@@ -217,6 +219,7 @@ export class Parser {
     let startPos = this._currentToken.startPos;
     this._match(T_INTERACTIVE);
     this._match(T_PROGRAM);
+    let attributes = this._lexer.getPendingAttributes();
     this._match(T_LBRACE);
     let branches = this._parseSwitchBranches();
     let endPos = this._currentToken.startPos;
@@ -224,6 +227,7 @@ export class Parser {
     let result = new ASTDefInteractiveProgram(branches);
     result.startPos = startPos;
     result.endPos = endPos;
+    result.attributes = attributes;
     return result;
   }
 
@@ -234,10 +238,12 @@ export class Parser {
     this._match(T_LPAREN);
     let parameters = this._parseLoweridSeq();
     this._match(T_RPAREN);
+    let attributes = this._lexer.getPendingAttributes();
     let block = this._parseStmtBlock();
     let result = new ASTDefProcedure(name, parameters, block);
     result.startPos = startPos;
     result.endPos = block.endPos;
+    result.attributes = attributes;
     return result;
   }
 
@@ -249,10 +255,12 @@ export class Parser {
     this._match(T_LPAREN);
     let parameters = this._parseLoweridSeq();
     this._match(T_RPAREN);
+    let attributes = this._lexer.getPendingAttributes();
     let block = this._parseStmtBlock();
     let result = new ASTDefFunction(name, parameters, block);
     result.startPos = startPos;
     result.endPos = block.endPos;
+    result.attributes = attributes;
     return result;
   }
 
@@ -282,6 +290,7 @@ export class Parser {
 
   _parseDefTypeRecord(startPos, typeName) {
     this._match(T_RECORD);
+    let attributes = this._lexer.getPendingAttributes();
     this._match(T_LBRACE);
     let fieldNames = this._parseFieldNames();
     let endPos = this._currentToken.startPos;
@@ -291,12 +300,14 @@ export class Parser {
                  ]);
     result.startPos = startPos;
     result.endPos = endPos;
+    result.attributes = attributes;
     return result;
   }
 
   _parseDefTypeVariant(startPos, typeName) {
     let constructorDeclarations = [];
     this._match(T_VARIANT);
+    let attributes = this._lexer.getPendingAttributes();
     this._match(T_LBRACE);
     while (this._currentToken.tag === T_CASE) {
       constructorDeclarations.push(this._parseConstructorDeclaration());
@@ -306,6 +317,7 @@ export class Parser {
     let result = new ASTDefType(typeName, constructorDeclarations);
     result.startPos = startPos;
     result.endPos = endPos;
+    result.attributes = attributes;
     return result;
   }
 

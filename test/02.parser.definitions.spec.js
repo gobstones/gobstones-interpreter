@@ -178,6 +178,18 @@ describe('Parser: definitions', () => {
       expect(ast[0].endPos.column).equals(1);
     });
 
+    it('Register attributes', () => {
+      let parser = new Parser([
+        '/*@ATTRIBUTE@foo@a@*/',
+        '/*@ATTRIBUTE@bar@bcdefg@*/',
+        'program {',
+        '}',
+      ].join('\n'));
+      let ast = parser.parse().definitions;
+      expect(ast.length).equals(1);
+      expect(ast[0].attributes).deep.equals({'foo': 'a', 'bar': 'bcdefg'});
+    });
+
   });
 
   describe('Interactive program definition', () => {
@@ -216,6 +228,17 @@ describe('Parser: definitions', () => {
           )
         ])
       ]);
+    });
+
+    it('Register attributes', () => {
+      let parser = new Parser([
+        '/*@ATTRIBUTE@atomic@true@*/',
+        'interactive program {',
+        '}',
+      ].join('\n'));
+      let ast = parser.parse().definitions;
+      expect(ast.length).equals(1);
+      expect(ast[0].attributes).deep.equals({'atomic': 'true'});
     });
 
   });
@@ -358,6 +381,27 @@ describe('Parser: definitions', () => {
       expect(ast[1].endPos.region).equals('A');
     });
 
+    it('Register attributes', () => {
+      let parser = new Parser([
+        '/*@ATTRIBUTE@num@1@*/',
+        '/*@ATTRIBUTE@foo@aaa@*/',
+        'procedure P() {',
+        '}',
+        '/*@ATTRIBUTE@foo@bbb@*/',
+        '/*@ATTRIBUTE@bar@ccc@*/',
+        'procedure Q() {',
+        '}',
+        '/*@ATTRIBUTE@num@2@*/',
+        'program {',
+        '}',
+      ].join('\n'));
+      let ast = parser.parse().definitions;
+      expect(ast.length).equals(3);
+      expect(ast[0].attributes).deep.equals({'num': '1', 'foo': 'aaa'});
+      expect(ast[1].attributes).deep.equals({'foo': 'bbb', 'bar': 'ccc'});
+      expect(ast[2].attributes).deep.equals({'num': '2'});
+    });
+
   });
 
   describe('Function definition', () => {
@@ -433,6 +477,30 @@ describe('Parser: definitions', () => {
           new ASTStmtBlock([])
         )
       ]);
+    });
+
+    it('Register attributes', () => {
+      let parser = new Parser([
+        '/*@ATTRIBUTE@name@PPP@*/',
+        'procedure P() {',
+        '}',
+        '/*@ATTRIBUTE@name@fff@*/',
+        'function f() {',
+        '  return (1)',
+        '}',
+        '/*@ATTRIBUTE@name@ggg@*/',
+        'function g() {',
+        '  return (1)',
+        '}',
+        'program {',
+        '}',
+      ].join('\n'));
+      let ast = parser.parse().definitions;
+      expect(ast.length).equals(4);
+      expect(ast[0].attributes).deep.equals({'name': 'PPP'});
+      expect(ast[1].attributes).deep.equals({'name': 'fff'});
+      expect(ast[2].attributes).deep.equals({'name': 'ggg'});
+      expect(ast[3].attributes).deep.equals({});
     });
 
   });
@@ -654,6 +722,33 @@ describe('Parser: definitions', () => {
       expect(fx.startPos.column).equals(11);
       expect(fx.endPos.line).equals(4);
       expect(fx.endPos.column).equals(12);
+    });
+
+    it('Register attributes', () => {
+      let parser = new Parser([
+        '/*@ATTRIBUTE@a@1@*/',
+        '/*@ATTRIBUTE@b@2@*/',
+        'program {',
+        '}',
+        '/*@ATTRIBUTE@c@3@*/',
+        'type A is record {',
+        '  field a',
+        '}',
+        '/*@ATTRIBUTE@d@4@*/',
+        'type B is variant {',
+        '  case BB { field b }',
+        '}',
+        '/*@ATTRIBUTE@e@5@*/',
+        'type C is variant {',
+        '  case CC { field c }',
+        '}',
+      ].join('\n'));
+      let ast = parser.parse().definitions;
+      expect(ast.length).equals(4);
+      expect(ast[0].attributes).deep.equals({'a': '1', 'b': '2'});
+      expect(ast[1].attributes).deep.equals({'c': '3'});
+      expect(ast[2].attributes).deep.equals({'d': '4'});
+      expect(ast[3].attributes).deep.equals({'e': '5'});
     });
 
   });

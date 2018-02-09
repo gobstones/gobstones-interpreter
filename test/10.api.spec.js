@@ -771,5 +771,78 @@ describe('Gobstones API', () => {
 
   });
 
+  describe('Get definition attributes', () => {
+
+    it('Program attributes', () => {
+      let api = API();
+      let p = api.parse([
+        '/*@ATTRIBUTE@foo@1@*/',
+        '/*@ATTRIBUTE@bar@2@*/',
+        'program {',
+        '}',
+      ].join('\n'));
+      expect(p.getAttributes('program')).deep.equals({'foo': '1', 'bar': '2'});
+    });
+
+    it('Interactive program attributes', () => {
+      let api = API();
+      let p = api.parse([
+        '/*@ATTRIBUTE@foo@1@*/',
+        '/*@ATTRIBUTE@bar@2@*/',
+        'interactive program {',
+        '}',
+      ].join('\n'));
+      expect(p.getAttributes('program')).deep.equals({'foo': '1', 'bar': '2'});
+    });
+
+    it('Procedure attributes', () => {
+      let api = API();
+      let p = api.parse([
+        '/*@ATTRIBUTE@foo@1@*/',
+        '/*@ATTRIBUTE@bar@2@*/',
+        'program {',
+        '}',
+        '/*@ATTRIBUTE@baz@3@*/',
+        'procedure P() {',
+        '}',
+      ].join('\n'));
+      expect(p.getAttributes('P')).deep.equals({'baz': '3'});
+    });
+
+    it('Function attributes', () => {
+      let api = API();
+      let p = api.parse([
+        '/*@ATTRIBUTE@foo@1@*/',
+        '/*@ATTRIBUTE@bar@2@*/',
+        'program {',
+        '}',
+        '/*@ATTRIBUTE@baz@3@*/',
+        'function f() {',
+        '  return (1)',
+        '}',
+      ].join('\n'));
+      expect(p.getAttributes('f')).deep.equals({'baz': '3'});
+    });
+
+    it('Type attributes', () => {
+      let api = API();
+      let p = api.parse([
+        'program {',
+        '}',
+        '/*@ATTRIBUTE@foo@1@*/',
+        'type A is record {',
+        '  field a',
+        '}',
+        '/*@ATTRIBUTE@bar@2@*/',
+        'type BB is variant {',
+        '  case B { field b }',
+        '}',
+      ].join('\n'));
+      expect(p.getAttributes('A')).deep.equals({'foo': '1'});
+      expect(p.getAttributes('BB')).deep.equals({'bar': '2'});
+    });
+
+  });
+
 });
 

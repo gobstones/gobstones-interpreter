@@ -161,11 +161,14 @@ export class Lexer {
     this._reader = this._multifileReader.readCurrentFile();
     this._warnings = [];
 
-    /*
-     * A stack of tokens '(', '[' and '{', to provide more helpful
-     * error reporting if delimiters are not balanced.
-     */
+    /* A stack of tokens '(', '[' and '{', to provide more helpful
+     * error reporting if delimiters are not balanced. */
     this._delimiterStack = [];
+
+    /* A dictionary of pending attributes, set by the ATTRIBUTE pragma.
+     * Pending attributes are used by the parser to decorate any procedure
+     * or function definition. */
+    this._pendingAttributes = {};
   }
 
   /* Return the next token from the input */
@@ -446,6 +449,10 @@ export class Lexer {
       this._reader = this._reader.beginRegion(region);
     } else if (pragma[0] === 'END_REGION') {
       this._reader = this._reader.endRegion();
+    } else if (pragma[0] === 'ATTRIBUTE' && pragma.length >= 2) {
+      let key = pragma[1];
+      let value = pragma.slice(2, pragma.length).join('@');
+      this.setAttribute(key, value);
     } else {
       this._emitWarning(startPos, this._reader, 'unknown-pragma', [pragma[0]]);
     }
@@ -487,6 +494,30 @@ export class Lexer {
                );
       }
     }
+  }
+
+  /*
+   * Interface for handling attributes.
+   *
+   * The pragma ATTRIBUTE@key@value
+   * establishes the attribute given by <key> to <value>.
+   *
+   * Whenever the parser finds a definition of the following kinds:
+   *   procedure
+   *   function
+   *   program
+   *   interactive program
+   *   type
+   * it gets decorated with the pending attributes.
+   */
+  getPendingAttributes() {
+    let a = this._pendingAttributes;
+    this._pendingAttributes = {};
+    return a;
+  }
+
+  setAttribute(key, value) {
+    this._pendingAttributes[key] = value;
   }
 
 }

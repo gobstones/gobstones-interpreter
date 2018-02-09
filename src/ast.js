@@ -88,6 +88,7 @@ export class ASTNode {
     this._children = children;
     this._startPos = UnknownPosition;
     this._endPos = UnknownPosition;
+    this._attributes = {};
 
     /* Assert this invariant to protect against common mistakes. */
     if (!(children instanceof Array)) {
@@ -141,6 +142,15 @@ export class ASTNode {
   get endPos() {
     return this._endPos;
   }
+
+  get attributes() {
+    return this._attributes;
+  }
+
+  set attributes(attributes) {
+    this._attributes = attributes;
+  }
+
 
 }
 
