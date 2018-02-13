@@ -157,14 +157,14 @@ describe('Compiler', () => {
       );
     });
 
-    it('Chain of "else if"s', () => {
+    it('Chain of "elseif"s', () => {
       let result = new Runner().run([
         'function f(x) {',
         '  if (x == 1) {',
         '    y := "a"',
-        '  } else if (x == 2) {',
+        '  } elseif (x == 2) {',
         '    y := "b"',
-        '  } else if (x == 3) {',
+        '  } elseif (x == 3) {',
         '    y := "c"',
         '  } else {',
         '    y := "d"',
@@ -175,9 +175,9 @@ describe('Compiler', () => {
         '  y := "D"',
         '  if (x == 1) {',
         '    y := "A"',
-        '  } else if (x == 2) {',
+        '  } elseif (x == 2) {',
         '    y := "B"',
-        '  } else if (x == 3) {',
+        '  } elseif (x == 3) {',
         '    y := "C"',
         '  }',
         '  return (y)',

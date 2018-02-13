@@ -5,7 +5,7 @@ import {
   Token, T_EOF, T_NUM, T_STRING, T_LOWERID, T_UPPERID,
   /* Keywords */
   T_PROGRAM, T_INTERACTIVE, T_PROCEDURE, T_FUNCTION, T_RETURN,
-  T_IF, T_THEN, T_ELSE, T_REPEAT, T_FOREACH, T_IN, T_WHILE,
+  T_IF, T_THEN, T_ELSEIF, T_ELSE, T_REPEAT, T_FOREACH, T_IN, T_WHILE,
   T_SWITCH, T_TO, T_LET, T_NOT, T_DIV, T_MOD, T_TYPE,
   T_IS, T_RECORD, T_VARIANT, T_CASE, T_FIELD, T_UNDERSCORE,
   T_TIMEOUT,
@@ -61,6 +61,7 @@ let KEYWORDS = {
   /* Control structures */
   'if': T_IF,
   'then': T_THEN,
+  'elseif': T_ELSEIF,
   'else': T_ELSE,
   'repeat': T_REPEAT,
   'foreach': T_FOREACH,

@@ -5,7 +5,7 @@ import {
   Token, T_EOF, T_NUM, T_STRING, T_LOWERID, T_UPPERID,
   /* Keywords */
   T_PROGRAM, T_INTERACTIVE, T_PROCEDURE, T_FUNCTION, T_RETURN,
-  T_IF, T_THEN, T_ELSE, T_REPEAT, T_FOREACH, T_IN, T_WHILE,
+  T_IF, T_THEN, T_ELSEIF, T_ELSE, T_REPEAT, T_FOREACH, T_IN, T_WHILE,
   T_SWITCH, T_TO, T_LET, T_NOT, T_DIV, T_MOD, T_TYPE,
   T_IS, T_RECORD, T_VARIANT, T_CASE, T_FIELD, T_UNDERSCORE,
   T_TIMEOUT,
@@ -361,7 +361,7 @@ export class Parser {
       case T_RETURN:
         return this._parseStmtReturn();
       case T_IF:
-        return this._parseStmtIf();
+        return this._parseStmtIf(true /* expectInitialIf */);
       case T_REPEAT:
         return this._parseStmtRepeat();
       case T_FOREACH:
@@ -427,9 +427,12 @@ export class Parser {
     return result;
   }
 
-  _parseStmtIf() {
+
+  _parseStmtIf(expectInitialIf) {
     let startPos = this._currentToken.startPos;
-    this._match(T_IF);
+    if (expectInitialIf) {
+      this._match(T_IF);
+    }
 
     this._match(T_LPAREN);
     let condition = this._parseExpression();
@@ -442,13 +445,13 @@ export class Parser {
 
     let endPos;
     let elseBlock;
-    if (this._currentToken.tag === T_ELSE) {
+    if (this._currentToken.tag === T_ELSEIF) {
+      this._match(T_ELSEIF);
+      elseBlock = this._parseStmtIf(false /* expectInitialIf */);
+      endPos = elseBlock.endPos;
+    } else if (this._currentToken.tag === T_ELSE) {
       this._match(T_ELSE);
-      if (this._currentToken.tag === T_IF) {
-        elseBlock = this._parseStmtIf();
-      } else {
-        elseBlock = this._parseStmtBlock();
-      }
+      elseBlock = this._parseStmtBlock();
       endPos = elseBlock.endPos;
     } else {
       elseBlock = null;

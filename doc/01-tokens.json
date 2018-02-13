@@ -10,6 +10,7 @@
   ["keyword", "return", "RETURN", "Para devolver valores de funciones y de la rutina principal."],
   ["keyword", "if", "IF", "Para la alternativa condicional."],
   ["keyword", "then", "THEN", "Palabra clave opcional para la rama 'then'."],
+  ["keyword", "elseif", "ELSEIF", "Para las ramas 'elseif'."],
   ["keyword", "else", "ELSE", "Para la rama 'else'."],
   ["keyword", "repeat", "REPEAT", "Repetición simple."],
   ["keyword", "foreach", "FOREACH", "Repetición indexada."],

@@ -58,7 +58,7 @@
     ["RETURN", "LPAREN", "expressionSeq", "RPAREN"]
   ],
   ["stmtIf",
-    ["IF", "stmtIfBranch", ["*", ["ELSE", "IF", "stmtIfBranch"]], ["?", ["ELSE", "stmtBlock"]]]
+    ["IF", "stmtIfBranch", ["*", ["ELSEIF", "stmtIfBranch"]], ["?", ["ELSE", "stmtBlock"]]]
   ],
   ["stmtIfBranch",
     ["LPAREN", "expression", "RPAREN", ["?", ["THEN"]], "stmtBlock"]

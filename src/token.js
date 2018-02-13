@@ -14,6 +14,7 @@ export const T_FUNCTION = Symbol.for('T_FUNCTION');
 export const T_RETURN = Symbol.for('T_RETURN');
 export const T_IF = Symbol.for('T_IF');
 export const T_THEN = Symbol.for('T_THEN');
+export const T_ELSEIF = Symbol.for('T_ELSEIF');
 export const T_ELSE = Symbol.for('T_ELSE');
 export const T_REPEAT = Symbol.for('T_REPEAT');
 export const T_FOREACH = Symbol.for('T_FOREACH');
