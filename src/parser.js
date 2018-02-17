@@ -430,7 +430,6 @@ export class Parser {
     return result;
   }
 
-
   _parseStmtIf(expectInitialIf) {
     let startPos = this._currentToken.startPos;
     if (expectInitialIf) {
