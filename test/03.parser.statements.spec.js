@@ -832,25 +832,6 @@ describe('Parser: statements', () => {
       ]);
     });
 
-    it('Accept alternative keyword "match"', () => {
-      let parser = new Parser(
-                     'program {' +
-                     '  match (bar) to {' +
-                     '  }' +
-                     '}'
-                   );
-      expectAST(parser.parse(), [
-        new ASTDefProgram(
-          new ASTStmtBlock([
-            new ASTStmtSwitch(
-              new ASTExprVariable(tok(T_LOWERID, 'bar')),
-              []
-            )
-          ])
-        )
-      ]);
-    });
-
     it('Accept wildcard pattern (_)', () => {
       let parser = new Parser(
                      'program {' +

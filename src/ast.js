@@ -29,6 +29,7 @@ export const N_PatternTimeout = Symbol.for('N_PatternTimeout');
 export const N_ExprVariable = Symbol.for('N_ExprVariable');
 export const N_ExprConstantNumber = Symbol.for('N_ExprConstantNumber');
 export const N_ExprConstantString = Symbol.for('N_ExprConstantString');
+export const N_ExprChoose = Symbol.for('N_ExprChoose');
 export const N_ExprList = Symbol.for('N_ExprList');
 export const N_ExprRange = Symbol.for('N_ExprRange');
 export const N_ExprTuple = Symbol.for('N_ExprTuple');
@@ -487,6 +488,24 @@ export class ASTExprConstantString extends ASTNode {
 
   get string() {
     return this._children[0];
+  }
+}
+
+export class ASTExprChoose extends ASTNode {
+  constructor(condition, trueExpr, falseExpr) {
+    super(N_ExprChoose, [condition, trueExpr, falseExpr]);
+  }
+
+  get condition() {
+    return this._children[0];
+  }
+
+  get trueExpr() {
+    return this._children[1];
+  }
+
+  get falseExpr() {
+    return this._children[2];
   }
 }
 

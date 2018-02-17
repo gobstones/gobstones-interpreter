@@ -28,6 +28,7 @@ import {
   N_ExprVariable,
   N_ExprConstantNumber,
   N_ExprConstantString,
+  N_ExprChoose,
   N_ExprList,
   N_ExprRange,
   N_ExprTuple,
@@ -658,6 +659,8 @@ export class Linter {
         return this._lintExprConstantNumber(expression);
       case N_ExprConstantString:
         return this._lintExprConstantString(expression);
+      case N_ExprChoose:
+        return this._lintExprChoose(expression);
       case N_ExprList:
         return this._lintExprList(expression);
       case N_ExprRange:
@@ -690,6 +693,12 @@ export class Linter {
 
   _lintExprConstantString(expression) {
     /* No restrictions */
+  }
+
+  _lintExprChoose(expression) {
+    this._lintExpression(expression.condition);
+    this._lintExpression(expression.trueExpr);
+    this._lintExpression(expression.falseExpr);
   }
 
   _lintExprList(expression) {

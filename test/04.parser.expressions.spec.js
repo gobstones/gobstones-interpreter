@@ -31,6 +31,7 @@ import {
   ASTExprVariable,
   ASTExprConstantNumber,
   ASTExprConstantString,
+  ASTExprChoose,
   ASTExprList,
   ASTExprRange,
   ASTExprTuple,
@@ -375,6 +376,133 @@ describe('Parser: expressions', () => {
       expect(ast[0].body.statements[0].value.startPos.column).equals(8);
       expect(ast[0].body.statements[0].value.endPos.line).equals(2);
       expect(ast[0].body.statements[0].value.endPos.column).equals(18);
+    });
+
+  });
+
+  describe('Choose expression', () => {
+
+    it('Empty choose', () => {
+      let parser = new Parser(
+                     'program {\n' +
+                     '  x := choose 1 otherwise' +
+                     '}'
+                   );
+      expectAST(parser.parse(), [
+        new ASTDefProgram(
+          new ASTStmtBlock([
+            new ASTStmtAssignVariable(
+              tok(T_LOWERID, 'x'),
+              new ASTExprConstantNumber(tok(T_NUM, '1'))
+            ),
+          ])
+        )
+      ]);
+    });
+
+    it('Choose with a single branch', () => {
+      let parser = new Parser(
+                     'program {\n' +
+                     '  x := choose 1 when (y)' +
+                     '              2 otherwise' +
+                     '}'
+                   );
+      expectAST(parser.parse(), [
+        new ASTDefProgram(
+          new ASTStmtBlock([
+            new ASTStmtAssignVariable(
+              tok(T_LOWERID, 'x'),
+              new ASTExprChoose(
+                new ASTExprVariable(tok(T_LOWERID, 'y')),
+                new ASTExprConstantNumber(tok(T_NUM, '1')),
+                new ASTExprConstantNumber(tok(T_NUM, '2'))
+              )
+            ),
+          ])
+        )
+      ]);
+    });
+
+    it('Choose with many branches', () => {
+      let parser = new Parser(
+                     'program {\n' +
+                     '  x := choose 1 when (y1)' +
+                     '              2 when (y2)' +
+                     '              3 when (y3)' +
+                     '              4 otherwise' +
+                     '}'
+                   );
+      expectAST(parser.parse(), [
+        new ASTDefProgram(
+          new ASTStmtBlock([
+            new ASTStmtAssignVariable(
+              tok(T_LOWERID, 'x'),
+              new ASTExprChoose(
+                new ASTExprVariable(tok(T_LOWERID, 'y1')),
+                new ASTExprConstantNumber(tok(T_NUM, '1')),
+                new ASTExprChoose(
+                  new ASTExprVariable(tok(T_LOWERID, 'y2')),
+                  new ASTExprConstantNumber(tok(T_NUM, '2')),
+                  new ASTExprChoose(
+                    new ASTExprVariable(tok(T_LOWERID, 'y3')),
+                    new ASTExprConstantNumber(tok(T_NUM, '3')),
+                    new ASTExprConstantNumber(tok(T_NUM, '4')),
+                  )
+                )
+              )
+            ),
+          ])
+        )
+      ]);
+    });
+
+    it('Nested choose', () => {
+      let parser = new Parser(
+                     'program {\n' +
+                     '  x := choose ' +
+                     '         choose 1 when (y1) 2 otherwise' +
+                     '           when (y2)' +
+                     '         choose 3 when (y3) 4 otherwise' +
+                     '           otherwise' +
+                     '}'
+                   );
+      expectAST(parser.parse(), [
+        new ASTDefProgram(
+          new ASTStmtBlock([
+            new ASTStmtAssignVariable(
+              tok(T_LOWERID, 'x'),
+              new ASTExprChoose(
+                new ASTExprVariable(tok(T_LOWERID, 'y2')),
+                new ASTExprChoose(
+                  new ASTExprVariable(tok(T_LOWERID, 'y1')),
+                  new ASTExprConstantNumber(tok(T_NUM, '1')),
+                  new ASTExprConstantNumber(tok(T_NUM, '2')),
+                ),
+                new ASTExprChoose(
+                  new ASTExprVariable(tok(T_LOWERID, 'y3')),
+                  new ASTExprConstantNumber(tok(T_NUM, '3')),
+                  new ASTExprConstantNumber(tok(T_NUM, '4')),
+                ),
+              )
+            ),
+          ])
+        )
+      ]);
+    });
+
+    it('Keep track of positions', () => {
+      let parser = new Parser(
+                     'program {\n' +
+                     '  x := choose 1 when (y)\n' +
+                     '              2 otherwise' +
+                     '}'
+                   );
+      let ast = parser.parse().definitions;
+      expect(ast[0].body.statements.length).equals(1);
+      expect(ast[0].body.statements[0].value.startPos.line).equals(2);
+      expect(ast[0].body.statements[0].value.startPos.column).equals(8);
+      expect(ast[0].body.statements[0].value.endPos.line).equals(3);
+      expect(ast[0].body.statements[0].value.endPos.column).equals(26);
     });
 
   });

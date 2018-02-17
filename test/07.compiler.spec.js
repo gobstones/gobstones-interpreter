@@ -897,6 +897,84 @@ describe('Compiler', () => {
 
   });
 
+  describe('Expressions: conditional (choose)', () => {
+
+    describe('Choose: true branch', () => {
+      let result = new Runner().run([
+        'program {',
+        '  x := choose 5 + 5 when (' + i18n('CONS:True') + ')',
+        '              20 div 0 otherwise',
+        '  return (x)',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(new ValueInteger(10));
+    });
+
+    describe('Choose: false branch', () => {
+      let result = new Runner().run([
+        'program {',
+        '  x := choose 10 div 0 when (1 == 2)',
+        '              20 otherwise',
+        '  return (x)',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(new ValueInteger(20));
+    });
+
+    describe('Choose: short-circuiting for nested conditions', () => {
+      let result = new Runner().run([
+        'program {',
+        '  x := choose 10 when (' + i18n('CONS:True') + ')',
+        '              20 div 0 when (55 div 0)',
+        '              30 div 0 otherwise',
+        '  return (x)',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(new ValueInteger(10));
+    });
+
+    describe('Choose: nested true branch', () => {
+      let result = new Runner().run([
+        'program {',
+        '  x := choose 10 div 0 when (' + i18n('CONS:False') + ')',
+        '              20 when (' + i18n('CONS:True') + ')',
+        '              30 div 0 otherwise',
+        '  return (x)',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(new ValueInteger(20));
+    });
+
+    describe('Choose: nested false branch', () => {
+      let result = new Runner().run([
+        'program {',
+        '  x := choose 10 div 0 when (' + i18n('CONS:False') + ')',
+        '              20 div 0 when (' + i18n('CONS:False') + ')',
+        '              30 otherwise',
+        '  return (x)',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(new ValueInteger(30));
+    });
+
+    describe('Choose: reject if condition not a boolean', () => {
+      let result = () => new Runner().run([
+        'program {',
+        '  x := choose 10 when (55)',
+        '              20 otherwise',
+        '  return (x)',
+        '}',
+      ].join('\n'));
+      expect(result).throws(
+        i18n('errmsg:expected-value-of-type-but-got')(
+          new TypeStructure(i18n('TYPE:Bool'), {}),
+          new TypeInteger(),
+        )
+      );
+    });
+      
+  });
+
   describe('Expressions: lists', () => {
 
     it('List construction (empty)', () => {

@@ -5,7 +5,9 @@ import {
   Token, T_EOF, T_NUM, T_STRING, T_LOWERID, T_UPPERID,
   /* Keywords */
   T_PROGRAM, T_INTERACTIVE, T_PROCEDURE, T_FUNCTION, T_RETURN,
-  T_IF, T_THEN, T_ELSEIF, T_ELSE, T_REPEAT, T_FOREACH, T_IN, T_WHILE,
+  T_IF, T_THEN, T_ELSEIF, T_ELSE,
+  T_CHOOSE, T_WHEN, T_OTHERWISE,
+  T_REPEAT, T_FOREACH, T_IN, T_WHILE,
   T_SWITCH, T_TO, T_LET, T_NOT, T_DIV, T_MOD, T_TYPE,
   T_IS, T_RECORD, T_VARIANT, T_CASE, T_FIELD, T_UNDERSCORE,
   T_TIMEOUT,
@@ -45,6 +47,7 @@ import {
   ASTExprVariable,
   ASTExprConstantNumber,
   ASTExprConstantString,
+  ASTExprChoose,
   ASTExprList,
   ASTExprRange,
   ASTExprTuple,
@@ -820,6 +823,8 @@ export class Parser {
         return this._parseExprConstantNumber();
       case T_STRING:
         return this._parseExprConstantString();
+      case T_CHOOSE:
+        return this._parseExprChoose(true /* expectInitialChoose */);
       case T_UPPERID:
         return this._parseExprStructureOrStructureUpdate();
       case T_LPAREN:
@@ -872,6 +877,31 @@ export class Parser {
     result.startPos = string.startPos;
     result.endPos = string.endPos;
     return result;
+  }
+
+  _parseExprChoose(expectInitialChoose) {
+    let startPos = this._currentToken.startPos;
+    if (expectInitialChoose) {
+      this._match(T_CHOOSE);
+    }
+    let expr1 = this._parseExpression();
+    if (this._currentToken.tag === T_WHEN) {
+      this._match(T_WHEN);
+      this._match(T_LPAREN);
+      let condition = this._parseExpression();
+      this._match(T_RPAREN);
+      let expr2 = this._parseExprChoose(false /* expectInitialChoose */);
+      let result = new ASTExprChoose(condition, expr1, expr2);
+      result.startPos = startPos;
+      result.endPos = expr2.endPos;
+      return result;
+    } else {
+      let endPos = this._currentToken.endPos;
+      this._match(T_OTHERWISE);
+      expr1.startPos = startPos;
+      expr1.endPos = endPos;
+      return expr1;
+    }
   }
 
   /*
