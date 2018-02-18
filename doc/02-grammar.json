@@ -58,7 +58,7 @@
     ["RETURN", "LPAREN", "expressionSeq", "RPAREN"]
   ],
   ["stmtIf",
-    ["IF", "stmtIfBranch", ["*", ["ELSE", "IF", "stmtIfBranch"]], ["?", ["ELSE", "stmtBlock"]]]
+    ["IF", "stmtIfBranch", ["*", ["ELSEIF", "stmtIfBranch"]], ["?", ["ELSE", "stmtBlock"]]]
   ],
   ["stmtIfBranch",
     ["LPAREN", "expression", "RPAREN", ["?", ["THEN"]], "stmtBlock"]
@@ -127,6 +127,7 @@
     ["exprFunctionCall"],
     ["exprConstantNumber"],
     ["exprConstantString"],
+    ["exprChoose"],
     ["exprList"],
     ["exprRange"],
     ["exprTuple"],
@@ -144,6 +145,11 @@
   ],
   ["exprConstantString",
     ["STRING"]
+  ],
+  ["exprChoose",
+    ["CHOOSE",
+      ["*", ["expression", "WHEN", "LPAREN", "expression", "RPAREN"]],
+      "expression", "OTHERWISE"]
   ],
   ["exprList",
     ["LBRACK", "expressionSeq", "RBRACK"]

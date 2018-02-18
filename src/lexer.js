@@ -5,7 +5,9 @@ import {
   Token, T_EOF, T_NUM, T_STRING, T_LOWERID, T_UPPERID,
   /* Keywords */
   T_PROGRAM, T_INTERACTIVE, T_PROCEDURE, T_FUNCTION, T_RETURN,
-  T_IF, T_THEN, T_ELSE, T_REPEAT, T_FOREACH, T_IN, T_WHILE,
+  T_IF, T_THEN, T_ELSEIF, T_ELSE,
+  T_CHOOSE, T_WHEN, T_OTHERWISE,
+  T_REPEAT, T_FOREACH, T_IN, T_WHILE,
   T_SWITCH, T_TO, T_LET, T_NOT, T_DIV, T_MOD, T_TYPE,
   T_IS, T_RECORD, T_VARIANT, T_CASE, T_FIELD, T_UNDERSCORE,
   T_TIMEOUT,
@@ -61,13 +63,16 @@ let KEYWORDS = {
   /* Control structures */
   'if': T_IF,
   'then': T_THEN,
+  'elseif': T_ELSEIF,
   'else': T_ELSE,
+  'choose': T_CHOOSE,
+  'when': T_WHEN,
+  'otherwise': T_OTHERWISE,
   'repeat': T_REPEAT,
   'foreach': T_FOREACH,
   'in': T_IN,
   'while': T_WHILE,
   'switch': T_SWITCH,
-  'match': T_SWITCH,
   'to': T_TO,
   /* Assignment */
   'let': T_LET,
@@ -135,6 +140,12 @@ function fail(startPos, endPos, reason, args) {
   throw new GbsSyntaxError(startPos, endPos, reason, args);
 }
 
+const CLOSING_DELIMITERS = {
+  '(': ')',
+  '[': ']',
+  '{': '}',
+};
+
 /* An instance of Lexer scans source code for tokens.
  * Example:
  *
@@ -154,12 +165,23 @@ export class Lexer {
     this._multifileReader = new MultifileReader(input);
     this._reader = this._multifileReader.readCurrentFile();
     this._warnings = [];
+
+    /* A stack of tokens '(', '[' and '{', to provide more helpful
+     * error reporting if delimiters are not balanced. */
+    this._delimiterStack = [];
+
+    /* A dictionary of pending attributes, set by the ATTRIBUTE pragma.
+     * Pending attributes are used by the parser to decorate any procedure
+     * or function definition. */
+    this._pendingAttributes = {};
   }
 
   /* Return the next token from the input */
   nextToken() {
     if (!this._findNextToken()) {
-      return new Token(T_EOF, null, this._reader, this._reader);
+      let token = new Token(T_EOF, null, this._reader, this._reader);
+      this._checkBalancedDelimiters(token);
+      return token;
     }
     if (isDigit(this._reader.peek())) {
       let startPos = this._reader;
@@ -292,7 +314,9 @@ export class Lexer {
         let startPos = this._reader;
         this._reader = this._reader.consumeString(symbol);
         let endPos = this._reader;
-        return new Token(tag, symbol, startPos, endPos);
+        let token = new Token(tag, symbol, startPos, endPos);
+        this._checkBalancedDelimiters(token);
+        return token;
       }
     }
     return fail(
@@ -430,6 +454,10 @@ export class Lexer {
       this._reader = this._reader.beginRegion(region);
     } else if (pragma[0] === 'END_REGION') {
       this._reader = this._reader.endRegion();
+    } else if (pragma[0] === 'ATTRIBUTE' && pragma.length >= 2) {
+      let key = pragma[1];
+      let value = pragma.slice(2, pragma.length).join('@');
+      this.setAttribute(key, value);
     } else {
       this._emitWarning(startPos, this._reader, 'unknown-pragma', [pragma[0]]);
     }
@@ -437,6 +465,64 @@ export class Lexer {
 
   _emitWarning(startPos, endPos, reason, args) {
     this._warnings.push(new GbsWarning(startPos, endPos, reason, args));
+  }
+
+  /* Check that reading a delimiter keeps the delimiter stack balanced. */
+  _checkBalancedDelimiters(token) {
+    if (token.tag === T_EOF && this._delimiterStack.length > 0) {
+      let openingDelimiter = this._delimiterStack.pop();
+      fail(
+        openingDelimiter.startPos, openingDelimiter.endPos,
+        'unmatched-opening-delimiter',
+        [openingDelimiter.value]
+      );
+    } else if (token.tag === T_LPAREN
+            || token.tag === T_LBRACE
+            || token.tag === T_LBRACK) {
+      this._delimiterStack.push(token);
+    } else if (token.tag === T_RPAREN
+            || token.tag === T_RBRACE
+            || token.tag === T_RBRACK) {
+      if (this._delimiterStack.length === 0) {
+        fail(
+          token.startPos, token.endPos,
+          'unmatched-closing-delimiter',
+          [token.value]
+        );
+      }
+      let openingDelimiter = this._delimiterStack.pop();
+      if (CLOSING_DELIMITERS[openingDelimiter.value] !== token.value) {
+        fail(
+          openingDelimiter.startPos, openingDelimiter.endPos,
+          'unmatched-opening-delimiter',
+          [openingDelimiter.value]
+        );
+      }
+    }
+  }
+
+  /*
+   * Interface for handling attributes.
+   *
+   * The pragma ATTRIBUTE@key@value
+   * establishes the attribute given by <key> to <value>.
+   *
+   * Whenever the parser finds a definition of the following kinds:
+   *   procedure
+   *   function
+   *   program
+   *   interactive program
+   *   type
+   * it gets decorated with the pending attributes.
+   */
+  getPendingAttributes() {
+    let a = this._pendingAttributes;
+    this._pendingAttributes = {};
+    return a;
+  }
+
+  setAttribute(key, value) {
+    this._pendingAttributes[key] = value;
   }
 
 }

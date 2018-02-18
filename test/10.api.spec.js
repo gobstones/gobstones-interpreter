@@ -276,6 +276,30 @@ describe('Gobstones API', () => {
       expect(r.message).equals("foo");
     });
 
+    it('Run a program with a runtime error: report dynamic stack', () => {
+      let p = API().parse([
+        '/*@BEGIN_REGION@C@*/',
+        'procedure Q() {',
+        '  Sacar(Rojo)',
+        '}',
+        '/*@END_REGION@*/',
+        '/*@BEGIN_REGION@B@*/',
+        'procedure P() {',
+        '  Q()',
+        '}',
+        '/*@END_REGION@*/',
+        '/*@BEGIN_REGION@A@*/',
+        'program {',
+        '  P()',
+        '}',
+        '/*@END_REGION@*/',
+      ].join('\n'));
+      let r = p.program.interpret(emptyBoard(1, 1));
+      expect(r.reason.code).equals('cannot-remove-stone');
+      expect(r.on.region).equals('C');
+      expect(r.on.regionStack).deep.equals(['A', 'B', 'C']);
+    });
+
   });
 
   describe('Snapshots', () => {
@@ -370,6 +394,32 @@ describe('Gobstones API', () => {
         expect(s[0].board.table[0][0]).deep.equals({});
     });
 
+    it('Snapshots: report dynamic', () => {
+        let p = API().parse([
+          'procedure Q() {',
+          '  Poner(Rojo)',
+          '}',
+          '',
+          '/*@BEGIN_REGION@B@*/',
+          'procedure P() {',
+          '  Q()',
+          '}',
+          '/*@END_REGION@*/',
+          '',
+          '/*@BEGIN_REGION@A@*/',
+          'program {',
+          '  P()',
+          '}',
+          '/*@END_REGION@*/',
+        ].join('\n'));
+        let r = p.program.interpret(emptyBoard(1, 1));
+        let s = r.snapshots;
+        expect(s.length).equals(2);
+        expect(s[0].board.table[0][0]).deep.equals({});
+        expect(s[1].board.table[0][0]).deep.equals({red: 1});
+        expect(s[1].regionStack).deep.equals(['A', 'B', '']);
+    });
+
   });
 
   describe('Interactive program', () => {
@@ -430,8 +480,28 @@ describe('Gobstones API', () => {
           '}',
         ].join('\n'));
         let r = p.program.interpret(emptyBoard(1, 1));
-        expect(r.onInit().reason.code).equals('cannot-move-to');
-        expect(r.onInit().reason.detail).deep.equals(['Sur']);
+        let s = r.onInit();
+        expect(s.reason.code).equals('cannot-move-to');
+        expect(s.reason.detail).deep.equals(['Sur']);
+    });
+
+    it('Run interactive program with INIT error: report dynamic stack', () => {
+        let p = API().parse([
+          '/*@BEGIN_REGION@B@*/',
+          'procedure P() {',
+          '  Sacar(Rojo)',
+          '}',
+          '/*@END_REGION@*/',
+          '/*@BEGIN_REGION@A@*/',
+          'interactive program {',
+          '  INIT -> { P() }',
+          '}',
+          '/*@END_REGION@*/',
+        ].join('\n'));
+        let r = p.program.interpret(emptyBoard(1, 1));
+        let s = r.onInit();
+        expect(s.on.region).equals('B');
+        expect(s.on.regionStack).deep.equals(['A', 'B']);
     });
 
     it('Run interactive program with key events', () => {
@@ -474,8 +544,35 @@ describe('Gobstones API', () => {
         expect(r.onInit()).deep.equals({
           width: 1, height: 1, head: {x: 0, y: 0}, table: [[{}]]
         });
-        expect(r.onKey('K_A').reason.code).equals('cannot-remove-stone');
-        expect(r.onKey('K_A').reason.detail).deep.equals(['Negro']);
+        let s = r.onKey('K_A');
+        expect(s.reason.code).equals('cannot-remove-stone');
+        expect(s.reason.detail).deep.equals(['Negro']);
+    });
+
+    it(
+      'Run interactive program with runtime error: report dynamic stack',
+      () => {
+        let p = API().parse([
+          '/*@BEGIN_REGION@B@*/',
+          'procedure P() {',
+          '  Poner(Rojo)',
+          '}',
+          '/*@END_REGION@*/',
+          '/*@BEGIN_REGION@C@*/',
+          'procedure Q() {',
+          '  Mover(Oeste)',
+          '}',
+          '/*@END_REGION@*/',
+          '/*@BEGIN_REGION@A@*/',
+          'interactive program {',
+          '  K_A -> { P() Q() P() }',
+          '}',
+          '/*@END_REGION@*/',
+        ].join('\n'));
+        let r = p.program.interpret(emptyBoard(1, 1));
+        let s = r.onKey('K_A');
+        expect(s.on.region).equals('C');
+        expect(s.on.regionStack).deep.equals(['A', 'C']);
     });
 
     it('Run interactive program with default event', () => {
@@ -654,6 +751,95 @@ describe('Gobstones API', () => {
             [{}, {}, {}, {}, {}, {}, {}, {}],
           ]
       });
+    });
+
+  });
+
+  describe('Internationalization', () => {
+
+    it('Allow arbitrary names for TYPE:Color', () => {
+      let api = API();
+      api.config.setLanguage('pt');
+      let p = api.parse('program { Colocar(Vermelho) }');
+      let r = p.program.interpret(emptyBoard(1, 1));
+      expect(r.finalBoard).deep.equals({
+          width: 1, height: 1,
+          head: {x: 0, y: 0},
+          table: [[{red: 1}]]
+      });
+    });
+
+  });
+
+  describe('Get definition attributes', () => {
+
+    it('Program attributes', () => {
+      let api = API();
+      let p = api.parse([
+        '/*@ATTRIBUTE@foo@1@*/',
+        '/*@ATTRIBUTE@bar@2@*/',
+        'program {',
+        '}',
+      ].join('\n'));
+      expect(p.getAttributes('program')).deep.equals({'foo': '1', 'bar': '2'});
+    });
+
+    it('Interactive program attributes', () => {
+      let api = API();
+      let p = api.parse([
+        '/*@ATTRIBUTE@foo@1@*/',
+        '/*@ATTRIBUTE@bar@2@*/',
+        'interactive program {',
+        '}',
+      ].join('\n'));
+      expect(p.getAttributes('program')).deep.equals({'foo': '1', 'bar': '2'});
+    });
+
+    it('Procedure attributes', () => {
+      let api = API();
+      let p = api.parse([
+        '/*@ATTRIBUTE@foo@1@*/',
+        '/*@ATTRIBUTE@bar@2@*/',
+        'program {',
+        '}',
+        '/*@ATTRIBUTE@baz@3@*/',
+        'procedure P() {',
+        '}',
+      ].join('\n'));
+      expect(p.getAttributes('P')).deep.equals({'baz': '3'});
+    });
+
+    it('Function attributes', () => {
+      let api = API();
+      let p = api.parse([
+        '/*@ATTRIBUTE@foo@1@*/',
+        '/*@ATTRIBUTE@bar@2@*/',
+        'program {',
+        '}',
+        '/*@ATTRIBUTE@baz@3@*/',
+        'function f() {',
+        '  return (1)',
+        '}',
+      ].join('\n'));
+      expect(p.getAttributes('f')).deep.equals({'baz': '3'});
+    });
+
+    it('Type attributes', () => {
+      let api = API();
+      let p = api.parse([
+        'program {',
+        '}',
+        '/*@ATTRIBUTE@foo@1@*/',
+        'type A is record {',
+        '  field a',
+        '}',
+        '/*@ATTRIBUTE@bar@2@*/',
+        'type BB is variant {',
+        '  case B { field b }',
+        '}',
+      ].join('\n'));
+      expect(p.getAttributes('A')).deep.equals({'foo': '1'});
+      expect(p.getAttributes('BB')).deep.equals({'bar': '2'});
     });
 
   });

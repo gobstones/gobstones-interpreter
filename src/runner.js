@@ -130,6 +130,11 @@ export class Runner {
     return this._vm.globalState();
   }
 
+  /* Dynamic stack of regions */
+  regionStack() {
+    return this._vm.regionStack();
+  }
+
   /* Create a new symbol table, including definitions for all the primitive
    * types and operations (which come from RuntimePrimitives) */
   _newSymtableWithPrimitives() {

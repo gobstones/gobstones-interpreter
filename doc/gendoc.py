@@ -80,7 +80,7 @@ def production_to_tex(production):
     tex = []
     for symbol in production:
         if isinstance(symbol, list):
-            assert symbol[0] in ['*', '?']
+            assert symbol[0] in ['*', '+', '?']
             subproduction = symbol[1]
             subtex = production_to_tex(subproduction)
             tex.append('(' + subtex + ')' + symbol[0])

@@ -1,8 +1,8 @@
 import chai from 'chai';
 
 import {
-  TYPES_WITH_ORDER,
-  TYPES_WITH_OPPOSITE,
+  typesWithOrder,
+  typesWithOpposite,
 } from '../src/runtime';
 import { Runner } from '../src/runner';
 import { i18n } from '../src/i18n';
@@ -457,7 +457,7 @@ describe('Primitive functions, procedures and operators', () => {
         let result = () => new Runner().run(compareFail('<='));
         expect(result).throws(
           i18n('errmsg:expected-value-of-some-type-but-got')(
-            TYPES_WITH_ORDER,
+            typesWithOrder(),
             new TypeString()
           )
         );
@@ -501,7 +501,7 @@ describe('Primitive functions, procedures and operators', () => {
         let result = () => new Runner().run(compareFail('>='));
         expect(result).throws(
           i18n('errmsg:expected-value-of-some-type-but-got')(
-            TYPES_WITH_ORDER,
+            typesWithOrder(),
             new TypeString()
           )
         );
@@ -545,7 +545,7 @@ describe('Primitive functions, procedures and operators', () => {
         let result = () => new Runner().run(compareFail('<'));
         expect(result).throws(
           i18n('errmsg:expected-value-of-some-type-but-got')(
-            TYPES_WITH_ORDER,
+            typesWithOrder(),
             new TypeString()
           )
         );
@@ -589,7 +589,7 @@ describe('Primitive functions, procedures and operators', () => {
         let result = () => new Runner().run(compareFail('>'));
         expect(result).throws(
           i18n('errmsg:expected-value-of-some-type-but-got')(
-            TYPES_WITH_ORDER,
+            typesWithOrder(),
             new TypeString()
           )
         );
@@ -707,7 +707,7 @@ describe('Primitive functions, procedures and operators', () => {
         ].join('\n'));
         expect(result).throws(
           i18n('errmsg:expected-value-of-some-type-but-got')(
-            TYPES_WITH_ORDER,
+            typesWithOrder(),
             new TypeList(new TypeAny())
           )
         );
@@ -811,7 +811,7 @@ describe('Primitive functions, procedures and operators', () => {
         ].join('\n'));
         expect(result).throws(
           i18n('errmsg:expected-value-of-some-type-but-got')(
-            TYPES_WITH_ORDER,
+            typesWithOrder(),
             new TypeList(new TypeAny())
           )
         );
@@ -963,7 +963,7 @@ describe('Primitive functions, procedures and operators', () => {
         ].join('\n'));
         expect(result).throws(
           i18n('errmsg:expected-value-of-some-type-but-got')(
-            TYPES_WITH_OPPOSITE,
+            typesWithOpposite(),
             new TypeTuple([])
           )
         );
@@ -1038,8 +1038,9 @@ describe('Primitive functions, procedures and operators', () => {
         i18n('errmsg:primitive-argument-type-mismatch')(
           'not',
           1,
-          i18n('TYPE:Bool'),
-          i18n('TYPE:Integer'),
+          1,
+          new TypeStructure(i18n('TYPE:Bool'), {}),
+          new TypeInteger(),
         )
       );
     });

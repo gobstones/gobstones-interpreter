@@ -1,9 +1,6 @@
 import chai from 'chai';
 
-import {
-  TYPES_WITH_ORDER,
-  TYPES_WITH_OPPOSITE,
-} from '../src/runtime';
+import { typesWithOrder } from '../src/runtime';
 import { Runner } from '../src/runner';
 import { i18n } from '../src/i18n';
 
@@ -97,8 +94,8 @@ describe('Compiler', () => {
       ].join('\n'));
       expect(result).throws(
         i18n('errmsg:expected-value-of-type-but-got')(
-          new TypeStructure(i18n('TYPE:Bool'), {}).toString(),
-          new TypeInteger().toString(),
+          new TypeStructure(i18n('TYPE:Bool'), {}),
+          new TypeInteger(),
         )
       );
     });
@@ -154,20 +151,20 @@ describe('Compiler', () => {
       ].join('\n'));
       expect(result).throws(
         i18n('errmsg:expected-value-of-type-but-got')(
-          new TypeStructure(i18n('TYPE:Bool'), {}).toString(),
-          new TypeStructure('B', {'B': {'x': new TypeInteger()}}).toString(),
+          new TypeStructure(i18n('TYPE:Bool'), {}),
+          new TypeStructure('B', {'B': {'x': new TypeInteger()}}),
         )
       );
     });
 
-    it('Chain of "else if"s', () => {
+    it('Chain of "elseif"s', () => {
       let result = new Runner().run([
         'function f(x) {',
         '  if (x == 1) {',
         '    y := "a"',
-        '  } else if (x == 2) {',
+        '  } elseif (x == 2) {',
         '    y := "b"',
-        '  } else if (x == 3) {',
+        '  } elseif (x == 3) {',
         '    y := "c"',
         '  } else {',
         '    y := "d"',
@@ -178,9 +175,9 @@ describe('Compiler', () => {
         '  y := "D"',
         '  if (x == 1) {',
         '    y := "A"',
-        '  } else if (x == 2) {',
+        '  } elseif (x == 2) {',
         '    y := "B"',
-        '  } else if (x == 3) {',
+        '  } elseif (x == 3) {',
         '    y := "C"',
         '  }',
         '  return (y)',
@@ -859,6 +856,7 @@ describe('Compiler', () => {
         i18n('errmsg:primitive-argument-type-mismatch')(
           i18n('PRIM:PutStone'),
           1,
+          1,
           new TypeStructure(i18n('TYPE:Color'), {}),
           new TypeInteger(),
         )
@@ -897,6 +895,84 @@ describe('Compiler', () => {
       expect(result).deep.equals(new ValueString('foo'));
     });
 
+  });
+
+  describe('Expressions: conditional (choose)', () => {
+
+    describe('Choose: true branch', () => {
+      let result = new Runner().run([
+        'program {',
+        '  x := choose 5 + 5 when (' + i18n('CONS:True') + ')',
+        '              20 div 0 otherwise',
+        '  return (x)',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(new ValueInteger(10));
+    });
+
+    describe('Choose: false branch', () => {
+      let result = new Runner().run([
+        'program {',
+        '  x := choose 10 div 0 when (1 == 2)',
+        '              20 otherwise',
+        '  return (x)',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(new ValueInteger(20));
+    });
+
+    describe('Choose: short-circuiting for nested conditions', () => {
+      let result = new Runner().run([
+        'program {',
+        '  x := choose 10 when (' + i18n('CONS:True') + ')',
+        '              20 div 0 when (55 div 0)',
+        '              30 div 0 otherwise',
+        '  return (x)',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(new ValueInteger(10));
+    });
+
+    describe('Choose: nested true branch', () => {
+      let result = new Runner().run([
+        'program {',
+        '  x := choose 10 div 0 when (' + i18n('CONS:False') + ')',
+        '              20 when (' + i18n('CONS:True') + ')',
+        '              30 div 0 otherwise',
+        '  return (x)',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(new ValueInteger(20));
+    });
+
+    describe('Choose: nested false branch', () => {
+      let result = new Runner().run([
+        'program {',
+        '  x := choose 10 div 0 when (' + i18n('CONS:False') + ')',
+        '              20 div 0 when (' + i18n('CONS:False') + ')',
+        '              30 otherwise',
+        '  return (x)',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(new ValueInteger(30));
+    });
+
+    describe('Choose: reject if condition not a boolean', () => {
+      let result = () => new Runner().run([
+        'program {',
+        '  x := choose 10 when (55)',
+        '              20 otherwise',
+        '  return (x)',
+        '}',
+      ].join('\n'));
+      expect(result).throws(
+        i18n('errmsg:expected-value-of-type-but-got')(
+          new TypeStructure(i18n('TYPE:Bool'), {}),
+          new TypeInteger(),
+        )
+      );
+    });
+      
   });
 
   describe('Expressions: lists', () => {
@@ -1110,7 +1186,7 @@ describe('Compiler', () => {
       ].join('\n'));
       expect(result).throws(
         i18n('errmsg:expected-value-of-some-type-but-got')(
-          TYPES_WITH_ORDER,
+          typesWithOrder(),
           new TypeString()
         )
       );
@@ -1555,6 +1631,7 @@ describe('Compiler', () => {
         i18n('errmsg:primitive-argument-type-mismatch')(
           '+',
           1,
+          2,
           new TypeInteger(),
           new TypeString(),
         )

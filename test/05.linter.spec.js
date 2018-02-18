@@ -1396,6 +1396,68 @@ describe('Linter', () => {
       );
     });
 
+    it('Recursively lint expressions (choose: condition)', () => {
+      let code = [
+        'program {',
+        '  x := choose 1 when (foo())',
+        '              2 otherwise',
+        '}',
+      ].join('\n');
+      expect(() => lint(code)).throws(
+        i18n('errmsg:undefined-function')('foo')
+      );
+    });
+
+    it('Recursively lint expressions (choose: true branch)', () => {
+      let code = [
+        'program {',
+        '  x := choose foo() when (1)',
+        '              2 otherwise',
+        '}',
+      ].join('\n');
+      expect(() => lint(code)).throws(
+        i18n('errmsg:undefined-function')('foo')
+      );
+    });
+
+    it('Recursively lint expressions (choose: false branch)', () => {
+      let code = [
+        'program {',
+        '  x := choose 1 when (2)',
+        '              foo() otherwise',
+        '}',
+      ].join('\n');
+      expect(() => lint(code)).throws(
+        i18n('errmsg:undefined-function')('foo')
+      );
+    });
+
+    it('Recursively lint expressions (choose: nested condition)', () => {
+      let code = [
+        'program {',
+        '  x := choose 1 when (2)',
+        '              3 when (foo())',
+        '              4 otherwise',
+        '}',
+      ].join('\n');
+      expect(() => lint(code)).throws(
+        i18n('errmsg:undefined-function')('foo')
+      );
+    });
+
+    it('Recursively lint expressions (choose: nested true branch)', () => {
+      let code = [
+        'program {',
+        '  x := choose 1 when (2)',
+        '              foo() when (3)',
+        '              4 otherwise',
+        '}',
+      ].join('\n');
+      expect(() => lint(code)).throws(
+        i18n('errmsg:undefined-function')('foo')
+      );
+    });
+
     it('Recursively lint expressions (range: first)', () => {
       let code = [
         'program {',

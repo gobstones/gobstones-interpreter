@@ -5,7 +5,9 @@ import {
   Token, T_EOF, T_NUM, T_STRING, T_LOWERID, T_UPPERID,
   /* Keywords */
   T_PROGRAM, T_INTERACTIVE, T_PROCEDURE, T_FUNCTION, T_RETURN,
-  T_IF, T_THEN, T_ELSE, T_REPEAT, T_FOREACH, T_IN, T_WHILE,
+  T_IF, T_THEN, T_ELSEIF, T_ELSE,
+  T_CHOOSE, T_WHEN, T_OTHERWISE,
+  T_REPEAT, T_FOREACH, T_IN, T_WHILE,
   T_SWITCH, T_TO, T_LET, T_NOT, T_DIV, T_MOD, T_TYPE,
   T_IS, T_RECORD, T_VARIANT, T_CASE, T_FIELD, T_UNDERSCORE,
   T_TIMEOUT,
@@ -45,6 +47,7 @@ import {
   ASTExprVariable,
   ASTExprConstantNumber,
   ASTExprConstantString,
+  ASTExprChoose,
   ASTExprList,
   ASTExprRange,
   ASTExprTuple,
@@ -206,10 +209,12 @@ export class Parser {
   _parseDefProgram() {
     let startPos = this._currentToken.startPos;
     this._match(T_PROGRAM);
+    let attributes = this._lexer.getPendingAttributes();
     let block = this._parseStmtBlock();
     let result = new ASTDefProgram(block);
     result.startPos = startPos;
     result.endPos = block.endPos;
+    result.attributes = attributes;
     return result;
   }
 
@@ -217,6 +222,7 @@ export class Parser {
     let startPos = this._currentToken.startPos;
     this._match(T_INTERACTIVE);
     this._match(T_PROGRAM);
+    let attributes = this._lexer.getPendingAttributes();
     this._match(T_LBRACE);
     let branches = this._parseSwitchBranches();
     let endPos = this._currentToken.startPos;
@@ -224,6 +230,7 @@ export class Parser {
     let result = new ASTDefInteractiveProgram(branches);
     result.startPos = startPos;
     result.endPos = endPos;
+    result.attributes = attributes;
     return result;
   }
 
@@ -234,10 +241,12 @@ export class Parser {
     this._match(T_LPAREN);
     let parameters = this._parseLoweridSeq();
     this._match(T_RPAREN);
+    let attributes = this._lexer.getPendingAttributes();
     let block = this._parseStmtBlock();
     let result = new ASTDefProcedure(name, parameters, block);
     result.startPos = startPos;
     result.endPos = block.endPos;
+    result.attributes = attributes;
     return result;
   }
 
@@ -249,10 +258,12 @@ export class Parser {
     this._match(T_LPAREN);
     let parameters = this._parseLoweridSeq();
     this._match(T_RPAREN);
+    let attributes = this._lexer.getPendingAttributes();
     let block = this._parseStmtBlock();
     let result = new ASTDefFunction(name, parameters, block);
     result.startPos = startPos;
     result.endPos = block.endPos;
+    result.attributes = attributes;
     return result;
   }
 
@@ -282,6 +293,7 @@ export class Parser {
 
   _parseDefTypeRecord(startPos, typeName) {
     this._match(T_RECORD);
+    let attributes = this._lexer.getPendingAttributes();
     this._match(T_LBRACE);
     let fieldNames = this._parseFieldNames();
     let endPos = this._currentToken.startPos;
@@ -291,12 +303,14 @@ export class Parser {
                  ]);
     result.startPos = startPos;
     result.endPos = endPos;
+    result.attributes = attributes;
     return result;
   }
 
   _parseDefTypeVariant(startPos, typeName) {
     let constructorDeclarations = [];
     this._match(T_VARIANT);
+    let attributes = this._lexer.getPendingAttributes();
     this._match(T_LBRACE);
     while (this._currentToken.tag === T_CASE) {
       constructorDeclarations.push(this._parseConstructorDeclaration());
@@ -306,6 +320,7 @@ export class Parser {
     let result = new ASTDefType(typeName, constructorDeclarations);
     result.startPos = startPos;
     result.endPos = endPos;
+    result.attributes = attributes;
     return result;
   }
 
@@ -349,7 +364,7 @@ export class Parser {
       case T_RETURN:
         return this._parseStmtReturn();
       case T_IF:
-        return this._parseStmtIf();
+        return this._parseStmtIf(true /* expectInitialIf */);
       case T_REPEAT:
         return this._parseStmtRepeat();
       case T_FOREACH:
@@ -415,9 +430,11 @@ export class Parser {
     return result;
   }
 
-  _parseStmtIf() {
+  _parseStmtIf(expectInitialIf) {
     let startPos = this._currentToken.startPos;
-    this._match(T_IF);
+    if (expectInitialIf) {
+      this._match(T_IF);
+    }
 
     this._match(T_LPAREN);
     let condition = this._parseExpression();
@@ -430,13 +447,13 @@ export class Parser {
 
     let endPos;
     let elseBlock;
-    if (this._currentToken.tag === T_ELSE) {
+    if (this._currentToken.tag === T_ELSEIF) {
+      this._match(T_ELSEIF);
+      elseBlock = this._parseStmtIf(false /* expectInitialIf */);
+      endPos = elseBlock.endPos;
+    } else if (this._currentToken.tag === T_ELSE) {
       this._match(T_ELSE);
-      if (this._currentToken.tag === T_IF) {
-        elseBlock = this._parseStmtIf();
-      } else {
-        elseBlock = this._parseStmtBlock();
-      }
+      elseBlock = this._parseStmtBlock();
       endPos = elseBlock.endPos;
     } else {
       elseBlock = null;
@@ -805,6 +822,8 @@ export class Parser {
         return this._parseExprConstantNumber();
       case T_STRING:
         return this._parseExprConstantString();
+      case T_CHOOSE:
+        return this._parseExprChoose(true /* expectInitialChoose */);
       case T_UPPERID:
         return this._parseExprStructureOrStructureUpdate();
       case T_LPAREN:
@@ -857,6 +876,31 @@ export class Parser {
     result.startPos = string.startPos;
     result.endPos = string.endPos;
     return result;
+  }
+
+  _parseExprChoose(expectInitialChoose) {
+    let startPos = this._currentToken.startPos;
+    if (expectInitialChoose) {
+      this._match(T_CHOOSE);
+    }
+    let expr1 = this._parseExpression();
+    if (this._currentToken.tag === T_WHEN) {
+      this._match(T_WHEN);
+      this._match(T_LPAREN);
+      let condition = this._parseExpression();
+      this._match(T_RPAREN);
+      let expr2 = this._parseExprChoose(false /* expectInitialChoose */);
+      let result = new ASTExprChoose(condition, expr1, expr2);
+      result.startPos = startPos;
+      result.endPos = expr2.endPos;
+      return result;
+    } else {
+      let endPos = this._currentToken.endPos;
+      this._match(T_OTHERWISE);
+      expr1.startPos = startPos;
+      expr1.endPos = endPos;
+      return expr1;
+    }
   }
 
   /*

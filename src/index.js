@@ -108,13 +108,14 @@ class ParseError extends GobstonesInterpreterError {
 }
 
 class ExecutionError extends GobstonesInterpreterError {
-  constructor(exception, snapshots) {
+  constructor(exception, snapshots, regionStack) {
     super(exception);
 
     const isTimeout = this.reason.code === 'timeout';
     this.snapshots = isTimeout
       ? [snapshots[snapshots.length - 1]]
       : snapshots;
+    this.on.regionStack = regionStack;
   }
 }
 
@@ -260,7 +261,11 @@ class InteractiveExecutionResult {
         if (exception.isGobstonesException === undefined) {
           throw exception;
         }
-        return new ExecutionError(exception, []);
+        return new ExecutionError(
+                 exception,
+                 [],
+                 state.runner.regionStack()
+               );
       }
     });
   }
@@ -298,6 +303,7 @@ class SnapshotTaker {
     }
     snapshot.board = apiboardFromState(globalState);
     snapshot.region = position.region;
+    snapshot.regionStack = this._runner.regionStack();
     return snapshot;
   }
 
@@ -373,6 +379,9 @@ class ParseResult {
       this.program = this._resultForProgram(state);
     }
     this.declarations = this._collectDeclarations(state.runner);
+    this.getAttributes = function (globalName) {
+      return state.runner.symbolTable.getAttributes(globalName);
+    };
   }
 
   _resultForProgram(state) {
@@ -402,7 +411,11 @@ class ParseResult {
             throw exception;
           }
 
-          return new ExecutionError(exception, snapshotTaker.snapshots());
+          return new ExecutionError(
+                   exception,
+                   snapshotTaker.snapshots(),
+                   state.runner.regionStack()
+                 );
         }
       });
     };
@@ -422,7 +435,11 @@ class ParseResult {
           if (exception.isGobstonesException === undefined) {
             throw exception;
           }
-          return new ExecutionError(exception, []);
+          return new ExecutionError(
+                   exception,
+                   [],
+                   state.runner.regionStack()
+                 );
         }
       });
     };

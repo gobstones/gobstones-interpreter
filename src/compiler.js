@@ -27,6 +27,7 @@ import {
   N_ExprVariable,
   N_ExprConstantNumber,
   N_ExprConstantString,
+  N_ExprChoose,
   N_ExprList,
   N_ExprRange,
   N_ExprTuple,
@@ -810,6 +811,8 @@ export class Compiler {
         return this._compileExprConstantNumber(expression);
       case N_ExprConstantString:
         return this._compileExprConstantString(expression);
+      case N_ExprChoose:
+        return this._compileExprChoose(expression);
       case N_ExprList:
         return this._compileExprList(expression);
       case N_ExprRange:
@@ -845,6 +848,55 @@ export class Compiler {
   _compileExprConstantString(expression) {
     this._produce(expression.startPos, expression.endPos,
       new IPushString(expression.string.value)
+    );
+  }
+
+  /*
+   * An expression of the form:
+   *
+   *   choose a when (cond) b otherwise
+   *
+   * is compiled similarly as a statement of the form:
+   *
+   *   if (cond) { a } else { b }
+   *
+   * Recall that a 'choose' with many branches:
+   *
+   *   choose a1 when (cond1)
+   *          ...
+   *          aN when (condN)
+   *          b  otherwise
+   *
+   * is actually parsed as a sequence of nested binary choose
+   * constructions:
+   *
+   *   choose a1 when (cond1)
+   *          (
+   *            ...
+   *            choose aN when (condN)
+   *                    b otherwise
+   *            ...
+   *          ) otherwise
+   *
+   */
+  _compileExprChoose(expression) {
+    this._compileExpression(expression.condition);
+    this._produce(expression.condition.startPos, expression.condition.endPos,
+      new ITypeCheck(new TypeStructure(i18n('TYPE:Bool'), {}))
+    );
+    let labelOtherwise = this._freshLabel();
+    this._produce(expression.startPos, expression.endPos,
+      new IJumpIfFalse(labelOtherwise)
+    );
+    this._compileExpression(expression.trueExpr);
+    let labelEnd = this._freshLabel();
+    this._produceList(expression.startPos, expression.endPos, [
+      new IJump(labelEnd),
+      new ILabel(labelOtherwise),
+    ]);
+    this._compileExpression(expression.falseExpr);
+    this._produce(expression.startPos, expression.endPos,
+      new ILabel(labelEnd)
     );
   }
 

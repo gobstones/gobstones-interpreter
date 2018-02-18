@@ -4,7 +4,9 @@ import {
   T_EOF, T_NUM, T_STRING, T_LOWERID, T_UPPERID,
   /* Keywords */
   T_PROGRAM, T_INTERACTIVE, T_PROCEDURE, T_FUNCTION, T_RETURN,
-  T_IF, T_THEN, T_ELSE, T_REPEAT, T_FOREACH, T_IN, T_WHILE,
+  T_IF, T_THEN, T_ELSEIF, T_ELSE,
+  T_CHOOSE, T_WHEN, T_OTHERWISE,
+  T_REPEAT, T_FOREACH, T_IN, T_WHILE,
   T_SWITCH, T_TO, T_LET, T_NOT, T_DIV, T_MOD, T_TYPE,
   T_IS, T_RECORD, T_VARIANT, T_CASE, T_FIELD, T_UNDERSCORE,
   T_TIMEOUT,
@@ -115,13 +117,16 @@ describe('Lexer', () => {
         'return',
         'if',
         'then',
+        'elseif',
         'else',
+        'choose',
+        'when',
+        'otherwise',
         'repeat',
         'foreach',
         'in',
         'while',
         'switch',
-        'match',
         'to',
         'let',
         'not',
@@ -145,12 +150,15 @@ describe('Lexer', () => {
         T_RETURN,
         T_IF,
         T_THEN,
+        T_ELSEIF,
         T_ELSE,
+        T_CHOOSE,
+        T_WHEN,
+        T_OTHERWISE,
         T_REPEAT,
         T_FOREACH,
         T_IN,
         T_WHILE,
-        T_SWITCH,
         T_SWITCH,
         T_TO,
         T_LET,
@@ -575,6 +583,56 @@ describe('Lexer', () => {
         i18n('errmsg:unclosed-string-constant')
       );
     });
+
+  });
+
+  describe('Checking of balanced delimiters', () => {
+
+    it('Reject unmatched opening parenthesis', () => {
+      let lexer = new Lexer('(]');
+      lexer.nextToken();
+      expect(() => lexer.nextToken()).throws(
+        i18n('errmsg:unmatched-opening-delimiter')('(')
+      );
+    });
+
+    it('Reject unmatched opening bracket', () => {
+      let lexer = new Lexer('({([({}{})}');
+      for (let i = 0; i < 10; i++) {
+        lexer.nextToken();
+      }
+      expect(() => lexer.nextToken()).throws(
+        i18n('errmsg:unmatched-opening-delimiter')('[')
+      );
+    });
+
+    it('Reject unmatched opening brace on EOF', () => {
+      let lexer = new Lexer('([{');
+      for (let i = 0; i < 3; i++) {
+        lexer.nextToken();
+      }
+      expect(() => lexer.nextToken()).throws(
+        i18n('errmsg:unmatched-opening-delimiter')('{')
+      );
+    });
+
+    it('Reject unmatched closing parenthesis', () => {
+      let lexer = new Lexer(')');
+      expect(() => lexer.nextToken()).throws(
+        i18n('errmsg:unmatched-closing-delimiter')(')')
+      );
+    });
+
+    it('Reject unmatched closing brace', () => {
+      let lexer = new Lexer('([(){}][[{}][]])}');
+      for (let i = 0; i < 16; i++) {
+        lexer.nextToken();
+      }
+      expect(() => lexer.nextToken()).throws(
+        i18n('errmsg:unmatched-closing-delimiter')('}')
+      );
+    });
+
 
   });
 

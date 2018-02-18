@@ -24,7 +24,7 @@ export class SourceReader {
     this._index = 0;             // Index in the current file
     this._line = 1;              // Line in the current file
     this._column = 1;            // Column in the current file
-    this._regions = [];          // Stack of regions
+    this._regions = [];          // Lexical (static) stack of regions
   }
 
   _clone() {

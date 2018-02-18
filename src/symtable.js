@@ -52,6 +52,7 @@ function fail(startPos, endPos, reason, args) {
  * - type definitions, constructors, and fields
  */
 export class SymbolTable {
+
   constructor() {
     this._program = null;
 
@@ -428,6 +429,31 @@ export class SymbolTable {
   /* Removes all local names. */
   exitScope() {
     this._localNames = {};
+  }
+
+  /* Get the attribute dictionary for a global name.
+   *
+   * A global name is the names of a global definition:
+   *   - the string 'program'
+   *   - any procedure name (e.g. 'P')
+   *   - any function name (e.g. 'f')
+   *   - any type name (e.g. 'A')
+   *
+   * The result is a dictionary of attributes.
+   *
+   */
+  getAttributes(globalName) {
+    if (globalName === 'program' && this._program !== null) {
+      return this._program.attributes;
+    } else if (globalName in this._procedures) {
+      return this._procedures[globalName].attributes;
+    } else if (globalName in this._functions) {
+      return this._functions[globalName].attributes;
+    } else if (globalName in this._types) {
+      return this._types[globalName].attributes;
+    } else {
+      return {};
+    }
   }
 
 }

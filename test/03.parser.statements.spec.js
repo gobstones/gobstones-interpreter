@@ -377,21 +377,21 @@ describe('Parser: statements', () => {
     });
 
     it('Fail if missing "then" block', () => {
-      let parser = new Parser('program { if(xxx)');
+      let parser = new Parser('program { if(xxx) }');
       expect(() => parser.parse()).throws(
         i18n('errmsg:expected-but-found')(
           i18n('T_LBRACE'),
-          i18n('T_EOF')
-       )
+          i18n('T_RBRACE')
+        )
       );
     });
 
     it('Fail if missing "else" block', () => {
-      let parser = new Parser('program { if(xxx) {} else');
+      let parser = new Parser('program { if(xxx) {} else }');
       expect(() => parser.parse()).throws(
         i18n('errmsg:expected-but-found')(
           i18n('T_LBRACE'),
-          i18n('T_EOF')
+          i18n('T_RBRACE')
        )
       );
     });
@@ -405,6 +405,132 @@ describe('Parser: statements', () => {
       expect(ast[0].body.statements[0].startPos.column).equals(3);
       expect(ast[0].body.statements[0].endPos.line).equals(4);
       expect(ast[0].body.statements[0].endPos.column).equals(3);
+    });
+
+    it('Accept "if" with "elseif" without "else"', () => {
+      let parser = new Parser([
+          'program {',
+          '  if (a) {',
+          '    A()',
+          '  } elseif (b) {',
+          '    B()',
+          '  }',
+          '}',
+      ].join('\n'));
+      expectAST(parser.parse(), [
+        new ASTDefProgram(
+          new ASTStmtBlock([
+            new ASTStmtIf(
+              new ASTExprVariable(tok(T_LOWERID, 'a')),
+              new ASTStmtBlock([
+                  new ASTStmtProcedureCall(tok(T_UPPERID, 'A'), [])
+              ]),
+              new ASTStmtIf(
+                new ASTExprVariable(tok(T_LOWERID, 'b')),
+                new ASTStmtBlock([
+                  new ASTStmtProcedureCall(tok(T_UPPERID, 'B'), [])
+                ]),
+                null,
+              ),
+            )
+          ])
+        )
+      ]);
+    });
+
+    it('Accept "if" with "elseif" with "else"', () => {
+      let parser = new Parser([
+          'program {',
+          '  if (a) {',
+          '    A()',
+          '  } elseif (b) then {',
+          '    B()',
+          '  } else {',
+          '    C()',
+          '  }',
+          '}',
+      ].join('\n'));
+      expectAST(parser.parse(), [
+        new ASTDefProgram(
+          new ASTStmtBlock([
+            new ASTStmtIf(
+              new ASTExprVariable(tok(T_LOWERID, 'a')),
+              new ASTStmtBlock([
+                new ASTStmtProcedureCall(tok(T_UPPERID, 'A'), [])
+              ]),
+              new ASTStmtIf(
+                new ASTExprVariable(tok(T_LOWERID, 'b')),
+                new ASTStmtBlock([
+                  new ASTStmtProcedureCall(tok(T_UPPERID, 'B'), [])
+                ]),
+                new ASTStmtBlock([
+                  new ASTStmtProcedureCall(tok(T_UPPERID, 'C'), [])
+                ])
+              ),
+            )
+          ])
+        )
+      ]);
+    });
+
+    it('Accept chain of "elseif"s', () => {
+      let parser = new Parser([
+          'program {',
+          '  if (a) {',
+          '    A()',
+          '  } elseif (b) then {',
+          '    B()',
+          '  } elseif (c) then {',
+          '    C()',
+          '  } elseif (d) then {',
+          '    D()',
+          '  } elseif (e) then {',
+          '    E()',
+          '  } else {',
+          '    F()',
+          '  }',
+          '}',
+      ].join('\n'));
+      expectAST(parser.parse(), [
+        new ASTDefProgram(
+          new ASTStmtBlock([
+            new ASTStmtIf(
+              new ASTExprVariable(tok(T_LOWERID, 'a')),
+              new ASTStmtBlock([
+                new ASTStmtProcedureCall(tok(T_UPPERID, 'A'), [])
+              ]),
+              new ASTStmtIf(
+                new ASTExprVariable(tok(T_LOWERID, 'b')),
+                new ASTStmtBlock([
+                  new ASTStmtProcedureCall(tok(T_UPPERID, 'B'), [])
+                ]),
+
+                new ASTStmtIf(
+                  new ASTExprVariable(tok(T_LOWERID, 'c')),
+                  new ASTStmtBlock([
+                    new ASTStmtProcedureCall(tok(T_UPPERID, 'C'), [])
+                  ]),
+                  new ASTStmtIf(
+                    new ASTExprVariable(tok(T_LOWERID, 'd')),
+                    new ASTStmtBlock([
+                      new ASTStmtProcedureCall(tok(T_UPPERID, 'D'), [])
+                    ]),
+                    new ASTStmtIf(
+                      new ASTExprVariable(tok(T_LOWERID, 'e')),
+                      new ASTStmtBlock([
+                        new ASTStmtProcedureCall(tok(T_UPPERID, 'E'), [])
+                      ]),
+                      new ASTStmtBlock([
+                        new ASTStmtProcedureCall(tok(T_UPPERID, 'F'), [])
+                      ]),
+                    ),
+                  ),
+                ),
+              ),
+            )
+          ])
+        )
+      ]);
     });
 
   });
@@ -470,12 +596,9 @@ describe('Parser: statements', () => {
     });
 
     it('Fail if missing right parenthesis', () => {
-      let parser = new Parser('program { repeat (n');
+      let parser = new Parser('program { repeat (n }');
       expect(() => parser.parse()).throws(
-        i18n('errmsg:expected-but-found')(
-          i18n('T_RPAREN'),
-          i18n('T_EOF')
-       )
+        i18n('errmsg:unmatched-opening-delimiter')('(')
       );
     });
 
@@ -491,132 +614,6 @@ describe('Parser: statements', () => {
       expect(ast[0].body.statements[1].startPos.column).equals(26);
       expect(ast[0].body.statements[1].endPos.line).equals(1);
       expect(ast[0].body.statements[1].endPos.column).equals(38);
-    });
-
-    it('Accept "if" with "else if" without "else"', () => {
-      let parser = new Parser([
-          'program {',
-          '  if (a) {',
-          '    A()',
-          '  } else if (b) {',
-          '    B()',
-          '  }',
-          '}',
-      ].join('\n'));
-      expectAST(parser.parse(), [
-        new ASTDefProgram(
-          new ASTStmtBlock([
-            new ASTStmtIf(
-              new ASTExprVariable(tok(T_LOWERID, 'a')),
-              new ASTStmtBlock([
-                  new ASTStmtProcedureCall(tok(T_UPPERID, 'A'), [])
-              ]),
-              new ASTStmtIf(
-                new ASTExprVariable(tok(T_LOWERID, 'b')),
-                new ASTStmtBlock([
-                  new ASTStmtProcedureCall(tok(T_UPPERID, 'B'), [])
-                ]),
-                null,
-              ),
-            )
-          ])
-        )
-      ]);
-    });
-
-    it('Accept "if" with "else if" with "else"', () => {
-      let parser = new Parser([
-          'program {',
-          '  if (a) {',
-          '    A()',
-          '  } else if (b) then {',
-          '    B()',
-          '  } else {',
-          '    C()',
-          '  }',
-          '}',
-      ].join('\n'));
-      expectAST(parser.parse(), [
-        new ASTDefProgram(
-          new ASTStmtBlock([
-            new ASTStmtIf(
-              new ASTExprVariable(tok(T_LOWERID, 'a')),
-              new ASTStmtBlock([
-                new ASTStmtProcedureCall(tok(T_UPPERID, 'A'), [])
-              ]),
-              new ASTStmtIf(
-                new ASTExprVariable(tok(T_LOWERID, 'b')),
-                new ASTStmtBlock([
-                  new ASTStmtProcedureCall(tok(T_UPPERID, 'B'), [])
-                ]),
-                new ASTStmtBlock([
-                  new ASTStmtProcedureCall(tok(T_UPPERID, 'C'), [])
-                ])
-              ),
-            )
-          ])
-        )
-      ]);
-    });
-
-    it('Accept chain of "else if"s', () => {
-      let parser = new Parser([
-          'program {',
-          '  if (a) {',
-          '    A()',
-          '  } else if (b) then {',
-          '    B()',
-          '  } else if (c) then {',
-          '    C()',
-          '  } else if (d) then {',
-          '    D()',
-          '  } else if (e) then {',
-          '    E()',
-          '  } else {',
-          '    F()',
-          '  }',
-          '}',
-      ].join('\n'));
-      expectAST(parser.parse(), [
-        new ASTDefProgram(
-          new ASTStmtBlock([
-            new ASTStmtIf(
-              new ASTExprVariable(tok(T_LOWERID, 'a')),
-              new ASTStmtBlock([
-                new ASTStmtProcedureCall(tok(T_UPPERID, 'A'), [])
-              ]),
-              new ASTStmtIf(
-                new ASTExprVariable(tok(T_LOWERID, 'b')),
-                new ASTStmtBlock([
-                  new ASTStmtProcedureCall(tok(T_UPPERID, 'B'), [])
-                ]),
-
-                new ASTStmtIf(
-                  new ASTExprVariable(tok(T_LOWERID, 'c')),
-                  new ASTStmtBlock([
-                    new ASTStmtProcedureCall(tok(T_UPPERID, 'C'), [])
-                  ]),
-                  new ASTStmtIf(
-                    new ASTExprVariable(tok(T_LOWERID, 'd')),
-                    new ASTStmtBlock([
-                      new ASTStmtProcedureCall(tok(T_UPPERID, 'D'), [])
-                    ]),
-                    new ASTStmtIf(
-                      new ASTExprVariable(tok(T_LOWERID, 'e')),
-                      new ASTStmtBlock([
-                        new ASTStmtProcedureCall(tok(T_UPPERID, 'E'), [])
-                      ]),
-                      new ASTStmtBlock([
-                        new ASTStmtProcedureCall(tok(T_UPPERID, 'F'), [])
-                      ]),
-                    ),
-                  ),
-                ),
-              ),
-            )
-          ])
-        )
-      ]);
     });
 
   });
@@ -828,25 +825,6 @@ describe('Parser: statements', () => {
           new ASTStmtBlock([
             new ASTStmtSwitch(
               new ASTExprVariable(tok(T_LOWERID, 'foo')),
-              []
-            )
-          ])
-        )
-      ]);
-    });
-
-    it('Accept alternative keyword "match"', () => {
-      let parser = new Parser(
-                     'program {' +
-                     '  match (bar) to {' +
-                     '  }' +
-                     '}'
-                   );
-      expectAST(parser.parse(), [
-        new ASTDefProgram(
-          new ASTStmtBlock([
-            new ASTStmtSwitch(
-              new ASTExprVariable(tok(T_LOWERID, 'bar')),
               []
             )
           ])
@@ -1463,10 +1441,7 @@ describe('Parser: statements', () => {
                      '}\n'
                    );
       expect(() => parser.parse()).throws(
-        i18n('errmsg:expected-but-found')(
-          i18n('expression'),
-          i18n('T_RBRACE')
-        )
+        i18n('errmsg:unmatched-opening-delimiter')('(')
       );
     });
 
