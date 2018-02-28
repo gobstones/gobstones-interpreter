@@ -686,8 +686,8 @@ export const LOCALE_ES = {
 
   'PRIM:head': 'primero',
   'PRIM:tail': 'resto',
-  'PRIM:init': 'ultimo',
-  'PRIM:last': 'comienzo',
+  'PRIM:init': 'comienzo',
+  'PRIM:last': 'ultimo',
 
   /* Helpers */
   '<alternative>':

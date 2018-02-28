@@ -547,8 +547,8 @@ LOCALE_PT['PRIM:maxDir'] = 'maxDir';
 
 LOCALE_PT['PRIM:head'] = 'primeiro';
 LOCALE_PT['PRIM:tail'] = 'resto';
-LOCALE_PT['PRIM:init'] = 'ultimo';
-LOCALE_PT['PRIM:last'] = 'comeco';
+LOCALE_PT['PRIM:init'] = 'comeco';
+LOCALE_PT['PRIM:last'] = 'ultimo';
 
 /* Helpers */
 LOCALE_PT['<alternative>'] =
