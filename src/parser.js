@@ -182,6 +182,12 @@ export class Parser {
     return new ASTMain(definitions);
   }
 
+  /* Return the list of all language options collected by the tokenizer.
+   * Language options are set by the LANGUAGE pragma. */
+  getLanguageOptions() {
+    return this._lexer.getLanguageOptions();
+  }
+
   /** Definitions **/
 
   _parseDefinition() {

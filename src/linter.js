@@ -86,6 +86,7 @@ export class Linter {
      * If a check is disabled, it does not produce a syntax error.
      */
     this._enabledLinterChecks = {
+      // Linter options
       'source-should-have-a-program-definition': true,
       'procedure-should-not-have-return': true,
       'function-should-have-return': true,
@@ -113,6 +114,8 @@ export class Linter {
       'type-used-as-constructor': true,
       'procedure-used-as-constructor': true,
       'undeclared-constructor': true,
+      // Extensions
+      'forbidden-extension-destructuring-foreach': true,
     };
   }
 
@@ -328,10 +331,23 @@ export class Linter {
   }
 
   _lintStmtForeach(statement) {
+    /* Only allow variables in indices (unless "DestructuringForeach"
+     * is enabled). */
+    if (statement.pattern.tag !== N_PatternVariable) {
+      this._lintCheck(
+        statement.pattern.startPos, statement.pattern.endPos,
+        'forbidden-extension-destructuring-foreach', []
+      );
+    }
+
     this._lintExpression(statement.range);
-    this._symtable.addNewLocalName(statement.index, LocalIndex);
+    for (let variable of statement.pattern.boundVariables) {
+      this._symtable.addNewLocalName(variable, LocalIndex);
+    }
     this._lintStatement(statement.body);
-    this._symtable.removeLocalName(statement.index);
+    for (let variable of statement.pattern.boundVariables) {
+      this._symtable.removeLocalName(variable);
+    }
   }
 
   _lintStmtWhile(statement) {

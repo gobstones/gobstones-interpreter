@@ -16,6 +16,18 @@ function lint(code) {
   return new Linter(new SymbolTable()).lint(new Parser(code).parse());
 }
 
+function lintDisableDestructuringForeach(code) {
+  let l = new Linter(new SymbolTable());
+  l.enableCheck('forbidden-extension-destructuring-foreach', true);
+  return l.lint(new Parser(code).parse());
+}
+
+function lintEnableDestructuringForeach(code) {
+  let l = new Linter(new SymbolTable());
+  l.enableCheck('forbidden-extension-destructuring-foreach', false);
+  return l.lint(new Parser(code).parse());
+}
+
 function tok(tag, value) {
   return new Token(tag, value, UnknownPosition, UnknownPosition);
 }
@@ -683,6 +695,66 @@ describe('Linter', () => {
           i18n('<position>')('(?)', 4, 10),
         )
       );
+    });
+
+  });
+
+  describe('Foreach statement', () => {
+
+    it('Always accept foreach with variable index', () => {
+      let code = [
+        'program {',
+        '  foreach i in [] {',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(
+        lintDisableDestructuringForeach(code).program !== null
+      ).equals(true);
+    });
+
+    it('DestructuringForeach disabled -- Reject wildcard index', () => {
+      let code = [
+        'program {',
+        '  foreach _ in [] {',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(() => lintDisableDestructuringForeach(code)).throws(
+        i18n('errmsg:forbidden-extension-destructuring-foreach')
+      );
+    });
+
+    it('DestructuringForeach enabled -- Accept wildcard index', () => {
+      let code = [
+        'program {',
+        '  foreach _ in [] {',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(lintEnableDestructuringForeach(code) === null).equals(false);
+    });
+
+    it('DestructuringForeach disabled -- Reject tuple index', () => {
+      let code = [
+        'program {',
+        '  foreach (x,y) in [] {',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(() => lintDisableDestructuringForeach(code)).throws(
+        i18n('errmsg:forbidden-extension-destructuring-foreach')
+      );
+    });
+
+    it('DestructuringForeach enabled -- Accept tuple index', () => {
+      let code = [
+        'program {',
+        '  foreach (x,y) in [] {',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(lintEnableDestructuringForeach(code) === null).equals(false);
     });
 
   });

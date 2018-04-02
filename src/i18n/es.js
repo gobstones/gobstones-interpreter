@@ -244,6 +244,11 @@ export const LOCALE_ES = {
            + 'pero no había ' + openingDelimiterName(delimiter) + '.';
     },
 
+  'errmsg:unknown-language-option':
+    function (option) {
+      return 'Opción desconocida. "' + option + '".';
+    },
+
   /* Parser */
   'errmsg:empty-source':
     'El programa está vacío.',
@@ -490,6 +495,9 @@ export const LOCALE_ES = {
            + 'en un programa interactivo (el usuario no puede construir '
            + 'instancias).';
     },
+
+  'errmsg:forbidden-extension-destructuring-foreach':
+    'El índice de la repetición indexada debe ser una variable.',
 
   /* Runtime errors (virtual machine) */
   'errmsg:undefined-variable':

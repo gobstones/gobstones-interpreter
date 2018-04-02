@@ -132,6 +132,11 @@ const SYMBOLS = [
   ['^', T_POW]
 ];
 
+/* Valid language options accepted by the LANGUAGE pragma */
+const LANGUAGE_OPTIONS = [
+  'DestructuringForeach',
+];
+
 function leadingZeroes(string) {
   return string.length >= 0 && string[0] === '0';
 }
@@ -174,6 +179,12 @@ export class Lexer {
      * Pending attributes are used by the parser to decorate any procedure
      * or function definition. */
     this._pendingAttributes = {};
+
+    /* A list of language options, enabled by the LANGUAGE pragma.
+     * Language options are interpreted by the runner to initialize.
+     * the remaining modules (linter, compiler, runtime, ...)
+     * accordingly. */
+    this._languageOptions = [];
   }
 
   /* Return the next token from the input */
@@ -458,6 +469,9 @@ export class Lexer {
       let key = pragma[1];
       let value = pragma.slice(2, pragma.length).join('@');
       this.setAttribute(key, value);
+    } else if (pragma[0] === 'LANGUAGE' && pragma.length == 2) {
+      let languageOption = pragma[1];
+      this.addLanguageOption(languageOption);
     } else {
       this._emitWarning(startPos, this._reader, 'unknown-pragma', [pragma[0]]);
     }
@@ -523,6 +537,26 @@ export class Lexer {
 
   setAttribute(key, value) {
     this._pendingAttributes[key] = value;
+  }
+
+  /*
+   * Interface for handling language options.
+   *
+   * The pragma LANGUAGE@option sets the given option.
+   *
+   * The runner module reads these options to initialize the
+   * linter/compiler/runtime.
+   */
+  getLanguageOptions() {
+    return this._languageOptions;
+  }
+
+  addLanguageOption(option) {
+    if (LANGUAGE_OPTIONS.indexOf(option) != -1) {
+      this._languageOptions.push(option);
+    } else {
+      fail(this._reader, this._reader, 'unknown-language-option', [option]);
+    }
   }
 
 }

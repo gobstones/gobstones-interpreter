@@ -133,7 +133,9 @@ Todos los s\'imbolos terminales se acompa\~nan de su nombre \token{EN\_MAYUSCULA
 
 \subsection{Pragmas}
 
-El tokenizador implementa directivas pragma para
+\subsubsection{Pragmas \texttt{BEGIN\_REGION} y \texttt{END\_REGION}}
+
+Las directivas \texttt{BEGIN\_REGION} y \texttt{END\_REGION} sirven para
 mantener registro de ``regiones''. Una regi\'on es una cadena de texto que
 sirve para identificar o {\em taggear} un fragmento del programa.
 Las regiones no tienen ning\'un significado
@@ -142,9 +144,9 @@ eleva el int\'erprete vienen acompa\~nadas de una posici\'on que incluye
 el nombre de la regi\'on actual. Las regiones pueden anidarse.
 Este comportamiento se implementa por medio de dos directivas.
 \begin{itemize}
-\item \str{/*@BEGIN\_REGION@\textit{nombre\_de\_la\_regi\'on}@*/}:
+\item \str{/*@BEGIN\_REGION@\textit{nombre\_de\_la\_regi\'on}@*/} ---
        mete el nombre de una regi\'on en la pila de regiones.
-\item \str{/*@END\_REGION@*/}: saca la regi\'on del tope de la pila de regiones.
+\item \str{/*@END\_REGION@*/} --- saca la regi\'on del tope de la pila de regiones.
 \end{itemize}
 Por ejemplo ante el siguiente programa:
 \begin{verbatim}
@@ -157,6 +159,76 @@ procedure P() {
 /*@END_REGION@*/
 \end{verbatim}
 El parser idealmente deber\'ia reportar que hay un error de sintaxis en la regi\'on \texttt{B}.
+
+\subsubsection{Pragma \texttt{ATTRIBUTE}}
+
+La directiva \texttt{ATTRIBUTE} sirve para decorar definiciones de
+tipos, programas, procedimientos y funciones con atributos clave/valor.
+La directiva \texttt{ATTRIBUTE} debe {\bf preceder} inmediatamente la definici\'on
+de un tipo, programa, procedimiento o funci\'on, y su sintaxis es la siguiente:
+\begin{itemize}
+\item \str{/*@ATTRIBUTE@clave@valor@*/} --- asocia el valor indicado a la clave indicada.
+      Las claves y valores son {\em strings}.
+\end{itemize}
+Una definici\'on de tipo, programa, procedimiento o funci\'on puede estar precedida
+de varias directivas \texttt{ATTRIBUTE}, asociando a dicha definici\'on un diccionario
+de atributos. Por ejemplo en el siguiente programa:
+\begin{verbatim}
+/*@ATTRIBUTE@descripcion@Poner una piedra en la casilla actual.@*/
+/*@ATTRIBUTE@esAtomico@SI@*/
+procedure PonerPiedra() {
+  ...
+}
+
+/*@ATTRIBUTE@esAtomico@NO@*/
+function f() {
+  ...
+}
+
+/*@ATTRIBUTE@descripcion@Programa principal.@*/
+program {
+  ...
+}
+\end{verbatim}
+El procedimiento \texttt{PonerPiedra} tiene asociado el siguiente diccionario de atributos
+(en formato JSON):
+\begin{verbatim}
+  {
+    descripcion: "Poner una piedra en la casilla actual.",
+    esAtomico: "SI"
+  }
+\end{verbatim}
+y la funci\'on \texttt{f} tiene asociado el siguiente diccionario de atributos:
+\begin{verbatim}
+  {
+    esAtomico: "NO"
+  }
+\end{verbatim}
+El int\'erprete no otorga ning\'un significado ni funcionalidad especial a los atributos.
+Son un mecanismo abierto cuya finalidad es dependiente de la implementaci\'on.
+
+\subsubsection{Pragma \texttt{LANGUAGE}}
+
+Establece opciones del lenguaje.
+El objetivo de esta directiva es habilitar extensiones y funcionalidades experimentales.
+La etapa de an\'alisis sint\'actico no se ve afectada por la directiva \texttt{LANGUAGE}.
+La directiva \texttt{LANGUAGE} puede potencialmente
+afectar las etapas de an\'alisis est\'atico ({\em linter}),
+compilaci\'on y el comportamiento en tiempo de ejecuci\'on.
+
+La sintaxis de la directiva es:
+\begin{itemize}
+\item \str{/*@LANGUAGE@nombre-de-la-opcion@*/} ---
+      habilita la opci\'on indicada.
+\end{itemize}
+
+Por el momento hay una \'unica directiva \texttt{LANGUAGE} implementada:
+\begin{itemize}
+\item \str{/*@LANGUAGE@DestructuringForeach@*/} ---
+      habilita la posibilidad de usar patrones complejos
+      como \'indice del \texttt{foreach}
+      (en lugar de permitir solamente variables).
+\end{itemize}
 
 \subsection{Producciones de la gram\'atica}
 
