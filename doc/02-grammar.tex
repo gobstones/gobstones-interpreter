@@ -50,6 +50,8 @@
 \token{LOWERID} (\token{COMMA} \nonterminal{\nonEmpty{loweridSeq}})?
 }
 \production{\nonterminal{statement}}{
+\nonterminal{stmtEllipsis}
+\ALT
 \nonterminal{stmtBlock}
 \ALT
 \nonterminal{stmtReturn}
@@ -70,6 +72,9 @@
 \ALT
 \nonterminal{stmtProcedureCall}
 }
+\production{\nonterminal{stmtEllipsis}}{
+\token{ELLIPSIS}
+}
 \production{\nonterminal{stmtBlock}}{
 \token{LBRACE} (\nonterminal{statement} (\token{SEMICOLON})?)* \token{RBRACE}
 }
@@ -86,7 +91,7 @@
 \token{REPEAT} \token{LPAREN} \nonterminal{expression} \token{RPAREN} \nonterminal{stmtBlock}
 }
 \production{\nonterminal{stmtForeach}}{
-\token{FOREACH} \token{LOWERID} \token{IN} \nonterminal{expression} \nonterminal{stmtBlock}
+\token{FOREACH} \nonterminal{pattern} \token{IN} \nonterminal{expression} \nonterminal{stmtBlock}
 }
 \production{\nonterminal{stmtWhile}}{
 \token{WHILE} \token{LPAREN} \nonterminal{expression} \token{RPAREN} \nonterminal{stmtBlock}
@@ -158,6 +163,8 @@
 \token{LPAREN} \nonterminal{expression} \token{RPAREN}
 }
 \production{\nonterminal{exprAtom}}{
+\nonterminal{exprEllipsis}
+\ALT
 \nonterminal{exprVariable}
 \ALT
 \nonterminal{exprFunctionCall}
@@ -177,6 +184,9 @@
 \nonterminal{exprStructure}
 \ALT
 \nonterminal{exprStructureUpdate}
+}
+\production{\nonterminal{exprEllipsis}}{
+\token{ELLIPSIS}
 }
 \production{\nonterminal{exprVariable}}{
 \token{LOWERID}

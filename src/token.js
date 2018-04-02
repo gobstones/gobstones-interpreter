@@ -47,6 +47,7 @@ export const T_LBRACK = Symbol.for('T_LBRACK');
 export const T_RBRACK = Symbol.for('T_RBRACK');
 export const T_COMMA = Symbol.for('T_COMMA');
 export const T_SEMICOLON = Symbol.for('T_SEMICOLON');
+export const T_ELLIPSIS = Symbol.for('T_ELLIPSIS');
 export const T_RANGE = Symbol.for('T_RANGE');
 export const T_GETS = Symbol.for('T_GETS');
 export const T_PIPE = Symbol.for('T_PIPE');

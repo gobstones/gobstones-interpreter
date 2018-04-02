@@ -1552,4 +1552,25 @@ describe('Parser: statements', () => {
 
   });
 
+  describe('Ellipsis statement', () => {
+
+    it('Parse ellipsis statement and macroexpand to BOOM', () => {
+      let parser = new Parser(
+                     'program {\n' +
+                     '  ...\n' +
+                     '}\n'
+                   );
+      expectAST(parser.parse(), [
+        new ASTDefProgram(
+          new ASTStmtBlock([
+            new ASTStmtProcedureCall(tok(T_UPPERID, i18n('PRIM:BOOM')), [
+              new ASTExprConstantString(tok(T_STRING, i18n('errmsg:ellipsis')))
+            ])
+          ])
+        )
+      ]);
+    });
+
+  });
+
 });

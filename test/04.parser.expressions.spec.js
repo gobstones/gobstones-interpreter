@@ -2269,4 +2269,32 @@ describe('Parser: expressions', () => {
 
   });
 
+  describe('Ellipsis expression', () => {
+
+    it('Parse ellipsis expression and macroexpand to boom', () => {
+      let parser = new Parser(
+                     'program {\n' +
+                     '  x := ...\n' +
+                     '}\n'
+                   );
+      expectAST(parser.parse(), [
+        new ASTDefProgram(
+          new ASTStmtBlock([
+            new ASTStmtAssignVariable(
+              tok(T_LOWERID, 'x'),
+              new ASTExprFunctionCall(
+                tok(T_LOWERID, i18n('PRIM:boom')), [
+                  new ASTExprConstantString(
+                    tok(T_STRING, i18n('errmsg:ellipsis'))
+                  )
+                ]
+              )
+            )
+          ])
+        )
+      ]);
+    });
+
+  });
+
 });

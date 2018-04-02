@@ -685,6 +685,7 @@ export const LOCALE_ES = {
 
   'PRIM:BOOM': 'BOOM',
   'PRIM:boom': 'boom',
+  'PRIM:ellipsis': 'El programa todavía no está completo.',
 
   'PRIM:PutStone': 'Poner',
   'PRIM:RemoveStone': 'Sacar',

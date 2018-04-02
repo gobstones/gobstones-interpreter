@@ -13,7 +13,7 @@ import {
   T_TIMEOUT,
   /* Symbols */
   T_LPAREN, T_RPAREN, T_LBRACE, T_RBRACE, T_LBRACK, T_RBRACK, T_COMMA,
-  T_SEMICOLON, T_RANGE, T_GETS, T_PIPE, T_ARROW, T_ASSIGN,
+  T_SEMICOLON, T_ELLIPSIS, T_RANGE, T_GETS, T_PIPE, T_ARROW, T_ASSIGN,
   T_EQ, T_NE, T_LE, T_GE, T_LT, T_GT, T_AND, T_OR, T_CONCAT, T_PLUS,
   T_MINUS, T_TIMES, T_POW
 } from './token';
@@ -101,10 +101,11 @@ const SYMBOLS = [
   [')', T_RPAREN],
   ['{', T_LBRACE],
   ['}', T_RBRACE],
-  ['[', T_LBRACK],    // For lists and ranges
+  ['[', T_LBRACK],     // For lists and ranges
   [']', T_RBRACK],
   [',', T_COMMA],
   [';', T_SEMICOLON],
+  ['...', T_ELLIPSIS], // For intentionally incomplete programs
   /* Range operator */
   ['..', T_RANGE],
   /* Assignment */
@@ -113,10 +114,10 @@ const SYMBOLS = [
   ['&&', T_AND],
   ['||', T_OR],
   /* Fields */
-  ['<-', T_GETS],     // Field initializer, e.g. Coord(x <- 1, y <- 2)
-  ['|', T_PIPE],      // Field update, e.g. Coord(c | x <- 2)
+  ['<-', T_GETS],      // Field initializer, e.g. Coord(x <- 1, y <- 2)
+  ['|', T_PIPE],       // Field update, e.g. Coord(c | x <- 2)
   /* Pattern matching */
-  ['->', T_ARROW],    // For the branches of a switch
+  ['->', T_ARROW],     // For the branches of a switch
   /* Relational operators */
   ['==', T_EQ],
   ['/=', T_NE],

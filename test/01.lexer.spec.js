@@ -12,7 +12,7 @@ import {
   T_TIMEOUT,
   /* Symbols */
   T_LPAREN, T_RPAREN, T_LBRACE, T_RBRACE, T_LBRACK, T_RBRACK, T_COMMA,
-  T_SEMICOLON, T_RANGE, T_GETS, T_PIPE, T_ARROW, T_ASSIGN,
+  T_SEMICOLON, T_ELLIPSIS, T_RANGE, T_GETS, T_PIPE, T_ARROW, T_ASSIGN,
   T_EQ, T_NE, T_LE, T_GE, T_LT, T_GT, T_AND, T_OR, T_CONCAT, T_PLUS,
   T_MINUS, T_TIMES, T_POW
 } from '../src/token';
@@ -187,6 +187,7 @@ describe('Lexer', () => {
         ']',
         ',',
         ';',
+        '...',
         '..',
         '<-',
         '|',
@@ -216,6 +217,7 @@ describe('Lexer', () => {
         T_RBRACK,
         T_COMMA,
         T_SEMICOLON,
+        T_ELLIPSIS,
         T_RANGE,
         T_GETS,
         T_PIPE,
