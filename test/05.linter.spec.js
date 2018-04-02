@@ -585,6 +585,106 @@ describe('Linter', () => {
       );
     });
 
+    it('Accept repeated local names in variable patterns', () => {
+      let code = [
+        'program {',
+        '  switch (1) {',
+        '    z -> {}',
+        '  }',
+        '  switch (1) {',
+        '    z -> {}',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(lint(code).program === null).equals(false);
+    });
+
+    it('Reject conflicting local names in variable pattern', () => {
+      let code = [
+        'program {',
+        '  z := 1',
+        '  switch (1) {',
+        '    z -> {}',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(() => lint(code)).throws(
+        i18n('errmsg:local-name-conflict')(
+          'z',
+          i18n('LocalVariable'),
+          i18n('<position>')('(?)', 2, 3),
+          i18n('LocalParameter'),
+          i18n('<position>')('(?)', 4, 5),
+        )
+      );
+    });
+
+    it('Reject conflicting local names in nested variable pattern', () => {
+      let code = [
+        'program {',
+        '  switch (1) {',
+        '    foo -> {',
+        '      switch (2) {',
+        '        foo -> {}',
+        '      }',
+        '    }',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(() => lint(code)).throws(
+        i18n('errmsg:local-name-conflict')(
+          'foo',
+          i18n('LocalParameter'),
+          i18n('<position>')('(?)', 3, 5),
+          i18n('LocalParameter'),
+          i18n('<position>')('(?)', 5, 9),
+        )
+      );
+    });
+
+    it('Reject conflicting local names in structure pattern', () => {
+      let code = [
+        'type A is variant {',
+        '  case B { field x }',
+        '}',
+        'program {',
+        '  z := 1',
+        '  switch (1) {',
+        '    B(z) -> {}',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(() => lint(code)).throws(
+        i18n('errmsg:local-name-conflict')(
+          'z',
+          i18n('LocalVariable'),
+          i18n('<position>')('(?)', 5, 3),
+          i18n('LocalParameter'),
+          i18n('<position>')('(?)', 7, 7),
+        )
+      );
+    });
+
+    it('Reject conflicting local names in tuple pattern', () => {
+      let code = [
+        'program {',
+        '  z := 1',
+        '  switch (1) {',
+        '    (x,y,z) -> {}',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(() => lint(code)).throws(
+        i18n('errmsg:local-name-conflict')(
+          'z',
+          i18n('LocalVariable'),
+          i18n('<position>')('(?)', 2, 3),
+          i18n('LocalParameter'),
+          i18n('<position>')('(?)', 4, 10),
+        )
+      );
+    });
+
   });
 
   describe('Procedure and function calls', () => {
@@ -679,6 +779,28 @@ describe('Linter', () => {
   });
 
   describe('Pattern matching', () => {
+
+    it('Accept wildcard pattern', () => {
+      let code = [
+        'program {',
+        '  switch (1) {',
+        '    _  -> {}',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(lint(code).program !== null).equals(true);
+    });
+
+    it('Accept variable pattern', () => {
+      let code = [
+        'program {',
+        '  switch (1) {',
+        '    x  -> {}',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(lint(code).program !== null).equals(true);
+    });
 
     it('Accept numeric pattern', () => {
       let code = [
@@ -820,6 +942,25 @@ describe('Linter', () => {
       );
     });
 
+    it('Reject variable pattern not on the last branch', () => {
+      let code = [
+        'type A is variant {',
+        '  case A1 { field x }',
+        '  case A2 { field x }',
+        '}',
+        'program {',
+        '  switch (1) {',
+        '    A1(x) -> {}',
+        '    z    -> {}',
+        '    A2(x) -> {}',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(() => lint(code)).throws(
+        i18n('errmsg:variable-pattern-should-be-last')('z')
+      );
+    });
+
     it('Allow wildcard pattern on the last branch, even if unreachable', () => {
       let code = [
         'type A is record {',
@@ -829,6 +970,21 @@ describe('Linter', () => {
         '  switch (1) {',
         '    A(x) -> {}',
         '    _    -> {}',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(lint(code).program !== null).equals(true);
+    });
+
+    it('Allow variable pattern on the last branch, even if unreachable', () => {
+      let code = [
+        'type A is record {',
+        '  field x',
+        '}',
+        'program {',
+        '  switch (1) {',
+        '    A(x) -> {}',
+        '    z    -> {}',
         '  }',
         '}',
       ].join('\n');

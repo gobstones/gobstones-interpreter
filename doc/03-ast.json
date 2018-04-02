@@ -29,6 +29,7 @@
   ],
   ["data", "Pattern",
     ["PatternWildcard"],
+    ["PatternVariable", ["variableName", "ID"]],
     ["PatternNumber", ["number", "NUM"]],
     ["PatternStructure", ["constructorName", "ID"], ["parameters", ["*", "ID"]]],
     ["PatternTuple", ["parameters", ["*", "ID"]]],

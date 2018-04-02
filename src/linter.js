@@ -20,6 +20,7 @@ import {
   N_StmtProcedureCall,
   /* Patterns */
   N_PatternWildcard,
+  N_PatternVariable,
   N_PatternNumber,
   N_PatternStructure,
   N_PatternTuple,
@@ -90,6 +91,7 @@ export class Linter {
       'function-should-have-return': true,
       'return-statement-not-allowed-here': true,
       'wildcard-pattern-should-be-last': true,
+      'variable-pattern-should-be-last': true,
       'structure-pattern-repeats-constructor': true,
       'structure-pattern-repeats-tuple-arity': true,
       'structure-pattern-repeats-timeout': true,
@@ -350,7 +352,7 @@ export class Linter {
       this._lintPattern(branch.pattern);
     }
 
-    this._switchBranchesCheckWildcard(branches);
+    this._switchBranchesCheckWildcardAndVariable(branches);
     this._switchBranchesCheckNoRepeats(branches);
     this._switchBranchesCheckCompatible(branches);
     if (isInteractiveProgram) {
@@ -365,16 +367,21 @@ export class Linter {
     }
   }
 
-  /* Check that there is at most one wildcard at the end */
-  _switchBranchesCheckWildcard(branches) {
+  /* Check that there is at most one wildcard/variable pattern at the end */
+  _switchBranchesCheckWildcardAndVariable(branches) {
     let i = 0;
     const n = branches.length;
     for (let branch of branches) {
-      if (branch.pattern.tag === N_PatternWildcard && i !== n - 1) {
-
+      if (branch.pattern.tag === N_PatternWildcard  && i !== n - 1) {
         this._lintCheck(
           branch.pattern.startPos, branch.pattern.endPos,
           'wildcard-pattern-should-be-last', []
+        );
+      }
+      if (branch.pattern.tag === N_PatternVariable  && i !== n - 1) {
+        this._lintCheck(
+          branch.pattern.startPos, branch.pattern.endPos,
+          'variable-pattern-should-be-last', [branch.pattern.variableName.value]
         );
       }
       i++;
@@ -390,8 +397,8 @@ export class Linter {
     let coveredTimeout = false;
     for (let branch of branches) {
       switch (branch.pattern.tag) {
-        case N_PatternWildcard:
-          /* Already checked in _switchBranchesCheckWildcard */
+        case N_PatternWildcard: case N_PatternVariable:
+          /* Already checked in _switchBranchesCheckWildcardAndVariable */
           break;
         case N_PatternNumber:
           let number = branch.pattern.number.value;
@@ -414,7 +421,7 @@ export class Linter {
           coveredConstructors[constructorName] = true;
           break;
         case N_PatternTuple:
-          let arity = branch.pattern.parameters.length;
+          let arity = branch.pattern.boundVariables.length;
           if (arity in coveredTuples) {
             this._lintCheck(
               branch.pattern.startPos, branch.pattern.endPos,
@@ -488,28 +495,28 @@ export class Linter {
     }
   }
 
-  /* Recursively lint the body of each branch. Locally bind parameters. */
+  /* Recursively lint the body of each branch. Locally bind variables. */
   _lintSwitchBranchBody(branch) {
-    for (let parameter of branch.pattern.parameters) {
-      this._symtable.addNewLocalName(parameter, LocalParameter);
+    for (let variable of branch.pattern.boundVariables) {
+      this._symtable.addNewLocalName(variable, LocalParameter);
     }
     this._lintStatement(branch.body);
-    for (let parameter of branch.pattern.parameters) {
-      this._symtable.removeLocalName(parameter);
+    for (let variable of branch.pattern.boundVariables) {
+      this._symtable.removeLocalName(variable);
     }
   }
 
   /* Return a description of the type of a pattern */
   _patternType(pattern) {
     switch (pattern.tag) {
-      case N_PatternWildcard:
+      case N_PatternWildcard: case N_PatternVariable:
         return null;
       case N_PatternNumber:
         return i18n('TYPE:Integer');
       case N_PatternStructure:
         return this._symtable.constructorType(pattern.constructorName.value);
       case N_PatternTuple:
-        return '_TUPLE_' + pattern.parameters.length.toString();
+        return '_TUPLE_' + pattern.boundVariables.length.toString();
       case N_PatternTimeout:
         return i18n('TYPE:Event');
       default:
@@ -588,6 +595,8 @@ export class Linter {
     switch (pattern.tag) {
       case N_PatternWildcard:
         return this._lintPatternWildcard(pattern);
+      case N_PatternVariable:
+        return this._lintPatternVariable(pattern);
       case N_PatternNumber:
         return this._lintPatternNumber(pattern);
       case N_PatternStructure:
@@ -606,6 +615,10 @@ export class Linter {
   }
 
   _lintPatternWildcard(pattern) {
+    /* No restrictions */
+  }
+
+  _lintPatternVariable(pattern) {
     /* No restrictions */
   }
 
@@ -628,7 +641,7 @@ export class Linter {
      * Note: constructor patterns with 0 arguments are always allowed.
      */
     let expected = this._symtable.constructorFields(name).length;
-    let received = pattern.parameters.length;
+    let received = pattern.boundVariables.length;
     if (received > 0 && expected !== received) {
       this._lintCheck(
         pattern.startPos, pattern.endPos,

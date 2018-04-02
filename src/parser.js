@@ -39,6 +39,7 @@ import {
   ASTStmtProcedureCall,
   /* Patterns */
   ASTPatternWildcard,
+  ASTPatternVariable,
   ASTPatternNumber,
   ASTPatternStructure,
   ASTPatternTuple,
@@ -481,6 +482,7 @@ export class Parser {
   _parseStmtForeach() {
     let startPos = this._currentToken.startPos;
     this._match(T_FOREACH);
+    //let index = this._parsePattern(); // TODO
     let index = this._parseLowerid();
     this._match(T_IN);
     let range = this._parseExpression();
@@ -597,6 +599,8 @@ export class Parser {
     switch (this._currentToken.tag) {
       case T_UNDERSCORE:
         return this._parsePatternWildcard();
+      case T_LOWERID:
+        return this._parsePatternVariable();
       case T_NUM: case T_MINUS:
         return this._parsePatternNumber();
       case T_UPPERID:
@@ -623,6 +627,15 @@ export class Parser {
     let endPos = startPos;
     result.startPos = startPos;
     result.endPos = endPos;
+    return result;
+  }
+
+  _parsePatternVariable() {
+    let startPos = this._currentToken.startPos;
+    let id = this._parseLowerid();
+    let result = new ASTPatternVariable(id);
+    result.startPos = startPos;
+    result.endPos = id.endPos;
     return result;
   }
 

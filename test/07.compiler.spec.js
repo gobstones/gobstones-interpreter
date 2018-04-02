@@ -420,6 +420,25 @@ describe('Compiler', () => {
       expect(result).deep.equals(new ValueInteger(42));
     });
 
+    it('Switch: match variable', () => {
+      let result = new Runner().run([
+        'program {',
+        '  switch ((1,2,3)) {',
+        '    z -> { x := z }',
+        '  }',
+        '  y := x',
+        '  return (y)',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(
+        new ValueTuple([
+          new ValueInteger(1),
+          new ValueInteger(2),
+          new ValueInteger(3)
+        ])
+      );
+    });
+
     it('Switch: empty switch (no match)', () => {
       let result = () => new Runner().run([
         'program {',

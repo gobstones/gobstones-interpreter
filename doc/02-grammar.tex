@@ -86,7 +86,7 @@
 \token{REPEAT} \token{LPAREN} \nonterminal{expression} \token{RPAREN} \nonterminal{stmtBlock}
 }
 \production{\nonterminal{stmtForeach}}{
-\token{FOREACH} \token{LOWERID} \token{IN} \nonterminal{expression} \nonterminal{stmtBlock}
+\token{FOREACH} \nonterminal{pattern} \token{IN} \nonterminal{expression} \nonterminal{stmtBlock}
 }
 \production{\nonterminal{stmtWhile}}{
 \token{WHILE} \token{LPAREN} \nonterminal{expression} \token{RPAREN} \nonterminal{stmtBlock}
@@ -116,6 +116,8 @@
 \production{\nonterminal{pattern}}{
 \nonterminal{patternWildcard}
 \ALT
+\nonterminal{patternVariable}
+\ALT
 \nonterminal{patternNumber}
 \ALT
 \nonterminal{patternStructure}
@@ -126,6 +128,9 @@
 }
 \production{\nonterminal{patternWildcard}}{
 \token{UNDERSCORE}
+}
+\production{\nonterminal{patternVariable}}{
+\token{LOWERID}
 }
 \production{\nonterminal{patternNumber}}{
 \token{NUM}
@@ -186,7 +191,7 @@
 \token{STRING}
 }
 \production{\nonterminal{exprChoose}}{
-\token{CHOOSE} (\nonterminal{expression} \token{WHEN} \token{LPAREN} \nonterminal{expression} \token{RPAREN})+ \nonterminal{expression} \token{OTHERWISE}
+\token{CHOOSE} (\nonterminal{expression} \token{WHEN} \token{LPAREN} \nonterminal{expression} \token{RPAREN})* \nonterminal{expression} \token{OTHERWISE}
 }
 \production{\nonterminal{exprList}}{
 \token{LBRACK} \nonterminal{expressionSeq} \token{RBRACK}

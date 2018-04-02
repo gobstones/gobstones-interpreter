@@ -19,6 +19,7 @@ import {
   N_StmtProcedureCall,
   /* Patterns */
   N_PatternWildcard,
+  N_PatternVariable,
   N_PatternNumber,
   N_PatternStructure,
   N_PatternTuple,
@@ -622,6 +623,8 @@ export class Compiler {
     switch (pattern.tag) {
       case N_PatternWildcard:
         return this._compilePatternCheckWildcard(pattern, targetLabel);
+      case N_PatternVariable:
+        return this._compilePatternCheckVariable(pattern, targetLabel);
       case N_PatternNumber:
         return this._compilePatternCheckNumber(pattern, targetLabel);
       case N_PatternStructure:
@@ -639,6 +642,13 @@ export class Compiler {
   }
 
   _compilePatternCheckWildcard(pattern, targetLabel) {
+    this._produce(
+      pattern.startPos, pattern.endPos,
+      new IJump(targetLabel)
+    );
+  }
+
+  _compilePatternCheckVariable(pattern, targetLabel) {
     this._produce(
       pattern.startPos, pattern.endPos,
       new IJump(targetLabel)
@@ -677,7 +687,7 @@ export class Compiler {
     /* Check that the type of the value coincides with the type
      * of the tuple */
     let anys = [];
-    for (let i = 0; i < pattern.parameters.length; i++) {
+    for (let i = 0; i < pattern.boundVariables.length; i++) {
       anys.push(new TypeAny());
     }
     let expectedType = new TypeTuple(anys);
@@ -689,7 +699,7 @@ export class Compiler {
     /* Jump if the value matches */
     this._produce(
       pattern.startPos, pattern.endPos,
-      new IJumpIfTuple(pattern.parameters.length, targetLabel)
+      new IJumpIfTuple(pattern.boundVariables.length, targetLabel)
     );
   }
 
@@ -702,12 +712,16 @@ export class Compiler {
 
   /* Pattern binding are instructions that bind the parameters
    * of a pattern to the corresponding parts of the value currently
-   * at the top of the stack.
+   * at the top of the stack. The value at the top of the stack
+   * is never popped (it must be duplicated if necessary).
    */
   _compilePatternBind(pattern) {
     switch (pattern.tag) {
       case N_PatternWildcard:
         return; /* No parameters to bind */
+      case N_PatternVariable:
+        this._compilePatternBindVariable(pattern);
+        return;
       case N_PatternNumber:
         return; /* No parameters to bind */
       case N_PatternStructure:
@@ -726,31 +740,38 @@ export class Compiler {
     }
   }
 
+  _compilePatternBindVariable(pattern) {
+    this._produceList(pattern.startPos, pattern.endPos, [
+      new IDup(),
+      new ISetVariable(pattern.variableName.value),
+    ]);
+  }
+
   _compilePatternBindStructure(pattern) {
-    /* Allow pattern with no parameters, even if the constructor
+    /* Allow structure pattern with no parameters, even if the constructor
      * has parameters */
-    if (pattern.parameters.length === 0) {
+    if (pattern.boundVariables.length === 0) {
       return;
     }
 
     let constructorName = pattern.constructorName.value;
     let fieldNames = this._symtable.constructorFields(constructorName);
     for (let i = 0; i < fieldNames.length; i++) {
-      let parameter = pattern.parameters[i];
+      let variable = pattern.boundVariables[i];
       let fieldName = fieldNames[i];
       this._produceList(pattern.startPos, pattern.endPos, [
         new IReadStructureField(fieldName),
-        new ISetVariable(parameter.value),
+        new ISetVariable(variable.value),
       ]);
     }
   }
 
   _compilePatternBindTuple(pattern) {
-    for (let index = 0; index < pattern.parameters.length; index++) {
-      let parameter = pattern.parameters[index];
+    for (let index = 0; index < pattern.boundVariables.length; index++) {
+      let variable = pattern.boundVariables[index];
       this._produceList(pattern.startPos, pattern.endPos, [
         new IReadTupleComponent(index),
-        new ISetVariable(parameter.value),
+        new ISetVariable(variable.value),
       ]);
     }
   }
@@ -758,39 +779,9 @@ export class Compiler {
   /* Pattern unbinding are instructions that unbind the parameters
    * of a pattern. */
   _compilePatternUnbind(pattern) {
-    switch (pattern.tag) {
-      case N_PatternWildcard:
-        return; /* No parameters to unbind */
-      case N_PatternNumber:
-        return; /* No parameters to unbind */
-      case N_PatternStructure:
-        this._compilePatternUnbindStructure(pattern);
-        return;
-      case N_PatternTuple:
-        this._compilePatternUnbindTuple(pattern);
-        return;
-      case N_PatternTimeout:
-        return; /* No parameters to unbind */
-      default:
-        throw Error(
-                'Compiler: Pattern unbinding not implemented: '
-              + Symbol.keyFor(pattern.tag)
-              );
-    }
-  }
-
-  _compilePatternUnbindStructure(pattern) {
-    for (let parameter of pattern.parameters) {
+    for (let variable of pattern.boundVariables) {
       this._produceList(pattern.startPos, pattern.endPos, [
-        new IUnsetVariable(parameter.value),
-      ]);
-    }
-  }
-
-  _compilePatternUnbindTuple(pattern) {
-    for (let parameter of pattern.parameters) {
-      this._produceList(pattern.startPos, pattern.endPos, [
-        new IUnsetVariable(parameter.value),
+        new IUnsetVariable(variable.value),
       ]);
     }
   }

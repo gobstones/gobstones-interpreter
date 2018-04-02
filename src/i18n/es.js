@@ -427,6 +427,12 @@ export const LOCALE_ES = {
   'errmsg:wildcard-pattern-should-be-last':
     'El comodín "_" tiene que ser la última rama del switch.',
 
+  'errmsg:variable-pattern-should-be-last':
+    function (name) {
+      return 'El patrón variable "' + name +
+             '" tiene que ser la última rama del switch.';
+    },
+
   'errmsg:numeric-pattern-repeats-number':
     function (number) {
       return 'Hay dos ramas distintas para el número "' + number + '".';

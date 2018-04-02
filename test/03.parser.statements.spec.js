@@ -24,6 +24,7 @@ import {
   ASTStmtProcedureCall,
   /* Patterns */
   ASTPatternWildcard,
+  ASTPatternVariable,
   ASTPatternNumber,
   ASTPatternStructure,
   ASTPatternTuple,
@@ -832,6 +833,39 @@ describe('Parser: statements', () => {
       ]);
     });
 
+    it('Accept variable pattern', () => {
+      let parser = new Parser(
+                     'program {' +
+                     '  switch (foo) {' +
+                     '    x -> {' +
+                     '      if (bar) {}' +
+                     '    }' +
+                     '  }' +
+                     '}'
+                   );
+      expectAST(parser.parse(), [
+        new ASTDefProgram(
+          new ASTStmtBlock([
+            new ASTStmtSwitch(
+              new ASTExprVariable(tok(T_LOWERID, 'foo')),
+              [
+                new ASTSwitchBranch(
+                  new ASTPatternVariable(tok(T_LOWERID, 'x')),
+                  new ASTStmtBlock([
+                    new ASTStmtIf(
+                      new ASTExprVariable(tok(T_LOWERID, 'bar')),
+                      new ASTStmtBlock([]),
+                      null
+                    )
+                  ])
+                )
+              ]
+            )
+          ])
+        )
+      ]);
+    });
+
     it('Accept wildcard pattern (_)', () => {
       let parser = new Parser(
                      'program {' +
@@ -1128,18 +1162,18 @@ describe('Parser: statements', () => {
       );
     });
 
-    it('Reject malformed pattern (single variable)', () => {
+    it('Reject malformed pattern (function)', () => {
       let parser = new Parser(
                      'program {' +
                      '  switch (foo) {' +
-                     '    x -> {}' +
+                     '    x(y) -> {}' +
                      '  }' +
                      '}'
                    );
       expect(() => parser.parse()).throws(
         i18n('errmsg:expected-but-found')(
-          i18n('pattern'),
-          i18n('T_LOWERID')
+          i18n('T_ARROW'),
+          i18n('T_LPAREN')
         )
       );
     });

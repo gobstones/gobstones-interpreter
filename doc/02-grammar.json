@@ -67,7 +67,7 @@
     ["REPEAT", "LPAREN", "expression", "RPAREN", "stmtBlock"]
   ],
   ["stmtForeach",
-    ["FOREACH", "LOWERID", "IN", "expression", "stmtBlock"]
+    ["FOREACH", "pattern", "IN", "expression", "stmtBlock"]
   ],
   ["stmtWhile",
     ["WHILE", "LPAREN", "expression", "RPAREN", "stmtBlock"]
@@ -94,6 +94,7 @@
   ],
   ["pattern",
     ["patternWildcard"],
+    ["patternVariable"],
     ["patternNumber"],
     ["patternStructure"],
     ["patternTuple"],
@@ -101,6 +102,9 @@
   ],
   ["patternWildcard",
     ["UNDERSCORE"]
+  ],
+  ["patternVariable",
+    ["LOWERID"]
   ],
   ["patternNumber",
     ["NUM"],

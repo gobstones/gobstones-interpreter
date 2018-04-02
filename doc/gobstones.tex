@@ -356,7 +356,7 @@ La etapa de an\'alisis sem\'antico (o {\em linting}) verifica de manera est\'ati
 \item Alcance de los nombres locales:
   \begin{itemize}
   \item Par\'ametros de procedimientos y funciones --- locales a todo el cuerpo del procedimiento o funci\'on.
-  \item Par\'ametros de constructores en un \texttt{switch} --- locales al bloque a la derecha de la correspondiente flecha \texttt{->}.
+  \item Variables ligadas en los patrones de un \texttt{switch} --- locales al bloque a la derecha de la correspondiente flecha \texttt{->}.
   \item \'Indices --- locales al cuerpo del \texttt{foreach}.
   \item Variables --- locales a todo el cuerpo del procedimiento o funci\'on.
   \end{itemize}
@@ -377,28 +377,29 @@ La etapa de an\'alisis sem\'antico (o {\em linting}) verifica de manera est\'ati
 
 {\bf Pattern matching.}
 \begin{itemize}
-\item Hay cinco tipos de patrones:
-  \begin{itemize}
+\item Hay seis tipos de patrones:
+  \begin{enumerate}
   \item Patr\'on comod\'in (\texttt{\_}).
+  \item Patr\'on variable (identificador ligado localmente).
   \item Patr\'on num\'erico (un n\'umero $n$, que puede ser positivo, negativo o cero).
-  \item Patr\'on constructor (\texttt{C} o alternativamente \texttt{C(x$_1$, ..., x$_n$)}).
+  \item Patr\'on estructura (\texttt{C} o alternativamente \texttt{C(x$_1$, ..., x$_n$)}).
   \item Patr\'on tupla (\texttt{(x$_1$, ..., x$_n$)}).
   \item Patr\'on timeout (\texttt{TIMEOUT($n$)}).
-  \end{itemize}
-\item En un patr\'on constructor, el nombre del constructor en cuesti\'on \DEBE ser un constructor existente de
+  \end{enumerate}
+\item En un patr\'on estructura, el nombre del constructor en cuesti\'on \DEBE ser un constructor existente de
       alg\'un tipo.
-\item En un patr\'on constructor, el constructor \PUEDE tener $0$ par\'ametros, independientemente del n\'umero
+\item En un patr\'on estructura, el constructor \PUEDE tener $0$ par\'ametros, independientemente del n\'umero
       de campos que tenga el constructor correspondiente.
-\item Si un patr\'on constructor tiene $1$ o m\'as par\'ametros, el n\'umero \DEBE coincidir con el n\'umero
+\item Si un patr\'on estructura tiene $1$ o m\'as par\'ametros, el n\'umero \DEBE coincidir con el n\'umero
       de campos del constructor correspondiente.
-\item En una secuencia de ramas los patrones constructor \PUEDEN aparecer en cualquier orden, sin respetar necesariamente el orden en que est\'an declarados.
-\item Una secuencia de ramas \NOPUEDE tener dos patrones num\'ericos con el mismo valor num\'erico.    %TODO
-\item Una secuencia de ramas \NOPUEDE tener dos patrones constructor asociados al mismo constructor.
+\item En una secuencia de ramas los patrones estructura \PUEDEN aparecer en cualquier orden, sin respetar necesariamente el orden en que est\'an declarados.
+\item Una secuencia de ramas \NOPUEDE tener dos patrones num\'ericos con el mismo valor num\'erico.
+\item Una secuencia de ramas \NOPUEDE tener dos patrones estructura asociados al mismo constructor.
 \item Una secuencia de ramas \NOPUEDE tener dos patrones tupla con la misma longitud.
 \item Una secuencia de ramas \NOPUEDE tener dos patrones timeout.
-\item Una secuencia de ramas \PUEDE tener o no tener un patr\'on comod\'in.
-\item Si una secuencia de ramas tiene un patr\'on comod\'in, el patr\'on comod\'in \DEBE estar en la \'ultima rama.
-\item Una secuencia de ramas \NOPUEDE tener un patr\'on comod\'in en ninguna otra rama que no sea la \'ultima.
+\item Una secuencia de ramas \PUEDE tener o no tener un patr\'on comod\'in. (No es obligatorio como \'ultima rama).
+\item Si una secuencia de ramas tiene un patr\'on comod\'in o un patr\'on variable, dicho patr\'on \DEBE estar en la \'ultima rama.
+\item Una secuencia de ramas \NOPUEDE tener un patr\'on comod\'in o un patr\'on variable en ninguna otra rama que no sea la \'ultima.
 \item Un patr\'on comod\'in \PUEDE ser inalcanzable.
       Es decir, un patr\'on comod\'in puede estar presente incluso si la secuencia de ramas
       cubre todas las alternativas de constructores posibles.
@@ -406,28 +407,29 @@ La etapa de an\'alisis sem\'antico (o {\em linting}) verifica de manera est\'ati
       Son patrones compatibles:
       \begin{itemize}
       \item Dos patrones num\'ericos.
-      \item Dos patrones constructor cuyos constructores pertenecen al mismo tipo.
+      \item Dos patrones estructura cuyos constructores pertenecen al mismo tipo.
       \item Un patr\'on timeout con cualquier otro constructor del tipo \texttt{\_EVENT}
             (que corresponde a los eventos que pueden darse en un programa interactivo).
-      \item El patr\'on comod\'in con cualquier otro patr\'on.
+      \item Un patr\'on comod\'in con cualquier otro patr\'on.
+      \item Un patr\'on variable con cualquier otro patr\'on.
       \end{itemize}
       Dos tipos son incompatibles en cualquier otro caso. En particular, son patrones incompatibles:
       \begin{itemize}
-      \item Un patr\'on num\'erico y un patr\'on constructor.
+      \item Un patr\'on num\'erico y un patr\'on estructura.
       \item Un patr\'on num\'erico y un patr\'on tupla.
-      \item Dos patrones constructor cuyos constructores pertenecen a distintos tipos.
+      \item Dos patrones estructura cuyos constructores pertenecen a distintos tipos.
       \item Dos patrones tupla con distinto n\'umero de componentes.
-      \item Un patr\'on constructor y un patr\'on tupla.
+      \item Un patr\'on estructura y un patr\'on tupla.
       \end{itemize}
 \item Los patrones de las ramas del \texttt{interactive program}
       \DEBEN ser eventos, es decir:
       patrones timeout,
-      patrones constructor del tipo \texttt{\_EVENT},
+      patrones estructura del tipo \texttt{\_EVENT},
       o patrones comod\'in.
-\item Los de las ramas de los \texttt{switch} \NOPUEDEN ser eventos, es decir:
+\item Los patrones de las ramas de los \texttt{switch} \NOPUEDEN ser eventos, es decir:
       pueden ser
       patrones num\'ericos,
-      patrones constructor de tipos que no sean \texttt{\_EVENT},
+      patrones estructura de tipos que no sean \texttt{\_EVENT},
       patrones tupla,
       o patrones comod\'in.
 \end{itemize}
@@ -436,17 +438,17 @@ La etapa de an\'alisis sem\'antico (o {\em linting}) verifica de manera est\'ati
 \begin{itemize}
 \item Los usos de par\'ametros, \'indices y variables (\ast{ExprVariable}) \PUEDEN no corresponder a par\'ametros, \'indices o variables definidas.
       La restricci\'on de que las variables se pueden usar solamente despu\'es de que se les haya dado un valor es una restricci\'on din\'amica.
-\item Cuando se construye una instancia de un tipo (registro o variante) con un constructor (\ast{ExprConstructor}),
+\item Cuando se construye una instancia de un tipo (registro o variante) con un constructor (\ast{ExprStructure}),
       el nombre del constructor \DEBE ser el nombre de un constructor existente.
-\item Cuando se construye o se actualiza una instancia con un constructor (\ast{ExprConstructor}, \ast{ExprConstructorUpdate}),
+\item Cuando se construye o se actualiza una instancia con un constructor (\ast{ExprStructure}, \ast{ExprStructureUpdate}),
       \NOPUEDE haber nombres de campos repetidos en la lista de {\em bindings}.
-\item Cuando se construye o se actualiza una instancia con un constructor (\ast{ExprConstructor}, \ast{ExprConstructorUpdate}),
+\item Cuando se construye o se actualiza una instancia con un constructor (\ast{ExprStructure}, \ast{ExprStructureUpdate}),
       los nombres de los campos que aparecen en la lista de {\em bindings}
       \DEBEN ser nombres de campos v\'alidos para dicho constructor. (Correctitud).
-\item Cuando se construye una instancia con un constructor (\ast{ExprConstructor}),
+\item Cuando se construye una instancia con un constructor (\ast{ExprStructure}),
       los nombres de los campos que aparecen en la lista de {\em bindings}
       \DEBEN cubrir todos los posibles nombres de campos v\'alidos para dicho constructor. (Completitud).
-\item Cuando se construye o se actualiza una instancia con un constructor (\ast{ExprConstructor}, \ast{ExprConstructorUpdate}),
+\item Cuando se construye o se actualiza una instancia con un constructor (\ast{ExprStructure}, \ast{ExprStructureUpdate}),
       el constructor \NOPUEDE ser un constructor del tipo \texttt{\_EVENT} (esto t\'ecnicamente depende
       del entorno global en el que se eval\'ue el programa, pero t\'ipicamente
       los eventos son las teclas como \texttt{K\_ENTER}, etc.).
