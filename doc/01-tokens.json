@@ -41,6 +41,7 @@
   ["symbol", "]", "RBRACK", "Corchete derecho."],
   ["symbol", ",", "COMMA", "Coma."],
   ["symbol", ";", "SEMICOLON", "Punto y coma (separador de instrucciones opcional)."],
+  ["symbol", "...", "ELLIPSIS", "Fragmento de programa intencionalmente incompleto."],
   ["symbol", "..", "RANGE", "Para rangos."],
   ["symbol", ":=", "ASSIGN", "Asignación."],
   ["symbol", "&&", "AND", "Conjunción."],

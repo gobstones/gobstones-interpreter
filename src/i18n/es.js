@@ -244,6 +244,11 @@ export const LOCALE_ES = {
            + 'pero no había ' + openingDelimiterName(delimiter) + '.';
     },
 
+  'errmsg:unknown-language-option':
+    function (option) {
+      return 'Opción desconocida. "' + option + '".';
+    },
+
   /* Parser */
   'errmsg:empty-source':
     'El programa está vacío.',
@@ -427,6 +432,12 @@ export const LOCALE_ES = {
   'errmsg:wildcard-pattern-should-be-last':
     'El comodín "_" tiene que ser la última rama del switch.',
 
+  'errmsg:variable-pattern-should-be-last':
+    function (name) {
+      return 'El patrón variable "' + name +
+             '" tiene que ser la última rama del switch.';
+    },
+
   'errmsg:numeric-pattern-repeats-number':
     function (number) {
       return 'Hay dos ramas distintas para el número "' + number + '".';
@@ -484,6 +495,12 @@ export const LOCALE_ES = {
            + 'en un programa interactivo (el usuario no puede construir '
            + 'instancias).';
     },
+
+  'errmsg:forbidden-extension-destructuring-foreach':
+    'El índice de la repetición indexada debe ser un identificador.',
+
+  'errmsg:patterns-in-foreach-must-not-be-events':
+    'El patrón de un foreach no puede ser un evento.',
 
   /* Runtime errors (virtual machine) */
   'errmsg:undefined-variable':
@@ -611,6 +628,9 @@ export const LOCALE_ES = {
   'errmsg:switch-does-not-match':
     'El valor analizado no coincide con ninguna de las ramas del switch.',
 
+  'errmsg:foreach-pattern-does-not-match':
+    'El elemento no coincide con el patrón esperado por el foreach.',
+
   'errmsg:cannot-divide-by-zero':
     'No se puede dividir por cero.',
 
@@ -665,6 +685,7 @@ export const LOCALE_ES = {
 
   'PRIM:BOOM': 'BOOM',
   'PRIM:boom': 'boom',
+  'PRIM:ellipsis': 'El programa todavía no está completo.',
 
   'PRIM:PutStone': 'Poner',
   'PRIM:RemoveStone': 'Sacar',

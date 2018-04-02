@@ -21,6 +21,7 @@ export const N_StmtAssignTuple = Symbol.for('N_StmtAssignTuple');
 export const N_StmtProcedureCall = Symbol.for('N_StmtProcedureCall');
 /* Patterns */
 export const N_PatternWildcard = Symbol.for('N_PatternWildcard');
+export const N_PatternVariable = Symbol.for('N_PatternVariable');
 export const N_PatternNumber = Symbol.for('N_PatternNumber');
 export const N_PatternStructure = Symbol.for('N_PatternStructure');
 export const N_PatternTuple = Symbol.for('N_PatternTuple');
@@ -294,11 +295,11 @@ export class ASTStmtRepeat extends ASTNode {
 }
 
 export class ASTStmtForeach extends ASTNode {
-  constructor(index, range, body) {
-    super(N_StmtForeach, [index, range, body]);
+  constructor(pattern, range, body) {
+    super(N_StmtForeach, [pattern, range, body]);
   }
 
-  get index() {
+  get pattern() {
     return this._children[0];
   }
 
@@ -402,8 +403,22 @@ export class ASTPatternWildcard extends ASTNode {
     super(N_PatternWildcard, []);
   }
 
-  get parameters() {
+  get boundVariables() {
     return [];
+  }
+}
+
+export class ASTPatternVariable extends ASTNode {
+  constructor(variableName) {
+    super(N_PatternVariable, [variableName]);
+  }
+
+  get variableName() {
+    return this._children[0];
+  }
+
+  get boundVariables() {
+    return [this._children[0]];
   }
 }
 
@@ -416,7 +431,7 @@ export class ASTPatternNumber extends ASTNode {
     return this._children[0];
   }
 
-  get parameters() {
+  get boundVariables() {
     return [];
   }
 }
@@ -430,7 +445,7 @@ export class ASTPatternStructure extends ASTNode {
     return this._children[0];
   }
 
-  get parameters() {
+  get boundVariables() {
     return this._children[1];
   }
 }
@@ -440,7 +455,7 @@ export class ASTPatternTuple extends ASTNode {
     super(N_PatternTuple, parameters);
   }
 
-  get parameters() {
+  get boundVariables() {
     return this._children;
   }
 }
@@ -450,7 +465,7 @@ export class ASTPatternTimeout extends ASTNode {
     super(N_PatternTimeout, [timeout]);
   }
 
-  get parameters() {
+  get boundVariables() {
     return [];
   }
 

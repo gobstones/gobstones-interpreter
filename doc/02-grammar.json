@@ -40,6 +40,7 @@
     ["LOWERID", ["?", ["COMMA", "nonEmptyLoweridSeq"]]]
   ],
   ["statement",
+    ["stmtEllipsis"],
     ["stmtBlock"],
     ["stmtReturn"],
     ["stmtIf"],
@@ -50,6 +51,9 @@
     ["stmtLet"],
     ["stmtVariableAssignment"],
     ["stmtProcedureCall"]
+  ],
+  ["stmtEllipsis",
+    ["ELLIPSIS"]
   ],
   ["stmtBlock",
     ["LBRACE", ["*", ["statement", ["?", ["SEMICOLON"]]]], "RBRACE"]
@@ -67,7 +71,7 @@
     ["REPEAT", "LPAREN", "expression", "RPAREN", "stmtBlock"]
   ],
   ["stmtForeach",
-    ["FOREACH", "LOWERID", "IN", "expression", "stmtBlock"]
+    ["FOREACH", "pattern", "IN", "expression", "stmtBlock"]
   ],
   ["stmtWhile",
     ["WHILE", "LPAREN", "expression", "RPAREN", "stmtBlock"]
@@ -94,6 +98,7 @@
   ],
   ["pattern",
     ["patternWildcard"],
+    ["patternVariable"],
     ["patternNumber"],
     ["patternStructure"],
     ["patternTuple"],
@@ -101,6 +106,9 @@
   ],
   ["patternWildcard",
     ["UNDERSCORE"]
+  ],
+  ["patternVariable",
+    ["LOWERID"]
   ],
   ["patternNumber",
     ["NUM"],
@@ -123,6 +131,7 @@
     ["LPAREN", "expression", "RPAREN"]
   ],
   ["exprAtom",
+    ["exprEllipsis"],
     ["exprVariable"],
     ["exprFunctionCall"],
     ["exprConstantNumber"],
@@ -133,6 +142,9 @@
     ["exprTuple"],
     ["exprStructure"],
     ["exprStructureUpdate"]
+  ],
+  ["exprEllipsis",
+    ["ELLIPSIS"]
   ],
   ["exprVariable",
     ["LOWERID"]

@@ -19,6 +19,7 @@ import {
   N_StmtProcedureCall,
   /* Patterns */
   N_PatternWildcard,
+  N_PatternVariable,
   N_PatternNumber,
   N_PatternStructure,
   N_PatternTuple,
@@ -384,10 +385,10 @@ export class Compiler {
    *   PrimitiveCall "<", 2    ;|
    *   JumpIfFalse labelEnd    ;/
    *
-   *   PushVariable _list                 ;\  get the `pos`-th element of the
-   *   PushVariable _pos                  ;|  list and store it in the local
-   *   PrimitiveCall "_unsafeListNth", 2  ;|  variable "<index>"
-   *   SetVariable <index>                ;/
+   *   PushVariable _list                    ;\ get the `pos`-th element of the
+   *   PushVariable _pos                     ;| list and match the value
+   *   PrimitiveCall "_unsafeListNth", 2     ;| with the pattern of the foreach
+   *   [match with the pattern or fail]      ;/
    *
    *   <body>
    *
@@ -401,7 +402,7 @@ export class Compiler {
    * UnsetVariable _list
    * UnsetVariable _n
    * UnsetVariable _pos
-   * UnsetVariable <index>
+   * [unset all the variables bound by the pattern]
    */
   _compileStmtForeach(statement) {
     let labelStart = this._freshLabel();
@@ -432,8 +433,8 @@ export class Compiler {
       new IPushVariable(list),
       new IPushVariable(pos),
       new IPrimitiveCall('_unsafeListNth', 2),
-      new ISetVariable(statement.index.value),
     ]);
+    this._compileMatchForeachPatternOrFail(statement.pattern);
     this._compileStatement(statement.body);
     this._produceList(statement.startPos, statement.endPos, [
       new IPushVariable(pos),
@@ -447,8 +448,45 @@ export class Compiler {
       new IUnsetVariable(list),
       new IUnsetVariable(n),
       new IUnsetVariable(pos),
-      new IUnsetVariable(statement.index.value),
     ]);
+    this._compilePatternUnbind(statement.pattern);
+  }
+
+  /* Attempt to match the pattern against the top of the stack.
+   * If the pattern matches, bind its variables.
+   * Otherwise, issue an error message.
+   * Always pops the top of the stack.
+   */
+  _compileMatchForeachPatternOrFail(pattern) {
+    switch (pattern.tag) {
+      case N_PatternWildcard:
+        this._produce(pattern.startPos, pattern.endPos, new IPop());
+        return;
+      case N_PatternVariable:
+        this._produce(pattern.startPos, pattern.endPos,
+          new ISetVariable(pattern.variableName.value)
+        );
+        return;
+      default:
+        /* Attempt to match, issuing an error message if there is no match:
+         *
+         *   [if subject matches pattern, jump to L]
+         *   [error message: no match]
+         * L:
+         *   [bind pattern to subject]
+         *   [pop subject]
+         */
+        let label = this._freshLabel();
+        this._compilePatternCheck(pattern, label);
+        this._produceList(pattern.startPos, pattern.endPos, [
+          new IPushString('foreach-pattern-does-not-match'),
+          new IPrimitiveCall('_FAIL', 1),
+          new ILabel(label),
+        ]);
+        this._compilePatternBind(pattern);
+        this._produce(pattern.startPos, pattern.endPos, new IPop());
+        return;
+    }
   }
 
   /* labelStart:
@@ -622,6 +660,8 @@ export class Compiler {
     switch (pattern.tag) {
       case N_PatternWildcard:
         return this._compilePatternCheckWildcard(pattern, targetLabel);
+      case N_PatternVariable:
+        return this._compilePatternCheckVariable(pattern, targetLabel);
       case N_PatternNumber:
         return this._compilePatternCheckNumber(pattern, targetLabel);
       case N_PatternStructure:
@@ -639,6 +679,13 @@ export class Compiler {
   }
 
   _compilePatternCheckWildcard(pattern, targetLabel) {
+    this._produce(
+      pattern.startPos, pattern.endPos,
+      new IJump(targetLabel)
+    );
+  }
+
+  _compilePatternCheckVariable(pattern, targetLabel) {
     this._produce(
       pattern.startPos, pattern.endPos,
       new IJump(targetLabel)
@@ -677,7 +724,7 @@ export class Compiler {
     /* Check that the type of the value coincides with the type
      * of the tuple */
     let anys = [];
-    for (let i = 0; i < pattern.parameters.length; i++) {
+    for (let i = 0; i < pattern.boundVariables.length; i++) {
       anys.push(new TypeAny());
     }
     let expectedType = new TypeTuple(anys);
@@ -689,7 +736,7 @@ export class Compiler {
     /* Jump if the value matches */
     this._produce(
       pattern.startPos, pattern.endPos,
-      new IJumpIfTuple(pattern.parameters.length, targetLabel)
+      new IJumpIfTuple(pattern.boundVariables.length, targetLabel)
     );
   }
 
@@ -702,12 +749,16 @@ export class Compiler {
 
   /* Pattern binding are instructions that bind the parameters
    * of a pattern to the corresponding parts of the value currently
-   * at the top of the stack.
+   * at the top of the stack. The value at the top of the stack
+   * is never popped (it must be duplicated if necessary).
    */
   _compilePatternBind(pattern) {
     switch (pattern.tag) {
       case N_PatternWildcard:
         return; /* No parameters to bind */
+      case N_PatternVariable:
+        this._compilePatternBindVariable(pattern);
+        return;
       case N_PatternNumber:
         return; /* No parameters to bind */
       case N_PatternStructure:
@@ -726,31 +777,38 @@ export class Compiler {
     }
   }
 
+  _compilePatternBindVariable(pattern) {
+    this._produceList(pattern.startPos, pattern.endPos, [
+      new IDup(),
+      new ISetVariable(pattern.variableName.value),
+    ]);
+  }
+
   _compilePatternBindStructure(pattern) {
-    /* Allow pattern with no parameters, even if the constructor
+    /* Allow structure pattern with no parameters, even if the constructor
      * has parameters */
-    if (pattern.parameters.length === 0) {
+    if (pattern.boundVariables.length === 0) {
       return;
     }
 
     let constructorName = pattern.constructorName.value;
     let fieldNames = this._symtable.constructorFields(constructorName);
     for (let i = 0; i < fieldNames.length; i++) {
-      let parameter = pattern.parameters[i];
+      let variable = pattern.boundVariables[i];
       let fieldName = fieldNames[i];
       this._produceList(pattern.startPos, pattern.endPos, [
         new IReadStructureField(fieldName),
-        new ISetVariable(parameter.value),
+        new ISetVariable(variable.value),
       ]);
     }
   }
 
   _compilePatternBindTuple(pattern) {
-    for (let index = 0; index < pattern.parameters.length; index++) {
-      let parameter = pattern.parameters[index];
+    for (let index = 0; index < pattern.boundVariables.length; index++) {
+      let variable = pattern.boundVariables[index];
       this._produceList(pattern.startPos, pattern.endPos, [
         new IReadTupleComponent(index),
-        new ISetVariable(parameter.value),
+        new ISetVariable(variable.value),
       ]);
     }
   }
@@ -758,39 +816,9 @@ export class Compiler {
   /* Pattern unbinding are instructions that unbind the parameters
    * of a pattern. */
   _compilePatternUnbind(pattern) {
-    switch (pattern.tag) {
-      case N_PatternWildcard:
-        return; /* No parameters to unbind */
-      case N_PatternNumber:
-        return; /* No parameters to unbind */
-      case N_PatternStructure:
-        this._compilePatternUnbindStructure(pattern);
-        return;
-      case N_PatternTuple:
-        this._compilePatternUnbindTuple(pattern);
-        return;
-      case N_PatternTimeout:
-        return; /* No parameters to unbind */
-      default:
-        throw Error(
-                'Compiler: Pattern unbinding not implemented: '
-              + Symbol.keyFor(pattern.tag)
-              );
-    }
-  }
-
-  _compilePatternUnbindStructure(pattern) {
-    for (let parameter of pattern.parameters) {
+    for (let variable of pattern.boundVariables) {
       this._produceList(pattern.startPos, pattern.endPos, [
-        new IUnsetVariable(parameter.value),
-      ]);
-    }
-  }
-
-  _compilePatternUnbindTuple(pattern) {
-    for (let parameter of pattern.parameters) {
-      this._produceList(pattern.startPos, pattern.endPos, [
-        new IUnsetVariable(parameter.value),
+        new IUnsetVariable(variable.value),
       ]);
     }
   }

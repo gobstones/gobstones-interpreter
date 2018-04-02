@@ -68,7 +68,12 @@ export class Runner {
   }
 
   parse(input) {
-    this._ast = new Parser(input).parse();
+    let parser = new Parser(input);
+    this._ast = parser.parse();
+
+    for (let option of parser.getLanguageOptions()) {
+      this._setLanguageOption(option);
+    }
   }
 
   enableLintCheck(linterCheckId, enabled) {
@@ -128,6 +133,15 @@ export class Runner {
 
   get globalState() {
     return this._vm.globalState();
+  }
+
+  /* Evaluate language options set by the LANGUAGE pragma */
+  _setLanguageOption(option) {
+    if (option === 'DestructuringForeach') {
+      this.enableLintCheck('forbidden-extension-destructuring-foreach', false);
+    } else {
+      throw Error('Unknown language option: ' + option);
+    }
   }
 
   /* Dynamic stack of regions */

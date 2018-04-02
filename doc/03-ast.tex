@@ -23,7 +23,7 @@
 \ALT
 \ast{StmtRepeat}(times : \type{Expression}, body : \type{Statement})
 \ALT
-\ast{StmtForeach}(index : \type{ID}, range : \type{Expression}, body : \type{Statement})
+\ast{StmtForeach}(pattern : \type{Pattern}, range : \type{Expression}, body : \type{Statement})
 \ALT
 \ast{StmtWhile}(condition : \type{Expression}, body : \type{Statement})
 \ALT
@@ -36,6 +36,8 @@
 \ast{StmtProcedureCall}(procedureName : \type{ID}, args : [\type{Expression}])}
 \datadecl{\type{SwitchBranch}}{\ast{SwitchBranch}(pattern : \type{Pattern}, body : \type{Statement})}
 \datadecl{\type{Pattern}}{\ast{PatternWildcard}()
+\ALT
+\ast{PatternVariable}(variableName : \type{ID})
 \ALT
 \ast{PatternNumber}(number : \type{NUM})
 \ALT

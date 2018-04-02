@@ -753,4 +753,33 @@ describe('Parser: definitions', () => {
 
   });
 
+  describe('LANGUAGE pragma', () => {
+
+    it('Recognize LANGUAGE option DestructuringForeach', () => {
+      let parser = new Parser([
+        '/*@LANGUAGE@DestructuringForeach@*/',
+        'program {',
+        '}'
+      ]);
+      parser.parse();
+      expect(parser.getLanguageOptions()).deep.equals([
+        'DestructuringForeach'
+      ]);
+    });
+
+    it('Fail on unknown LANGUAGE option', () => {
+      expect(() => 
+          new Parser([
+            '/*@LANGUAGE@foobar@*/',
+            'program {',
+            '}'
+          ]).parse()
+      ).throws(
+        i18n('errmsg:unknown-language-option')('foobar')
+      );
+    });
+
+  });
+
 });
+

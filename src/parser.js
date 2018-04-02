@@ -13,7 +13,7 @@ import {
   T_TIMEOUT,
   /* Symbols */
   T_LPAREN, T_RPAREN, T_LBRACE, T_RBRACE, T_LBRACK, T_RBRACK, T_COMMA,
-  T_SEMICOLON, T_RANGE, T_GETS, T_PIPE, T_ARROW, T_ASSIGN,
+  T_SEMICOLON, T_ELLIPSIS, T_RANGE, T_GETS, T_PIPE, T_ARROW, T_ASSIGN,
   T_EQ, T_NE, T_LE, T_GE, T_LT, T_GT, T_AND, T_OR, T_CONCAT, T_PLUS,
   T_MINUS, T_TIMES, T_POW
 } from './token';
@@ -39,6 +39,7 @@ import {
   ASTStmtProcedureCall,
   /* Patterns */
   ASTPatternWildcard,
+  ASTPatternVariable,
   ASTPatternNumber,
   ASTPatternStructure,
   ASTPatternTuple,
@@ -179,6 +180,12 @@ export class Parser {
       definitions.push(this._parseDefinition());
     }
     return new ASTMain(definitions);
+  }
+
+  /* Return the list of all language options collected by the tokenizer.
+   * Language options are set by the LANGUAGE pragma. */
+  getLanguageOptions() {
+    return this._lexer.getLanguageOptions();
   }
 
   /** Definitions **/
@@ -361,6 +368,8 @@ export class Parser {
   /* Statement (not followed by semicolon) */
   _parsePureStatement() {
     switch (this._currentToken.tag) {
+      case T_ELLIPSIS:
+        return this._parseStmtEllipsis();
       case T_RETURN:
         return this._parseStmtReturn();
       case T_IF:
@@ -417,6 +426,21 @@ export class Parser {
     let result = new ASTStmtBlock(statements);
     result.startPos = startPos;
     result.endPos = endPos;
+    return result;
+  }
+
+  _parseStmtEllipsis() {
+    let startPos = this._currentToken.startPos;
+    this._match(T_ELLIPSIS);
+    let result = new ASTStmtProcedureCall(
+      new Token(T_UPPERID, i18n('PRIM:BOOM'), startPos, startPos), [
+        new ASTExprConstantString(
+          new Token(T_STRING, i18n('errmsg:ellipsis'))
+        )
+      ]
+    );
+    result.startPos = startPos;
+    result.endPos = this._currentToken.startPos;
     return result;
   }
 
@@ -481,11 +505,11 @@ export class Parser {
   _parseStmtForeach() {
     let startPos = this._currentToken.startPos;
     this._match(T_FOREACH);
-    let index = this._parseLowerid();
+    let pattern = this._parsePattern();
     this._match(T_IN);
     let range = this._parseExpression();
     let body = this._parseStmtBlock();
-    let result = new ASTStmtForeach(index, range, body);
+    let result = new ASTStmtForeach(pattern, range, body);
     result.startPos = startPos;
     result.endPos = body.endPos;
     return result;
@@ -597,6 +621,8 @@ export class Parser {
     switch (this._currentToken.tag) {
       case T_UNDERSCORE:
         return this._parsePatternWildcard();
+      case T_LOWERID:
+        return this._parsePatternVariable();
       case T_NUM: case T_MINUS:
         return this._parsePatternNumber();
       case T_UPPERID:
@@ -623,6 +649,15 @@ export class Parser {
     let endPos = startPos;
     result.startPos = startPos;
     result.endPos = endPos;
+    return result;
+  }
+
+  _parsePatternVariable() {
+    let startPos = this._currentToken.startPos;
+    let id = this._parseLowerid();
+    let result = new ASTPatternVariable(id);
+    result.startPos = startPos;
+    result.endPos = id.endPos;
     return result;
   }
 
@@ -816,6 +851,8 @@ export class Parser {
    * I.e. all the operators must be surrounded by parentheses */
   _parseExprAtom() {
     switch (this._currentToken.tag) {
+      case T_ELLIPSIS:
+        return this._parseExprEllipsis();
       case T_LOWERID:
         return this._parseExprVariableOrFunctionCall();
       case T_NUM:
@@ -839,6 +876,21 @@ export class Parser {
           ]
         );
     }
+  }
+
+  _parseExprEllipsis() {
+    let startPos = this._currentToken.startPos;
+    this._match(T_ELLIPSIS);
+    let result = new ASTExprFunctionCall(
+      new Token(T_LOWERID, i18n('PRIM:boom'), startPos, startPos), [
+        new ASTExprConstantString(
+          new Token(T_STRING, i18n('errmsg:ellipsis'))
+        )
+      ]
+    );
+    result.startPos = startPos;
+    result.endPos = this._currentToken.startPos;
+    return result;
   }
 
   _parseExprVariableOrFunctionCall() {

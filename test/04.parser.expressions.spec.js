@@ -24,6 +24,7 @@ import {
   ASTStmtProcedureCall,
   /* Patterns */
   ASTPatternWildcard,
+  ASTPatternVariable,
   ASTPatternStructure,
   ASTPatternTuple,
   ASTPatternTimeout,
@@ -187,7 +188,7 @@ describe('Parser: expressions', () => {
               new ASTStmtBlock([]),
             ),
             new ASTStmtForeach(
-              tok(T_LOWERID, 'i'),
+              new ASTPatternVariable(tok(T_LOWERID, 'i')),
               new ASTExprFunctionCall(tok(T_LOWERID, 'f3'), []),
               new ASTStmtBlock([]),
             ),
@@ -2260,6 +2261,34 @@ describe('Parser: expressions', () => {
                   new ASTExprVariable(tok(T_LOWERID, 'd'))
                 ])
               ])
+            )
+          ])
+        )
+      ]);
+    });
+
+  });
+
+  describe('Ellipsis expression', () => {
+
+    it('Parse ellipsis expression and macroexpand to boom', () => {
+      let parser = new Parser(
+                     'program {\n' +
+                     '  x := ...\n' +
+                     '}\n'
+                   );
+      expectAST(parser.parse(), [
+        new ASTDefProgram(
+          new ASTStmtBlock([
+            new ASTStmtAssignVariable(
+              tok(T_LOWERID, 'x'),
+              new ASTExprFunctionCall(
+                tok(T_LOWERID, i18n('PRIM:boom')), [
+                  new ASTExprConstantString(
+                    tok(T_STRING, i18n('errmsg:ellipsis'))
+                  )
+                ]
+              )
             )
           ])
         )

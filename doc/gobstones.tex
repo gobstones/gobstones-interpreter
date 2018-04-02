@@ -133,7 +133,9 @@ Todos los s\'imbolos terminales se acompa\~nan de su nombre \token{EN\_MAYUSCULA
 
 \subsection{Pragmas}
 
-El tokenizador implementa directivas pragma para
+\subsubsection{Pragmas \texttt{BEGIN\_REGION} y \texttt{END\_REGION}}
+
+Las directivas \texttt{BEGIN\_REGION} y \texttt{END\_REGION} sirven para
 mantener registro de ``regiones''. Una regi\'on es una cadena de texto que
 sirve para identificar o {\em taggear} un fragmento del programa.
 Las regiones no tienen ning\'un significado
@@ -142,9 +144,9 @@ eleva el int\'erprete vienen acompa\~nadas de una posici\'on que incluye
 el nombre de la regi\'on actual. Las regiones pueden anidarse.
 Este comportamiento se implementa por medio de dos directivas.
 \begin{itemize}
-\item \str{/*@BEGIN\_REGION@\textit{nombre\_de\_la\_regi\'on}@*/}:
+\item \str{/*@BEGIN\_REGION@\textit{nombre\_de\_la\_regi\'on}@*/} ---
        mete el nombre de una regi\'on en la pila de regiones.
-\item \str{/*@END\_REGION@*/}: saca la regi\'on del tope de la pila de regiones.
+\item \str{/*@END\_REGION@*/} --- saca la regi\'on del tope de la pila de regiones.
 \end{itemize}
 Por ejemplo ante el siguiente programa:
 \begin{verbatim}
@@ -157,6 +159,76 @@ procedure P() {
 /*@END_REGION@*/
 \end{verbatim}
 El parser idealmente deber\'ia reportar que hay un error de sintaxis en la regi\'on \texttt{B}.
+
+\subsubsection{Pragma \texttt{ATTRIBUTE}}
+
+La directiva \texttt{ATTRIBUTE} sirve para decorar definiciones de
+tipos, programas, procedimientos y funciones con atributos clave/valor.
+La directiva \texttt{ATTRIBUTE} debe {\bf preceder} inmediatamente la definici\'on
+de un tipo, programa, procedimiento o funci\'on, y su sintaxis es la siguiente:
+\begin{itemize}
+\item \str{/*@ATTRIBUTE@clave@valor@*/} --- asocia el valor indicado a la clave indicada.
+      Las claves y valores son {\em strings}.
+\end{itemize}
+Una definici\'on de tipo, programa, procedimiento o funci\'on puede estar precedida
+de varias directivas \texttt{ATTRIBUTE}, asociando a dicha definici\'on un diccionario
+de atributos. Por ejemplo en el siguiente programa:
+\begin{verbatim}
+/*@ATTRIBUTE@descripcion@Poner una piedra en la casilla actual.@*/
+/*@ATTRIBUTE@esAtomico@SI@*/
+procedure PonerPiedra() {
+  ...
+}
+
+/*@ATTRIBUTE@esAtomico@NO@*/
+function f() {
+  ...
+}
+
+/*@ATTRIBUTE@descripcion@Programa principal.@*/
+program {
+  ...
+}
+\end{verbatim}
+El procedimiento \texttt{PonerPiedra} tiene asociado el siguiente diccionario de atributos
+(en formato JSON):
+\begin{verbatim}
+  {
+    descripcion: "Poner una piedra en la casilla actual.",
+    esAtomico: "SI"
+  }
+\end{verbatim}
+y la funci\'on \texttt{f} tiene asociado el siguiente diccionario de atributos:
+\begin{verbatim}
+  {
+    esAtomico: "NO"
+  }
+\end{verbatim}
+El int\'erprete no otorga ning\'un significado ni funcionalidad especial a los atributos.
+Son un mecanismo abierto cuya finalidad es dependiente de la implementaci\'on.
+
+\subsubsection{Pragma \texttt{LANGUAGE}}
+
+Establece opciones del lenguaje.
+El objetivo de esta directiva es habilitar extensiones y funcionalidades experimentales.
+La etapa de an\'alisis sint\'actico no se ve afectada por la directiva \texttt{LANGUAGE}.
+La directiva \texttt{LANGUAGE} puede potencialmente
+afectar las etapas de an\'alisis est\'atico ({\em linter}),
+compilaci\'on y el comportamiento en tiempo de ejecuci\'on.
+
+La sintaxis de la directiva es:
+\begin{itemize}
+\item \str{/*@LANGUAGE@nombre-de-la-opcion@*/} ---
+      habilita la opci\'on indicada.
+\end{itemize}
+
+Por el momento hay una \'unica directiva \texttt{LANGUAGE} implementada:
+\begin{itemize}
+\item \str{/*@LANGUAGE@DestructuringForeach@*/} ---
+      habilita la posibilidad de usar patrones complejos
+      como \'indice del \texttt{foreach}
+      (en lugar de permitir solamente variables).
+\end{itemize}
 
 \subsection{Producciones de la gram\'atica}
 
@@ -346,9 +418,14 @@ La etapa de an\'alisis sem\'antico (o {\em linting}) verifica de manera est\'ati
   \begin{itemize}
   \item Par\'ametros --- est\'an ligados en la lista de par\'ametros de
         un procedimiento, o en la lista de par\'ametros de una funci\'on, 
-        o en la lista de par\'ametros de un constructor al hacer {\em pattern matching}
-        con \texttt{switch} (por ejemplo los par\'ametros \texttt{x} e \texttt{y} en
-        el comando \texttt{switch (c) \{ Coord(x, y) -> ... \}})
+        o en la lista de variables ligadas al hacer {\em pattern matching}
+        con \texttt{switch}. Por ejemplo \texttt{x} e \texttt{y} son par\'ametros
+        en los comandos:
+        \begin{enumerate}
+        \item \texttt{switch (c) \{ Coord(x, y) ->\ ... \}}
+        \item \texttt{switch (c) \{ (x, y) ->\ ... \}}
+        \item \texttt{switch (c) \{ x ->\ ... \}}
+        \end{enumerate}
   \item \'Indices --- est\'an ligados por un \texttt{foreach}.
   \item Variables --- su valor se declara en una asignaci\'on \texttt{x := e} o en una asignaci\'on
         a una tupla \texttt{(x1, ..., xN) := e}.
@@ -356,7 +433,7 @@ La etapa de an\'alisis sem\'antico (o {\em linting}) verifica de manera est\'ati
 \item Alcance de los nombres locales:
   \begin{itemize}
   \item Par\'ametros de procedimientos y funciones --- locales a todo el cuerpo del procedimiento o funci\'on.
-  \item Par\'ametros de constructores en un \texttt{switch} --- locales al bloque a la derecha de la correspondiente flecha \texttt{->}.
+  \item Variables ligadas en los patrones de un \texttt{switch} --- locales al bloque a la derecha de la correspondiente flecha \texttt{->}.
   \item \'Indices --- locales al cuerpo del \texttt{foreach}.
   \item Variables --- locales a todo el cuerpo del procedimiento o funci\'on.
   \end{itemize}
@@ -377,28 +454,39 @@ La etapa de an\'alisis sem\'antico (o {\em linting}) verifica de manera est\'ati
 
 {\bf Pattern matching.}
 \begin{itemize}
-\item Hay cinco tipos de patrones:
-  \begin{itemize}
+\item Hay seis tipos de patrones:
+  \begin{enumerate}
   \item Patr\'on comod\'in (\texttt{\_}).
+  \item Patr\'on variable (identificador ligado localmente).
   \item Patr\'on num\'erico (un n\'umero $n$, que puede ser positivo, negativo o cero).
-  \item Patr\'on constructor (\texttt{C} o alternativamente \texttt{C(x$_1$, ..., x$_n$)}).
+  \item Patr\'on estructura (\texttt{C} o alternativamente \texttt{C(x$_1$, ..., x$_n$)}).
   \item Patr\'on tupla (\texttt{(x$_1$, ..., x$_n$)}).
   \item Patr\'on timeout (\texttt{TIMEOUT($n$)}).
-  \end{itemize}
-\item En un patr\'on constructor, el nombre del constructor en cuesti\'on \DEBE ser un constructor existente de
+  \end{enumerate}
+\item Actualmente los patrones se pueden utilizar en tres lugares:
+      \begin{enumerate}
+      \item en las ramas de un \texttt{interactive program},
+      \item en las ramas de un \texttt{switch},
+      \item como patr\'on de un \texttt{foreach},
+            siempre y cuando la opci\'on \texttt{DestructuringForeach}
+            haya sido habilitada con la directiva \texttt{/*@LANGUAGE@DestructuringForeach@*/}.
+            De lo contrario, el patr\'on de un \texttt{foreach}
+            puede ser \'unicamente un patr\'on variable (\'indice).
+      \end{enumerate}
+\item En un patr\'on estructura, el nombre del constructor en cuesti\'on \DEBE ser un constructor existente de
       alg\'un tipo.
-\item En un patr\'on constructor, el constructor \PUEDE tener $0$ par\'ametros, independientemente del n\'umero
+\item En un patr\'on estructura, el constructor \PUEDE tener $0$ par\'ametros, independientemente del n\'umero
       de campos que tenga el constructor correspondiente.
-\item Si un patr\'on constructor tiene $1$ o m\'as par\'ametros, el n\'umero \DEBE coincidir con el n\'umero
+\item Si un patr\'on estructura tiene $1$ o m\'as par\'ametros, el n\'umero \DEBE coincidir con el n\'umero
       de campos del constructor correspondiente.
-\item En una secuencia de ramas los patrones constructor \PUEDEN aparecer en cualquier orden, sin respetar necesariamente el orden en que est\'an declarados.
-\item Una secuencia de ramas \NOPUEDE tener dos patrones num\'ericos con el mismo valor num\'erico.    %TODO
-\item Una secuencia de ramas \NOPUEDE tener dos patrones constructor asociados al mismo constructor.
+\item En una secuencia de ramas los patrones estructura \PUEDEN aparecer en cualquier orden, sin respetar necesariamente el orden en que est\'an declarados.
+\item Una secuencia de ramas \NOPUEDE tener dos patrones num\'ericos con el mismo valor num\'erico.
+\item Una secuencia de ramas \NOPUEDE tener dos patrones estructura asociados al mismo constructor.
 \item Una secuencia de ramas \NOPUEDE tener dos patrones tupla con la misma longitud.
 \item Una secuencia de ramas \NOPUEDE tener dos patrones timeout.
-\item Una secuencia de ramas \PUEDE tener o no tener un patr\'on comod\'in.
-\item Si una secuencia de ramas tiene un patr\'on comod\'in, el patr\'on comod\'in \DEBE estar en la \'ultima rama.
-\item Una secuencia de ramas \NOPUEDE tener un patr\'on comod\'in en ninguna otra rama que no sea la \'ultima.
+\item Una secuencia de ramas \PUEDE tener o no tener un patr\'on comod\'in. (No es obligatorio como \'ultima rama).
+\item Si una secuencia de ramas tiene un patr\'on comod\'in o un patr\'on variable, dicho patr\'on \DEBE estar en la \'ultima rama.
+\item Una secuencia de ramas \NOPUEDE tener un patr\'on comod\'in o un patr\'on variable en ninguna otra rama que no sea la \'ultima.
 \item Un patr\'on comod\'in \PUEDE ser inalcanzable.
       Es decir, un patr\'on comod\'in puede estar presente incluso si la secuencia de ramas
       cubre todas las alternativas de constructores posibles.
@@ -406,47 +494,51 @@ La etapa de an\'alisis sem\'antico (o {\em linting}) verifica de manera est\'ati
       Son patrones compatibles:
       \begin{itemize}
       \item Dos patrones num\'ericos.
-      \item Dos patrones constructor cuyos constructores pertenecen al mismo tipo.
+      \item Dos patrones estructura cuyos constructores pertenecen al mismo tipo.
       \item Un patr\'on timeout con cualquier otro constructor del tipo \texttt{\_EVENT}
             (que corresponde a los eventos que pueden darse en un programa interactivo).
-      \item El patr\'on comod\'in con cualquier otro patr\'on.
+      \item Un patr\'on comod\'in con cualquier otro patr\'on.
+      \item Un patr\'on variable con cualquier otro patr\'on.
       \end{itemize}
       Dos tipos son incompatibles en cualquier otro caso. En particular, son patrones incompatibles:
       \begin{itemize}
-      \item Un patr\'on num\'erico y un patr\'on constructor.
+      \item Un patr\'on num\'erico y un patr\'on estructura.
       \item Un patr\'on num\'erico y un patr\'on tupla.
-      \item Dos patrones constructor cuyos constructores pertenecen a distintos tipos.
+      \item Dos patrones estructura cuyos constructores pertenecen a distintos tipos.
       \item Dos patrones tupla con distinto n\'umero de componentes.
-      \item Un patr\'on constructor y un patr\'on tupla.
+      \item Un patr\'on estructura y un patr\'on tupla.
       \end{itemize}
 \item Los patrones de las ramas del \texttt{interactive program}
       \DEBEN ser eventos, es decir:
       patrones timeout,
-      patrones constructor del tipo \texttt{\_EVENT},
+      patrones estructura del tipo \texttt{\_EVENT},
+      patrones variable
       o patrones comod\'in.
-\item Los de las ramas de los \texttt{switch} \NOPUEDEN ser eventos, es decir:
+\item Los patrones de las ramas de los \texttt{switch} \NOPUEDEN ser eventos, es decir:
       pueden ser
       patrones num\'ericos,
-      patrones constructor de tipos que no sean \texttt{\_EVENT},
+      patrones estructura de tipos que no sean \texttt{\_EVENT},
       patrones tupla,
+      patrones variable,
       o patrones comod\'in.
+\item El patr\'on de un \texttt{foreach} \NOPUEDE ser un evento.
 \end{itemize}
 
 {\bf Expresiones.}
 \begin{itemize}
 \item Los usos de par\'ametros, \'indices y variables (\ast{ExprVariable}) \PUEDEN no corresponder a par\'ametros, \'indices o variables definidas.
       La restricci\'on de que las variables se pueden usar solamente despu\'es de que se les haya dado un valor es una restricci\'on din\'amica.
-\item Cuando se construye una instancia de un tipo (registro o variante) con un constructor (\ast{ExprConstructor}),
+\item Cuando se construye una instancia de un tipo (registro o variante) con un constructor (\ast{ExprStructure}),
       el nombre del constructor \DEBE ser el nombre de un constructor existente.
-\item Cuando se construye o se actualiza una instancia con un constructor (\ast{ExprConstructor}, \ast{ExprConstructorUpdate}),
+\item Cuando se construye o se actualiza una instancia con un constructor (\ast{ExprStructure}, \ast{ExprStructureUpdate}),
       \NOPUEDE haber nombres de campos repetidos en la lista de {\em bindings}.
-\item Cuando se construye o se actualiza una instancia con un constructor (\ast{ExprConstructor}, \ast{ExprConstructorUpdate}),
+\item Cuando se construye o se actualiza una instancia con un constructor (\ast{ExprStructure}, \ast{ExprStructureUpdate}),
       los nombres de los campos que aparecen en la lista de {\em bindings}
       \DEBEN ser nombres de campos v\'alidos para dicho constructor. (Correctitud).
-\item Cuando se construye una instancia con un constructor (\ast{ExprConstructor}),
+\item Cuando se construye una instancia con un constructor (\ast{ExprStructure}),
       los nombres de los campos que aparecen en la lista de {\em bindings}
       \DEBEN cubrir todos los posibles nombres de campos v\'alidos para dicho constructor. (Completitud).
-\item Cuando se construye o se actualiza una instancia con un constructor (\ast{ExprConstructor}, \ast{ExprConstructorUpdate}),
+\item Cuando se construye o se actualiza una instancia con un constructor (\ast{ExprStructure}, \ast{ExprStructureUpdate}),
       el constructor \NOPUEDE ser un constructor del tipo \texttt{\_EVENT} (esto t\'ecnicamente depende
       del entorno global en el que se eval\'ue el programa, pero t\'ipicamente
       los eventos son las teclas como \texttt{K\_ENTER}, etc.).

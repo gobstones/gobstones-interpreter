@@ -16,6 +16,18 @@ function lint(code) {
   return new Linter(new SymbolTable()).lint(new Parser(code).parse());
 }
 
+function lintDisableDestructuringForeach(code) {
+  let l = new Linter(new SymbolTable());
+  l.enableCheck('forbidden-extension-destructuring-foreach', true);
+  return l.lint(new Parser(code).parse());
+}
+
+function lintEnableDestructuringForeach(code) {
+  let l = new Linter(new SymbolTable());
+  l.enableCheck('forbidden-extension-destructuring-foreach', false);
+  return l.lint(new Parser(code).parse());
+}
+
 function tok(tag, value) {
   return new Token(tag, value, UnknownPosition, UnknownPosition);
 }
@@ -585,6 +597,201 @@ describe('Linter', () => {
       );
     });
 
+    it('Accept repeated local names in variable patterns', () => {
+      let code = [
+        'program {',
+        '  switch (1) {',
+        '    z -> {}',
+        '  }',
+        '  switch (1) {',
+        '    z -> {}',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(lint(code).program === null).equals(false);
+    });
+
+    it('Reject conflicting local names in variable pattern', () => {
+      let code = [
+        'program {',
+        '  z := 1',
+        '  switch (1) {',
+        '    z -> {}',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(() => lint(code)).throws(
+        i18n('errmsg:local-name-conflict')(
+          'z',
+          i18n('LocalVariable'),
+          i18n('<position>')('(?)', 2, 3),
+          i18n('LocalParameter'),
+          i18n('<position>')('(?)', 4, 5),
+        )
+      );
+    });
+
+    it('Reject conflicting local names in nested variable pattern', () => {
+      let code = [
+        'program {',
+        '  switch (1) {',
+        '    foo -> {',
+        '      switch (2) {',
+        '        foo -> {}',
+        '      }',
+        '    }',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(() => lint(code)).throws(
+        i18n('errmsg:local-name-conflict')(
+          'foo',
+          i18n('LocalParameter'),
+          i18n('<position>')('(?)', 3, 5),
+          i18n('LocalParameter'),
+          i18n('<position>')('(?)', 5, 9),
+        )
+      );
+    });
+
+    it('Reject conflicting local names in structure pattern', () => {
+      let code = [
+        'type A is variant {',
+        '  case B { field x }',
+        '}',
+        'program {',
+        '  z := 1',
+        '  switch (1) {',
+        '    B(z) -> {}',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(() => lint(code)).throws(
+        i18n('errmsg:local-name-conflict')(
+          'z',
+          i18n('LocalVariable'),
+          i18n('<position>')('(?)', 5, 3),
+          i18n('LocalParameter'),
+          i18n('<position>')('(?)', 7, 7),
+        )
+      );
+    });
+
+    it('Reject conflicting local names in tuple pattern', () => {
+      let code = [
+        'program {',
+        '  z := 1',
+        '  switch (1) {',
+        '    (x,y,z) -> {}',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(() => lint(code)).throws(
+        i18n('errmsg:local-name-conflict')(
+          'z',
+          i18n('LocalVariable'),
+          i18n('<position>')('(?)', 2, 3),
+          i18n('LocalParameter'),
+          i18n('<position>')('(?)', 4, 10),
+        )
+      );
+    });
+
+  });
+
+  describe('Foreach statement', () => {
+
+    it('Always accept foreach with variable index', () => {
+      let code = [
+        'program {',
+        '  foreach i in [] {',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(
+        lintDisableDestructuringForeach(code).program !== null
+      ).equals(true);
+    });
+
+    it('DestructuringForeach disabled -- Reject wildcard index', () => {
+      let code = [
+        'program {',
+        '  foreach _ in [] {',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(() => lintDisableDestructuringForeach(code)).throws(
+        i18n('errmsg:forbidden-extension-destructuring-foreach')
+      );
+    });
+
+    it('DestructuringForeach enabled -- Accept wildcard index', () => {
+      let code = [
+        'program {',
+        '  foreach _ in [] {',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(lintEnableDestructuringForeach(code) === null).equals(false);
+    });
+
+    it('DestructuringForeach disabled -- Reject tuple index', () => {
+      let code = [
+        'program {',
+        '  foreach (x,y) in [] {',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(() => lintDisableDestructuringForeach(code)).throws(
+        i18n('errmsg:forbidden-extension-destructuring-foreach')
+      );
+    });
+
+    it('DestructuringForeach enabled -- Accept tuple index', () => {
+      let code = [
+        'program {',
+        '  foreach (x,y) in [] {',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(lintEnableDestructuringForeach(code) === null).equals(false);
+    });
+
+    it('Always reject events as indices', () => {
+      let code = [
+        'program {',
+        '  foreach ' + i18n('CONS:TIMEOUT') + '(1) in [] {',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(() => lintEnableDestructuringForeach(code)).throws(
+        i18n('errmsg:patterns-in-foreach-must-not-be-events')
+      );
+    });
+
+    it('Accept structure pattern', () => {
+      let code = [
+        'type A is record { field x field y }',
+        'program {',
+        '  foreach A(a, b) in [] {',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(lintEnableDestructuringForeach(code) === null).equals(false);
+    });
+
+    it('Reject structure pattern with undefined constructor', () => {
+      let code = [
+        'program {',
+        '  foreach A(a, b) in [] {',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(() => lintEnableDestructuringForeach(code)).throws(
+        i18n('errmsg:undeclared-constructor')('A')
+      );
+    });
+
   });
 
   describe('Procedure and function calls', () => {
@@ -679,6 +886,28 @@ describe('Linter', () => {
   });
 
   describe('Pattern matching', () => {
+
+    it('Accept wildcard pattern', () => {
+      let code = [
+        'program {',
+        '  switch (1) {',
+        '    _  -> {}',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(lint(code).program !== null).equals(true);
+    });
+
+    it('Accept variable pattern', () => {
+      let code = [
+        'program {',
+        '  switch (1) {',
+        '    x  -> {}',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(lint(code).program !== null).equals(true);
+    });
 
     it('Accept numeric pattern', () => {
       let code = [
@@ -820,6 +1049,25 @@ describe('Linter', () => {
       );
     });
 
+    it('Reject variable pattern not on the last branch', () => {
+      let code = [
+        'type A is variant {',
+        '  case A1 { field x }',
+        '  case A2 { field x }',
+        '}',
+        'program {',
+        '  switch (1) {',
+        '    A1(x) -> {}',
+        '    z    -> {}',
+        '    A2(x) -> {}',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(() => lint(code)).throws(
+        i18n('errmsg:variable-pattern-should-be-last')('z')
+      );
+    });
+
     it('Allow wildcard pattern on the last branch, even if unreachable', () => {
       let code = [
         'type A is record {',
@@ -829,6 +1077,21 @@ describe('Linter', () => {
         '  switch (1) {',
         '    A(x) -> {}',
         '    _    -> {}',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(lint(code).program !== null).equals(true);
+    });
+
+    it('Allow variable pattern on the last branch, even if unreachable', () => {
+      let code = [
+        'type A is record {',
+        '  field x',
+        '}',
+        'program {',
+        '  switch (1) {',
+        '    A(x) -> {}',
+        '    z    -> {}',
         '  }',
         '}',
       ].join('\n');

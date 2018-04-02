@@ -368,6 +368,205 @@ describe('Compiler', () => {
       );
     });
 
+    it('Foreach (destructuring): wildcard pattern', () => {
+      let result = new Runner().run([
+        '/*@LANGUAGE@DestructuringForeach@*/',
+        'program {',
+        '  x := 0',
+        '  foreach _ in [1, 2, 3] {',
+        '    x := 2 * x',
+        '    foreach _ in [4, 5] {',
+        '      x := x + 1',
+        '    }',
+        '  }',
+        '  return (x)',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(new ValueInteger(14));
+    });
+
+    it('Foreach (destructuring): numeric pattern', () => {
+      let result = new Runner().run([
+        '/*@LANGUAGE@DestructuringForeach@*/',
+        'program {',
+        '  x := 0',
+        '  foreach -12 in [2 * -6, -1 * 12, -6 - 6] {',
+        '    x := x + 1',
+        '  }',
+        '  return (x)',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(new ValueInteger(3));
+    });
+
+    it('Foreach (destructuring): numeric pattern -- mismatch', () => {
+      let result = () => new Runner().run([
+        '/*@LANGUAGE@DestructuringForeach@*/',
+        'program {',
+        '  x := 0',
+        '  foreach -12 in [12] {',
+        '    x := x + 1',
+        '  }',
+        '  return (x)',
+        '}',
+      ].join('\n'));
+      expect(result).throws(i18n('errmsg:foreach-pattern-does-not-match'));
+    });
+
+    it('Foreach (destructuring): tuple pattern', () => {
+      let result = new Runner().run([
+        '/*@LANGUAGE@DestructuringForeach@*/',
+        'program {',
+        '  lx := []',
+        '  ly := []',
+        '  foreach (x, y) in [(1, "a"), (2, "b"), (3, "c")] {',
+        '    lx := lx ++ [x]',
+        '    ly := ly ++ [y]',
+        '  }',
+        '  return (lx, ly)',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(
+        new ValueTuple([
+          new ValueList([
+            new ValueInteger(1),
+            new ValueInteger(2),
+            new ValueInteger(3)
+          ]),
+          new ValueList([
+            new ValueString("a"),
+            new ValueString("b"),
+            new ValueString("c")
+          ]),
+        ])
+      );
+    });
+
+    it('Foreach (destructuring): tuple pattern -- type mismatch', () => {
+      let result = () => new Runner().run([
+        '/*@LANGUAGE@DestructuringForeach@*/',
+        'program {',
+        '  foreach (x, y) in [()] {',
+        '  }',
+        '}',
+      ].join('\n'));
+      expect(result).throws(
+        i18n('errmsg:expected-value-of-type-but-got')(
+          new TypeTuple([new TypeAny(), new TypeAny()]),
+          new TypeTuple([])
+        )
+      );
+    });
+
+    it('Foreach (destructuring): structure pattern', () => {
+      let result = new Runner().run([
+        '/*@LANGUAGE@DestructuringForeach@*/',
+        'type A is record {',
+        '  field ax',
+        '  field ay',
+        '}',
+        'program {',
+        '  lx := []',
+        '  ly := []',
+        '  foreach A(x, y) in [',
+        '      A(ax <- 1, ay <- "a"),',
+        '      A(ax <- 2, ay <- "b"),',
+        '      A(ax <- 3, ay <- "c")',
+        '  ] {',
+        '    lx := lx ++ [x]',
+        '    ly := ly ++ [y]',
+        '  }',
+        '  return (lx, ly)',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(
+        new ValueTuple([
+          new ValueList([
+            new ValueInteger(1),
+            new ValueInteger(2),
+            new ValueInteger(3)
+          ]),
+          new ValueList([
+            new ValueString("a"),
+            new ValueString("b"),
+            new ValueString("c")
+          ]),
+        ])
+      );
+    });
+
+    it('Foreach (destructuring): structure pattern --- variant', () => {
+      let result = new Runner().run([
+        '/*@LANGUAGE@DestructuringForeach@*/',
+        'type A is variant {',
+        '  case B {',
+        '    field x',
+        '  }',
+        '  case C {',
+        '    field x',
+        '  }',
+        '}',
+        'program {',
+        '  y := 0',
+        '  foreach B(x) in [B(x <- 100), B(x <- 1)] {',
+        '    y := y + x',
+        '  }',
+        '  return (y)',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(new ValueInteger(101));
+    });
+
+    it('Foreach (destructuring): structure pattern --- no match', () => {
+      let result = () => new Runner().run([
+        '/*@LANGUAGE@DestructuringForeach@*/',
+        'type A is variant {',
+        '  case B {',
+        '    field x',
+        '  }',
+        '  case C {',
+        '    field x',
+        '  }',
+        '}',
+        'program {',
+        '  y := 0',
+        '  foreach B(x) in [B(x <- 100), C(x <- 1)] {',
+        '    y := y + x',
+        '  }',
+        '  return (y)',
+        '}',
+      ].join('\n'));
+      expect(result).throws(i18n('errmsg:foreach-pattern-does-not-match'));
+    });
+
+    it('Foreach (destructuring): unbind variables -- empty list', () => {
+      let result = new Runner().run([
+        '/*@LANGUAGE@DestructuringForeach@*/',
+        'program {',
+        '  z := 0',
+        '  foreach (x,y) in [] {',
+        '    z := z + x * y',
+        '  }',
+        '  return (z)',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(new ValueInteger(0));
+    });
+
+    it('Foreach (destructuring): unbind variables -- non-empty list', () => {
+      let result = () => new Runner().run([
+        '/*@LANGUAGE@DestructuringForeach@*/',
+        'program {',
+        '  z := [1,2,3]',
+        '  foreach (x,y) in [] {',
+        '    z := z + x * y',
+        '  }',
+        '  return (y)',
+        '}',
+      ].join('\n'));
+      expect(result).throws(i18n('errmsg:undefined-variable')('y'));
+    });
+
   });
 
   describe('Statements: while', () => {
@@ -418,6 +617,25 @@ describe('Compiler', () => {
         '}',
       ].join('\n'));
       expect(result).deep.equals(new ValueInteger(42));
+    });
+
+    it('Switch: match variable', () => {
+      let result = new Runner().run([
+        'program {',
+        '  switch ((1,2,3)) {',
+        '    z -> { x := z }',
+        '  }',
+        '  y := x',
+        '  return (y)',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(
+        new ValueTuple([
+          new ValueInteger(1),
+          new ValueInteger(2),
+          new ValueInteger(3)
+        ])
+      );
     });
 
     it('Switch: empty switch (no match)', () => {
