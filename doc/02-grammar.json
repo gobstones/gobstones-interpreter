@@ -67,7 +67,7 @@
     ["REPEAT", "LPAREN", "expression", "RPAREN", "stmtBlock"]
   ],
   ["stmtForeach",
-    ["FOREACH", "pattern", "IN", "expression", "stmtBlock"]
+    ["FOREACH", "LOWERID", "IN", "expression", "stmtBlock"]
   ],
   ["stmtWhile",
     ["WHILE", "LPAREN", "expression", "RPAREN", "stmtBlock"]

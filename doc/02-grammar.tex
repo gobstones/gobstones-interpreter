@@ -86,7 +86,7 @@
 \token{REPEAT} \token{LPAREN} \nonterminal{expression} \token{RPAREN} \nonterminal{stmtBlock}
 }
 \production{\nonterminal{stmtForeach}}{
-\token{FOREACH} \nonterminal{pattern} \token{IN} \nonterminal{expression} \nonterminal{stmtBlock}
+\token{FOREACH} \token{LOWERID} \token{IN} \nonterminal{expression} \nonterminal{stmtBlock}
 }
 \production{\nonterminal{stmtWhile}}{
 \token{WHILE} \token{LPAREN} \nonterminal{expression} \token{RPAREN} \nonterminal{stmtBlock}
