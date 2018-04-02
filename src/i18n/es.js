@@ -497,7 +497,7 @@ export const LOCALE_ES = {
     },
 
   'errmsg:forbidden-extension-destructuring-foreach':
-    'El índice de la repetición indexada debe ser una variable.',
+    'El índice de la repetición indexada debe ser un identificador.',
 
   'errmsg:patterns-in-foreach-must-not-be-events':
     'El patrón de un foreach no puede ser un evento.',
@@ -627,6 +627,9 @@ export const LOCALE_ES = {
 
   'errmsg:switch-does-not-match':
     'El valor analizado no coincide con ninguna de las ramas del switch.',
+
+  'errmsg:foreach-pattern-does-not-match':
+    'El elemento no coincide con el patrón esperado por el foreach.',
 
   'errmsg:cannot-divide-by-zero':
     'No se puede dividir por cero.',

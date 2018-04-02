@@ -385,10 +385,10 @@ export class Compiler {
    *   PrimitiveCall "<", 2    ;|
    *   JumpIfFalse labelEnd    ;/
    *
-   *   PushVariable _list                 ;\  get the `pos`-th element of the
-   *   PushVariable _pos                  ;|  list and store it in the local
-   *   PrimitiveCall "_unsafeListNth", 2  ;|  variable "<index>"
-   *   SetVariable <index>                ;/
+   *   PushVariable _list                    ;\ get the `pos`-th element of the
+   *   PushVariable _pos                     ;| list and match the value
+   *   PrimitiveCall "_unsafeListNth", 2     ;| with the pattern of the foreach
+   *   [match with the pattern or fail]      ;/
    *
    *   <body>
    *
@@ -402,7 +402,7 @@ export class Compiler {
    * UnsetVariable _list
    * UnsetVariable _n
    * UnsetVariable _pos
-   * UnsetVariable <index>
+   * [unset all the variables bound by the pattern]
    */
   _compileStmtForeach(statement) {
     let labelStart = this._freshLabel();
@@ -433,8 +433,8 @@ export class Compiler {
       new IPushVariable(list),
       new IPushVariable(pos),
       new IPrimitiveCall('_unsafeListNth', 2),
-      new ISetVariable(statement.index.value),
     ]);
+    this._compileMatchForeachPatternOrFail(statement.pattern);
     this._compileStatement(statement.body);
     this._produceList(statement.startPos, statement.endPos, [
       new IPushVariable(pos),
@@ -448,8 +448,45 @@ export class Compiler {
       new IUnsetVariable(list),
       new IUnsetVariable(n),
       new IUnsetVariable(pos),
-      new IUnsetVariable(statement.index.value),
     ]);
+    this._compilePatternUnbind(statement.pattern);
+  }
+
+  /* Attempt to match the pattern against the top of the stack.
+   * If the pattern matches, bind its variables.
+   * Otherwise, issue an error message.
+   * Always pops the top of the stack.
+   */
+  _compileMatchForeachPatternOrFail(pattern) {
+    switch (pattern.tag) {
+      case N_PatternWildcard:
+        this._produce(pattern.startPos, pattern.endPos, new IPop());
+        return;
+      case N_PatternVariable:
+        this._produce(pattern.startPos, pattern.endPos,
+          new ISetVariable(pattern.variableName.value)
+        );
+        return;
+      default:
+        /* Attempt to match, issuing an error message if there is no match:
+         *
+         *   [if subject matches pattern, jump to L]
+         *   [error message: no match]
+         * L:
+         *   [bind pattern to subject]
+         *   [pop subject]
+         */
+        let label = this._freshLabel();
+        this._compilePatternCheck(pattern, label);
+        this._produceList(pattern.startPos, pattern.endPos, [
+          new IPushString('foreach-pattern-does-not-match'),
+          new IPrimitiveCall('_FAIL', 1),
+          new ILabel(label),
+        ]);
+        this._compilePatternBind(pattern);
+        this._produce(pattern.startPos, pattern.endPos, new IPop());
+        return;
+    }
   }
 
   /* labelStart:
