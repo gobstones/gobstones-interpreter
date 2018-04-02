@@ -499,6 +499,9 @@ export const LOCALE_ES = {
   'errmsg:forbidden-extension-destructuring-foreach':
     'El índice de la repetición indexada debe ser una variable.',
 
+  'errmsg:patterns-in-foreach-must-not-be-events':
+    'El patrón de un foreach no puede ser un evento.',
+
   /* Runtime errors (virtual machine) */
   'errmsg:undefined-variable':
     function (variableName) {

@@ -418,9 +418,14 @@ La etapa de an\'alisis sem\'antico (o {\em linting}) verifica de manera est\'ati
   \begin{itemize}
   \item Par\'ametros --- est\'an ligados en la lista de par\'ametros de
         un procedimiento, o en la lista de par\'ametros de una funci\'on, 
-        o en la lista de par\'ametros de un constructor al hacer {\em pattern matching}
-        con \texttt{switch} (por ejemplo los par\'ametros \texttt{x} e \texttt{y} en
-        el comando \texttt{switch (c) \{ Coord(x, y) -> ... \}})
+        o en la lista de variables ligadas al hacer {\em pattern matching}
+        con \texttt{switch}. Por ejemplo \texttt{x} e \texttt{y} son par\'ametros
+        en los comandos:
+        \begin{enumerate}
+        \item \texttt{switch (c) \{ Coord(x, y) ->\ ... \}}
+        \item \texttt{switch (c) \{ (x, y) ->\ ... \}}
+        \item \texttt{switch (c) \{ x ->\ ... \}}
+        \end{enumerate}
   \item \'Indices --- est\'an ligados por un \texttt{foreach}.
   \item Variables --- su valor se declara en una asignaci\'on \texttt{x := e} o en una asignaci\'on
         a una tupla \texttt{(x1, ..., xN) := e}.
@@ -458,6 +463,16 @@ La etapa de an\'alisis sem\'antico (o {\em linting}) verifica de manera est\'ati
   \item Patr\'on tupla (\texttt{(x$_1$, ..., x$_n$)}).
   \item Patr\'on timeout (\texttt{TIMEOUT($n$)}).
   \end{enumerate}
+\item Actualmente los patrones se pueden utilizar en tres lugares:
+      \begin{enumerate}
+      \item en las ramas de un \texttt{interactive program},
+      \item en las ramas de un \texttt{switch},
+      \item como patr\'on de un \texttt{foreach},
+            siempre y cuando la opci\'on \texttt{DestructuringForeach}
+            haya sido habilitada con la directiva \texttt{/*@LANGUAGE@DestructuringForeach@*/}.
+            De lo contrario, el patr\'on de un \texttt{foreach}
+            puede ser \'unicamente un patr\'on variable (\'indice).
+      \end{enumerate}
 \item En un patr\'on estructura, el nombre del constructor en cuesti\'on \DEBE ser un constructor existente de
       alg\'un tipo.
 \item En un patr\'on estructura, el constructor \PUEDE tener $0$ par\'ametros, independientemente del n\'umero
@@ -497,13 +512,16 @@ La etapa de an\'alisis sem\'antico (o {\em linting}) verifica de manera est\'ati
       \DEBEN ser eventos, es decir:
       patrones timeout,
       patrones estructura del tipo \texttt{\_EVENT},
+      patrones variable
       o patrones comod\'in.
 \item Los patrones de las ramas de los \texttt{switch} \NOPUEDEN ser eventos, es decir:
       pueden ser
       patrones num\'ericos,
       patrones estructura de tipos que no sean \texttt{\_EVENT},
       patrones tupla,
+      patrones variable,
       o patrones comod\'in.
+\item El patr\'on de un \texttt{foreach} \NOPUEDE ser un evento. \TODO{TBI}
 \end{itemize}
 
 {\bf Expresiones.}

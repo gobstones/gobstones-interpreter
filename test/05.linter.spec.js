@@ -757,6 +757,41 @@ describe('Linter', () => {
       expect(lintEnableDestructuringForeach(code) === null).equals(false);
     });
 
+    it('Always reject events as indices', () => {
+      let code = [
+        'program {',
+        '  foreach ' + i18n('CONS:TIMEOUT') + '(1) in [] {',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(() => lintEnableDestructuringForeach(code)).throws(
+        i18n('errmsg:patterns-in-foreach-must-not-be-events')
+      );
+    });
+
+    it('Accept structure pattern', () => {
+      let code = [
+        'type A is record { field x field y }',
+        'program {',
+        '  foreach A(a, b) in [] {',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(lintEnableDestructuringForeach(code) === null).equals(false);
+    });
+
+    it('Reject structure pattern with undefined constructor', () => {
+      let code = [
+        'program {',
+        '  foreach A(a, b) in [] {',
+        '  }',
+        '}',
+      ].join('\n');
+      expect(() => lintEnableDestructuringForeach(code)).throws(
+        i18n('errmsg:undeclared-constructor')('A')
+      );
+    });
+
   });
 
   describe('Procedure and function calls', () => {

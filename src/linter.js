@@ -99,6 +99,7 @@ export class Linter {
       'pattern-does-not-match-type': true,
       'patterns-in-interactive-program-must-be-events': true,
       'patterns-in-switch-must-not-be-events': true,
+      'patterns-in-foreach-must-not-be-events': true,
       'repeated-variable-in-tuple-assignment': true,
       'constructor-used-as-procedure': true,
       'undefined-procedure': true,
@@ -331,15 +332,7 @@ export class Linter {
   }
 
   _lintStmtForeach(statement) {
-    /* Only allow variables in indices (unless "DestructuringForeach"
-     * is enabled). */
-    if (statement.pattern.tag !== N_PatternVariable) {
-      this._lintCheck(
-        statement.pattern.startPos, statement.pattern.endPos,
-        'forbidden-extension-destructuring-foreach', []
-      );
-    }
-
+    this._lintStmtForeachPattern(statement.pattern);
     this._lintExpression(statement.range);
     for (let variable of statement.pattern.boundVariables) {
       this._symtable.addNewLocalName(variable, LocalIndex);
@@ -347,6 +340,29 @@ export class Linter {
     this._lintStatement(statement.body);
     for (let variable of statement.pattern.boundVariables) {
       this._symtable.removeLocalName(variable);
+    }
+  }
+
+  _lintStmtForeachPattern(pattern) {
+    /* If "DestructuringForeach" is disabled, forbid complex patterns.
+     * Allow only variable patterns (indices). */
+    if (pattern.tag !== N_PatternVariable) {
+      this._lintCheck(
+        pattern.startPos, pattern.endPos,
+        'forbidden-extension-destructuring-foreach', []
+      );
+    }
+
+    /* Check that the pattern itself is well-formed */
+    this._lintPattern(pattern);
+
+    /* The pattern in a foreach cannot be an event */
+    let patternType = this._patternType(pattern);
+    if (patternType === i18n('TYPE:Event')) {
+      this._lintCheck(
+        pattern.startPos, pattern.endPos,
+        'patterns-in-foreach-must-not-be-events', []
+      );
     }
   }
 

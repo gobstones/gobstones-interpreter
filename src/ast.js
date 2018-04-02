@@ -299,9 +299,9 @@ export class ASTStmtForeach extends ASTNode {
     super(N_StmtForeach, [pattern, range, body]);
   }
 
-  // TODO: Remove
+  // TODO: BORRAR
   get index() {
-    return this._children[0].variableName;
+    return this.pattern.variableName;
   }
 
   get pattern() {
