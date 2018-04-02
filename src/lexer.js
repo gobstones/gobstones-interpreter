@@ -470,7 +470,7 @@ export class Lexer {
       let key = pragma[1];
       let value = pragma.slice(2, pragma.length).join('@');
       this.setAttribute(key, value);
-    } else if (pragma[0] === 'LANGUAGE' && pragma.length == 2) {
+    } else if (pragma[0] === 'LANGUAGE' && pragma.length === 2) {
       let languageOption = pragma[1];
       this.addLanguageOption(languageOption);
     } else {
@@ -553,7 +553,7 @@ export class Lexer {
   }
 
   addLanguageOption(option) {
-    if (LANGUAGE_OPTIONS.indexOf(option) != -1) {
+    if (LANGUAGE_OPTIONS.indexOf(option) !== -1) {
       this._languageOptions.push(option);
     } else {
       fail(this._reader, this._reader, 'unknown-language-option', [option]);

@@ -1,5 +1,4 @@
 
-import { GbsSyntaxError } from './exceptions';
 import { Parser } from './parser';
 import { Linter } from './linter';
 import { SymbolTable } from './symtable';
@@ -138,7 +137,7 @@ export class Runner {
 
   /* Evaluate language options set by the LANGUAGE pragma */
   _setLanguageOption(option) {
-    if (option == 'DestructuringForeach') {
+    if (option === 'DestructuringForeach') {
       this.enableLintCheck('forbidden-extension-destructuring-foreach', false);
     } else {
       throw Error('Unknown language option: ' + option);

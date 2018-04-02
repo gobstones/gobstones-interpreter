@@ -404,13 +404,13 @@ export class Linter {
     let i = 0;
     const n = branches.length;
     for (let branch of branches) {
-      if (branch.pattern.tag === N_PatternWildcard  && i !== n - 1) {
+      if (branch.pattern.tag === N_PatternWildcard && i !== n - 1) {
         this._lintCheck(
           branch.pattern.startPos, branch.pattern.endPos,
           'wildcard-pattern-should-be-last', []
         );
       }
-      if (branch.pattern.tag === N_PatternVariable  && i !== n - 1) {
+      if (branch.pattern.tag === N_PatternVariable && i !== n - 1) {
         this._lintCheck(
           branch.pattern.startPos, branch.pattern.endPos,
           'variable-pattern-should-be-last', [branch.pattern.variableName.value]

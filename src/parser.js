@@ -433,7 +433,7 @@ export class Parser {
     let startPos = this._currentToken.startPos;
     this._match(T_ELLIPSIS);
     let result = new ASTStmtProcedureCall(
-      new Token(T_UPPERID, i18n('PRIM:BOOM'), startPos, startPos), [ 
+      new Token(T_UPPERID, i18n('PRIM:BOOM'), startPos, startPos), [
         new ASTExprConstantString(
           new Token(T_STRING, i18n('errmsg:ellipsis'))
         )
@@ -882,7 +882,7 @@ export class Parser {
     let startPos = this._currentToken.startPos;
     this._match(T_ELLIPSIS);
     let result = new ASTExprFunctionCall(
-      new Token(T_LOWERID, i18n('PRIM:boom'), startPos, startPos), [ 
+      new Token(T_LOWERID, i18n('PRIM:boom'), startPos, startPos), [
         new ASTExprConstantString(
           new Token(T_STRING, i18n('errmsg:ellipsis'))
         )
