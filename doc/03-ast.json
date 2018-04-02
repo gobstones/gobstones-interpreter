@@ -17,7 +17,7 @@
     ["StmtReturn", ["result", "Expression"]],
     ["StmtIf", ["condition", "Expression"], ["thenBlock", "Statement"], ["elseBlock", ["?", "Statement"]]],
     ["StmtRepeat", ["times", "Expression"], ["body", "Statement"]],
-    ["StmtForeach", ["index", "ID"], ["range", "Expression"], ["body", "Statement"]],
+    ["StmtForeach", ["pattern", "Pattern"], ["range", "Expression"], ["body", "Statement"]],
     ["StmtWhile", ["condition", "Expression"], ["body", "Statement"]],
     ["StmtSwitch", ["subject", "Expression"], ["branches", ["*", "SwitchBranch"]]],
     ["StmtAssignVariable", ["variable", "ID"], ["value", "Expression"]],

@@ -295,13 +295,17 @@ export class ASTStmtRepeat extends ASTNode {
 }
 
 export class ASTStmtForeach extends ASTNode {
-  constructor(index, range, body) {
-    super(N_StmtForeach, [index, range, body]);
+  constructor(pattern, range, body) {
+    super(N_StmtForeach, [pattern, range, body]);
   }
 
+  // TODO: Remove
   get index() {
+    return this._children[0].variableName;
+  }
+
+  get pattern() {
     return this._children[0];
-    //return this._children[0].variableName();
   }
 
   get range() {

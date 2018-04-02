@@ -627,7 +627,7 @@ describe('Parser: statements', () => {
         new ASTDefProgram(
           new ASTStmtBlock([
             new ASTStmtForeach(
-              tok(T_LOWERID, 'i'),
+              new ASTPatternVariable(tok(T_LOWERID, 'i')),
               new ASTExprVariable(tok(T_LOWERID, 'expr')),
               new ASTStmtBlock([])
             )
@@ -651,16 +651,16 @@ describe('Parser: statements', () => {
         new ASTDefProgram(
           new ASTStmtBlock([
             new ASTStmtForeach(
-              tok(T_LOWERID, 'dir'),
+              new ASTPatternVariable(tok(T_LOWERID, 'dir')),
               new ASTExprVariable(tok(T_LOWERID, 'lista1')),
               new ASTStmtBlock([
                 new ASTStmtForeach(
-                  tok(T_LOWERID, 'col'),
+                  new ASTPatternVariable(tok(T_LOWERID, 'col')),
                   new ASTExprVariable(tok(T_LOWERID, 'lista2')),
                   new ASTStmtBlock([])
                 ),
                 new ASTStmtForeach(
-                  tok(T_LOWERID, 'col'),
+                  new ASTPatternVariable(tok(T_LOWERID, 'col')),
                   new ASTExprVariable(tok(T_LOWERID, 'lista3')),
                   new ASTStmtBlock([])
                 )
@@ -669,16 +669,6 @@ describe('Parser: statements', () => {
           ])
         )
       ]);
-    });
-
-    it('Fail if wrong (uppercase) index name', () => {
-      let parser = new Parser('program { foreach I in expr {} }');
-      expect(() => parser.parse()).throws(
-        i18n('errmsg:expected-but-found')(
-          i18n('T_LOWERID'),
-          i18n('T_UPPERID')
-        )
-      );
     });
 
     it('Fail if missing "in"', () => {
@@ -709,6 +699,77 @@ describe('Parser: statements', () => {
       expect(ast[0].body.statements[0].startPos.column).equals(1);
       expect(ast[0].body.statements[0].endPos.line).equals(7);
       expect(ast[0].body.statements[0].endPos.column).equals(1);
+    });
+
+    it('Accept wildcard patterns in "foreach"', () => {
+      let parser = new Parser('program { foreach _ in expr {} }');
+      expectAST(parser.parse(), [
+        new ASTDefProgram(
+          new ASTStmtBlock([
+            new ASTStmtForeach(
+              new ASTPatternWildcard(),
+              new ASTExprVariable(tok(T_LOWERID, 'expr')),
+              new ASTStmtBlock([])
+            )
+          ])
+        )
+      ]);
+    });
+
+    it('Accept tuple patterns in "foreach"', () => {
+      let parser = new Parser('program { foreach (x, y, z) in expr {} }');
+      expectAST(parser.parse(), [
+        new ASTDefProgram(
+          new ASTStmtBlock([
+            new ASTStmtForeach(
+              new ASTPatternTuple([
+                tok(T_LOWERID, 'x'),
+                tok(T_LOWERID, 'y'),
+                tok(T_LOWERID, 'z'),
+              ]),
+              new ASTExprVariable(tok(T_LOWERID, 'expr')),
+              new ASTStmtBlock([])
+            )
+          ])
+        )
+      ]);
+    });
+
+    it('Accept structure patterns without parameters in "foreach"', () => {
+      let parser = new Parser([
+        'program { foreach True in expr {} }',
+      ].join('\n'));
+      expectAST(parser.parse(), [
+        new ASTDefProgram(
+          new ASTStmtBlock([
+            new ASTStmtForeach(
+              new ASTPatternStructure(tok(T_UPPERID, 'True'), []),
+              new ASTExprVariable(tok(T_LOWERID, 'expr')),
+              new ASTStmtBlock([])
+            )
+          ])
+        )
+      ]);
+    });
+
+    it('Accept structure patterns with parameters in "foreach"', () => {
+      let parser = new Parser([
+        'program { foreach A(foo, bar) in expr {} }',
+      ].join('\n'));
+      expectAST(parser.parse(), [
+        new ASTDefProgram(
+          new ASTStmtBlock([
+            new ASTStmtForeach(
+              new ASTPatternStructure(tok(T_UPPERID, 'A'), [
+                tok(T_LOWERID, 'foo'),
+                tok(T_LOWERID, 'bar'),
+              ]),
+              new ASTExprVariable(tok(T_LOWERID, 'expr')),
+              new ASTStmtBlock([])
+            )
+          ])
+        )
+      ]);
     });
 
   });

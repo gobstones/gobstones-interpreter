@@ -482,12 +482,11 @@ export class Parser {
   _parseStmtForeach() {
     let startPos = this._currentToken.startPos;
     this._match(T_FOREACH);
-    //let index = this._parsePattern(); // TODO
-    let index = this._parseLowerid();
+    let pattern = this._parsePattern();
     this._match(T_IN);
     let range = this._parseExpression();
     let body = this._parseStmtBlock();
-    let result = new ASTStmtForeach(index, range, body);
+    let result = new ASTStmtForeach(pattern, range, body);
     result.startPos = startPos;
     result.endPos = body.endPos;
     return result;

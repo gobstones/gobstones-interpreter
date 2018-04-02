@@ -24,6 +24,7 @@ import {
   ASTStmtProcedureCall,
   /* Patterns */
   ASTPatternWildcard,
+  ASTPatternVariable,
   ASTPatternStructure,
   ASTPatternTuple,
   ASTPatternTimeout,
@@ -187,7 +188,7 @@ describe('Parser: expressions', () => {
               new ASTStmtBlock([]),
             ),
             new ASTStmtForeach(
-              tok(T_LOWERID, 'i'),
+              new ASTPatternVariable(tok(T_LOWERID, 'i')),
               new ASTExprFunctionCall(tok(T_LOWERID, 'f3'), []),
               new ASTStmtBlock([]),
             ),
