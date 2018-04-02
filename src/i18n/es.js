@@ -503,6 +503,8 @@ export const LOCALE_ES = {
     'El patrón de un foreach no puede ser un evento.',
 
   /* Runtime errors (virtual machine) */
+  'errmsg:ellipsis': 'El programa todavía no está completo.',
+
   'errmsg:undefined-variable':
     function (variableName) {
       return 'La variable "' + variableName + '" no está definida.';
@@ -685,7 +687,6 @@ export const LOCALE_ES = {
 
   'PRIM:BOOM': 'BOOM',
   'PRIM:boom': 'boom',
-  'PRIM:ellipsis': 'El programa todavía no está completo.',
 
   'PRIM:PutStone': 'Poner',
   'PRIM:RemoveStone': 'Sacar',
