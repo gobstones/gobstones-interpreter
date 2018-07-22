@@ -141,6 +141,32 @@ describe('Primitive functions, procedures and operators', () => {
       new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
     ]);
 
+  describe('Type check (TypeCheck)', () => {
+
+    describe('Typecheck passes', () => {
+      let result = new Runner().run([
+        'program {',
+        '    ' + i18n('PRIM:TypeCheck') + '(4, 0, "fail %1 %2")',
+        '}',
+      ].join(''));
+    });
+
+    describe('Typecheck fails', () => {
+      let result = () => new Runner().run([
+        'program {',
+        '    ' + i18n('PRIM:TypeCheck') +
+        '    ' + '("foo", 0, "expected %2 but got %1")',
+        '}',
+      ].join(''));
+      expect(result).throws(
+        i18n('errmsg:typecheck-failed')(
+          'expected %2 but got %1', new TypeString(), new TypeInteger()
+        )
+      );
+    });
+
+  });
+
   describe('Relational operators', () => {
 
     describe('Equality (==)', () => {
@@ -1297,7 +1323,7 @@ describe('Primitive functions, procedures and operators', () => {
       expect(result).throws(i18n('errmsg:cannot-divide-by-zero'));
     });
 
-    it('Power', () => {
+    it('Power (^)', () => {
       let result = new Runner().run([
         'program {',
         '  return (',
@@ -1355,6 +1381,15 @@ describe('Primitive functions, procedures and operators', () => {
         new ValueInteger(
           '1606938044258990275541962092341162602522202993782792835301376'),
       ]));
+    });
+
+    it('Fail on negative exponent for power (^)', () => {
+      let result = () => new Runner().run([
+        'program {',
+        '  return (2 ^ -1)',
+        '}'
+      ].join('\n'));
+      expect(result).throws(i18n('errmsg:negative-exponent'));
     });
 
   });
