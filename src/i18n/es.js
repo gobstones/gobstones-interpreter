@@ -125,16 +125,16 @@ function openingDelimiterName(delimiter) {
 }
 
 function formatTypes(string, type1, type2) {
-  let result = ''
+  let result = '';
   for (let i = 0; i < string.length; i++) {
-    if (string[i] == '%' && i + 1 < string.length) {
-      if (string[i + 1] == '%') {
+    if (string[i] === '%' && i + 1 < string.length) {
+      if (string[i + 1] === '%') {
         result += '%';
         i++;
-      } else if (string[i + 1] == '1') {
+      } else if (string[i + 1] === '1') {
         result += typeAsNoun(type1);
         i++;
-      } else if (string[i + 1] == '2') {
+      } else if (string[i + 1] === '2') {
         result += typeAsNoun(type2);
         i++;
       } else {
