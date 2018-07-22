@@ -17,7 +17,7 @@ export function i18n(message) {
 
 export function i18nWithLanguage(code, thunk) {
   if (!(code in dictionaries)) {
-    throw Error('Invlid language code: ' + code);
+    throw Error('Invalid language code: ' + code);
   }
   let oldLanguage = CURRENT_LANGUAGE;
   CURRENT_LANGUAGE = code;

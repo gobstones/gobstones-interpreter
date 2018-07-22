@@ -604,6 +604,26 @@ export class RuntimePrimitives {
 
     /* --Primitive procedures-- */
 
+    this._primitiveProcedures[i18n('PRIM:TypeCheck')] =
+      new PrimitiveOperation(
+        [typeAny, typeAny, typeString],
+        function (startPos, endPos, globalState, args) {
+          let v1 = args[0];
+          let v2 = args[1];
+          let errorMessage = args[2];
+          if (joinTypes(v1.type(), v2.type()) === null) {
+            fail(startPos, endPos, 'typecheck-failed', [
+                errorMessage.string,
+                v1.type(),
+                v2.type(),
+            ]);
+          }
+        },
+        function (globalState, color) {
+          return null;
+        }
+      );
+
     this._primitiveProcedures[i18n('PRIM:PutStone')] =
       new PrimitiveOperation(
         [typeColor()], noValidation,
@@ -941,6 +961,20 @@ export class RuntimePrimitives {
         },
         function (globalState, a, b) {
           return a.mod(b);
+        }
+      );
+
+    this._primitiveFunctions['^'] =
+      new PrimitiveOperation(
+        [typeInteger, typeInteger],
+        function (startPos, endPos, globalState, args) {
+          let b = args[1];
+          if (b.lt(new ValueInteger(0))) {
+            fail(startPos, endPos, 'negative-exponent', []);
+          }
+        },
+        function (globalState, a, b) {
+          return a.pow(b);
         }
       );
 

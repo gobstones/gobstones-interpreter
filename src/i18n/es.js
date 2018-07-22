@@ -124,6 +124,29 @@ function openingDelimiterName(delimiter) {
   }
 }
 
+function formatTypes(string, type1, type2) {
+  let result = '';
+  for (let i = 0; i < string.length; i++) {
+    if (string[i] === '%' && i + 1 < string.length) {
+      if (string[i + 1] === '%') {
+        result += '%';
+        i++;
+      } else if (string[i + 1] === '1') {
+        result += typeAsNoun(type1);
+        i++;
+      } else if (string[i + 1] === '2') {
+        result += typeAsNoun(type2);
+        i++;
+      } else {
+        result += '%';
+      }
+    } else {
+      result += string[i];
+    }
+  }
+  return result;
+}
+
 export const LOCALE_ES = {
 
   /* Descriptions of syntactic constructions and tokens */
@@ -636,6 +659,9 @@ export const LOCALE_ES = {
   'errmsg:cannot-divide-by-zero':
     'No se puede dividir por cero.',
 
+  'errmsg:negative-exponent':
+    'El exponente de la potencia no puede ser negativo.',
+
   'errmsg:list-cannot-be-empty':
     'La lista no puede ser vacía.',
 
@@ -643,6 +669,12 @@ export const LOCALE_ES = {
     function (millisecs) {
       return 'La ejecución del programa demoró más de '
            + millisecs.toString() + 'ms.';
+    },
+
+  /* Typecheck */
+  'errmsg:typecheck-failed':
+    function (errorMessage, type1, type2) {
+      return formatTypes(errorMessage, type1, type2);
     },
 
   /* Board operations */
@@ -685,6 +717,7 @@ export const LOCALE_ES = {
   'CONS:Dir2': 'Sur',
   'CONS:Dir3': 'Oeste',
 
+  'PRIM:TypeCheck': 'TypeCheck',
   'PRIM:BOOM': 'BOOM',
   'PRIM:boom': 'boom',
 

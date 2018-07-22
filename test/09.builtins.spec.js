@@ -141,6 +141,32 @@ describe('Primitive functions, procedures and operators', () => {
       new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
     ]);
 
+  describe('Type check (TypeCheck)', () => {
+
+    describe('Typecheck passes', () => {
+      let result = new Runner().run([
+        'program {',
+        '    ' + i18n('PRIM:TypeCheck') + '(4, 0, "fail %1 %2")',
+        '}',
+      ].join(''));
+    });
+
+    describe('Typecheck fails', () => {
+      let result = () => new Runner().run([
+        'program {',
+        '    ' + i18n('PRIM:TypeCheck') +
+        '    ' + '("foo", 0, "expected %2 but got %1")',
+        '}',
+      ].join(''));
+      expect(result).throws(
+        i18n('errmsg:typecheck-failed')(
+          'expected %2 but got %1', new TypeString(), new TypeInteger()
+        )
+      );
+    });
+
+  });
+
   describe('Relational operators', () => {
 
     describe('Equality (==)', () => {
@@ -1295,6 +1321,75 @@ describe('Primitive functions, procedures and operators', () => {
         '}'
       ].join('\n'));
       expect(result).throws(i18n('errmsg:cannot-divide-by-zero'));
+    });
+
+    it('Power (^)', () => {
+      let result = new Runner().run([
+        'program {',
+        '  return (',
+        /* Zero / zero */
+        '    0 ^ 0,',
+        /* Zero / positive */
+        '    0 ^ 1, 0 ^ 2, 0 ^ 3, 0 ^ 10,',
+        /* Positive / zero */
+        '    1 ^ 0, 2 ^ 0, 3 ^ 0, 10 ^ 0,',
+        /* Positive / positive */
+        '    1 ^ 1, 1 ^ 2, 1 ^ 3, 1 ^ 10,',
+        '    2 ^ 1, 2 ^ 2, 2 ^ 3, 2 ^ 10,',
+        '    3 ^ 1, 3 ^ 2, 3 ^ 3, 3 ^ 10,',
+        '    10 ^ 1, 10 ^ 2, 10 ^ 3, 10 ^ 10,',
+        /* Negative / positive */
+        '    -1 ^ 1, -1 ^ 2, -1 ^ 3, -1 ^ 10,',
+        '    -2 ^ 1, -2 ^ 2, -2 ^ 3, -2 ^ 10,',
+        '    -3 ^ 1, -3 ^ 2, -3 ^ 3, -3 ^ 10,',
+        '    -10 ^ 1, -10 ^ 2, -10 ^ 3, -10 ^ 10,',
+        /* Big */
+        '    4374389299929001883777 ^ 2,',
+        '    2 ^ 200',
+        '  )',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(new ValueTuple([
+        /* Zero / zero */
+        new ValueInteger('1'),
+        /* Zero / positive */
+        new ValueInteger('0'), new ValueInteger('0'),
+        new ValueInteger('0'), new ValueInteger('0'),
+        /* Positive / zero */
+        new ValueInteger('1'), new ValueInteger('1'),
+        new ValueInteger('1'), new ValueInteger('1'),
+        /* Positive / positive */
+        new ValueInteger('1'), new ValueInteger('1'),
+        new ValueInteger('1'), new ValueInteger('1'),
+        new ValueInteger('2'), new ValueInteger('4'),
+        new ValueInteger('8'), new ValueInteger('1024'),
+        new ValueInteger('3'), new ValueInteger('9'),
+        new ValueInteger('27'), new ValueInteger('59049'),
+        new ValueInteger('10'), new ValueInteger('100'),
+        new ValueInteger('1000'), new ValueInteger('10000000000'),
+        /* Negative / positive */
+        new ValueInteger('-1'), new ValueInteger('1'),
+        new ValueInteger('-1'), new ValueInteger('1'),
+        new ValueInteger('-2'), new ValueInteger('4'),
+        new ValueInteger('-8'), new ValueInteger('1024'),
+        new ValueInteger('-3'), new ValueInteger('9'),
+        new ValueInteger('-27'), new ValueInteger('59049'),
+        new ValueInteger('-10'), new ValueInteger('100'),
+        new ValueInteger('-1000'), new ValueInteger('10000000000'),
+        /* Big */
+        new ValueInteger('19135281747333343200152945504707214615785729'),
+        new ValueInteger(
+          '1606938044258990275541962092341162602522202993782792835301376'),
+      ]));
+    });
+
+    it('Fail on negative exponent for power (^)', () => {
+      let result = () => new Runner().run([
+        'program {',
+        '  return (2 ^ -1)',
+        '}'
+      ].join('\n'));
+      expect(result).throws(i18n('errmsg:negative-exponent'));
     });
 
   });

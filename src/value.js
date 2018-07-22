@@ -547,6 +547,13 @@ export class ValueInteger extends Value {
     return this.sub(q.mul(other));
   }
 
+  /* Assumes that 'other' is non-negative */
+  pow(other) {
+    let a = Integer(this._number);
+    let b = Integer(other._number);
+    return new ValueInteger(a.pow(b).toString());
+  }
+
   eq(other) {
     return this.equal(other);
   }
