@@ -944,6 +944,20 @@ export class RuntimePrimitives {
         }
       );
 
+    this._primitiveFunctions['^'] =
+      new PrimitiveOperation(
+        [typeInteger, typeInteger],
+        function (startPos, endPos, globalState, args) {
+          let b = args[1];
+          if (b.lt(new ValueInteger(0))) {
+            fail(startPos, endPos, 'negative-exponent', []);
+          }
+        },
+        function (globalState, a, b) {
+          return a.pow(b);
+        }
+      );
+
     this._primitiveFunctions['-(unary)'] =
       new PrimitiveOperation(
         [typeAny],

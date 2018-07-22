@@ -636,6 +636,9 @@ export const LOCALE_ES = {
   'errmsg:cannot-divide-by-zero':
     'No se puede dividir por cero.',
 
+  'errmsg:negative-exponent':
+    'El exponente de la potencia no puede ser negativo.',
+
   'errmsg:list-cannot-be-empty':
     'La lista no puede ser vacía.',
 

@@ -1297,6 +1297,66 @@ describe('Primitive functions, procedures and operators', () => {
       expect(result).throws(i18n('errmsg:cannot-divide-by-zero'));
     });
 
+    it('Power', () => {
+      let result = new Runner().run([
+        'program {',
+        '  return (',
+        /* Zero / zero */
+        '    0 ^ 0,',
+        /* Zero / positive */
+        '    0 ^ 1, 0 ^ 2, 0 ^ 3, 0 ^ 10,',
+        /* Positive / zero */
+        '    1 ^ 0, 2 ^ 0, 3 ^ 0, 10 ^ 0,',
+        /* Positive / positive */
+        '    1 ^ 1, 1 ^ 2, 1 ^ 3, 1 ^ 10,',
+        '    2 ^ 1, 2 ^ 2, 2 ^ 3, 2 ^ 10,',
+        '    3 ^ 1, 3 ^ 2, 3 ^ 3, 3 ^ 10,',
+        '    10 ^ 1, 10 ^ 2, 10 ^ 3, 10 ^ 10,',
+        /* Negative / positive */
+        '    -1 ^ 1, -1 ^ 2, -1 ^ 3, -1 ^ 10,',
+        '    -2 ^ 1, -2 ^ 2, -2 ^ 3, -2 ^ 10,',
+        '    -3 ^ 1, -3 ^ 2, -3 ^ 3, -3 ^ 10,',
+        '    -10 ^ 1, -10 ^ 2, -10 ^ 3, -10 ^ 10,',
+        /* Big */
+        '    4374389299929001883777 ^ 2,',
+        '    2 ^ 200',
+        '  )',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(new ValueTuple([
+        /* Zero / zero */
+        new ValueInteger('1'),
+        /* Zero / positive */
+        new ValueInteger('0'), new ValueInteger('0'),
+        new ValueInteger('0'), new ValueInteger('0'),
+        /* Positive / zero */
+        new ValueInteger('1'), new ValueInteger('1'),
+        new ValueInteger('1'), new ValueInteger('1'),
+        /* Positive / positive */
+        new ValueInteger('1'), new ValueInteger('1'),
+        new ValueInteger('1'), new ValueInteger('1'),
+        new ValueInteger('2'), new ValueInteger('4'),
+        new ValueInteger('8'), new ValueInteger('1024'),
+        new ValueInteger('3'), new ValueInteger('9'),
+        new ValueInteger('27'), new ValueInteger('59049'),
+        new ValueInteger('10'), new ValueInteger('100'),
+        new ValueInteger('1000'), new ValueInteger('10000000000'),
+        /* Negative / positive */
+        new ValueInteger('-1'), new ValueInteger('1'),
+        new ValueInteger('-1'), new ValueInteger('1'),
+        new ValueInteger('-2'), new ValueInteger('4'),
+        new ValueInteger('-8'), new ValueInteger('1024'),
+        new ValueInteger('-3'), new ValueInteger('9'),
+        new ValueInteger('-27'), new ValueInteger('59049'),
+        new ValueInteger('-10'), new ValueInteger('100'),
+        new ValueInteger('-1000'), new ValueInteger('10000000000'),
+        /* Big */
+        new ValueInteger('19135281747333343200152945504707214615785729'),
+        new ValueInteger(
+          '1606938044258990275541962092341162602522202993782792835301376'),
+      ]));
+    });
+
   });
 
   describe('User-triggered failure (BOOM and boom)', () => {
