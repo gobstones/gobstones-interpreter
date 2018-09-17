@@ -428,25 +428,25 @@ describe('Gobstones API', () => {
         let p = API().parse([
           'interactive program {',
           '  INIT -> {}',
-          '  K_ARROW_LEFT -> {}',
-          '  K_ENTER -> {}',
+          '  K_LEFT -> {}',
+          '  K_RETURN -> {}',
           '  _ -> {}',
           '}',
         ].join('\n'));
         let r = p.program.interpret(emptyBoard(1, 1));
-        expect(r.keys).deep.equals(['K_ARROW_LEFT', 'K_ENTER']);
+        expect(r.keys).deep.equals(['K_LEFT', 'K_RETURN']);
         expect(r.timeout).equals(null);
     });
 
     it('Initialize interactive program with timeout', () => {
         let p = API().parse([
           'interactive program {',
-          '  K_ENTER -> {}',
+          '  K_RETURN -> {}',
           '  TIMEOUT(200) -> {}',
           '}',
         ].join('\n'));
         let r = p.program.interpret(emptyBoard(1, 1));
-        expect(r.keys).deep.equals(['K_ENTER']);
+        expect(r.keys).deep.equals(['K_RETURN']);
         expect(r.timeout).equals(200);
     });
 

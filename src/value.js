@@ -191,7 +191,11 @@ export class TypeList extends Type {
   }
 
   toString() {
-    return i18n('TYPE:List') + '(' + this._contentType.toString() + ')';
+    let suffix = '';
+    if (!this._contentType.isAny()) {
+      suffix = '(' + this._contentType.toString() + ')';
+    }
+    return i18n('TYPE:List') + suffix;
   }
 
   isList() {
@@ -225,19 +229,16 @@ export class TypeStructure extends Type {
           fieldName + ' <- ' + fieldTypes[fieldName].toString()
         );
       }
-      let qualifiedConstructor = this._typeName + ':' + constructorName;
-      if (fieldStrings.length === 0) {
-        caseStrings.push(qualifiedConstructor);
-      } else {
+      if (fieldStrings.length !== 0) {
         caseStrings.push(
-          qualifiedConstructor + '(' + fieldStrings.join(', ') + ')'
+          constructorName + '(' + fieldStrings.join(', ') + ')'
         );
       }
     }
     if (caseStrings.length === 0) {
       return this._typeName;
     } else {
-      return caseStrings.join(' + ');
+      return this._typeName + ' { ' + caseStrings.join(' | ') + ' }';
     }
   }
 

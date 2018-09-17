@@ -136,6 +136,7 @@ const SYMBOLS = [
 /* Valid language options accepted by the LANGUAGE pragma */
 const LANGUAGE_OPTIONS = [
   'DestructuringForeach',
+  'AllowRecursion',
 ];
 
 function leadingZeroes(string) {

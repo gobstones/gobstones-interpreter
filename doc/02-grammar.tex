@@ -79,7 +79,7 @@
 \token{LBRACE} (\nonterminal{statement} (\token{SEMICOLON})?)* \token{RBRACE}
 }
 \production{\nonterminal{stmtReturn}}{
-\token{RETURN} \token{LPAREN} \nonterminal{expressionSeq} \token{RPAREN}
+\token{RETURN} \token{LPAREN} \nonterminal{\nonEmpty{expressionSeq}} \token{RPAREN}
 }
 \production{\nonterminal{stmtIf}}{
 \token{IF} \nonterminal{stmtIfBranch} (\token{ELSEIF} \nonterminal{stmtIfBranch})* (\token{ELSE} \nonterminal{stmtBlock})?

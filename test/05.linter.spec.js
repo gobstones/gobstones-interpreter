@@ -28,6 +28,19 @@ function lintEnableDestructuringForeach(code) {
   return l.lint(new Parser(code).parse());
 }
 
+function lintDisableRecursion(code) {
+  let l = new Linter(new SymbolTable());
+  l.enableCheck('forbidden-extension-allow-recursion', true);
+  return l.lint(new Parser(code).parse());
+}
+
+function lintEnableRecursion(code) {
+  let l = new Linter(new SymbolTable());
+  l.enableCheck('forbidden-extension-allow-recursion', false);
+  return l.lint(new Parser(code).parse());
+}
+
+
 function tok(tag, value) {
   return new Token(tag, value, UnknownPosition, UnknownPosition);
 }
@@ -1768,6 +1781,74 @@ describe('Linter', () => {
       expect(() => lint(code)).throws(
         i18n('errmsg:undefined-function')('foo')
       );
+    });
+
+  });
+
+  describe('Recursion checker', () => {
+
+    it('Reject recursive procedure', () => {
+      let code = [
+        'procedure P() {',
+        '  P()',
+        '}',
+        'program {',
+        '}',
+      ].join('\n');
+      expect(() => lintDisableRecursion(code)).throws(
+        i18n('errmsg:forbidden-extension-allow-recursion')([])
+      );
+    });
+
+    it('Reject recursive function', () => {
+      let code = [
+        'function f() {',
+        '  x := f()',
+        '  return (1)',
+        '}',
+        'program {',
+        '}',
+      ].join('\n');
+      expect(() => lintDisableRecursion(code)).throws(
+        i18n('errmsg:forbidden-extension-allow-recursion')([])
+      );
+    });
+
+    it('Reject indirect recursion', () => {
+      let code = [
+        'function f() {',
+        '  x := h(g())',
+        '  return (1)',
+        '}',
+        'function h(x) { return (x) }',
+        'function g() {',
+        '  foreach x in [1..0] { P() }',
+        '  return (1)',
+        '}',
+        'procedure P() {',
+        '  z := h(i())',
+        '}',
+        'function i() {',
+        '  return (h(f()))',
+        '}',
+        'program {',
+        '}',
+      ].join('\n');
+      expect(() => lintDisableRecursion(code)).throws(
+        i18n('errmsg:forbidden-extension-allow-recursion')([])
+      );
+    });
+
+    it('Allow recursion with pragma', () => {
+      let code = [
+        '/*@LANGUAGE@AllowRecursion@*/',
+        'procedure P() {',
+        '  P()',
+        '}',
+        'program {',
+        '}',
+      ].join('\n');
+      expect(lintEnableRecursion(code).program !== null).equals(true);
     });
 
   });

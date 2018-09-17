@@ -139,6 +139,8 @@ export class Runner {
   _setLanguageOption(option) {
     if (option === 'DestructuringForeach') {
       this.enableLintCheck('forbidden-extension-destructuring-foreach', false);
+    } else if (option === 'AllowRecursion') {
+      this.enableLintCheck('forbidden-extension-allow-recursion', false);
     } else {
       throw Error('Unknown language option: ' + option);
     }

@@ -187,19 +187,19 @@ def instructions_to_tex(json_instructions):
 
 def builtin_type_to_tex(builtin):
     tex = []
-    tex.append('\\item \\texttt{type} \\typename{%s}' % (builtin[1],))
+    tex.append('\\item \\texttt{type} \\typename{%s}' % (string_to_tex(builtin[1]),))
     constructors = builtin[2:]
     if len(constructors) == 0:
         return tex
     tex.append(' --- constructores: \\begin{itemize}')
     for constructor in constructors:
-        tex.append('\\item \\constructorname{%s}' % (constructor[0],))
+        tex.append('\\item \\constructorname{%s}' % (string_to_tex(constructor[0]),))
         fields = constructor[1:]
         if len(fields) == 0:
             continue
         tex.append(' --- campos: \\begin{itemize}')
         for field in fields:
-            tex.append('\\item \\fieldname{%s}' % (field,))
+            tex.append('\\item \\fieldname{%s}' % (string_to_tex(field),))
         tex.append('\\end{itemize}')
     tex.append('\\end{itemize}')
     return tex

@@ -59,7 +59,7 @@
     ["LBRACE", ["*", ["statement", ["?", ["SEMICOLON"]]]], "RBRACE"]
   ],
   ["stmtReturn",
-    ["RETURN", "LPAREN", "expressionSeq", "RPAREN"]
+    ["RETURN", "LPAREN", "nonEmptyExpressionSeq", "RPAREN"]
   ],
   ["stmtIf",
     ["IF", "stmtIfBranch", ["*", ["ELSEIF", "stmtIfBranch"]], ["?", ["ELSE", "stmtBlock"]]]

@@ -285,6 +285,9 @@ export const LOCALE_ES = {
   'errmsg:pattern-number-cannot-be-negative-zero':
     'El patrón numérico no puede ser "-0".',
 
+  'errmsg:return-tuple-cannot-be-empty':
+    'El return tiene que devolver algo.',
+
   'errmsg:pattern-tuple-cannot-be-singleton':
     'El patrón para una tupla no puede tener una sola componente. '
   + 'Las tuplas tienen 0, 2, 3, o más componentes, pero no 1.',
@@ -522,6 +525,29 @@ export const LOCALE_ES = {
   'errmsg:forbidden-extension-destructuring-foreach':
     'El índice de la repetición indexada debe ser un identificador.',
 
+  'errmsg:forbidden-extension-allow-recursion':
+    function (cycle) {
+      let msg = [];
+      for (let call of cycle) {
+        msg.push(
+          '  '
+          + call.caller
+          + ' llama a '
+          + call.callee
+          + ' ('
+          + call.location.startPos.filename.toString()
+          + ':'
+          + call.location.startPos.line.toString()
+          + ':'
+          + call.location.startPos.column.toString()
+          + ')'
+        );
+      }
+      return 'La recursión está deshabilitada. '
+           + 'Hay un ciclo en las invocaciones:\n'
+           + msg.join('\n');
+    },
+
   'errmsg:patterns-in-foreach-must-not-be-events':
     'El patrón de un foreach no puede ser un evento.',
 
@@ -739,10 +765,11 @@ export const LOCALE_ES = {
   'PRIM:minDir': 'minDir',
   'PRIM:maxDir': 'maxDir',
 
+  'PRIM:isEmpty': 'vacía',
   'PRIM:head': 'primero',
   'PRIM:tail': 'resto',
   'PRIM:init': 'comienzo',
-  'PRIM:last': 'ultimo',
+  'PRIM:last': 'último',
 
   /* Helpers */
   '<alternative>':

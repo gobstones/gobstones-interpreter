@@ -447,7 +447,7 @@ export class Parser {
   _parseStmtReturn() {
     let startPos = this._currentToken.startPos;
     this._match(T_RETURN);
-    let tuple = this._parseExprTuple();
+    let tuple = this._parseExprTuple(false /* possiblyEmpty */);
     let result = new ASTStmtReturn(tuple);
     result.startPos = startPos;
     result.endPos = tuple.endPos;
@@ -864,7 +864,7 @@ export class Parser {
       case T_UPPERID:
         return this._parseExprStructureOrStructureUpdate();
       case T_LPAREN:
-        return this._parseExprTuple();
+        return this._parseExprTuple(true /* possiblyEmpty */);
       case T_LBRACK:
         return this._parseExprListOrRange();
       default:
@@ -1188,12 +1188,16 @@ export class Parser {
    * expression itself. If there are 0 or >=2 expressions, return
    * a tuple.
    */
-  _parseExprTuple() {
+  _parseExprTuple(possiblyEmpty) {
     let startPos = this._currentToken.startPos;
     this._match(T_LPAREN);
     let expressionList = this._parseExpressionSeq(T_RPAREN);
     let endPos = this._currentToken.startPos;
     this._match(T_RPAREN);
+
+    if (!possiblyEmpty && expressionList === 0) {
+      fail(startPos, endPos, 'return-tuple-cannot-be-empty', []);
+    }
 
     let result;
     if (expressionList.length === 1) {
