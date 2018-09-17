@@ -76,12 +76,20 @@ function fail(startPos, endPos, reason, args) {
  * - the current instruction pointer
  * - a stack of local values
  * - a map from local names to values
+ *
+ * Each local variable has a type and a value.
+ * - The actual type of the current value held by a variable
+ *   should always be an instance of the type.
+ * - The type of a variable should be the join of all the
+ *   types held historically by the variable.
+ * - The Frame does not impose these conditions.
  */
 class Frame {
 
   constructor(frameId, routineName, instructionPointer) {
     this._routineName = routineName;
     this._instructionPointer = instructionPointer;
+    this._variableTypes = {};
     this._variables = {};
     this._stack = [];
 
@@ -107,12 +115,27 @@ class Frame {
     this._instructionPointer = value;
   }
 
-  setVariable(name, value) {
+  /* Precondition:
+   *   Let oldType = this._variableTypes[name]
+   *   if this._variableTypes[name] is defined.
+   *   Otherwise, let oldType = new TypeAny().
+   *   Then the following condition must hold:
+   *     type = joinTypes(value.type(), oldType) */
+  setVariable(name, type, value) {
+    this._variableTypes[name] = type;
     this._variables[name] = value;
   }
 
   unsetVariable(name, value) {
     delete this._variables[name];
+  }
+
+  getVariableType(name) {
+    if (name in this._variableTypes) {
+      return this._variableTypes[name];
+    } else {
+      return new TypeAny();
+    }
   }
 
   getVariable(name) {
@@ -438,24 +461,22 @@ export class VirtualMachine {
     let newValue = frame.popValue();
 
     /* Check that types are compatible */
-    let oldValue = frame.getVariable(instruction.variableName);
-    if (oldValue !== null) {
-      let oldType = oldValue.type();
-      let newType = newValue.type();
-      if (joinTypes(oldType, newType) === null) {
-        fail(
-          instruction.startPos, instruction.endPos,
-          'incompatible-types-on-assignment', [
-            instruction.variableName,
-            oldType,
-            newType,
-          ]
-        );
-      }
+    let oldType = frame.getVariableType(instruction.variableName);
+    let valType = newValue.type();
+    let newType = joinTypes(oldType, valType);
+    if (newType === null) {
+      fail(
+        instruction.startPos, instruction.endPos,
+        'incompatible-types-on-assignment', [
+          instruction.variableName,
+          oldType,
+          valType,
+        ]
+      );
     }
 
     /* Proceed with assignment */
-    frame.setVariable(instruction.variableName, newValue);
+    frame.setVariable(instruction.variableName, newType, newValue);
     frame.instructionPointer++;
   }
 

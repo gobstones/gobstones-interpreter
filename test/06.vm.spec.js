@@ -121,6 +121,27 @@ describe('Virtual Machine', () => {
       );
     });
 
+    it('Reject assignment of historically non-matching type', () => {
+      let vm = makeVirtualMachine([
+        new IPushInteger(10),
+        new IMakeList(1),
+        new ISetVariable('x'),   // x : List(Int)
+        new IMakeList(0),
+        new ISetVariable('x'),   // x : List(Any)
+        new IPushString('foo'),
+        new IMakeList(1),
+        new ISetVariable('x'),   // x : List(String)
+        new IReturn(),
+      ]);
+      expect(() => vm.run()).throws(
+        i18n('errmsg:incompatible-types-on-assignment')(
+          'x',
+          new TypeList(new TypeInteger()),
+          new TypeList(new TypeString()),
+        )
+      );
+    });
+
     it('Fail when reading an undefined variable', () => {
       let vm = makeVirtualMachine([
         new IPushInteger(10),
