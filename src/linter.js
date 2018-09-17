@@ -46,6 +46,7 @@ import {
 import { LocalParameter, LocalIndex, LocalVariable } from './symtable';
 import { GbsSyntaxError } from './exceptions';
 import { i18n } from './i18n';
+import { RecursionChecker } from './recursion_checker';
 
 function isBlockWithReturn(stmt) {
   return stmt.tag === N_StmtBlock
@@ -117,6 +118,7 @@ export class Linter {
       'undeclared-constructor': true,
       // Extensions
       'forbidden-extension-destructuring-foreach': true,
+      'forbidden-extension-allow-recursion': true,
     };
   }
 
@@ -164,6 +166,9 @@ export class Linter {
     for (let definition of ast.definitions) {
       this._lintDefinition(definition);
     }
+
+    /* Disable recursion */
+    this._disableRecursion(ast);
   }
 
   _addDefinitionToSymbolTable(definition) {
@@ -911,6 +916,18 @@ export class Linter {
     /* Recursively check arguments */
     for (let argument of expression.args) {
       this._lintExpression(argument);
+    }
+  }
+
+  _disableRecursion(ast) {
+    if (this._enabledLinterChecks['forbidden-extension-allow-recursion']) {
+      let cycle = new RecursionChecker().callCycle(ast);
+      if (cycle !== null) {
+        this._lintCheck(
+          cycle[0].location.startPos, cycle[0].location.endPos,
+          'forbidden-extension-allow-recursion', [cycle]
+        );
+      }
     }
   }
 
