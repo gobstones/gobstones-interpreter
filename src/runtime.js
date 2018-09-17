@@ -72,16 +72,22 @@ function keyEventEnum() {
   let charKeys = [
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
     'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
   ];
   let specialKeys = [
-    'SPACE', 'ENTER', 'TAB', 'BACKSPACE', 'DELETE', 'ESCAPE',
+    'SPACE', 'RETURN', 'TAB', 'BACKSPACE', 'ESCAPE',
+    'INSERT', 'DELETE', 'HOME', 'END', 'PAGEUP', 'PAGEDOWN',
+    'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12',
   ];
   let symbolKeys = [
-    'PLUS', 'MINUS', 'ASTERISK', 'SLASH', 'EQUALS', 'L_PARENT', 'R_PARENT',
-    'L_BRACKET', 'R_BRACKET', 'L_ANGLEBR', 'R_ANGLEBR',
+    'AMPERSAND', 'ASTERISK', 'AT', 'BACKSLASH', 'CARET', 'COLON', 'DOLLAR',
+    'EQUALS', 'EXCLAIM', 'GREATER', 'HASH', 'LESS', 'PERCENT', 'PLUS',
+    'SEMICOLON', 'SLASH', 'QUESTION', 'QUOTE',
+    'QUOTEDBL', 'UNDERSCORE', 'LEFTPAREN', 'RIGHTPAREN',
+    'LEFTBRACKET', 'RIGHTBRACKET', 'LEFTBRACE', 'RIGHTBRACE',
   ];
   let arrowKeys = [
-    'ARROW_LEFT', 'ARROW_RIGHT', 'ARROW_UP', 'ARROW_DOWN',
+    'LEFT', 'RIGHT', 'UP', 'DOWN',
   ];
   let keys = charKeys.concat(specialKeys).concat(symbolKeys).concat(arrowKeys);
 
@@ -1094,7 +1100,7 @@ export class RuntimePrimitives {
     this._primitiveFunctions[i18n('PRIM:boom')] =
       this._primitiveProcedures[i18n('PRIM:BOOM')];
 
-    /* List opreators */
+    /* List operators */
     this._primitiveFunctions['++'] =
       new PrimitiveOperation(
         [typeListAny, typeListAny],
