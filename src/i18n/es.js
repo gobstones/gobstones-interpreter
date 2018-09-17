@@ -739,10 +739,11 @@ export const LOCALE_ES = {
   'PRIM:minDir': 'minDir',
   'PRIM:maxDir': 'maxDir',
 
+  'PRIM:isEmpty': 'vacía',
   'PRIM:head': 'primero',
   'PRIM:tail': 'resto',
   'PRIM:init': 'comienzo',
-  'PRIM:last': 'ultimo',
+  'PRIM:last': 'último',
 
   /* Helpers */
   '<alternative>':

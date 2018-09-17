@@ -1884,6 +1884,38 @@ describe('Primitive functions, procedures and operators', () => {
 
     });
 
+    describe('isEmpty', () => {
+
+      it('isEmpty', () => {
+        let result = new Runner().run([
+          'program {',
+          '  return (',
+          '    ' + i18n('PRIM:isEmpty') + '([]) ,',
+          '    ' + i18n('PRIM:isEmpty') + '([0]) ,',
+          '    ' + i18n('PRIM:isEmpty') + '([1, 2, 3])',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).deep.equals(new ValueTuple([
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:True'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+          new ValueStructure(i18n('TYPE:Bool'), i18n('CONS:False'), {}),
+        ]));
+      });
+
+      it('Fail if not a list', () => {
+        let result = () => new Runner().run([
+          'program {',
+          '  return (',
+          '    ' + i18n('PRIM:isEmpty') + '(())',
+          '  )',
+          '}',
+        ].join('\n'));
+        expect(result).throws();
+      });
+
+    });
+
     describe('Head', () => {
 
       it('Head', () => {

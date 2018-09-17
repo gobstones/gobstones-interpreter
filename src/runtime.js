@@ -1114,6 +1114,14 @@ export class RuntimePrimitives {
         }
       );
 
+    this._primitiveFunctions[i18n('PRIM:isEmpty')] =
+      new PrimitiveOperation(
+        [typeListAny], noValidation,
+        function (globalState, a) {
+          return valueFromBool(a.length() === 0);
+        }
+      );
+
     this._primitiveFunctions[i18n('PRIM:head')] =
       new PrimitiveOperation(
         [typeListAny],
