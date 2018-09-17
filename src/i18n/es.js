@@ -285,6 +285,9 @@ export const LOCALE_ES = {
   'errmsg:pattern-number-cannot-be-negative-zero':
     'El patrón numérico no puede ser "-0".',
 
+  'errmsg:return-tuple-cannot-be-empty':
+    'El return tiene que devolver algo.',
+
   'errmsg:pattern-tuple-cannot-be-singleton':
     'El patrón para una tupla no puede tener una sola componente. '
   + 'Las tuplas tienen 0, 2, 3, o más componentes, pero no 1.',
