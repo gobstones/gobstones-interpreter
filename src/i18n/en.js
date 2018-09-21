@@ -20,7 +20,7 @@ LOCALE_EN['CONS:Dir2'] = 'South';
 LOCALE_EN['CONS:Dir3'] = 'West';
 
 LOCALE_EN['PRIM:PutStone'] = 'Drop';
-LOCALE_EN['PRIM:RemoveStone'] = 'Take';
+LOCALE_EN['PRIM:RemoveStone'] = 'Grab';
 LOCALE_EN['PRIM:Move'] = 'Move';
 LOCALE_EN['PRIM:GoToEdge'] = 'GoToEdge';
 LOCALE_EN['PRIM:EmptyBoardContents'] = 'EmptyBoardContents';
