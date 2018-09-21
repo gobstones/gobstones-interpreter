@@ -230,7 +230,8 @@ describe('Gobstones API', () => {
           '}',
         ].join('\n'));
         let r = p.program.interpret(emptyBoard(1, 1));
-        expect(r.returnValue.type).equals('Tuple(Number, String)');
+        expect(r.returnValue.type).equals(
+          i18n('TYPE:Tuple') + '(Number, String)');
         expect(r.returnValue.value).deep.equals([1, 'x']);
         expect(r.actualReturnValue).deep.equals(
           new ValueTuple([

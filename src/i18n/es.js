@@ -720,7 +720,7 @@ export const LOCALE_ES = {
 
   'TYPE:Integer': 'Number',
   'TYPE:String': 'String',
-  'TYPE:Tuple': 'Tuple',
+  'TYPE:Tuple': '',
   'TYPE:List': 'List',
 
   'TYPE:Event': 'Event',
