@@ -463,10 +463,11 @@ La etapa de an\'alisis sem\'antico (o {\em linting}) verifica de manera est\'ati
   \item Patr\'on tupla (\texttt{(x$_1$, ..., x$_n$)}).
   \item Patr\'on timeout (\texttt{TIMEOUT($n$)}).
   \end{enumerate}
-\item Actualmente los patrones se pueden utilizar en tres lugares:
+\item Actualmente los patrones se pueden utilizar en cuatro lugares:
       \begin{enumerate}
       \item en las ramas de un \texttt{interactive program},
       \item en las ramas de un \texttt{switch},
+      \item en las ramas de un \texttt{matching..select},
       \item como patr\'on de un \texttt{foreach},
             siempre y cuando la opci\'on \texttt{DestructuringForeach}
             haya sido habilitada con la directiva \texttt{/*@LANGUAGE@DestructuringForeach@*/}.
@@ -514,7 +515,7 @@ La etapa de an\'alisis sem\'antico (o {\em linting}) verifica de manera est\'ati
       patrones estructura del tipo \texttt{\_EVENT},
       patrones variable
       o patrones comod\'in.
-\item Los patrones de las ramas de los \texttt{switch} \NOPUEDEN ser eventos, es decir:
+\item Los patrones de las ramas de los \texttt{switch} y los \texttt{matching..select} \NOPUEDEN ser eventos, es decir:
       pueden ser
       patrones num\'ericos,
       patrones estructura de tipos que no sean \texttt{\_EVENT},

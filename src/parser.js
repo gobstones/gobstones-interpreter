@@ -7,6 +7,7 @@ import {
   T_PROGRAM, T_INTERACTIVE, T_PROCEDURE, T_FUNCTION, T_RETURN,
   T_IF, T_THEN, T_ELSEIF, T_ELSE,
   T_CHOOSE, T_WHEN, T_OTHERWISE,
+  T_MATCHING, T_SELECT, T_ON,
   T_REPEAT, T_FOREACH, T_IN, T_WHILE,
   T_SWITCH, T_TO, T_LET, T_NOT, T_DIV, T_MOD, T_TYPE,
   T_IS, T_RECORD, T_VARIANT, T_CASE, T_FIELD, T_UNDERSCORE,
@@ -49,6 +50,7 @@ import {
   ASTExprConstantNumber,
   ASTExprConstantString,
   ASTExprChoose,
+  ASTExprMatching,
   ASTExprList,
   ASTExprRange,
   ASTExprTuple,
@@ -57,6 +59,8 @@ import {
   ASTExprFunctionCall,
   /* SwitchBranch */
   ASTSwitchBranch,
+  /* MatchingBranch */
+  ASTMatchingBranch,
   /* FieldBinding */
   ASTFieldBinding,
   /* ConstructorDeclaration */
@@ -861,6 +865,8 @@ export class Parser {
         return this._parseExprConstantString();
       case T_CHOOSE:
         return this._parseExprChoose(true /* expectInitialChoose */);
+      case T_MATCHING:
+        return this._parseExprMatching();
       case T_UPPERID:
         return this._parseExprStructureOrStructureUpdate();
       case T_LPAREN:
@@ -953,6 +959,20 @@ export class Parser {
       expr1.endPos = endPos;
       return expr1;
     }
+  }
+
+  _parseExprMatching() {
+    let startPos = this._currentToken.startPos;
+    this._match(T_MATCHING);
+    this._match(T_LPAREN);
+    let subject = this._parseExpression();
+    this._match(T_RPAREN);
+    this._match(T_SELECT);
+    let branches = this._parseMatchingBranches();
+    let result = new ASTExprMatching(subject, branches);
+    result.startPos = startPos;
+    result.endPos = result.endPos;
+    return result;
   }
 
   /*
@@ -1228,6 +1248,53 @@ export class Parser {
     result.startPos = pattern.startPos;
     result.endPos = body.endPos;
     return result;
+  }
+
+  /** MatchingBranch **/
+
+  _parseMatchingBranches() {
+    let branches = [];
+    while (this._currentToken.tag !== T_OTHERWISE) {
+      branches.push(this._parseMatchingBranch());
+    }
+    this._match(T_OTHERWISE);
+    return branches;
+  }
+
+  _parseMatchingBranch() {
+    let body = this._parseExpression();
+    switch (this._currentToken.tag) {
+      case T_ON:
+        {
+          this._match(T_ON);
+          let pattern = this._parsePattern();
+          let result = new ASTMatchingBranch(pattern, body);
+          result.startPos = body.startPos;
+          result.endPos = pattern.endPos;
+          return result;
+        }
+      case T_OTHERWISE:
+        {
+          let pattern = new ASTPatternWildcard();
+          pattern.startPos = this._currentToken.startPos;
+          pattern.endPos = this._currentToken.endPos;
+          let result = new ASTMatchingBranch(pattern, body);
+          result.startPos = body.startPos;
+          result.endPos = this._currentToken.endPos;
+          return result;
+        }
+      default:
+        return fail(
+          this._currentToken.startPos, this._currentToken.endPos,
+          'expected-but-found', [
+            i18n('<alternative>')([
+              i18n('T_ON'),
+              i18n('T_OTHERWISE'),
+            ]),
+            i18n(Symbol.keyFor(this._currentToken.tag))
+          ]
+        );
+    }
   }
 
   /** FieldBinding **/

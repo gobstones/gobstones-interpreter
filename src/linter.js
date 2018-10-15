@@ -30,6 +30,7 @@ import {
   N_ExprConstantNumber,
   N_ExprConstantString,
   N_ExprChoose,
+  N_ExprMatching,
   N_ExprList,
   N_ExprRange,
   N_ExprTuple,
@@ -221,7 +222,8 @@ export class Linter {
   _lintDefInteractiveProgram(definition) {
     /* Lint all branches */
     this._lintSwitchBranches(
-      definition.branches, true /* isInteractiveProgram */
+      definition.branches,
+      true /* isInteractiveProgram */
     );
   }
 
@@ -379,33 +381,38 @@ export class Linter {
   _lintStmtSwitch(statement) {
     this._lintExpression(statement.subject);
     this._lintSwitchBranches(
-      statement.branches, false /* !isInteractiveProgram */
+      statement.branches,
+      false /* !isInteractiveProgram */
     );
   }
 
   _lintSwitchBranches(branches, isInteractiveProgram) {
+    this._lintBranches(branches, isInteractiveProgram, false /* isMatching */);
+  }
+
+  _lintBranches(branches, isInteractiveProgram, isMatching) {
     /* Check that each pattern is well-formed */
     for (let branch of branches) {
       this._lintPattern(branch.pattern);
     }
 
-    this._switchBranchesCheckWildcardAndVariable(branches);
-    this._switchBranchesCheckNoRepeats(branches);
-    this._switchBranchesCheckCompatible(branches);
+    this._branchesCheckWildcardAndVariable(branches);
+    this._branchesCheckNoRepeats(branches);
+    this._branchesCheckCompatible(branches);
     if (isInteractiveProgram) {
-      this._switchBranchesCheckTypeEvent(branches);
+      this._branchesCheckTypeEvent(branches);
     } else {
-      this._switchBranchesCheckTypeNotEvent(branches);
+      this._branchesCheckTypeNotEvent(branches);
     }
 
     /* Lint recursively each branch */
     for (let branch of branches) {
-      this._lintSwitchBranchBody(branch);
+      this._lintBranchBody(branch, isMatching);
     }
   }
 
   /* Check that there is at most one wildcard/variable pattern at the end */
-  _switchBranchesCheckWildcardAndVariable(branches) {
+  _branchesCheckWildcardAndVariable(branches) {
     let i = 0;
     const n = branches.length;
     for (let branch of branches) {
@@ -427,7 +434,7 @@ export class Linter {
 
   /* Check that there are no repeated constructors in a sequence
    * of branches. */
-  _switchBranchesCheckNoRepeats(branches) {
+  _branchesCheckNoRepeats(branches) {
     let coveredNumbers = {};
     let coveredConstructors = {};
     let coveredTuples = {};
@@ -488,7 +495,7 @@ export class Linter {
 
   /* Check that constructors are compatible,
    * i.e. that they belong to the same type */
-  _switchBranchesCheckCompatible(branches) {
+  _branchesCheckCompatible(branches) {
     let expectedType = null;
     for (let branch of branches) {
       let patternType = this._patternType(branch.pattern);
@@ -507,7 +514,7 @@ export class Linter {
   }
 
   /* Check that there are patterns are of type Event */
-  _switchBranchesCheckTypeEvent(branches) {
+  _branchesCheckTypeEvent(branches) {
     for (let branch of branches) {
       let patternType = this._patternType(branch.pattern);
       if (patternType !== null && patternType !== i18n('TYPE:Event')) {
@@ -520,7 +527,7 @@ export class Linter {
   }
 
   /* Check that there are no patterns of type Event */
-  _switchBranchesCheckTypeNotEvent(branches) {
+  _branchesCheckTypeNotEvent(branches) {
     for (let branch of branches) {
       let patternType = this._patternType(branch.pattern);
       if (patternType === i18n('TYPE:Event')) {
@@ -533,11 +540,15 @@ export class Linter {
   }
 
   /* Recursively lint the body of each branch. Locally bind variables. */
-  _lintSwitchBranchBody(branch) {
+  _lintBranchBody(branch, isMatching) {
     for (let variable of branch.pattern.boundVariables) {
       this._symtable.addNewLocalName(variable, LocalParameter);
     }
-    this._lintStatement(branch.body);
+    if (isMatching) {
+      this._lintExpression(branch.body);
+    } else {
+      this._lintStatement(branch.body);
+    }
     for (let variable of branch.pattern.boundVariables) {
       this._symtable.removeLocalName(variable);
     }
@@ -711,6 +722,8 @@ export class Linter {
         return this._lintExprConstantString(expression);
       case N_ExprChoose:
         return this._lintExprChoose(expression);
+      case N_ExprMatching:
+        return this._lintExprMatching(expression);
       case N_ExprList:
         return this._lintExprList(expression);
       case N_ExprRange:
@@ -749,6 +762,19 @@ export class Linter {
     this._lintExpression(expression.condition);
     this._lintExpression(expression.trueExpr);
     this._lintExpression(expression.falseExpr);
+  }
+
+  _lintExprMatching(expression) {
+    this._lintExpression(expression.subject);
+    this._lintMatchingBranches(expression.branches);
+  }
+
+  _lintMatchingBranches(branches) {
+    this._lintBranches(
+      branches,
+      false /* !isInteractiveProgram */,
+      true /* isMatching */
+    );
   }
 
   _lintExprList(expression) {

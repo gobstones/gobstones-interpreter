@@ -25,6 +25,7 @@ import {
   /* Patterns */
   ASTPatternWildcard,
   ASTPatternVariable,
+  ASTPatternNumber,
   ASTPatternStructure,
   ASTPatternTuple,
   ASTPatternTimeout,
@@ -33,6 +34,7 @@ import {
   ASTExprConstantNumber,
   ASTExprConstantString,
   ASTExprChoose,
+  ASTExprMatching,
   ASTExprList,
   ASTExprRange,
   ASTExprTuple,
@@ -41,6 +43,8 @@ import {
   ASTExprFunctionCall,
   /* SwitchBranch */
   ASTSwitchBranch,
+  /* MatchingBranch */
+  ASTMatchingBranch,
   /* FieldBinding */
   ASTFieldBinding,
   /* ConstructorDeclaration */
@@ -507,6 +511,176 @@ describe('Parser: expressions', () => {
     });
 
   });
+
+  describe('Matching expression', () => {
+
+      it('Empty matching', () => {
+        let parser = new Parser([
+                       'program {',
+                       '  x := matching (1) select',
+                       '         2 otherwise',
+                       '}',
+                     ].join('\n'));
+        expectAST(parser.parse(), [
+          new ASTDefProgram(
+            new ASTStmtBlock([
+              new ASTStmtAssignVariable(
+                tok(T_LOWERID, 'x'),
+                new ASTExprMatching(
+                  new ASTExprConstantNumber(tok(T_NUM, '1')),
+                  [
+                    new ASTMatchingBranch(
+                      new ASTPatternWildcard(),
+                      new ASTExprConstantNumber(tok(T_NUM, '2')),
+                    ),
+                  ]
+                )
+              ),
+            ])
+          )
+        ]);
+      });
+
+      it('Matching with a single branch', () => {
+        let parser = new Parser([
+                       'program {',
+                       '  x := matching (1) select',
+                       '         2 on A()',
+                       '         3 otherwise',
+                       '}',
+                     ].join('\n'));
+        expectAST(parser.parse(), [
+          new ASTDefProgram(
+            new ASTStmtBlock([
+              new ASTStmtAssignVariable(
+                tok(T_LOWERID, 'x'),
+                new ASTExprMatching(
+                  new ASTExprConstantNumber(tok(T_NUM, '1')),
+                  [
+                    new ASTMatchingBranch(
+                      new ASTPatternStructure(
+                        tok(T_UPPERID, 'A'),
+                        []
+                      ),
+                      new ASTExprConstantNumber(tok(T_NUM, '2')),
+                    ),
+                    new ASTMatchingBranch(
+                      new ASTPatternWildcard(),
+                      new ASTExprConstantNumber(tok(T_NUM, '3')),
+                    ),
+                  ]
+                )
+              ),
+            ])
+          )
+        ]);
+      });
+
+      it('Matching with many branches', () => {
+        let parser = new Parser([
+                       'program {',
+                       '  x := matching (1) select',
+                       '         u on A(y)',
+                       '         v on -3',
+                       '         w otherwise',
+                       '}',
+                     ].join('\n'));
+        expectAST(parser.parse(), [
+          new ASTDefProgram(
+            new ASTStmtBlock([
+              new ASTStmtAssignVariable(
+                tok(T_LOWERID, 'x'),
+                new ASTExprMatching(
+                  new ASTExprConstantNumber(tok(T_NUM, '1')),
+                  [
+                    new ASTMatchingBranch(
+                      new ASTPatternStructure(
+                        tok(T_UPPERID, 'A'),
+                        [tok(T_LOWERID, 'y')]
+                      ),
+                      new ASTExprVariable(tok(T_LOWERID, 'u')),
+                    ),
+                    new ASTMatchingBranch(
+                      new ASTPatternNumber(tok(T_NUM, '-3')),
+                      new ASTExprVariable(tok(T_LOWERID, 'v')),
+                    ),
+                    new ASTMatchingBranch(
+                      new ASTPatternWildcard(),
+                      new ASTExprVariable(tok(T_LOWERID, 'w')),
+                    ),
+                  ]
+                )
+              ),
+            ])
+          )
+        ]);
+      });
+
+      it('Nested matching', () => {
+        let parser = new Parser([
+                       'program {',
+                       '  x := matching (1) select',
+                       '         matching (a) select b otherwise on True',
+                       '         c otherwise',
+                       '}',
+                     ].join('\n'));
+        expectAST(parser.parse(), [
+          new ASTDefProgram(
+            new ASTStmtBlock([
+              new ASTStmtAssignVariable(
+                tok(T_LOWERID, 'x'),
+                new ASTExprMatching(
+                  new ASTExprConstantNumber(tok(T_NUM, '1')),
+                  [
+                    new ASTMatchingBranch(
+                      new ASTPatternStructure(
+                        tok(T_UPPERID, 'True'),
+                        []
+                      ),
+                      new ASTExprMatching(
+                        new ASTExprVariable(tok(T_LOWERID, 'a')),
+                        [
+                          new ASTMatchingBranch(
+                            new ASTPatternWildcard(),
+                            new ASTExprVariable(tok(T_LOWERID, 'b')),
+                          )
+                        ]
+                      )
+                    ),
+                    new ASTMatchingBranch(
+                      new ASTPatternWildcard(),
+                      new ASTExprVariable(tok(T_LOWERID, 'c')),
+                    ),
+                  ]
+                )
+              ),
+            ])
+          )
+        ]);
+      });
+
+      it('Matching: syntax error', () => {
+        let parser = new Parser([
+                       'program {',
+                       '  x := matching (1) select',
+                       '         u on A(y)',
+                       '         v on -3',
+                       '         w matching',
+                       '}',
+                     ].join('\n'));
+        expect(() => parser.parse()).throws(
+          i18n('errmsg:expected-but-found')(
+            i18n('<alternative>')([
+              i18n('T_ON'),
+              i18n('T_OTHERWISE'),
+            ]),
+            i18n('T_MATCHING')
+          )
+        );
+      });
+
+  });
+
 
   describe('Structure creation expression', () => {
 

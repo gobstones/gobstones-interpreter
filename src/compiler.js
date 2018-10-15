@@ -29,6 +29,7 @@ import {
   N_ExprConstantNumber,
   N_ExprConstantString,
   N_ExprChoose,
+  N_ExprMatching,
   N_ExprList,
   N_ExprRange,
   N_ExprTuple,
@@ -37,6 +38,8 @@ import {
   N_ExprFunctionCall,
   /* SwitchBranch: pattern -> body */
   N_SwitchBranch,
+  /* MatchingBranch: pattern -> body */
+  N_MatchingBranch,
   /* FieldValue: field <- value */
   N_FieldValue,
   /* ConstructorDeclaration */
@@ -151,7 +154,7 @@ export class Compiler {
   /* An interactive program is compiled as a switch statement
    * followed by a Return instruction. */
   _compileDefInteractiveProgram(definition) {
-    this._compileMatchSwitchBranches(definition);
+    this._compileMatchBranches(definition, false /* isMatching */);
     this._produce(
       definition.startPos, definition.endPos,
       new IReturn()
@@ -545,10 +548,10 @@ export class Compiler {
   _compileStmtSwitch(statement) {
     /* Compile the subject */
     this._compileExpression(statement.subject);
-    this._compileMatchSwitchBranches(statement);
+    this._compileMatchBranches(statement, false /* !isMatching */);
   }
 
-  _compileMatchSwitchBranches(statement) {
+  _compileMatchBranches(statement, isMatching) {
     let branchLabels = [];
     /* Attempt to match each pattern */
     for (let branch of statement.branches) {
@@ -571,7 +574,11 @@ export class Compiler {
       this._produce(branch.startPos, branch.endPos, new ILabel(label));
       this._compilePatternBind(branch.pattern);
       this._produce(branch.startPos, branch.endPos, new IPop());
-      this._compileStatement(branch.body);
+      if (isMatching) {
+        this._compileExpression(branch.body);
+      } else {
+        this._compileStatement(branch.body);
+      }
       this._compilePatternUnbind(branch.pattern);
       this._produce(branch.startPos, branch.endPos, new IJump(labelEnd));
     }
@@ -841,6 +848,8 @@ export class Compiler {
         return this._compileExprConstantString(expression);
       case N_ExprChoose:
         return this._compileExprChoose(expression);
+      case N_ExprMatching:
+        return this._compileExprMatching(expression);
       case N_ExprList:
         return this._compileExprList(expression);
       case N_ExprRange:
@@ -926,6 +935,11 @@ export class Compiler {
     this._produce(expression.startPos, expression.endPos,
       new ILabel(labelEnd)
     );
+  }
+
+  _compileExprMatching(expression) {
+    this._compileExpression(expression.subject);
+    this._compileMatchBranches(expression, true /* isMatching */);
   }
 
   _compileExprList(expression) {

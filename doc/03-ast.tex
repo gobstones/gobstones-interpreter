@@ -54,6 +54,8 @@
 \ALT
 \ast{ExprChoose}(condition : \type{Expression}, trueExpr : \type{Expression}, falseExpr : \type{Expression})
 \ALT
+\ast{ExprMatching}(subject : \type{Expression}, branches : [\type{MatchingBranch}])
+\ALT
 \ast{ExprList}(elements : [\type{Expression}])
 \ALT
 \ast{ExprRange}(first : \type{Expression}, second : (\type{Expression})?, last : \type{Expression})
@@ -65,6 +67,7 @@
 \ast{ExprStructureUpdate}(constructorName : \type{ID}, original : \type{Expression}, fieldBindings : [\type{FieldBinding}])
 \ALT
 \ast{ExprFunctionCall}(functionName : \type{ID}, args : [\type{Expression}])}
+\datadecl{\type{MatchingBranch}}{\ast{MatchingBranch}(pattern : \type{Pattern}, body : \type{Expression})}
 \datadecl{\type{ConstructorDeclaration}}{\ast{ConstructorDeclaration}(constructorName : \type{ID}, fieldNames : [\type{ID}])}
 \datadecl{\type{FieldBinding}}{\ast{FieldBinding}(fieldName : \type{ID}, value : \type{Expression})}
 %

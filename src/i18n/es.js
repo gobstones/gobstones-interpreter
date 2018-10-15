@@ -183,6 +183,12 @@ export const LOCALE_ES = {
   'T_MOD': keyword('mod'),
   'T_TYPE': keyword('type'),
   'T_IS': keyword('is'),
+  'T_CHOOSE': keyword('choose'),
+  'T_WHEN': keyword('when'),
+  'T_OTHERWISE': keyword('otherwise'),
+  'T_MATCHING': keyword('matching'),
+  'T_SELECT': keyword('select'),
+  'T_ON': keyword('on'),
   'T_RECORD': keyword('record'),
   'T_VARIANT': keyword('variant'),
   'T_CASE': keyword('case'),
@@ -456,12 +462,12 @@ export const LOCALE_ES = {
     },
 
   'errmsg:wildcard-pattern-should-be-last':
-    'El comodín "_" tiene que ser la última rama del switch.',
+    'El comodín "_" debe estar en la última rama.',
 
   'errmsg:variable-pattern-should-be-last':
     function (name) {
       return 'El patrón variable "' + name +
-             '" tiene que ser la última rama del switch.';
+             '" tiene debe estar en la última rama.';
     },
 
   'errmsg:numeric-pattern-repeats-number':
@@ -494,7 +500,7 @@ export const LOCALE_ES = {
     'Los patrones de un "interactive program" deben ser eventos.',
 
   'errmsg:patterns-in-switch-must-not-be-events':
-    'Los patrones de un "switch" no pueden ser eventos.',
+    'El patrón no puede ser un evento.',
 
   'errmsg:structure-construction-repeated-field':
     function (constructorName, fieldName) {

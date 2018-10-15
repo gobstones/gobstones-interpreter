@@ -40,12 +40,16 @@
     ["ExprConstantNumber", ["number", "NUM"]],
     ["ExprConstantString", ["string", "STRING"]],
     ["ExprChoose", ["condition", "Expression"], ["trueExpr", "Expression"], ["falseExpr", "Expression"]],
+    ["ExprMatching", ["subject", "Expression"], ["branches", ["*", "MatchingBranch"]]],
     ["ExprList", ["elements", ["*", "Expression"]]],
     ["ExprRange", ["first", "Expression"], ["second", ["?", "Expression"]], ["last", "Expression"]],
     ["ExprTuple", ["elements", ["*", "Expression"]]],
     ["ExprStructure", ["constructorName", "ID"], ["fieldBindings", ["*", "FieldBinding"]]],
     ["ExprStructureUpdate", ["constructorName", "ID"], ["original", "Expression"], ["fieldBindings", ["*", "FieldBinding"]]],
     ["ExprFunctionCall", ["functionName", "ID"], ["args", ["*", "Expression"]]]
+  ],
+  ["data", "MatchingBranch",
+    ["MatchingBranch", ["pattern", "Pattern"], ["body", "Expression"]]
   ],
   ["data", "ConstructorDeclaration",
     ["ConstructorDeclaration", ["constructorName", "ID"], ["fieldNames", ["*", "ID"]]]

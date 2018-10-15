@@ -31,6 +31,7 @@ export const N_ExprVariable = Symbol.for('N_ExprVariable');
 export const N_ExprConstantNumber = Symbol.for('N_ExprConstantNumber');
 export const N_ExprConstantString = Symbol.for('N_ExprConstantString');
 export const N_ExprChoose = Symbol.for('N_ExprChoose');
+export const N_ExprMatching = Symbol.for('N_ExprMatching');
 export const N_ExprList = Symbol.for('N_ExprList');
 export const N_ExprRange = Symbol.for('N_ExprRange');
 export const N_ExprTuple = Symbol.for('N_ExprTuple');
@@ -39,6 +40,8 @@ export const N_ExprStructureUpdate = Symbol.for('N_ExprStructureUpdate');
 export const N_ExprFunctionCall = Symbol.for('N_ExprFunctionCall');
 /* SwitchBranch: pattern -> body */
 export const N_SwitchBranch = Symbol.for('N_SwitchBranch');
+/* MatchingBranch: pattern -> body */
+export const N_MatchingBranch = Symbol.for('N_MatchingBranch');
 /* FieldBinding: fieldName <- value */
 export const N_FieldBinding = Symbol.for('N_FieldBinding');
 /* ConstructorDeclaration */
@@ -354,6 +357,20 @@ export class ASTSwitchBranch extends ASTNode {
   }
 }
 
+export class ASTMatchingBranch extends ASTNode {
+  constructor(pattern, body) {
+    super(N_MatchingBranch, [pattern, body]);
+  }
+
+  get pattern() {
+    return this._children[0];
+  }
+
+  get body() {
+    return this._children[1];
+  }
+}
+
 export class ASTStmtAssignVariable extends ASTNode {
   constructor(variable, value) {
     super(N_StmtAssignVariable, [variable, value]);
@@ -521,6 +538,20 @@ export class ASTExprChoose extends ASTNode {
 
   get falseExpr() {
     return this._children[2];
+  }
+}
+
+export class ASTExprMatching extends ASTNode {
+  constructor(subject, branches) {
+    super(N_ExprMatching, [subject, branches]);
+  }
+
+  get subject() {
+    return this._children[0];
+  }
+
+  get branches() {
+    return this._children[1];
   }
 }
 

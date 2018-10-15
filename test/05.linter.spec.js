@@ -898,7 +898,7 @@ describe('Linter', () => {
 
   });
 
-  describe('Pattern matching', () => {
+  describe('Pattern matching with switch', () => {
 
     it('Accept wildcard pattern', () => {
       let code = [
@@ -1365,6 +1365,59 @@ describe('Linter', () => {
         '    B(x) -> {}',
         '    C(x) -> {}',
         '  }',
+        '}',
+      ].join('\n');
+      expect(lint(code).program !== null).equals(true);
+    });
+
+  });
+
+  describe('Pattern matching with matching..select', () => {
+
+    it('Accept trivial matching..select', () => {
+      let code = [
+        'program {',
+        '  x := matching (1) select 2 otherwise',
+        '}',
+      ].join('\n');
+      expect(lint(code).program !== null).equals(true);
+    });
+
+    it('Reject wildcard pattern', () => {
+      let code = [
+        'program {',
+        '  y := 1',
+        '  x := matching (y) select ',
+        '         2 on _',
+        '         3 otherwise',
+        '}',
+      ].join('\n');
+      expect(() => lint(code).program !== null).throws(
+        i18n('errmsg:wildcard-pattern-should-be-last')
+      );
+    });
+
+    it('Reject event pattern', () => {
+      let code = [
+        'program {',
+        '  y := 1',
+        '  x := matching (y) select',
+        '         2 on ' + i18n('CONS:TIMEOUT') + '(1) ',
+        '         3 otherwise',
+        '}',
+      ].join('\n');
+      expect(() => lint(code).program !== null).throws(
+        i18n('errmsg:patterns-in-switch-must-not-be-events')
+      );
+    });
+
+    it('Accept numeric pattern', () => {
+      let code = [
+        'program {',
+        '  y := 1',
+        '  x := matching (y) select ',
+        '         2 on 1',
+        '         3 otherwise',
         '}',
       ].join('\n');
       expect(lint(code).program !== null).equals(true);

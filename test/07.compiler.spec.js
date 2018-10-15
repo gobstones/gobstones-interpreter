@@ -1193,6 +1193,80 @@ describe('Compiler', () => {
       
   });
 
+  describe('Expressions: matching..select', () => {
+
+    describe('Matching..select: default branch', () => {
+      let result = new Runner().run([
+        'type A is variant {',
+        '  case B {',
+        '    field a',
+        '    field b',
+        '  }',
+        '  case C {',
+        '    field a',
+        '    field c',
+        '  }',
+        '}',
+        'program {',
+        '  y := B(a <- 1, b <- 2)',
+        '  x := matching (y) select',
+        '         42 otherwise',
+        '  return (x)',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(new ValueInteger(42));
+    });
+
+    describe('Matching..select: non-default branch (1)', () => {
+      let result = new Runner().run([
+        'type A is variant {',
+        '  case B {',
+        '    field a',
+        '    field b',
+        '  }',
+        '  case C {',
+        '    field a',
+        '    field c',
+        '  }',
+        '}',
+        'program {',
+        '  y := B(a <- 1, b <- 2)',
+        '  x := matching (y) select',
+        '         100 * u + v  on B(u, v)',
+        '         1000 * u + v on C(u, v)',
+        '         42           otherwise',
+        '  return (x)',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(new ValueInteger(102));
+    });
+
+    describe('Matching..select: non-default branch (2)', () => {
+      let result = new Runner().run([
+        'type A is variant {',
+        '  case B {',
+        '    field a',
+        '    field b',
+        '  }',
+        '  case C {',
+        '    field a',
+        '    field c',
+        '  }',
+        '}',
+        'program {',
+        '  y := C(a <- 2, c <- 3)',
+        '  x := matching (y) select',
+        '         100 * u + v  on B(u, v)',
+        '         1000 * u + v on C(u, v)',
+        '         42           otherwise',
+        '  return (x)',
+        '}',
+      ].join('\n'));
+      expect(result).deep.equals(new ValueInteger(2003));
+    });
+
+  });
+
   describe('Expressions: lists', () => {
 
     it('List construction (empty)', () => {

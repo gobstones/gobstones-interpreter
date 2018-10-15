@@ -175,6 +175,8 @@
 \ALT
 \nonterminal{exprChoose}
 \ALT
+\nonterminal{exprMatching}
+\ALT
 \nonterminal{exprList}
 \ALT
 \nonterminal{exprRange}
@@ -202,6 +204,9 @@
 }
 \production{\nonterminal{exprChoose}}{
 \token{CHOOSE} (\nonterminal{expression} \token{WHEN} \token{LPAREN} \nonterminal{expression} \token{RPAREN})* \nonterminal{expression} \token{OTHERWISE}
+}
+\production{\nonterminal{exprMatching}}{
+\token{MATCHING} \nonterminal{expression} \token{SELECT} (\nonterminal{expression} \token{ON} \nonterminal{pattern})* \nonterminal{expression} \token{OTHERWISE}
 }
 \production{\nonterminal{exprList}}{
 \token{LBRACK} \nonterminal{expressionSeq} \token{RBRACK}
