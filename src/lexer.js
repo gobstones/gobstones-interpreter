@@ -7,6 +7,7 @@ import {
   T_PROGRAM, T_INTERACTIVE, T_PROCEDURE, T_FUNCTION, T_RETURN,
   T_IF, T_THEN, T_ELSEIF, T_ELSE,
   T_CHOOSE, T_WHEN, T_OTHERWISE,
+  T_MATCHING, T_SELECT, T_ON,
   T_REPEAT, T_FOREACH, T_IN, T_WHILE,
   T_SWITCH, T_TO, T_LET, T_NOT, T_DIV, T_MOD, T_TYPE,
   T_IS, T_RECORD, T_VARIANT, T_CASE, T_FIELD, T_UNDERSCORE,
@@ -74,6 +75,9 @@ let KEYWORDS = {
   'while': T_WHILE,
   'switch': T_SWITCH,
   'to': T_TO,
+  'matching': T_MATCHING,
+  'select': T_SELECT,
+  'on': T_ON,
   /* Assignment */
   'let': T_LET,
   /* Operators */

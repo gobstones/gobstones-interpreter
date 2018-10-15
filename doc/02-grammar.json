@@ -137,6 +137,7 @@
     ["exprConstantNumber"],
     ["exprConstantString"],
     ["exprChoose"],
+    ["exprMatching"],
     ["exprList"],
     ["exprRange"],
     ["exprTuple"],
@@ -161,6 +162,11 @@
   ["exprChoose",
     ["CHOOSE",
       ["*", ["expression", "WHEN", "LPAREN", "expression", "RPAREN"]],
+      "expression", "OTHERWISE"]
+  ],
+  ["exprMatching",
+    ["MATCHING", "expression", "SELECT",
+      ["*", ["expression", "ON", "pattern"]],
       "expression", "OTHERWISE"]
   ],
   ["exprList",
