@@ -499,6 +499,9 @@ export const LOCALE_ES = {
   'errmsg:patterns-in-interactive-program-must-be-events':
     'Los patrones de un "interactive program" deben ser eventos.',
 
+  'errmsg:patterns-in-interactive-program-cannot-be-variables':
+    'El patrón no puede ser una variable.',
+
   'errmsg:patterns-in-switch-must-not-be-events':
     'El patrón no puede ser un evento.',
 
@@ -771,7 +774,7 @@ export const LOCALE_ES = {
   'PRIM:minDir': 'minDir',
   'PRIM:maxDir': 'maxDir',
 
-  'PRIM:isEmpty': 'vacía',
+  'PRIM:isEmpty': 'esVacía',
   'PRIM:head': 'primero',
   'PRIM:tail': 'resto',
   'PRIM:init': 'comienzo',

@@ -1312,6 +1312,17 @@ describe('Linter', () => {
       );
     });
 
+    it('Reject variable patterns in interactive program', () => {
+      let code = [
+        'interactive program {',
+        '  k -> {}',
+        '}',
+      ].join('\n');
+      expect(() => lint(code)).throws(
+        i18n('errmsg:patterns-in-interactive-program-cannot-be-variables')
+      );
+    });
+
     it('Reject repeated parameter names in structure pattern', () => {
       let code = [
         'type A is record {',

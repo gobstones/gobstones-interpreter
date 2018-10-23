@@ -100,6 +100,7 @@ export class Linter {
       'structure-pattern-repeats-timeout': true,
       'pattern-does-not-match-type': true,
       'patterns-in-interactive-program-must-be-events': true,
+      'patterns-in-interactive-program-cannot-be-variables': true,
       'patterns-in-switch-must-not-be-events': true,
       'patterns-in-foreach-must-not-be-events': true,
       'repeated-variable-in-tuple-assignment': true,
@@ -521,6 +522,12 @@ export class Linter {
         this._lintCheck(
           branch.pattern.startPos, branch.pattern.endPos,
           'patterns-in-interactive-program-must-be-events', []
+        );
+      }
+      if (branch.pattern.tag === N_PatternVariable) {
+        this._lintCheck(
+          branch.pattern.startPos, branch.pattern.endPos,
+          'patterns-in-interactive-program-cannot-be-variables', []
         );
       }
     }

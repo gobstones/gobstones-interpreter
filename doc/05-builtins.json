@@ -136,6 +136,10 @@
     "",
     "Denota la máxima dirección."
   ],
+  ["function", "esVacía", ["lista"],
+    "",
+    "Denota verdadero si la lista es vacía."
+  ],
   ["function", "primero", ["lista"],
     "La lista no puede ser vacía.",
     "Denota la cabeza de la lista, es decir, su primer elemento."
@@ -148,7 +152,7 @@
     "La lista no puede ser vacía.",
     "Denota el comienzo de la lista, es decir, la lista que consta de todos los elementos excepto el último."
   ],
-  ["function", "ultimo", ["lista"],
+  ["function", "último", ["lista"],
     "La lista no puede ser vacía.",
     "Denota el último elemento de la lista."
   ]
