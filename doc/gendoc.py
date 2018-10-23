@@ -209,7 +209,7 @@ def builtin_routine_to_tex(builtin):
     parameters = builtin[2]
     tex.append(
       '\\item \\texttt{%s} \\typename{%s}(%s)' % (
-        builtin[0], builtin[1], ', '.join(parameters)
+        builtin[0], string_to_tex(builtin[1]), ', '.join(parameters)
       )
     )
     tex.append('\\begin{itemize}')

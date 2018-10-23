@@ -510,10 +510,10 @@ La etapa de an\'alisis sem\'antico (o {\em linting}) verifica de manera est\'ati
       \item Un patr\'on estructura y un patr\'on tupla.
       \end{itemize}
 \item Los patrones de las ramas del \texttt{interactive program}
-      \DEBEN ser eventos, es decir:
+      \DEBEN ser eventos y \NOPUEDEN ser patrones variable, es decir,
+      pueden ser
       patrones timeout,
-      patrones estructura del tipo \texttt{\_EVENT},
-      patrones variable
+      patrones estructura del tipo \texttt{\_EVENT}
       o patrones comod\'in.
 \item Los patrones de las ramas de los \texttt{switch} y los \texttt{matching..select} \NOPUEDEN ser eventos, es decir:
       pueden ser
