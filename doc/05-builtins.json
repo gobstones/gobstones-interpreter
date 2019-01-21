@@ -144,7 +144,7 @@
     "La lista no puede ser vacía.",
     "Denota la cabeza de la lista, es decir, su primer elemento."
   ],
-  ["function", "resto", ["lista"],
+  ["function", "sinElPrimero", ["lista"],
     "La lista no puede ser vacía.",
     "Denota la cola de la lista, es decir, la lista que consta de todos los elementos excepto el primero."
   ],

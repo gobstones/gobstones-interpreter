@@ -776,7 +776,7 @@ export const LOCALE_ES = {
 
   'PRIM:isEmpty': 'esVacía',
   'PRIM:head': 'primero',
-  'PRIM:tail': 'resto',
+  'PRIM:tail': 'sinElPrimero',
   'PRIM:init': 'comienzo',
   'PRIM:last': 'último',
 
