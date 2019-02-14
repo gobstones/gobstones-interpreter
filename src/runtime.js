@@ -1150,6 +1150,9 @@ export class RuntimePrimitives {
         }
       );
 
+    this._primitiveFunctions[i18n('PRIM:oldTail')] =
+      this._primitiveFunctions[i18n('PRIM:tail')];
+
     this._primitiveFunctions[i18n('PRIM:init')] =
       new PrimitiveOperation(
         [typeListAny],

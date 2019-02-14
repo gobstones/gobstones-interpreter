@@ -39,6 +39,7 @@ LOCALE_EN['PRIM:maxDir'] = 'maxDir';
 
 LOCALE_EN['PRIM:head'] = 'head';
 LOCALE_EN['PRIM:tail'] = 'tail';
+LOCALE_EN['PRIM:oldTail'] = 'tail';
 LOCALE_EN['PRIM:init'] = 'init';
 LOCALE_EN['PRIM:last'] = 'last';
 
