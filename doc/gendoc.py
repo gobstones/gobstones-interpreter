@@ -35,7 +35,7 @@ def string_to_tex(string):
 def gendoc(json_fn, json_to_tex):
     assert json_fn.endswith('.json')
     tex_fn = json_fn[:-5] + '.tex' 
-    print 'Generating %s from %s.' % (tex_fn, json_fn)
+    print('Generating %s from %s.' % (tex_fn, json_fn))
     json_data = json.load(open(json_fn))
     tex = json_to_tex(json_data)
     f = open(tex_fn, 'w')
